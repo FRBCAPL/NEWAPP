@@ -1,0 +1,379 @@
+/* ==========================================================================
+   Global Styles
+   ========================================================================== */
+
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Chat color variables */
+  --chat-red: #ff2222;
+  --chat-dark: #000;
+  --chat-dark2: #111;
+  --chat-dark3: #181818;
+  --chat-border: #a30000;
+  --chat-yellow: #fbc02d;
+  --chat-green: #4caf50;
+}
+
+body, html, #root {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  width: 100vw;
+  max-width: 100vw;
+  min-width: 320px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: var(--chat-dark) !important;
+  color: var(--chat-yellow);
+}
+
+#root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+  width: 100vw;
+  min-width: 0;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+/* ==========================================================================
+   Logo Styles
+   ========================================================================== */
+
+.logo {
+  height: 6em;
+  max-width: 90vw;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+  box-sizing: border-box;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+/* ==========================================================================
+   Dashboard & Top Nav Styles
+   ========================================================================== */
+
+.dashboard-card {
+  background: var(--chat-dark2);
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  padding: 2.5rem 2rem;
+  max-width: 500px;
+  margin: 3rem auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #fff;
+}
+.dashboard-card h1 {
+  color: var(--chat-red);
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+.dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 2rem 0;
+  width: 100%;
+  justify-content: center;
+}
+.dashboard-actions button {
+  margin-left: 0;
+}
+.dashboard-actions button + button {
+  margin-left: 10px;
+}
+.dashboard-card button,
+.dashboard-btn,
+.top-nav-bar button {
+  background: var(--chat-red);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  padding: 0.75rem 1.5rem;
+  margin: 0.5rem 0.25rem;
+  min-width: 120px;
+  transition: background 0.2s, color 0.2s;
+  display: inline-block;
+  text-align: center;
+}
+.dashboard-card button:hover:not(:disabled),
+.dashboard-btn:hover,
+.top-nav-bar button:hover {
+  background: #d10000;
+  color: var(--chat-yellow);
+}
+.dashboard-logout-btn {
+  background: #d00 !important;
+  color: #fff !important;
+  margin-left: 10px;
+}
+
+
+.top-nav-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 56px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  background: var(--chat-dark);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  padding-left: 20px;
+  padding-right: 20px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  flex-wrap: wrap;
+}
+.timer-box {
+  margin-left: 16px;
+  margin-right: 24px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+  background: #222;
+  color: #fff;
+  padding: 6px 24px;
+  border-radius: 999px;
+  font-weight: bold;
+  font-size: 16px;
+  border: 2px solid var(--chat-red);
+  display: inline-block;
+  min-width: 120px;
+}
+
+.chat-greeting {
+  color: #fd0202;
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+  display: block;
+}
+
+/* ==========================================================================
+   Chat Styles
+   ========================================================================== */
+
+/* ... (Chat styles remain as in your original, for brevity) ... */
+
+/* ==========================================================================
+   Responsive Styles
+   ========================================================================== */
+
+/* Tablet and down */
+@media (max-width: 900px) {
+  #root {
+    padding: 1rem;
+    max-width: 100vw;
+  }
+  .logo {
+    height: 4em;
+    max-width: 80vw;
+    padding: 1em;
+  }
+  .chat-container,
+  .dashboard-card,
+  .pin-login-card,
+  .modal-content {
+    width: 98vw !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    padding: 1rem !important;
+    border-radius: 10px !important;
+  }
+  .top-nav-bar {
+    flex-direction: column;
+    height: auto !important;
+    padding: 0.5rem !important;
+  }
+  .dashboard-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .sidebar {
+    width: 200px;
+  }
+  .player-search-list {
+    max-height: 180px !important;
+    font-size: 0.95em !important;
+  }
+}
+
+/* Phone screens */
+@media (max-width: 700px) {
+  .chat-container {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    padding: 0.5rem !important;
+    margin: 0 !important;
+  }
+  .top-nav-bar {
+    flex-direction: column !important;
+    height: auto !important;
+    padding: 0.5rem !important;
+    align-items: stretch !important;
+  }
+  .dashboard-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  .dashboard-btn, .timer-box, .chat-greeting {
+    font-size: 0.95em !important;
+    min-width: 90px !important;
+    padding: 6px 10px !important;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  /* Hide sidebar/channel list for more space */
+  .str-chat__channel-list-messenger,
+  .str-chat__channel-list-messenger__main {
+    display: none !important;
+  }
+  /* Make message list and input fill the screen */
+  .str-chat__main-panel,
+  .str-chat__list,
+  .str-chat__input-flat {
+    width: 100vw !important;
+    min-width: 0 !important;
+    max-width: 100vw !important;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 600px) {
+  .match-proposal-content,
+  .player-modal {
+    min-width: 0;
+    max-width: 96vw;
+    padding: 1rem 0.5rem;
+  }
+  .player-modal-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .match-proposal-select,
+  .match-proposal-location-select {
+    width: 100%;
+    margin-left: 0;
+  }
+  .match-proposal-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+  .chat-container,
+  .dashboard-card,
+  .pin-login-card,
+  .modal-content {
+    width: 100vw !important;
+    padding: 0.5rem !important;
+    border-radius: 0 !important;
+  }
+  .top-nav-bar {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  .dashboard-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  .dashboard-btn, .timer-box, .chat-greeting {
+    font-size: 0.9em !important;
+    min-width: 70px !important;
+    padding: 4px 6px !important;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
