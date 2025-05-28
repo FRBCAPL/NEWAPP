@@ -452,7 +452,43 @@ button:focus-visible,
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: transform 0.3s;
 }
+
+/* Hamburger menu button (hidden on desktop) */
+.hamburger-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--chat-yellow);
+  cursor: pointer;
+  margin-right: 1rem;
+  z-index: 10001;
+}
+
+/* Sidebar overlay for mobile */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.5);
+  z-index: 9998;
+}
+
+/* Close button inside sidebar */
+.sidebar-close-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 2rem;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10000;
+}
+
 .general-channel-row {
   padding: 16px;
   border-bottom: 1px solid var(--chat-border);
@@ -805,10 +841,44 @@ button:focus-visible,
     min-width: 90px !important;
     padding: 6px 10px !important;
   }
-  /* Hide sidebar/channel list for more space */
-  .str-chat__channel-list-messenger,
-  .str-chat__channel-list-messenger__main,
+  /* Hamburger menu visible on mobile */
+  .hamburger-btn {
+    display: block;
+  }
+  /* Sidebar as sliding overlay */
   .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 80vw;
+    max-width: 320px;
+    background: var(--chat-dark2);
+    z-index: 9999;
+    box-shadow: 2px 0 12px #000a;
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+    display: flex !important;
+    flex-direction: column;
+  }
+  .sidebar.active {
+    transform: translateX(0);
+  }
+  .sidebar-close-btn {
+    display: block;
+  }
+  /* Sidebar overlay for mobile */
+  .sidebar-overlay {
+    display: none;
+  }
+  .sidebar-overlay.active {
+    display: block;
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.5);
+    z-index: 9998;
+  }
+  /* Hide original sidebar/channel list for more space (except when active) */
+  .str-chat__channel-list-messenger,
+  .str-chat__channel-list-messenger__main {
     display: none !important;
   }
   /* Make message list and input fill the screen */

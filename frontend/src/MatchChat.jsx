@@ -84,6 +84,7 @@ export default function MatchChat({ userName, userEmail, userPin, channelId }) {
   const [showPlayerSearch, setShowPlayerSearch] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(1800); // 30 min
   const [channelSearch, setChannelSearch] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false); // 🟢 Sidebar toggle state
 
   // --- Timer for auto-logout ---
   useEffect(() => {
@@ -169,6 +170,14 @@ export default function MatchChat({ userName, userEmail, userPin, channelId }) {
       <div className="chat-container">
         <Chat client={chatClient} theme="str-chat__theme-dark">
           <div className="top-nav-bar">
+            {/* 🟢 Hamburger menu for mobile */}
+            <button
+              className="hamburger-btn"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open sidebar"
+            >
+              &#9776;
+            </button>
             <button
               className="dashboard-btn"
               onClick={() => {
@@ -199,8 +208,24 @@ export default function MatchChat({ userName, userEmail, userPin, channelId }) {
             </span>
           </div>
 
+          {/* 🟢 Sidebar overlay for mobile */}
+          {sidebarOpen && (
+            <div
+              className="sidebar-overlay active"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
           <div className="main-chat-area">
-            <div className="sidebar">
+            {/* 🟢 Sidebar with toggle/close */}
+            <div className={`sidebar${sidebarOpen ? " active" : ""}`}>
+              <button
+                className="sidebar-close-btn"
+                onClick={() => setSidebarOpen(false)}
+                aria-label="Close sidebar"
+              >
+                &times;
+              </button>
               <div
                 className={`general-channel-row${channel?.id === GENERAL_CHANNEL_ID ? " active" : ""}`}
                 onClick={() => setChannel(generalChannel)}
@@ -242,6 +267,7 @@ export default function MatchChat({ userName, userEmail, userPin, channelId }) {
                           className="channel-list-row"
                           onClick={() => {
                             setChannel(ch);
+                            setSidebarOpen(false); // 🟢 Close sidebar on channel select (mobile)
                           }}
                         >
                           <div className="channel-list-name">
