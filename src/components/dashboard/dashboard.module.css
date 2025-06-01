@@ -1,0 +1,322 @@
+:root {
+  --primary-black: #0c0c0c;
+  --secondary-black: #020202;
+  --accent-red: #e53e3e;
+  --accent-red-dark: #b91c1c;
+  --admin-orange: #f59e42;
+  --admin-orange-dark: #e07b00;
+  --white: #fff;
+  --gray: #a1a1aa;
+}
+
+/* ========== Layout Containers ========== */
+
+.dashboardBg {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.dashboardFrame {
+  background: #000;
+  padding: 18px;
+  border: 2px solid var(--accent-red);
+  border-radius: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 98vw;
+  box-sizing: border-box;
+}
+
+/* Main dashboard card */
+.dashboardCard {
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  background: #18181b;
+  color: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 32px #e53e3e22, 0 0 16px #e53e3e11;
+  padding: 2.5rem 2rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  overflow-y: auto;
+  box-sizing: border-box;
+  animation: fadeInUp 0.6s ease forwards;
+  transition: box-shadow 0.3s, transform 0.3s;
+}
+.dashboardCard:hover {
+  box-shadow: 0 8px 48px #e53e3e44, 0 0 24px #e53e3e22;
+  transform: translateY(-4px);
+}
+
+/* ========== Titles ========== */
+
+.dashboardTitle {
+  color: #fff;
+  text-shadow: 0 0 8px var(--accent-red);
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.02em;
+}
+
+.dashboardUserName {
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.2em;
+  display: block;
+  margin-top: 0.2em;
+}
+
+/* ========== Sections ========== */
+
+.dashboardSection {
+  background: var(--secondary-black);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(229,62,62,0.06);
+}
+
+.dashboardSectionBox {
+  position: relative;
+  background: rgba(0, 0, 0, 0.88);
+  border: 1.5px solid #cccaca;
+  border-radius: 13px;
+  padding: 1.2em 1.2em;
+  margin-bottom: 1.5em;
+  box-shadow: 0 2px 12px #e5393522;
+  z-index: 1;
+}
+.dashboardSectionBox::before {
+  content: "";
+  position: absolute;
+  top: -5px; left: -5px; right: -5px; bottom: -5px;
+  border: 2px solid #9b0101;
+  border-radius: 16px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.dashboardSectionTitle {
+  font-size: 1.2rem;
+  color: var(--accent-red);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* ========== Lists ========== */
+
+.dashboardList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: var(--gray);
+}
+
+/* ========== Actions & Simulation ========== */
+
+.dashboardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+}
+
+/* Buttons */
+.dashboardBtn,
+.dashboardAdminBtn,
+.dashboardLogoutBtn {
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(255,42,42,0.15);
+  border: none;
+  transition: background 0.18s, color 0.18s, border-color 0.18s, transform 0.1s;
+}
+
+.dashboardBtn {
+  background: linear-gradient(90deg, #ff2a2a 0%, #b80000 100%);
+  color: #fff;
+}
+.dashboardBtn:hover,
+.dashboardBtn:focus {
+  background: linear-gradient(90deg, #b80000 0%, #ff2a2a 100%);
+  transform: scale(1.04);
+  box-shadow: 0 4px 16px #e53e3e44;
+}
+
+.dashboardAdminBtn {
+  background: var(--admin-orange);
+  color: var(--white);
+  border-radius: 6px;
+  padding: 0.7rem 1.4rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.dashboardAdminBtn:hover,
+.dashboardAdminBtn:focus {
+  background: var(--admin-orange-dark);
+  transform: scale(1.04);
+}
+
+.dashboardLogoutBtn {
+  background: transparent;
+  color: var(--accent-red);
+  border: 2px solid var(--accent-red);
+  border-radius: 6px;
+  padding: 0.7rem 1.4rem;
+  font-size: .7rem;
+  font-weight: 500;
+  margin-left: auto;
+}
+.dashboardLogoutBtn:hover,
+.dashboardLogoutBtn:focus {
+  background: var(--accent-red);
+  color: var(--white);
+  border-color: var(--accent-red-dark);
+  transform: scale(1.04);
+}
+
+/* Simulation Box */
+.dashboardSimulationBox {
+  flex: 1 1 320px;
+  max-width: 350px;
+  min-width: 240px;
+  min-height: 160px;
+  margin: 0 auto;
+  padding: 12px;
+  background: #191919;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px #0006;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ========== Highlights & Animations ========== */
+
+.dashboardHighlight {
+  animation: pulseGlow 2.5s infinite ease-in-out;
+  background: #222;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  color: #fff;
+  font-weight: 600;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 8px var(--accent-red), 0 0 2px #fff;
+  }
+  100% {
+    box-shadow: 0 0 24px var(--accent-red), 0 0 8px #fff;
+  }
+}
+
+/* ========== Responsive Styles ========== */
+
+@media (max-width: 700px) {
+  .dashboardCard {
+    padding: 1rem 0.5rem;
+    max-height: 95vh;
+  }
+  .dashboardActions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .dashboardFrame {
+    padding: 6px;
+    border-radius: 14px;
+  }
+  .dashboardSimulationBox {
+    max-width: 98vw;
+    min-width: 0;
+    padding: 6px;
+    min-height: 100px;
+  }
+}
+.dashboardCard {
+  width: 100%;
+  max-width: 600px;
+  max-height: 92vh;
+  background: #18181b;
+  color: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 32px #e53e3e22, 0 0 16px #e53e3e11;
+  padding: 1.5rem 1rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  overflow-y: auto;
+  box-sizing: border-box;
+  animation: fadeInUp 0.6s ease forwards;
+  transition: box-shadow 0.3s, transform 0.3s;
+}
+
+.dashboardSection,
+.dashboardSectionBox {
+  padding: 0.7rem 1rem;
+  margin-bottom: 0.7rem;
+}
+
+.dashboardSimulationBox {
+  flex: 1 1 240px;
+  max-width: 320px;
+  min-width: 180px;
+  min-height: 100px;
+  padding: 6px;
+  background: #191919;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px #0006;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .dashboardCard {
+    padding: 0.6rem 0.2rem;
+    max-height: 97vh;
+    gap: 0.7rem;
+  }
+  .dashboardSection,
+  .dashboardSectionBox {
+    padding: 0.5rem 0.6rem;
+    margin-bottom: 0.5rem;
+  }
+  .dashboardSimulationBox {
+    max-width: 98vw;
+    min-width: 0;
+    padding: 3px;
+    min-height: 60px;
+  }
+}
+
+/* ========== End of Dashboard CSS ========== */

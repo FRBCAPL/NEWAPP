@@ -1,0 +1,462 @@
+:root {
+  --chat-dark: #000;
+  --chat-dark2: #181818;
+  --chat-dark3: #222;
+  --chat-red: #e53935;
+  --chat-border: #222;
+  --chat-white: #f8f6f6;
+}
+
+/* ---------- Layout Containers ---------- */
+.outerChatBg {
+  background: var(--chat-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 100vw;
+  min-height: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+.chatContainer {
+  width: 100vw;
+  max-width: 1100px;
+  height: 100vh;
+  margin: 0 auto;
+  border-radius: 12px;
+  background: var(--chat-dark3);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ---------- Top Navigation Bar ---------- */
+.topNavBar {
+  display: flex;
+  flex-direction: column;
+  padding: 1em 1.5em 0.5em 1.5em;
+  background: var(--chat-dark2);
+  border-bottom: 2px solid var(--chat-border);
+}
+
+.chatGreeting {
+  font-size: 1.15em;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 0.5em;
+  white-space: nowrap;
+}
+
+.buttonRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5em;
+  flex-wrap: nowrap; /* Prevent wrapping on desktop */
+}
+
+.topChatButton {
+  background: transparent;
+  color: #fff;
+  border: 2px solid var(--chat-red);
+  border-radius: 8px;
+  padding: 0.5em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  box-shadow: none;
+  margin-right: 0.5em;
+}
+.topChatButton:hover,
+.topChatButton:focus {
+  color: var(--chat-red);
+  border-color: var(--chat-red);
+  background: transparent;
+  outline: none;
+}
+
+.logoutWithTimer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timerBox {
+  margin-top: 0.18em;
+  color: var(--chat-red);
+  font-weight: bold;
+  font-size: 0.97em;
+  background: #222;
+  border-radius: 6px;
+  padding: 0.3em 0.8em;
+  white-space: nowrap;
+}
+
+/* ---------- Main Chat Area ---------- */
+.mainChatArea {
+  display: flex;
+  flex: 1;
+  height: calc(100% - 56px);
+  margin-top: 56px;
+  min-height: 0;
+}
+
+.mainChatWindow {
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  background: var(--chat-dark);
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: #4e9cff #181818;
+}
+.mainChatWindow::-webkit-scrollbar {
+  width: 8px;
+  background: #181818;
+}
+.mainChatWindow::-webkit-scrollbar-thumb {
+  background: #4e9cff;
+  border-radius: 4px;
+}
+
+/* ---------- Pool Table Background ---------- */
+.poolBackground {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Optionally set a max-width or max-height to further constrain */
+}
+
+.poolBackground img,
+.poolBackground svg {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* or 'cover' if you want to crop to fill */
+  display: block;
+}
+
+
+/* ---------- Chat Content Layer ---------- */
+.chatContent {
+  position: relative;
+  z-index: 1;
+  /* Optional: add background overlay for readability */
+  /* background: rgba(0, 0, 0, 0.3); */
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+  width: 270px;
+  background: var(--chat-dark3);
+  color: #fff;
+  height: 100%;
+  border-right: 1px solid #222;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.3s ease-in-out;
+  z-index: 1001;
+}
+
+/* Hamburger button for mobile */
+.hamburgerButton {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 2em;
+  color: #fff;
+  margin: 0 1em 0 0;
+  cursor: pointer;
+  z-index: 1002;
+}
+.hamburgerIcon {
+  pointer-events: none;
+}
+
+/* Sidebar backdrop for mobile */
+.sidebarBackdrop {
+  display: none;
+}
+
+/* Sidebar close button for mobile */
+.closeSidebarButton {
+  display: none;
+}
+
+/* ---------- Channel List ---------- */
+.generalChannelRow,
+.channelListRow {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #fff;
+}
+.active {
+  background: #1a0000;
+}
+.channelListName {
+  color: #fff;
+  font-weight: bold;
+}
+.pinIcon {
+  margin-left: 8px;
+  font-size: 1.2em;
+  cursor: pointer;
+  user-select: none;
+}
+.pinned {
+  color: var(--chat-red);
+}
+.noPinnedChannels,
+.noChannelsFound {
+  color: #bbb;
+  font-style: italic;
+  padding: 24px 0;
+  text-align: center;
+  font-size: 1em;
+}
+.sectionHeader {
+  color: var(--chat-red);
+  font-weight: bold;
+  padding: 0.5em 1em 0.2em 1em;
+  font-size: 1.1em;
+}
+.sidebarSearch {
+  padding: 0.5em 1em;
+}
+.sidebarSearch input {
+  width: 100%;
+  padding: 0.5em;
+  border-radius: 5px;
+  border: 1px solid #333;
+  background: var(--chat-dark);
+  color: #fff;
+}
+.channelListWrapper {
+  margin-top: 2.2em;
+}
+
+/* ---------- Custom Message UI ---------- */
+.customMessageUi {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1em;
+  min-width: 0;
+  width: 100%;
+  padding-left: 1em;
+  padding-right: 1em;
+  box-sizing: border-box;
+}
+.onlineDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 0.5em;
+  background: #bbb;
+  display: inline-block;
+}
+.online {
+  background: #7be881;
+}
+.messageContent {
+  flex: 1;
+}
+.messageUsername {
+  color: var(--chat-red);
+  font-weight: bold;
+  margin-bottom: 0.2em;
+  text-align: left;
+  display: block;
+}
+.messageText {
+  color: #fff;
+  text-align: left;
+  display: block;
+  word-break: break-word;
+}
+
+/* ---------- Loading Spinner ---------- */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 4rem;
+}
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 5px solid #ccc;
+  border-top: 5px solid #4e9cff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Stream Chat Send Button ---------- */
+.str-chat__send-button {
+  background: linear-gradient(90deg, #e53935 0%, #4e9cff 100%);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  box-shadow: 0 2px 8px rgba(78,156,255,0.12);
+  transition: box-shadow 0.2s;
+}
+.str-chat__send-button:hover {
+  box-shadow: 0 4px 16px rgba(229,57,53,0.18);
+}
+
+/* ---------- Responsive Design ---------- */
+@media (max-width: 900px) {
+  .hamburgerButton { display: block; }
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 80vw;
+    max-width: 320px;
+    min-width: 200px;
+    background: var(--chat-dark3);
+    z-index: 1000;
+    transition: transform 0.3s ease-in-out;
+    transform: translateX(-100%);
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.3);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .closeSidebarButton {
+    display: block;
+    background: none;
+    border: none;
+    font-size: 2em;
+    color: #fff;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    cursor: pointer;
+    z-index: 1010;
+  }
+}
+
+@media (max-width: 700px) {
+  .topNavBar {
+    flex-wrap: wrap;
+    padding: 0.5em;
+    gap: 0.3em;
+  }
+  .buttonRow {
+    flex-wrap: wrap;
+    gap: 0.3em;
+  }
+  .logoutWithTimer {
+    align-items: center;
+  }
+  .sidebar {
+    width: 100vw;
+    min-width: 0;
+    max-width: 100vw;
+  }
+  .mainChatArea {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 600px) {
+  .customMessageUi {
+    padding-left: 1em;
+    padding-right: 1em;
+  }
+  .mainChatWindow {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+/* ...existing styles... */
+
+/* Message List Background (SVG Pool Table) */
+.messageListBackground {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.poolTableImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* or 'cover' for full fill with cropping */
+  display: block;
+}
+
+/* Make sure the message list container is positioned */
+.str-chat__main-panel {
+  position: relative;
+}
+/* Ensure the message list area is a positioning context */
+.str-chat__main-panel {
+  position: relative;
+}
+
+/* The SVG background container fills the message list area */
+.messageListBackground {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none; /* Allows chat UI to be clickable */
+  overflow: hidden;
+}
+
+/* The SVG itself fills its parent and scales responsively */
+.poolTableSvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain; /* or 'cover' if you want to crop to fill */
+}
+.messageListBackground {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+
+  /* Center children with Flexbox */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

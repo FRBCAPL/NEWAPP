@@ -1,0 +1,86 @@
+/* responsive.css */
+
+/* Tablet and down */
+@media (max-width: 900px) {
+  #root {
+    padding: 1rem;
+    max-width: 100vw;
+  }
+  .logo {
+    height: 4em;
+    max-width: 80vw;
+    padding: 1em;
+  }
+  .card {
+    padding: 1em;
+  }
+  .player-search-list {
+    max-height: 180px;
+    font-size: 0.95em;
+  }
+  /* If .dashboard-actions is not handled by a module, keep the following: */
+  .dashboard-actions button {
+    font-size: 0.95rem;
+    min-width: 70px;
+    max-width: 140px;
+    padding: 0.6rem 0.7rem;
+  }
+}
+
+/* Phone screens */
+@media (max-width: 700px) {
+  /* Only keep if .logo, .card, .player-modal, etc. are not handled by modules */
+  .card {
+    padding: 0.5em;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 600px) {
+  .match-proposal-content,
+  .player-modal {
+    min-width: 0;
+    max-width: 96vw;
+    padding: 1rem 0.5rem;
+  }
+  .player-modal-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .match-proposal-select,
+  .match-proposal-location-select {
+    width: 100%;
+    margin-left: 0;
+  }
+  .match-proposal-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+  .card {
+    padding: 0.5em;
+  }
+}
+
+/* If you have not moved these to modules, keep them; otherwise, remove: */
+@media (max-width: 700px) {
+  .custom-channel-header {
+    padding: 0.8em 0.5em 0.5em 1em;
+    min-height: 64px;
+  }
+  .channel-header-name {
+    font-size: 1.05em;
+    max-width: 160px;
+  }
+  .custom-channel-header-avatar {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    font-size: 1em;
+    border-width: 2px;
+  }
+  .active-users-avatars {
+    gap: 0.5em;
+    min-height: 32px;
+  }
+}

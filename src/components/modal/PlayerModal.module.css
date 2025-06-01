@@ -1,0 +1,285 @@
+:root {
+  --chat-dark2: #232323;
+  --chat-red: #e53935;
+  --title-color: #e53935; /* For day labels */
+  justify-content: center;
+   text-align: center;
+}
+
+/* ===========================
+   Overlay & Modal Container
+   =========================== */
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.7);
+}
+
+.modalContent,
+.playerModal {
+  position: relative;
+  z-index: 2;
+  background: var(--chat-dark2);
+  color: #fff;
+  border-radius: 1.2rem;
+  border: 2px solid var(--chat-red);
+  box-shadow: 0 0 24px var(--chat-red), 0 0 32px rgba(0,0,0,0.7);
+  padding: 1.5em;
+  max-width: 650px;   /* Slightly wider modal for 3 columns */
+  width: 95vw;
+  min-width: 320px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  /* No overflow-x: auto to prevent scrollbars */
+}
+
+/* ===========================
+   Close Button
+   =========================== */
+.closeBtn,
+.playerModalClose {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--chat-red);
+  font-size: 2em;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 3;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+/* ===========================
+   Modal Titles & Sections
+   =========================== */
+.playerModalTitle {
+  color: #fff;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 2rem;
+}
+
+.playerModalSection {
+  margin-bottom: 1.5rem;
+}
+
+.playerModalSectionTitle {
+  color: var(--chat-red);
+  margin-bottom: 0.4em;
+  font-weight: bold;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.playerModalSectionValue {
+  color: #ddd;
+  font-style: italic;
+}
+
+/* ===========================
+   Locations Separator
+   =========================== */
+.locationSeparator {
+  color: var(--chat-red);
+  margin: 0 6px;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+/* ===========================
+   Availability Grid & Day Labels
+   =========================== */
+.playerModalGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Always 3 columns */
+  gap: 0.75em;
+  width: 100%;
+  margin-bottom: 1em;
+}
+
+@media (max-width: 700px) {
+  .modalContent,
+  .playerModal {
+    max-width: 98vw;
+    min-width: 0;
+  }
+  .playerModalGrid {
+    grid-template-columns: repeat(2, 1fr); /* 2 columns on smaller screens */
+  }
+}
+@media (max-width: 500px) {
+  .playerModalGrid {
+    grid-template-columns: 1fr; /* 1 column on mobile */
+  }
+}
+
+.playerModalDay {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: #222;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.5rem;
+  word-break: break-word;
+  margin-bottom: 0.5em;
+}
+
+.playerModalDayLabel {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  font-weight: 700;
+  font-size: 1.0rem;
+  color: var(--title-color);
+  letter-spacing: 0.04em;
+  text-align: center;
+  border-bottom: 1px solid #444;
+  padding-bottom: 0.2rem;
+  margin-bottom: 0.3rem;
+  /* Optional: background: #232323; border-radius: 7px 7px 0 0; */
+}
+
+/* ===========================
+   Time Blocks (Consistent & Responsive)
+   =========================== */
+.playerModalSlot,
+.playerModalSlotEmpty {
+  width: 100%;
+   margin: 0 auto;            /* Horizontally center in the column */
+  padding: 0.7em 1em;
+  border: 2px solid #e53935;
+  border-radius: 15px;
+  background: #232323;
+  color: #fff;
+  font-size: .9rem;
+  margin-bottom: 0.4em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: pre-line;      /* Allows wrapping if needed */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  min-width: 0;               /* Prevents flex/grid overflow */
+  word-break: break-word;     /* Wraps long text if needed */
+}
+
+.playerModalSlot:hover {
+  background: var(--chat-red);
+  color: #fff;
+  border-color: var(--chat-red);
+}
+
+.playerModalSlotDisabled {
+  background: #888 !important;
+  color: #aaa !important;
+  cursor: not-allowed !important;
+  border-color: #666 !important;
+  box-shadow: none !important;
+}
+
+/* ===========================
+   Contact Info
+   =========================== */
+.playerModalContact {
+  margin-bottom: 0.5rem;
+}
+
+.playerModalContactTimer {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin-top: 0.8rem;
+}
+
+.playerModalShowContact {
+  display: block;
+  margin: 0.5rem auto 0 auto;
+  background: transparent;
+  color: #fff;
+  border: 2px solid var(--chat-red);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: bold;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.playerModalShowContact:hover,
+.playerModalShowContact:focus {
+  color: var(--chat-red);
+  border-color: var(--chat-red);
+  background: transparent;
+  outline: none;
+}
+
+.playerModalInstruction {
+  color: #fff;
+  font-size: 1rem;
+  text-align: center;
+  margin-bottom: 0.8em;
+}
+
+/* ===========================
+   Player Search Styles
+   =========================== */
+.playerSearchInput {
+  width: 320px;
+  max-width: 90%;
+  font-size: 1.1rem;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 2px solid #e53935;
+  background: #232323;
+  color: #fff;
+  transition: border 0.18s, box-shadow 0.18s;
+  box-sizing: border-box;
+}
+
+.playerSearchInstruction {
+  color: #e53935;
+  font-size: 1.05rem;
+  margin-bottom: 10px;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+.playerModalActions {
+  display: flex;
+  justify-content: center;
+  gap: 1em;
+  margin: 1.5em 0 0 0;
+}
+
+.playerModalBtn {
+  background: var(--chat-red);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7em 1.4em;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s, border 0.18s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+}
+
+.playerModalBtn:hover,
+.playerModalBtn:focus {
+  background: #fff;
+  color: var(--chat-red);
+  outline: none;
+  border: 2px solid var(--chat-red);
+}
