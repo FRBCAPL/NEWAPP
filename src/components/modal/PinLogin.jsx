@@ -52,8 +52,9 @@ export default function PinLogin({ onSuccess }) {
   // ---- YOUR RETURN MUST BE INSIDE THE FUNCTION BODY ----
   return (
     <div className={styles.pinLoginBg}>
+ 
       <div className={styles.pinLoginFrame}>
-   <div style={{ width: "100%", maxWidth: 600, height: 300, margin: "0 auto 2rem auto", padding: 16 }}>
+        <div style={{ width: "100%", maxWidth: 600, height: 300, margin: "0 auto 2rem auto", padding: 16 }}>
   <ResponsiveWrapper aspectWidth={600} aspectHeight={300}>
     <PoolSimulation />
   </ResponsiveWrapper>

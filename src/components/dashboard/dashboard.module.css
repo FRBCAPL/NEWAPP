@@ -25,7 +25,7 @@
 .dashboardFrame {
   background: #000;
   padding: 18px;
-  border: 2px solid var(--accent-red);
+ 
   border-radius: 24px;
   display: flex;
   justify-content: center;
