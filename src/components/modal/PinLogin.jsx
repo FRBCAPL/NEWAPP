@@ -1,55 +1,67 @@
 import React, { useState } from "react";
 import fetchSheetData from "../../utils/fetchSheetData";
 import styles from "./PinLogin.module.css";
-import PoolSimulation from "../PoolSimulation.jsx";
 
+import ResponsiveWrapper from "../ResponsiveWrapper";
+import PoolSimulation from "../PoolSimulation";
+
+// --- Google Sheet config (safe to expose for public read-only sheets) ---
 const sheetID = "1tvMgMHsRwQxsR6lMNlSnztmwpK7fhZeNEyqjTqmRFRc";
 const pinSheetName = "BCAPL SIGNUP";
 
+/**
+ * PinLogin - Login form for PIN authentication
+ * @param {function} onSuccess - callback when login succeeds
+ */
 export default function PinLogin({ onSuccess }) {
   const [pin, setPin] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-const verifyPin = async () => {
-  if (!pin) {
-    setMessage("Please enter a PIN.");
-    return;
-  }
-  setMessage("");
-  setLoading(true);
-  try {
-    const rows = await fetchSheetData(sheetID, `${pinSheetName}!A1:L1000`);
-    const dataRows = rows.slice(1);
-    const match = dataRows.find(row => row[11]?.toString() === pin);
-    setLoading(false);
-    if (match) {
-      setMessage("");
-      // Pass full name (first + last), email, pin
-      onSuccess(`${match[0] || ""} ${match[1] || ""}`.trim(), match[2] || "", pin);
-    } else {
-      setMessage("Invalid PIN. Please try again. Your PIN is in your welcome email. Email: frbcapl@gmail.com for PIN reset.");
+  // --- Verify PIN against Google Sheet ---
+  const verifyPin = async () => {
+    if (!pin) {
+      setMessage("Please enter a PIN.");
+      return;
     }
-  } catch (error) {
-    setLoading(false);
-    setMessage("Error verifying PIN. Please try again later.");
-    console.error("PIN verification error:", error);
-  }
-};
+    setMessage("");
+    setLoading(true);
+    try {
+      const rows = await fetchSheetData(sheetID, `${pinSheetName}!A1:L1000`);
+      const dataRows = rows.slice(1); // skip header
+      const match = dataRows.find(row => row[11]?.toString() === pin);
+      setLoading(false);
+      if (match) {
+        setMessage("");
+        onSuccess(`${match[0] || ""} ${match[1] || ""}`.trim(), match[2] || "", pin);
+      } else {
+        setMessage("Invalid PIN. Please try again. Your PIN is in your welcome email. Email: frbcapl@gmail.com for PIN reset.");
+      }
+    } catch (error) {
+      setLoading(false);
+      setMessage("Error verifying PIN. Please try again later.");
+      console.error("PIN verification error:", error);
+    }
+  };
 
-
+  // --- Allow Enter key to submit ---
   const handleKeyDown = (e) => {
     if (e.key === "Enter") verifyPin();
   };
 
+  // ---- YOUR RETURN MUST BE INSIDE THE FUNCTION BODY ----
   return (
     <div className={styles.pinLoginBg}>
       <div className={styles.pinLoginFrame}>
+   <div style={{ width: "100%", maxWidth: 600, height: 300, margin: "0 auto 2rem auto", padding: 16 }}>
+  <ResponsiveWrapper aspectWidth={600} aspectHeight={300}>
+    <PoolSimulation />
+  </ResponsiveWrapper>
+</div>
+
         <div className={styles.pinLoginCard}>
-          {/* Pool simulation appears ONLY here */}
-          <PoolSimulation />
           <h3 className={styles.pinLoginSubtitle}>
-            <span className={styles.pinLoginLock}>🔒</span>
+            <span className={styles.pinLoginLock} aria-hidden="true">🔒</span>
             <span className={styles.pinOutlineText}> Please Enter Your PIN</span>
           </h3>
           <input
@@ -62,16 +74,19 @@ const verifyPin = async () => {
             inputMode="numeric"
             autoFocus
             className={styles.pinInput}
+            aria-label="PIN"
+            disabled={loading}
           />
           <button
             onClick={verifyPin}
             disabled={loading}
             className={styles.pinLoginBtn}
+            type="button"
           >
             {loading ? "Verifying..." : "Submit"}
           </button>
           {message && (
-            <p className={styles.pinLoginError}>
+            <p className={styles.pinLoginError} role="alert">
               {message}
             </p>
           )}

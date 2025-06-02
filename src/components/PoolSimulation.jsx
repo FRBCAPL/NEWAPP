@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import table2 from "./PoolTableSVG/table2.svg";
 import nineBall from "../assets/nineball.svg";
 import tenBall from "../assets/tenball.svg";
@@ -6,15 +6,13 @@ import eightBall from "../assets/8ball.svg";
 import cueBall from "../assets/cueball.svg";
 import styles from "./modal/PinLogin.module.css";
 
-
-
+// --- Constants ---
 const BALLS = [
   { key: "cue", src: cueBall, alt: "Cue Ball" },
   { key: "8", src: eightBall, alt: "8 Ball" },
   { key: "9", src: nineBall, alt: "9 Ball" },
   { key: "10", src: tenBall, alt: "10 Ball" }
 ];
-
 const TABLE_WIDTH = 600;
 const TABLE_HEIGHT = 300;
 const BALL_SIZE = 15;
@@ -24,6 +22,7 @@ const PLAYFIELD_OFFSET_Y = 0;
 const CORNER_MARGIN_FACTOR = 3.0;
 const SIDE_MARGIN_FACTOR = 1.8;
 
+// --- Utility Functions ---
 function isInPocket(ball) {
   const pockets = [
     { x: PLAYFIELD_OFFSET_X, y: PLAYFIELD_OFFSET_Y, margin: BALL_SIZE * CORNER_MARGIN_FACTOR },
@@ -39,7 +38,6 @@ function isInPocket(ball) {
     pocket => Math.hypot(cx - pocket.x, cy - pocket.y) < pocket.margin + BALL_RADIUS * 0.85
   );
 }
-
 
 function resolveBallCollision(a, b, ballSize) {
   const dx = b.x - a.x;
@@ -70,7 +68,6 @@ function resolveBallCollision(a, b, ballSize) {
   b.isMoving = true;
 }
 
-// --- SMART AI LOGIC ---
 function lineIntersectsBall(x1, y1, x2, y2, ball, ignoreKey) {
   if (!ball.visible || ball.key === ignoreKey) return false;
   const A = {x: x1, y: y1};
@@ -97,7 +94,7 @@ function getPockets() {
 }
 
 export default function PoolSimulation() {
-  const containerRef = useRef(null);
+  const tableImgRef = useRef(null);
   const ballRefs = useRef({
     cue: React.createRef(),
     8: React.createRef(),
@@ -110,6 +107,7 @@ export default function PoolSimulation() {
   const cueTimeout = useRef(null);
   const shotCount = useRef(0);
 
+  // Save initial positions for cue ball reset
   function saveInitialPositions() {
     Object.keys(balls.current).forEach(key => {
       initialPositions.current[key] = {
@@ -119,6 +117,7 @@ export default function PoolSimulation() {
     });
   }
 
+  // Rack balls at start or rerack
   function rackBalls() {
     const rackApexX = TABLE_WIDTH * 0.3;
     const rackApexY = TABLE_HEIGHT / 2;
@@ -162,11 +161,7 @@ export default function PoolSimulation() {
 
     Object.values(balls.current).forEach(ball => {
       if (ball.ref.current) {
-        ball.ref.current.style.left = `${ball.x - BALL_RADIUS}px`;
-        ball.ref.current.style.top = `${ball.y - BALL_RADIUS}px`;
         ball.ref.current.style.opacity = 1;
-        ball.ref.current.style.width = BALL_SIZE;
-        ball.ref.current.style.height = BALL_SIZE;
       }
     });
 
@@ -181,6 +176,7 @@ export default function PoolSimulation() {
     }, 1000);
   }
 
+  // On mount: rack and break
   useEffect(() => {
     rackBalls();
     setTimeout(() => {
@@ -193,6 +189,7 @@ export default function PoolSimulation() {
     // eslint-disable-next-line
   }, []);
 
+  // Break shot: first shot is a blast, then AI takes over
   function breakCueBall() {
     if (!balls.current.cue) return;
     if (balls.current.cue.isMoving) return;
@@ -200,7 +197,6 @@ export default function PoolSimulation() {
     const cue = balls.current.cue;
     shotCount.current += 1;
 
-    // On the break (first shot): blast cue ball at rack apex with random angle/speed
     if (shotCount.current === 1) {
       const rackApex = balls.current[8];
       const dx = rackApex.x - cue.x;
@@ -221,82 +217,88 @@ export default function PoolSimulation() {
     smartCueShot();
   }
 
-function smartCueShot() {
-  const objectBallOrder = ["8", "9", "10"];
-  const targetKey = objectBallOrder.find(key => balls.current[key]?.visible);
-  if (!targetKey) return; // game over
+  // AI shot logic
+  function smartCueShot() {
+    const objectBallOrder = ["8", "9", "10"];
+    const targetKey = objectBallOrder.find(key => balls.current[key]?.visible);
+    if (!targetKey) return; // game over
 
-  const cue = balls.current.cue;
-  const target = balls.current[targetKey];
-  const pockets = getPockets();
+    const cue = balls.current.cue;
+    const target = balls.current[targetKey];
+    const pockets = getPockets();
 
-  let best = null;
-  let bestScore = Infinity;
+    let best = null;
+    let bestScore = Infinity;
 
-  for (const pocket of pockets) {
-    const toPocketX = pocket.x - target.x;
-    const toPocketY = pocket.y - target.y;
-    const toPocketLen = Math.hypot(toPocketX, toPocketY);
+    for (const pocket of pockets) {
+      const toPocketX = pocket.x - target.x;
+      const toPocketY = pocket.y - target.y;
+      const toPocketLen = Math.hypot(toPocketX, toPocketY);
 
-    // Ghost ball position for straight-in shot
-    const ghostX = target.x - (toPocketX / toPocketLen) * BALL_SIZE;
-    const ghostY = target.y - (toPocketY / toPocketLen) * BALL_SIZE;
+      // Ghost ball position for straight-in shot
+      const ghostX = target.x - (toPocketX / toPocketLen) * BALL_SIZE;
+      const ghostY = target.y - (toPocketY / toPocketLen) * BALL_SIZE;
 
-    // Check if cue can hit ghost ball directly (no balls in the way)
-    let blocked = false;
-    for (const otherKey of objectBallOrder) {
-      if (otherKey === targetKey) continue;
-      if (lineIntersectsBall(cue.x, cue.y, ghostX, ghostY, {...balls.current[otherKey], key: otherKey}, targetKey)) {
-        blocked = true;
-        break;
+      // Check if cue can hit ghost ball directly (no balls in the way)
+      let blocked = false;
+      for (const otherKey of objectBallOrder) {
+        if (otherKey === targetKey) continue;
+        if (lineIntersectsBall(cue.x, cue.y, ghostX, ghostY, {...balls.current[otherKey], key: otherKey}, targetKey)) {
+          blocked = true;
+          break;
+        }
+      }
+
+      // Estimate scratch risk: if cue ball path after hit goes toward a pocket
+      let scratchRisk = 0;
+      for (const testPocket of pockets) {
+        const distToPocket = Math.hypot(ghostX - testPocket.x, ghostY - testPocket.y);
+        if (distToPocket < BALL_SIZE * 2.0) scratchRisk += 1;
+      }
+
+      // Score: prefer unblocked, short shots, penalize scratch risk
+      const cueToGhost = Math.hypot(cue.x - ghostX, cue.y - ghostY);
+      const score = (blocked ? 1000 : 0) + cueToGhost + scratchRisk * 100;
+
+      if (score < bestScore) {
+        bestScore = score;
+        best = { ghostX, ghostY };
       }
     }
 
-    // Estimate scratch risk: if cue ball path after hit goes toward a pocket
-    // (Simple: see if the cue ball's post-collision vector points toward a pocket)
-    let scratchRisk = 0;
-    for (const testPocket of pockets) {
-      const distToPocket = Math.hypot(ghostX - testPocket.x, ghostY - testPocket.y);
-      if (distToPocket < BALL_SIZE * 2.0) scratchRisk += 1; // crude risk estimate
+    // If no clear shot, just shoot at the lowest ball with a gentle angle
+    if (!best) {
+      const angle = Math.atan2(target.y - cue.y, target.x - cue.x) + (Math.random() - 0.5) * 0.3;
+      const dist = Math.hypot(target.x - cue.x, target.y - cue.y);
+      best = {
+        ghostX: cue.x + Math.cos(angle) * dist * 0.8,
+        ghostY: cue.y + Math.sin(angle) * dist * 0.8
+      };
     }
 
-    // Score: prefer unblocked, short shots, penalize scratch risk
-    const cueToGhost = Math.hypot(cue.x - ghostX, cue.y - ghostY);
-    const score = (blocked ? 1000 : 0) + cueToGhost + scratchRisk * 100;
-
-    if (score < bestScore) {
-      bestScore = score;
-      best = { ghostX, ghostY };
-    }
+    // Shoot!
+    const shotDx = best.ghostX - cue.x;
+    const shotDy = best.ghostY - cue.y;
+    const shotLen = Math.hypot(shotDx, shotDy);
+    const shotSpeed = 7;
+    cue.vx = (shotDx / shotLen) * shotSpeed;
+    cue.vy = (shotDy / shotLen) * shotSpeed;
+    cue.isMoving = true;
+    animateBalls();
   }
 
-  // If no clear shot, just shoot at the lowest ball with a gentle angle
-  if (!best) {
-    const angle = Math.atan2(target.y - cue.y, target.x - cue.x) + (Math.random() - 0.5) * 0.3;
-    const dist = Math.hypot(target.x - cue.x, target.y - cue.y);
-    best = {
-      ghostX: cue.x + Math.cos(angle) * dist * 0.8,
-      ghostY: cue.y + Math.sin(angle) * dist * 0.8
-    };
-  }
-
-  // Shoot!
-  const shotDx = best.ghostX - cue.x;
-  const shotDy = best.ghostY - cue.y;
-  const shotLen = Math.hypot(shotDx, shotDy);
-  const shotSpeed = 7;
-  cue.vx = (shotDx / shotLen) * shotSpeed;
-  cue.vy = (shotDy / shotLen) * shotSpeed;
-  cue.isMoving = true;
-  animateBalls();
-}
-
-
+  // Main animation loop (no scaling math needed!)
   function animateBalls() {
     const friction = 0.99;
     const ballSize = BALL_SIZE;
     const radius = ballSize / 2;
     const subSteps = 16;
+
+    // Felt bounds in simulation coordinates
+    const FELT_LEFT = 18.25;
+    const FELT_RIGHT = 570.77;
+    const FELT_TOP = 20.20;
+    const FELT_BOTTOM = 270.18;
 
     function step() {
       let pocketedThisFrame = [];
@@ -308,24 +310,22 @@ function smartCueShot() {
           let nextX = ball.x + ball.vx / subSteps;
           let nextY = ball.y + ball.vy / subSteps;
 
-          // Rail collision
-          if (nextX < PLAYFIELD_OFFSET_X + radius + 20) {
-            ball.x = PLAYFIELD_OFFSET_X + radius + 20;
+          // --- Rail collision using felt bounds ---
+          if (nextX < FELT_LEFT + BALL_RADIUS) {
+            ball.x = FELT_LEFT + BALL_RADIUS;
             ball.vx = Math.abs(ball.vx) * 0.8;
-          }
-          else if (nextX > TABLE_WIDTH - radius - 25 + PLAYFIELD_OFFSET_X) {
-            ball.x = TABLE_WIDTH - radius - 25 + PLAYFIELD_OFFSET_X;
+          } else if (nextX > FELT_RIGHT - BALL_RADIUS) {
+            ball.x = FELT_RIGHT - BALL_RADIUS;
             ball.vx = -Math.abs(ball.vx) * 0.8;
           } else {
             ball.x = nextX;
           }
 
-          if (nextY < PLAYFIELD_OFFSET_Y + radius + 18) {
-            ball.y = PLAYFIELD_OFFSET_Y + radius + 18;
+          if (nextY < FELT_TOP + BALL_RADIUS) {
+            ball.y = FELT_TOP + BALL_RADIUS;
             ball.vy = Math.abs(ball.vy) * 0.8;
-          }
-          else if (nextY > TABLE_HEIGHT - radius - 30 + PLAYFIELD_OFFSET_Y) {
-            ball.y = TABLE_HEIGHT - radius - 30 + PLAYFIELD_OFFSET_Y;
+          } else if (nextY > FELT_BOTTOM - BALL_RADIUS) {
+            ball.y = FELT_BOTTOM - BALL_RADIUS;
             ball.vy = -Math.abs(ball.vy) * 0.8;
           } else {
             ball.y = nextY;
@@ -335,7 +335,7 @@ function smartCueShot() {
           ball.vx *= Math.pow(friction, 1 / subSteps);
           ball.vy *= Math.pow(friction, 1 / subSteps);
 
-          // Pocket detection (circular margin)
+          // Pocket detection
           if (isInPocket(ball)) {
             ball.isMoving = false;
             ball.visible = false;
@@ -365,13 +365,14 @@ function smartCueShot() {
         }
       }
 
-      // Render
+      // Directly update DOM for all balls (no scaling math needed)
       Object.entries(balls.current).forEach(([key, ball]) => {
         if (ball.ref.current && ball.visible) {
-          ball.ref.current.style.left = (ball.x !== undefined ? ball.x - BALL_RADIUS : 0) + "px";
-          ball.ref.current.style.top = (ball.y !== undefined ? ball.y - BALL_RADIUS : 0) + "px";
+          ball.ref.current.style.left = (ball.x - BALL_RADIUS) + "px";
+          ball.ref.current.style.top = (ball.y - BALL_RADIUS) + "px";
           ball.ref.current.style.width = BALL_SIZE + "px";
           ball.ref.current.style.height = BALL_SIZE + "px";
+          ball.ref.current.style.opacity = 1;
         }
       });
 
@@ -388,11 +389,7 @@ function smartCueShot() {
           balls.current["cue"].isMoving = false;
           balls.current["cue"].visible = true;
           if (balls.current["cue"].ref.current) {
-            balls.current["cue"].ref.current.style.left = (balls.current["cue"].x !== undefined ? balls.current["cue"].x - BALL_RADIUS : 0) + "px";
-            balls.current["cue"].ref.current.style.top = (balls.current["cue"].y !== undefined ? balls.current["cue"].y - BALL_RADIUS : 0) + "px";
             balls.current["cue"].ref.current.style.opacity = 1;
-            balls.current["cue"].ref.current.style.width = BALL_SIZE + "px";
-            balls.current["cue"].ref.current.style.height = BALL_SIZE + "px";
           }
           setTimeout(() => {
             smartCueShot();
@@ -423,79 +420,87 @@ function smartCueShot() {
     animationFrame.current = requestAnimationFrame(step);
   }
 
+  // --- Render ---
   return (
-    <div style={{
-      width: "100%",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      minHeight: "320px"
-    }}>
-      <div
+<div
+  style={{
+    width: 600,
+    height: 300,
+    position: "relative",
+    background: "black",
+    
+    zIndex: 99999,
+  }}
+>
+
+      <img
+        ref={tableImgRef}
+        src={table2}
+        alt="Pool Table"
         style={{
-          position: "relative",
-          width: TABLE_WIDTH,
-          height: TABLE_HEIGHT
+          width: "100%",
+          height: "100%",
+          display: "block",
+          objectFit: "fill",
+          position: "absolute",
+          top: 0,
+          left: 0,
+          zIndex: 1,
+          pointerEvents: "none"
         }}
-        ref={containerRef}
+      />
+      {/* Centered Words, scaled */}
+      <div
+        className={styles.pinLoginTitle}
+        style={{
+          position: "absolute",
+          left: 0,
+          top: "38%",
+          width: "100%",
+          textAlign: "center",
+          pointerEvents: "none",
+          userSelect: "none",
+          zIndex: 2,
+          opacity: 0.55,
+          lineHeight: 1.1,
+          fontWeight: "bold",
+          color: "#000",
+          fontSize: "24px",
+          textShadow: `
+            1px 0 0 #ff0000,
+            -1px 0 0 #ff0000,
+            0 1px 0 #ff0000,
+            0 -1px 0 #ff0000,
+            1px 1px 0 #ff0000,
+            -1px -1px 0 #ff0000,
+            1px -1px 0 #ff0000,
+            -1px 1px 0 #ff0000
+          `
+        }}
       >
+        <div>Front Range</div>
+        <div>Pool League</div>
+      </div>
+      {BALLS.map(ball =>
         <img
-          src={table2}
-          width={TABLE_WIDTH}
-          height={TABLE_HEIGHT}
-          style={{ display: "block" }}
-          alt="Pool Table"
-        />
-        <div
-          className={styles.pinLoginTitle}
+          key={ball.key}
+          src={ball.src}
+          alt={ball.alt}
+          ref={ballRefs.current[ball.key]}
+          className={styles.pinBallImg}
           style={{
             position: "absolute",
-            left: 0,
-            top: "38%",
-            width: "100%",
-            textAlign: "center",
-            pointerEvents: "none",
-            userSelect: "none",
-            zIndex: 2,
-            opacity: 0.60,
-            lineHeight: 1.1,
-            fontWeight: "bold",
-            color: "#000",
-            textShadow: `
-              1px 0 0 #ff0000,
-              -1px 0 0 #ff0000,
-              0 1px 0 #ff0000,
-              0 -1px 0 #ff0000,
-              1px 1px 0 #ff0000,
-              -1px -1px 0 #ff0000,
-              1px -1px 0 #ff0000,
-              -1px 1px 0 #ff0000
-            `
+            left: (balls.current[ball.key]?.x !== undefined ? balls.current[ball.key].x - BALL_RADIUS : 0),
+            top: (balls.current[ball.key]?.y !== undefined ? balls.current[ball.key].y - BALL_RADIUS : 0),
+            width: BALL_SIZE,
+            height: BALL_SIZE,
+            zIndex: 10,
+            opacity: balls.current[ball.key]?.visible === false ? 0 : 1,
+            transition: "none",
+            pointerEvents: "none"
           }}
-        >
-          <div>Front Range</div>
-          <div>Pool League</div>
-        </div>
-        {BALLS.map(ball =>
-          balls.current[ball.key]?.visible !== false && (
-            <img
-              key={ball.key}
-              src={ball.src}
-              alt={ball.alt}
-              ref={ballRefs.current[ball.key]}
-              className={styles.pinBallImg}
-              style={{
-                position: "absolute",
-                left: (balls.current[ball.key]?.x !== undefined ? balls.current[ball.key].x - BALL_RADIUS : 0),
-                top: (balls.current[ball.key]?.y !== undefined ? balls.current[ball.key].y - BALL_RADIUS : 0),
-                width: BALL_SIZE,
-                height: BALL_SIZE,
-                zIndex: 10
-              }}
-            />
-          )
-        )}
-      </div>
+        />
+      )}
     </div>
   );
 }

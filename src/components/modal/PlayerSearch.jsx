@@ -6,11 +6,11 @@ import PlayerAvailabilityModal from "./PlayerAvailabilityModal";
 import MatchProposalModal from "./MatchProposalModal";
 import styles from "./PlayerSearch.module.css";
 
-// --- Google Sheet details ---
+// --- Google Sheet details (safe for public read-only use) ---
 const sheetID = "1tvMgMHsRwQxsR6lMNlSnztmwpK7fhZeNEyqjTqmRFRc";
 const pinSheetName = "BCAPL SIGNUP";
 
-// --- Utility: Normalize time string ---
+// --- Utility: Normalize time string for display ---
 function normalizeTime(str) {
   if (!str) return "";
   str = str.trim().toLowerCase().replace(/\s+/g, "");
@@ -48,6 +48,14 @@ function parseAvailability(str) {
   return result;
 }
 
+/**
+ * PlayerSearch - Modal for searching and selecting a player to propose a match.
+ * @param {function} onClose - callback to close the modal
+ * @param {string} excludeName - player name to exclude from search
+ * @param {string} senderName - name of the user sending the proposal
+ * @param {string} senderEmail - email of the user sending the proposal
+ * @param {function} onProposalComplete - callback after proposal is sent
+ */
 export default function PlayerSearch({
   onClose,
   excludeName,
@@ -59,16 +67,18 @@ export default function PlayerSearch({
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const [mode, setMode] = useState("search");
+  const [mode, setMode] = useState("search"); // "search" | "availability" | "proposal"
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [proposal, setProposal] = useState(null);
 
+  // --- Load players from Google Sheet ---
   useEffect(() => {
+    let isMounted = true;
     async function loadPlayers() {
       try {
         const rows = await fetchSheetData(sheetID, `${pinSheetName}!A1:L1000`);
         if (!rows || rows.length === 0) {
-          setPlayers([]);
+          if (isMounted) setPlayers([]);
           setLoading(false);
           return;
         }
@@ -90,16 +100,18 @@ export default function PlayerSearch({
               p.lastName &&
               `${p.firstName} ${p.lastName}`.toLowerCase() !== excludeName?.toLowerCase()
           );
-        setPlayers(playerList);
+        if (isMounted) setPlayers(playerList);
       } catch (err) {
-        setPlayers([]);
+        if (isMounted) setPlayers([]);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
     loadPlayers();
+    return () => { isMounted = false; };
   }, [excludeName]);
 
+  // --- Filtered players for search ---
   const filteredPlayers =
     search.length >= 3
       ? players.filter(
@@ -109,12 +121,13 @@ export default function PlayerSearch({
         )
       : [];
 
+  // --- Modal content for each mode ---
   const modalContent = (
     <>
       {mode === "search" && (
         <div className={styles.overlay}>
           <div className={styles.overlayBackground} onClick={onClose} />
-          <div className={styles.modal}>
+          <div className={styles.modal} role="dialog" aria-modal="true" aria-label="Player Search">
             <div className={styles.playerSearchModal}>
               <button
                 className={styles.playerSearchClose}
@@ -137,6 +150,7 @@ export default function PlayerSearch({
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 autoFocus
+                aria-label="Search for player"
               />
               {loading ? (
                 <p>Loading players...</p>
@@ -161,6 +175,7 @@ export default function PlayerSearch({
                               setSelectedPlayer(p);
                               setMode("availability");
                             }}
+                            type="button"
                           >
                             <Highlight text={`${p.firstName} ${p.lastName}`} query={search} />
                           </button>
@@ -205,5 +220,6 @@ export default function PlayerSearch({
     </>
   );
 
+  // --- Render modal via portal ---
   return ReactDOM.createPortal(modalContent, document.body);
 }

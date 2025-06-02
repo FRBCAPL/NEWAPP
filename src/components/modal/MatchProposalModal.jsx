@@ -16,6 +16,16 @@ function formatDateMMDDYYYY(date) {
   return `${month}-${day}-${year}`;
 }
 
+/**
+ * MatchProposalModal - Modal for proposing a match to an opponent.
+ * @param {object} player - Opponent player object
+ * @param {string} day - Day short name ("Mon", "Tue", etc.)
+ * @param {string} slot - Time block string
+ * @param {function} onClose - Close modal callback
+ * @param {string} senderName - Name of the sender
+ * @param {string} senderEmail - Email of the sender
+ * @param {function} onProposalComplete - Callback after proposal is sent
+ */
 export default function MatchProposalModal({
   player,
   day,
@@ -80,9 +90,7 @@ export default function MatchProposalModal({
     };
 
     sendProposalEmail(proposalData)
-      .then(async () => {
-        setShowConfirmation(true);
-      })
+      .then(() => setShowConfirmation(true))
       .catch(() => {
         alert("Failed to send proposal email.");
       });
@@ -100,17 +108,29 @@ export default function MatchProposalModal({
   // --- Render ---
   return (
     <div className={styles["match-proposal-overlay"]}>
-      <div className={styles["match-proposal-content"]} onClick={e => e.stopPropagation()}>
-        <button className={styles["match-proposal-close"]} onClick={onClose} aria-label="Close">
+      <div
+        className={styles["match-proposal-content"]}
+        onClick={e => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Propose a Match"
+      >
+        <button
+          className={styles["match-proposal-close"]}
+          onClick={onClose}
+          aria-label="Close"
+          type="button"
+        >
           &times;
         </button>
         <h2 className={styles["match-proposal-title"]}>Propose a Match</h2>
+
         <div className={styles["match-proposal-row"]}>
-          <b>To Opponent:</b>  <span className={styles.opponentName}>
-    {player.firstName} {player.lastName}
-  </span>
+          <b>To Opponent:</b>
+          <span className={styles.opponentName}>
+            {player.firstName} {player.lastName}
+          </span>
         </div>
-        {/* Centered Day row */}
         <div className={`${styles["match-proposal-row"]} ${styles["match-proposal-day-row"]}`}>
           <b className={styles["match-proposal-day-label"]}>Day:</b>
           <span className={styles["match-proposal-day-value"]}>{selectedDay}</span>
@@ -127,6 +147,7 @@ export default function MatchProposalModal({
               showPopperArrow={false}
               wrapperClassName="custom-datepicker"
               className={styles["match-proposal-date-input"]}
+              aria-label="Select match date"
             />
           </div>
         </div>
@@ -136,6 +157,7 @@ export default function MatchProposalModal({
             value={time}
             onChange={e => setTime(e.target.value)}
             className={styles["match-proposal-select"]}
+            aria-label="Select time block"
           >
             {allSlots.map((s, i) => (
               <option key={i} value={s}>
@@ -151,6 +173,7 @@ export default function MatchProposalModal({
               value={startTime}
               onChange={e => setStartTime(e.target.value)}
               className={styles["match-proposal-select"]}
+              aria-label="Select start time"
             >
               <option value="">Select...</option>
               {possibleStartTimes.map((t, i) => (
@@ -168,13 +191,14 @@ export default function MatchProposalModal({
             value={gameType}
             onChange={e => setGameType(e.target.value)}
             className={styles["match-proposal-select"]}
+            aria-label="Select game type"
           >
             <option value="8 Ball">8 Ball</option>
             <option value="9 Ball">9 Ball</option>
             <option value="10 Ball">10 Ball</option>
             <option value="One Pocket">One Pocket</option>
-             <option value="Mixed">Mixed ~ Any combination 8/9/10</option>
-                    </select>
+            <option value="Mixed">Mixed ~ Any combination 8/9/10</option>
+          </select>
         </div>
 
         <div className={styles["match-proposal-row"]}>
@@ -183,16 +207,16 @@ export default function MatchProposalModal({
             value={raceLength}
             onChange={e => setRaceLength(Number(e.target.value))}
             className={styles["match-proposal-select"]}
+            aria-label="Select race length"
           >
             {[...Array(13)].map((_, i) => {
-  const value = i + 3;
-  return (
-    <option key={value} value={value}>
-      {value}
-    </option>
-  );
-})}
-
+              const value = i + 3;
+              return (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              );
+            })}
           </select>
         </div>
 
@@ -202,6 +226,7 @@ export default function MatchProposalModal({
             value={location}
             onChange={e => setLocation(e.target.value)}
             className={`${styles["match-proposal-select"]} ${styles["match-proposal-location-select"]}`}
+            aria-label="Select location"
           >
             <option value="">Select...</option>
             {locationOptions.map((loc, idx) => (
@@ -217,6 +242,7 @@ export default function MatchProposalModal({
             placeholder="Write a message to your opponent…"
             rows={3}
             className={styles["match-proposal-textarea"]}
+            aria-label="Message to opponent"
           />
         </div>
 
@@ -224,6 +250,7 @@ export default function MatchProposalModal({
           disabled={!startTime || !location}
           onClick={handleSend}
           className={styles["match-proposal-send-btn"]}
+          type="button"
         >
           Send Proposal
         </button>

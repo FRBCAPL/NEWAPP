@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { HashRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 
-// Import main pages/components
+// Main pages/components
 import ConfirmMatch from "./components/ConfirmMatch";
 import Dashboard from "./components/dashboard/Dashboard";
 import MatchChat from "./components/chat/MatchChat";
@@ -11,13 +11,13 @@ import AdminDashboard from "./components/dashboard/AdminDashboard";
 import PinLogin from "./components/modal/PinLogin";
 import PlayerSearch from "./components/modal/PlayerSearch";
 
-import "./styles/chat-theme.css";
+import "./styles/global.css";
 
 // --- MainApp must be a component, not a function inside App ---
 function MainApp({
   isAuthenticated,
-  userFirstName,     // <-- NEW
-  userLastName,      // <-- NEW
+  userFirstName,
+  userLastName,
   userEmail,
   userPin,
   showPlayerSearch,
@@ -29,6 +29,7 @@ function MainApp({
 }) {
   const navigate = useNavigate();
 
+  // Optionally auto-show player search if flagged in localStorage
   useEffect(() => {
     if (localStorage.getItem("showPlayerSearch") === "true") {
       handleScheduleMatch();
@@ -44,8 +45,8 @@ function MainApp({
       ) : (
         <>
           <Dashboard
-            playerName={userFirstName}      // <-- Pass first name
-            playerLastName={userLastName}   // <-- Pass last name
+            playerName={userFirstName}
+            playerLastName={userLastName}
             onScheduleMatch={handleScheduleMatch}
             onOpenChat={() => (window.location.hash = "#/chat")}
             onLogout={handleLogout}
@@ -68,7 +69,7 @@ function MainApp({
 }
 
 function App() {
-  // --- Split first and last name into separate state ---
+  // --- State ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userFirstName, setUserFirstName] = useState("");
   const [userLastName, setUserLastName] = useState("");
@@ -76,7 +77,7 @@ function App() {
   const [userEmail, setUserEmail] = useState("");
   const [userPin, setUserPin] = useState("");
 
-  // --- Load from localStorage on mount ---
+  // --- Load auth/user info from localStorage on mount ---
   useEffect(() => {
     const savedAuth = localStorage.getItem("isAuthenticated");
     if (savedAuth === "true") {
@@ -88,14 +89,14 @@ function App() {
     }
   }, []);
 
-  // --- Handle login success: split name and store both parts ---
+  // --- Login handler ---
   const handleLoginSuccess = (name, email, pin) => {
     let firstName = "";
     let lastName = "";
     if (name) {
       const parts = name.trim().split(" ");
       firstName = parts[0];
-      lastName = parts.slice(1).join(" "); // Handles middle names too
+      lastName = parts.slice(1).join(" ");
     }
     setUserFirstName(firstName);
     setUserLastName(lastName);
@@ -110,6 +111,7 @@ function App() {
     localStorage.setItem("isAuthenticated", "true");
   };
 
+  // --- Logout handler ---
   const handleLogout = () => {
     setUserFirstName("");
     setUserLastName("");
@@ -117,9 +119,15 @@ function App() {
     setUserPin("");
     setIsAuthenticated(false);
     setShowPlayerSearch(false);
-    localStorage.clear();
+    // Only remove your app's keys, not all localStorage:
+    localStorage.removeItem("userFirstName");
+    localStorage.removeItem("userLastName");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userPin");
+    localStorage.removeItem("isAuthenticated");
   };
 
+  // --- Modal handlers ---
   const handleScheduleMatch = () => setShowPlayerSearch(true);
   const handlePlayerSelected = (player) => {
     setShowPlayerSearch(false);
@@ -127,6 +135,7 @@ function App() {
   };
   const handleClosePlayerSearch = () => setShowPlayerSearch(false);
 
+  // --- Main Router ---
   return (
     <HashRouter>
       <Routes>
@@ -156,6 +165,24 @@ function App() {
           }
         />
         <Route
+          path="/dashboard"
+          element={
+            isAuthenticated ? (
+              <Dashboard
+                playerName={userFirstName}
+                playerLastName={userLastName}
+                onScheduleMatch={handleScheduleMatch}
+                onOpenChat={() => (window.location.hash = "#/chat")}
+                onLogout={handleLogout}
+                userPin={userPin}
+                onGoToAdmin={() => { /* This won't work here, use MainApp for navigation */ }}
+              />
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
+        <Route
           path="/"
           element={
             <MainApp
@@ -173,28 +200,8 @@ function App() {
             />
           }
         />
-        {/* Catch-all route to redirect unknown paths to root */}
+        {/* Catch-all route */}
         <Route path="*" element={<Navigate to="/" />} />
- <Route
-  path="/dashboard"
-  element={
-    isAuthenticated ? (
-      <Dashboard
-        playerName={userFirstName}
-        playerLastName={userLastName}
-        onScheduleMatch={handleScheduleMatch}
-        onOpenChat={() => (window.location.hash = "#/chat")}
-        onLogout={handleLogout}
-        userPin={userPin}
-        onGoToAdmin={() => navigate("/admin")}
-      />
-    ) : (
-      <Navigate to="/" />
-    )
-  }
-/>
-
-
       </Routes>
     </HashRouter>
   );

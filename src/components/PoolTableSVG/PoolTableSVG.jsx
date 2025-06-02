@@ -1,6 +1,5 @@
 import React from "react";
 
-// Sizing now matches the first file!
 const WIDTH = 520;
 const HEIGHT = 260;
 const RAIL = 28;
@@ -12,13 +11,12 @@ const PLAYFIELD_Y = RAIL + FELT_CUSHION;
 const PLAYFIELD_WIDTH = WIDTH - 2 * (RAIL + FELT_CUSHION);
 const PLAYFIELD_HEIGHT = HEIGHT - 2 * (RAIL + FELT_CUSHION);
 
-// Pocket specs (pixels)
 const CORNER_MOUTH = 44;
 const SIDE_MOUTH = 54;
-const CORNER_JAW_DEPTH = 26; // how far the notch cuts in at the corner
-const SIDE_JAW_DEPTH = 18;   // how far the notch cuts in at the sides
+const CORNER_JAW_DEPTH = 26;
+const SIDE_JAW_DEPTH = 18;
 
-export default function PoolTableSVG() {
+export default function PoolTableSVG(props) {
   const x = PLAYFIELD_X;
   const y = PLAYFIELD_Y;
   const w = PLAYFIELD_WIDTH;
@@ -26,7 +24,6 @@ export default function PoolTableSVG() {
   const cM = CORNER_MOUTH / 2;
   const sM = SIDE_MOUTH / 2;
 
-  // Path for the playfield with notched pockets (corner and side)
   function playingSurfacePath() {
     return `
       M ${x + cM} ${y}
@@ -52,10 +49,11 @@ export default function PoolTableSVG() {
 
   return (
     <svg
-      width={WIDTH}
-      height={HEIGHT}
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-      style={{ display: "block", borderRadius: "20px", background: "#222" }}
+      // width and height omitted; parent controls size!
+      style={{ display: "block", borderRadius: "20px", background: "#222", width: "100%", height: "100%" }}
+      preserveAspectRatio="xMidYMid meet"
+      {...props}
     >
       {/* Outer rail */}
       <rect
