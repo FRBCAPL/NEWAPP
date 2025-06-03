@@ -51,10 +51,20 @@ export default function PinLogin({ onSuccess }) {
 
   // ---- YOUR RETURN MUST BE INSIDE THE FUNCTION BODY ----
   return (
-    <div className={styles.pinLoginBg}>
- 
-      <div className={styles.pinLoginFrame}>
-        <div style={{ width: "100%", maxWidth: 600, height: 300, margin: "0 auto 2rem auto", padding: 16 }}>
+  <div className={styles.pinLoginBg}>
+    <div className={styles.pinLoginFrame}>
+      {/* --- Sign Up Button --- */}
+      <a
+        href="https://frusapl.com/frbcapl-singles#3a534cc1-c4ac-4c04-8d7a-a0fe9ddfaca4"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={styles.signupBtn}
+        style={{ marginBottom: "1.5rem" }}
+      >
+        Sign Up for Beta Test
+      </a>
+      {/* --- Simulation --- */}
+     <div className={styles.simulationContainer}>
   <ResponsiveWrapper aspectWidth={600} aspectHeight={300}>
     <PoolSimulation />
   </ResponsiveWrapper>

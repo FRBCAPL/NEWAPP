@@ -19,19 +19,19 @@
 }
 
 .pinLoginFrame {
+  display: flex;           /* <-- Add this line! */
+  flex-direction: column;  /* Stack children vertically */
+  align-items: center;     /* Center horizontally */
+  justify-content: center; /* Center vertically if you want */
   background: #000;
   padding: 6px;
   border-radius: 16px;
-   flex-direction: column;  /* Stack children vertically */
-  align-items: center;     /* Center horizontally */
-  justify-content: center; /* Center vertically if you want */
   width: 100%;
   max-width: 600px;
   box-sizing: border-box;
   margin: auto;
-  flex-direction: column;
-  align-items: center;
 }
+
 
 .pinLoginCard {
   width: 100%;
@@ -60,20 +60,28 @@
 }
 
 .simulationContainer {
-  width: 100vw;
-  max-width: 98vw;
-  aspect-ratio: 2 / 1;
-  margin: 0 auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  aspect-ratio: 2 / 1;         /* 600:300 aspect ratio, supported in modern browsers */
+  margin: 0 auto 2rem auto;
+  display: block;
+  background: #000;            /* Optional: fallback background */
   box-sizing: border-box;
-  background: transparent;
 }
 
-.simulationPadding {
-  padding: 20px; /* or whatever value you want */
+.simulationContainer img,
+.simulationContainer svg,
+.simulationContainer table {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  display: block;
 }
+
+
+
+
 
 
 .tableImg {
@@ -164,6 +172,30 @@
   cursor: not-allowed;
   box-shadow: none;
 }
+.signupBtn {
+  display: block; /* instead of inline-block */
+  background: #e53935;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.1rem;
+  padding: .7em 3em;
+  border: none;
+  border-radius: 20px;
+  text-decoration: none;
+  text-align: center;
+  transition: background 0.18s, color 0.18s;
+  box-shadow: 0 2px 8px #e5393530;
+  margin: 0 auto 2.5rem auto; /* top, right, bottom, left */
+  cursor: pointer;
+}
+
+.signupBtn:hover,
+.signupBtn:focus {
+  background: #04f02b;
+  color: #fcf9f9;
+  outline: none;
+  border: 2px solid #e53935;
+}
 
 /* ========== Error Message ========== */
 .pinLoginError {
@@ -233,5 +265,11 @@
     width: 100%;
     max-width: 99vw;
     min-width: 0;
+  }
+}
+@media (max-width: 700px) {
+  .simulationContainer {
+    padding-left: 8px;
+    padding-right: 8px;
   }
 }

@@ -82,17 +82,24 @@ export default function PlayerSearch({
           setLoading(false);
           return;
         }
-        const playerList = rows
-          .slice(1)
-          .map(row => ({
-            firstName: row[0] || "",
-            lastName: row[1] || "",
-            email: row[2] || "",
-            phone: row[3] || "",
-            locations: row[8] || "",
-            availability: parseAvailability(row[7] || ""),
-            pin: row[11] || "",
-          }))
+       const playerList = rows
+  .slice(1)
+  .map(row => ({
+    firstName: row[0] || "",
+    lastName: row[1] || "",
+    email: row[2] || "",
+    phone: row[3] || "",
+    locations: row[8] || "",
+    availability: parseAvailability(row[7] || ""),
+    pin: row[11] || "",
+    // ADD THIS LINE:
+    preferredContacts: (row[10] || "")
+      .split(/\r?\n/) // Split on both Windows and Unix newlines
+
+      .map(method => method.trim().toLowerCase())
+      .filter(Boolean),
+  }))
+
           .filter(
             p =>
               p.email &&

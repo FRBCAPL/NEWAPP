@@ -112,7 +112,14 @@
 .playerModalSectionValue {
   color: #ddd;
   font-style: italic;
+  text-align: center;         /* Center text */
+  display: flex;              /* Center inline elements if any */
+  justify-content: center;    /* Center content horizontally */
+  align-items: center;        /* Center vertically if multi-line */
+  flex-wrap: wrap;            /* Allow wrapping if many locations */
 }
+
+
 
 /* ========== Locations Separator ========== */
 .locationSeparator {
@@ -292,4 +299,9 @@
     padding: 1em 1.2em;
     font-size: 1.1rem;
   }
+}
+.contactSpacer {
+  color: #fa0202;
+  font-weight: bold;
+  margin: 0 0.25em;
 }

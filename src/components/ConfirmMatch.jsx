@@ -27,7 +27,9 @@ export default function ConfirmMatch() {
   const gameType = searchParams.get('gameType');
   const raceLength = searchParams.get('raceLength');
 
+
   const handleConfirm = () => {
+    console.log("CONFIRM BUTTON CLICKED");
     const confirmationMessage = `Hi ${from},
 
 Your match is CONFIRMED for ${day}, ${date} at ${time} (${location}).
@@ -64,12 +66,29 @@ Good luck and have fun!`;
       raceLength: raceLength || "",
     };
 
-    sendConfirmationEmail(params)
-      .then(() => setShowModal(true))
-      .catch((err) => {
-        alert("Failed to send confirmation email.");
-        console.error(err);
-      });
+sendConfirmationEmail(params);
+
+fetch('https://newapp-xyen.onrender.com/api/matches', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    opponent: from,
+    player: to,
+    day,
+    date,
+    time,
+    location,
+    gameType,
+    raceLength
+  })
+})
+.then(() => setShowModal(true))
+.catch(err => {
+  alert("Failed to save match to server.");
+  console.error(err);
+});
+
+
   };
 
   return (
