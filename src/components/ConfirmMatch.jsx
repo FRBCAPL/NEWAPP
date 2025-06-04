@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import ConfirmationModal from "./modal/ConfirmationModal"; // <-- FIXED
+import ConfirmationModal from "./modal/ConfirmationModal";
 import { sendConfirmationEmail } from '../utils/emailHelpers';
 import BilliardBall from "./BilliardBall";
-
 import styles from "./ConfirmMatch.module.css";
-// import MatchProposalModal from "./MatchProposalModal"; // <-- REMOVE THIS LINE
 import Highlight from "./Highlight";
 
-
+// --- Add this helper function ---
+function to24Hour(time12h) {
+  if (!time12h) return "";
+  const [time, modifier] = time12h.split(' ');
+  let [hours, minutes] = time.split(':');
+  if (hours === '12') hours = '00';
+  if (modifier === 'PM' && hours !== '00') hours = String(parseInt(hours, 10) + 12);
+  return `${hours.padStart(2, '0')}:${minutes}`;
+}
 
 export default function ConfirmMatch() {
   const [searchParams] = useSearchParams();
@@ -26,7 +32,6 @@ export default function ConfirmMatch() {
   const proposalNote = searchParams.get('note');
   const gameType = searchParams.get('gameType');
   const raceLength = searchParams.get('raceLength');
-
 
   const handleConfirm = () => {
     console.log("CONFIRM BUTTON CLICKED");
@@ -66,29 +71,28 @@ Good luck and have fun!`;
       raceLength: raceLength || "",
     };
 
-sendConfirmationEmail(params);
+    sendConfirmationEmail(params);
 
-fetch('https://atlasbackend-bnng.onrender.com/api/matches', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    opponent: from,
-    player: to,
-    day,
-    date,
-    time,
-    location,
-    gameType,
-    raceLength
-  })
-})
-.then(() => setShowModal(true))
-.catch(err => {
-  alert("Failed to save match to server.");
-  console.error(err);
-});
-
-
+    // --- Use to24Hour(time) here! ---
+    fetch('https://atlasbackend-bnng.onrender.com/api/matches', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        opponent: from ? from.trim() : "",
+        player: to ? to.trim() : "",
+        day,
+        date, // should be YYYY-MM-DD
+        time: to24Hour(time), // <--- convert to 24-hour format!
+        location,
+        gameType,
+        raceLength
+      })
+    })
+      .then(() => setShowModal(true))
+      .catch(err => {
+        alert("Failed to save match to server.");
+        console.error(err);
+      });
   };
 
   return (

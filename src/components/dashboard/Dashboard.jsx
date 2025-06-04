@@ -5,7 +5,6 @@ import ResponsiveWrapper from "../ResponsiveWrapper";
 import StandingsModal from "./StandingsModal.jsx";
 
 const STANDINGS_URL = 'https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=75a741e3-5647-41e3-97e5-b2cc00a55489';
-// Use Vite env variable at the top level
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
 export default function Dashboard({
@@ -22,12 +21,25 @@ export default function Dashboard({
   const [upcomingMatches, setUpcomingMatches] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Debug: log props
+  useEffect(() => {
+    console.log("Dashboard props:", { playerName, playerLastName });
+  }, [playerName, playerLastName]);
+
   // Helper: get a JS Date from match date and time strings
   function getMatchDateTime(match) {
     if (match.date && match.time) {
-      return new Date(`${match.date}T${match.time}`);
+      // Parse MM-DD-YYYY to YYYY-MM-DD for Date constructor
+      const [month, day, year] = match.date.split("-");
+      const isoDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+      let time = match.time;
+      if (time && /^\d{4}$/.test(time)) {
+        // Convert "1730" to "17:30"
+        time = time.slice(0, 2) + ":" + time.slice(2);
+      }
+      return new Date(`${isoDate}T${time}`);
     }
-    return new Date(match.date || 0);
+    return new Date(0);
   }
 
   // Combine first and last name for full DB query
@@ -40,7 +52,9 @@ export default function Dashboard({
     fetch(`${BACKEND_URL}/api/matches?player=${encodeURIComponent(fullName)}`)
       .then(res => res.json())
       .then(matches => {
-        // Remove matches whose date/time has passed (extra safety)
+        console.log("Matches received from backend:", matches);
+
+        // Filter out matches whose date/time has passed
         const now = new Date();
         const filtered = matches.filter(match => {
           const matchDate = getMatchDateTime(match);
@@ -75,27 +89,48 @@ export default function Dashboard({
               <div>Loading...</div>
             ) : (
               <ul className={styles.dashboardList}>
+                {/* Debug: Show raw data */}
+                {/* <pre>{JSON.stringify(upcomingMatches, null, 2)}</pre> */}
                 {upcomingMatches.length === 0 ? (
                   <li>No matches scheduled yet.</li>
                 ) : (
-                  upcomingMatches.map((match, idx) => (
-                    <li key={match._id || idx}>
-                      <strong>Opponent:</strong> {match.opponent}<br />
-                      <strong>Date:</strong> {match.day}, {match.date}<br />
-                      <strong>Time:</strong> {match.time}<br />
-                      <strong>Location:</strong> {match.location}<br />
-                      {match.gameType && (
-                        <>
-                          <strong>Game Type:</strong> {match.gameType}<br />
-                        </>
-                      )}
-                      {match.raceLength && (
-                        <>
-                          <strong>Race to:</strong> {match.raceLength}<br />
-                        </>
-                      )}
-                    </li>
-                  ))
+                  upcomingMatches.map((match, idx) => {
+                    // Determine who the opponent is
+                    const opponent =
+                      match.player === fullName
+                        ? match.opponent
+                        : match.player;
+                    // Show role
+                    const role =
+                      match.player === fullName
+                        ? "(You are the player)"
+                        : "(You are the opponent)";
+                    // Format time if needed
+                    let displayTime = match.time;
+                    if (displayTime && /^\d{4}$/.test(displayTime)) {
+                      displayTime =
+                        displayTime.slice(0, 2) + ":" + displayTime.slice(2);
+                    }
+                    return (
+                      <li key={match._id || idx}>
+                        <strong>Opponent:</strong> {opponent}<br />
+                        <strong>Date:</strong> {match.day}, {match.date}<br />
+                        <strong>Time:</strong> {displayTime}<br />
+                        <strong>Location:</strong> {match.location}<br />
+                        {match.gameType && (
+                          <>
+                            <strong>Game Type:</strong> {match.gameType}<br />
+                          </>
+                        )}
+                        {match.raceLength && (
+                          <>
+                            <strong>Race to:</strong> {match.raceLength}<br />
+                          </>
+                        )}
+                        <em>{role}</em>
+                      </li>
+                    );
+                  })
                 )}
               </ul>
             )}
