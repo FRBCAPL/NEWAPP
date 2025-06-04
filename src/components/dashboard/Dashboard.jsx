@@ -32,7 +32,9 @@ export default function Dashboard({
   useEffect(() => {
     if (!playerName) return;
     setLoading(true);
-    fetch(`http://localhost:8080/api/matches?player=${encodeURIComponent(playerName)}`)
+    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8080";
+fetch(`${BACKEND_URL}/api/matches?player=${encodeURIComponent(playerName)}`)
+
       .then(res => res.json())
       .then(matches => {
         // Remove matches whose date/time has passed (extra safety)

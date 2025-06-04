@@ -16,15 +16,31 @@ function formatDateMMDDYYYY(date) {
   return `${month}-${day}-${year}`;
 }
 
+// Normalize time strings like "12pm", "12:00pm", "12:00 pm", "12PM", etc. to "12:00 PM"
+function normalizeTimeString(time) {
+  // Remove extra spaces, make lowercase for matching
+  let t = time.trim().replace(/\s+/g, '').toLowerCase();
+  // Match "12pm", "12:00pm", "1am", "1:30pm", etc.
+  const match = t.match(/^(\d{1,2})(:\d{2})?(am|pm)$/);
+  if (match) {
+    const h = match[1];
+    const m = match[2] ? match[2] : ":00";
+    const ap = match[3].toUpperCase();
+    return `${h}${m} ${ap}`;
+  }
+  // Try to match "12:00 pm" (with space)
+  const spaced = time.trim().match(/^(\d{1,2})(:\d{2})?\s?(am|pm)$/i);
+  if (spaced) {
+    const h = spaced[1];
+    const m = spaced[2] ? spaced[2] : ":00";
+    const ap = spaced[3].toUpperCase();
+    return `${h}${m} ${ap}`;
+  }
+  return time.trim();
+}
+
 /**
  * MatchProposalModal - Modal for proposing a match to an opponent.
- * @param {object} player - Opponent player object
- * @param {string} day - Day short name ("Mon", "Tue", etc.)
- * @param {string} slot - Time block string
- * @param {function} onClose - Close modal callback
- * @param {string} senderName - Name of the sender
- * @param {string} senderEmail - Email of the sender
- * @param {function} onProposalComplete - Callback after proposal is sent
  */
 export default function MatchProposalModal({
   player,
@@ -57,9 +73,10 @@ export default function MatchProposalModal({
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const selectedDay = dayNames[date.getDay()];
 
+  // Normalize both start and end times before generating start times
   const possibleStartTimes = useMemo(() => {
     if (!time || !time.includes("-")) return [];
-    const [blockStart, blockEnd] = time.split(" - ").map(s => s.trim());
+    let [blockStart, blockEnd] = time.split(" - ").map(s => normalizeTimeString(s.trim()));
     if (!blockStart || !blockEnd) return [];
     return generateStartTimes(blockStart, blockEnd, 30);
   }, [time]);

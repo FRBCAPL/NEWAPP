@@ -68,7 +68,7 @@ Good luck and have fun!`;
 
 sendConfirmationEmail(params);
 
-fetch('https://newapp-xyen.onrender.com/api/matches', {
+fetch('https://atlasbackend-bnng.onrender.com/api/matches', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
