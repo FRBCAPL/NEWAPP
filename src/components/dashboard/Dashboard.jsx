@@ -30,11 +30,14 @@ export default function Dashboard({
     return new Date(match.date || 0);
   }
 
-  // Fetch matches from backend on mount and when playerName changes
+  // Combine first and last name for full DB query
+  const fullName = `${playerName} ${playerLastName}`.trim();
+
+  // Fetch matches from backend on mount and when playerName or playerLastName changes
   useEffect(() => {
     if (!playerName) return;
     setLoading(true);
-    fetch(`${BACKEND_URL}/api/matches?player=${encodeURIComponent(playerName)}`)
+    fetch(`${BACKEND_URL}/api/matches?player=${encodeURIComponent(fullName)}`)
       .then(res => res.json())
       .then(matches => {
         // Remove matches whose date/time has passed (extra safety)
@@ -52,7 +55,7 @@ export default function Dashboard({
         setUpcomingMatches([]);
         setLoading(false);
       });
-  }, [playerName]);
+  }, [playerName, playerLastName]); // Add both as dependencies
 
   return (
     <div className={styles.dashboardBg}>
