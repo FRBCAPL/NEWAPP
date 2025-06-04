@@ -5,6 +5,8 @@ import ResponsiveWrapper from "../ResponsiveWrapper";
 import StandingsModal from "./StandingsModal.jsx";
 
 const STANDINGS_URL = 'https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=75a741e3-5647-41e3-97e5-b2cc00a55489';
+// Use Vite env variable at the top level
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
 export default function Dashboard({
   playerName,
@@ -32,9 +34,7 @@ export default function Dashboard({
   useEffect(() => {
     if (!playerName) return;
     setLoading(true);
-    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8080";
-fetch(`${BACKEND_URL}/api/matches?player=${encodeURIComponent(playerName)}`)
-
+    fetch(`${BACKEND_URL}/api/matches?player=${encodeURIComponent(playerName)}`)
       .then(res => res.json())
       .then(matches => {
         // Remove matches whose date/time has passed (extra safety)
