@@ -3,6 +3,7 @@ import styles from './dashboard.module.css';
 import PoolSimulation from "../PoolSimulation.jsx";
 import ResponsiveWrapper from "../ResponsiveWrapper";
 import StandingsModal from "./StandingsModal.jsx";
+import MatchDetailsModal from "../modal/MatchDetailsModal.jsx"; // Make sure this path is correct
 
 const STANDINGS_URL = 'https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=75a741e3-5647-41e3-97e5-b2cc00a55489';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
@@ -21,10 +22,18 @@ export default function Dashboard({
   const [upcomingMatches, setUpcomingMatches] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Debug: log props
-  useEffect(() => {
-    console.log("Dashboard props:", { playerName, playerLastName });
-  }, [playerName, playerLastName]);
+  // Modal state for match details
+  const [selectedMatch, setSelectedMatch] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  function openModal(match) {
+    setSelectedMatch(match);
+    setModalOpen(true);
+  }
+  function closeModal() {
+    setModalOpen(false);
+    setSelectedMatch(null);
+  }
 
   // Helper: get a JS Date from match date and time strings
   function getMatchDateTime(match) {
@@ -52,8 +61,6 @@ export default function Dashboard({
     fetch(`${BACKEND_URL}/api/matches?player=${encodeURIComponent(fullName)}`)
       .then(res => res.json())
       .then(matches => {
-        console.log("Matches received from backend:", matches);
-
         // Filter out matches whose date/time has passed
         const now = new Date();
         const filtered = matches.filter(match => {
@@ -84,55 +91,55 @@ export default function Dashboard({
 
           {/* Upcoming Matches Section */}
           <section className={`${styles.dashboardSection} ${styles.dashboardSectionBox}`}>
-            <h2 className={styles.dashboardSectionTitle}>Upcoming Matches</h2>
+  <h2 className={styles.dashboardSectionTitle}>Upcoming Scheduled Matches</h2>
+  <div className={styles.dashboardHelperText}>
+    Click For Match Details
+  </div>
             {loading ? (
               <div>Loading...</div>
             ) : (
-              <ul className={styles.dashboardList}>
-                {/* Debug: Show raw data */}
-                {/* <pre>{JSON.stringify(upcomingMatches, null, 2)}</pre> */}
-                {upcomingMatches.length === 0 ? (
-                  <li>No matches scheduled yet.</li>
-                ) : (
-                  upcomingMatches.map((match, idx) => {
-                    // Determine who the opponent is
-                    const opponent =
-                      match.player === fullName
-                        ? match.opponent
-                        : match.player;
-                    // Show role
-                    const role =
-                      match.player === fullName
-                        ? "(You are the player)"
-                        : "(You are the opponent)";
-                    // Format time if needed
-                    let displayTime = match.time;
-                    if (displayTime && /^\d{4}$/.test(displayTime)) {
-                      displayTime =
-                        displayTime.slice(0, 2) + ":" + displayTime.slice(2);
-                    }
-                    return (
-                      <li key={match._id || idx}>
-                        <strong>Opponent:</strong> {opponent}<br />
-                        <strong>Date:</strong> {match.day}, {match.date}<br />
-                        <strong>Time:</strong> {displayTime}<br />
-                        <strong>Location:</strong> {match.location}<br />
-                        {match.gameType && (
-                          <>
-                            <strong>Game Type:</strong> {match.gameType}<br />
-                          </>
-                        )}
-                        {match.raceLength && (
-                          <>
-                            <strong>Race to:</strong> {match.raceLength}<br />
-                          </>
-                        )}
-                        <em>{role}</em>
-                      </li>
-                    );
-                  })
-                )}
-              </ul>
+           <ul className={styles.dashboardList}>
+  {upcomingMatches.length === 0 ? (
+    <li>No matches scheduled yet.</li>
+  ) : (
+    upcomingMatches.map((match, idx) => {
+      const opponent =
+        match.player === fullName ? match.opponent : match.player;
+
+      // Format date
+      let formattedDate = "";
+      if (match.date) {
+        const [month, day, year] = match.date.split("-");
+        const dateObj = new Date(`${year}-${month}-${day}`);
+        formattedDate = dateObj.toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+      }
+
+      return (
+  <li key={match._id || idx} className={styles.matchCard}>
+  <button
+    className={styles.matchCardButton}
+    onClick={() => openModal(match)}
+    type="button"
+  >
+    <span className={styles.matchCardOpponentLabel}>Opponent:</span>
+    <span className={styles.matchCardOpponentName}>{opponent}</span>
+    <span className={styles.matchCardDetail}>{formattedDate}</span>
+    <span className={styles.matchCardDetail}>{match.location}</span>
+  </button>
+</li>
+
+
+
+      );
+    })
+  )}
+</ul>
+
+
             )}
           </section>
 
@@ -203,6 +210,8 @@ export default function Dashboard({
         onClose={() => setShowStandings(false)}
         standingsUrl={STANDINGS_URL}
       />
+      {/* Match Details Modal */}
+      <MatchDetailsModal open={modalOpen} onClose={closeModal} match={selectedMatch} />
     </div>
   );
 }
