@@ -161,6 +161,7 @@ export default function MatchProposalModal({
     senderName: senderName,
     receiverName: `${player.firstName} ${player.lastName}`,
     date: date.toISOString().slice(0, 10),
+     time: startTime, 
     location,
     message: proposalMessage,
     gameType,

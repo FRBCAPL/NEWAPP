@@ -1,75 +1,86 @@
-import React from "react";
+import styles from './dashboard.module.css';
 
-export default function ProposalListModal({ proposals, onSelect, onClose }) {
+function formatDateMMDDYYYY(dateStr) {
+  if (!dateStr) return "";
+  const [year, month, day] = dateStr.split(/[-/]/);
+  return `${month}/${day}/${year}`;
+}
+
+function formatTimeHHMM(timeStr) {
+  if (!timeStr) return "—";
+  // Handles "HH:mm", "HHmm", or even "H:mm"
+  let h = 0, m = 0;
+  if (timeStr.includes(":")) {
+    [h, m] = timeStr.split(":").map(Number);
+  } else if (timeStr.length === 4) {
+    h = Number(timeStr.slice(0,2));
+    m = Number(timeStr.slice(2));
+  } else if (timeStr.length === 3) {
+    h = Number(timeStr.slice(0,1));
+    m = Number(timeStr.slice(1));
+  } else {
+    return timeStr; // fallback
+  }
+  if (isNaN(h) || isNaN(m)) return timeStr;
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  return `${hour12}:${m.toString().padStart(2,"0")} ${ampm}`;
+}
+
+function ProposalListModal({ proposals, onSelect, onClose }) {
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.45)",
-        zIndex: 9999,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center"
-      }}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Pending Match Proposals"
-    >
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: 10,
-          maxWidth: 420,
-          width: "90%",
-          padding: "2rem",
-          boxShadow: "0 6px 32px #0004",
-          position: "relative"
-        }}
-      >
-        <h2 style={{ marginTop: 0 }}>Pending Match Proposals</h2>
+    <div className={styles.modalOverlay} style={{
+      zIndex: 9999,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }}>
+      <div className={styles.proposalModalContent}>
         <button
           onClick={onClose}
-          style={{
-            position: "absolute",
-            top: 12,
-            right: 16,
-            background: "none",
-            border: "none",
-            fontSize: 22,
-            color: "#888",
-            cursor: "pointer"
-          }}
           aria-label="Close proposals list"
+          type="button"
+          className={styles.proposalModalCloseBtn}
         >
           ×
         </button>
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {proposals.map(proposal => (
-            <li key={proposal._id} style={{ marginBottom: "1rem" }}>
-              <button
-                onClick={() => onSelect(proposal)}
-                style={{
-                  width: "100%",
-                  textAlign: "left",
-                  background: "#f8f9fa",
-                  border: "1px solid #eee",
-                  borderRadius: 6,
-                  padding: "1rem",
-                  cursor: "pointer",
-                  fontSize: "1rem",
-                  transition: "background 0.2s"
-                }}
-              >
-                <div><b>From:</b> {proposal.sender}</div>
-                <div><b>Date:</b> {proposal.date} <b>Time:</b> {proposal.time}</div>
-                <div><b>Location:</b> {proposal.location}</div>
-              </button>
-            </li>
-          ))}
-        </ul>
-        {proposals.length === 0 && <div>No pending proposals.</div>}
+        <h2 className={styles.proposalModalTitle}>Pending Match Proposals</h2>
+       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+  {proposals.map(proposal => {
+    console.log('proposal.time:', proposal.time); // <-- Add here
+    return (
+      <li key={proposal._id}>
+        <button
+          onClick={() => onSelect(proposal)}
+          className={styles.proposalCardButton}
+        >
+          <div>
+            <span className={styles.proposalCardLabel}>From:</span> {proposal.senderName}
+          </div>
+          <div>
+            <span className={styles.proposalCardLabel}>Date:</span> {formatDateMMDDYYYY(proposal.date)}
+            {"  "}
+            <span className={styles.proposalCardLabel}>Time:</span> {formatTimeHHMM(proposal.time)}
+          </div>
+          <div>
+            <span className={styles.proposalCardLabel}>Location:</span> {proposal.location}
+          </div>
+          <div className={styles.proposalCardMessage}>
+            {proposal.message}
+          </div>
+        </button>
+      </li>
+    );
+  })}
+</ul>
+
+        {proposals.length === 0 && (
+          <div style={{ color: "#ffecb3", textAlign: "center", marginTop: 16 }}>
+            No pending proposals.
+          </div>
+        )}
       </div>
     </div>
   );
 }
+export default ProposalListModal;

@@ -1,88 +1,17 @@
+// src/components/dashboard/Dashboard.jsx
+
 import React, { useState, useEffect } from "react";
 import styles from './dashboard.module.css';
 import PoolSimulation from "../PoolSimulation.jsx";
 import ResponsiveWrapper from "../ResponsiveWrapper";
 import StandingsModal from "./StandingsModal.jsx";
 import MatchDetailsModal from "../modal/MatchDetailsModal.jsx";
-import ConfirmationModal from "../modal/ConfirmationModal.jsx"; // <-- Correct import path
+import ProposalListModal from './ProposalListModal';
+import ConfirmMatchDetails from '../ConfirmMatchDetails';
+import CounterProposalModal from '../modal/CounterProposalModal';
 
 const STANDINGS_URL = 'https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=75a741e3-5647-41e3-97e5-b2cc00a55489';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
-
-// --- ProposalListModal Component ---
-function ProposalListModal({ proposals, onSelect, onClose }) {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.45)",
-        zIndex: 9999,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center"
-      }}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Pending Match Proposals"
-    >
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: 10,
-          maxWidth: 420,
-          width: "90%",
-          padding: "2rem",
-          boxShadow: "0 6px 32px #0004",
-          position: "relative"
-        }}
-      >
-        <h2 style={{ marginTop: 0 }}>Pending Match Proposals</h2>
-        <button
-          onClick={onClose}
-          style={{
-            position: "absolute",
-            top: 12,
-            right: 16,
-            background: "none",
-            border: "none",
-            fontSize: 22,
-            color: "#888",
-            cursor: "pointer"
-          }}
-          aria-label="Close proposals list"
-        >
-          ×
-        </button>
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {proposals.map(proposal => (
-            <li key={proposal._id} style={{ marginBottom: "1rem" }}>
-              <button
-                onClick={() => onSelect(proposal)}
-                style={{
-                  width: "100%",
-                  textAlign: "left",
-                  background: "#f8f9fa",
-                  border: "1px solid #eee",
-                  borderRadius: 6,
-                  padding: "1rem",
-                  cursor: "pointer",
-                  fontSize: "1rem",
-                  transition: "background 0.2s"
-                }}
-              >
-                <div><b>From:</b> {proposal.sender}</div>
-                <div><b>Date:</b> {proposal.date} <b>Time:</b> {proposal.time}</div>
-                <div><b>Location:</b> {proposal.location}</div>
-              </button>
-            </li>
-          ))}
-        </ul>
-        {proposals.length === 0 && <div>No pending proposals.</div>}
-      </div>
-    </div>
-  );
-}
 
 export default function Dashboard({
   playerName,
@@ -102,6 +31,11 @@ export default function Dashboard({
   const [pendingProposals, setPendingProposals] = useState([]);
   const [showProposalListModal, setShowProposalListModal] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState(null);
+  const [proposalNote, setProposalNote] = useState(""); // For modal note
+
+  // Counter-Proposal modal state
+  const [showCounterModal, setShowCounterModal] = useState(false);
+  const [counterProposal, setCounterProposal] = useState(null);
 
   // Notes state for shared notes (from backend)
   const [notes, setNotes] = useState([]);
@@ -113,6 +47,9 @@ export default function Dashboard({
   // Modal state for match details
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Show all matches toggle
+  const [showAllMatches, setShowAllMatches] = useState(false);
 
   function openModal(match) {
     setSelectedMatch(match);
@@ -183,7 +120,7 @@ export default function Dashboard({
     const fullName = `${playerName} ${playerLastName}`.trim();
     fetch(`${BACKEND_URL}/api/proposals/by-name?receiverName=${encodeURIComponent(fullName)}`)
       .then(res => res.json())
-      .then(data => setPendingProposals(data.filter(p => p.status === "pending")))
+      .then(data => setPendingProposals(data.filter(p => ["pending", "countered"].includes(p.status))))
       .catch(() => setPendingProposals([]));
   }, [playerName, playerLastName]);
 
@@ -230,18 +167,35 @@ export default function Dashboard({
     setNotes([]);
   };
 
-  // Confirm/decline proposal
-  function handleProposalResponse(proposalId, status) {
+  // Confirm/decline proposal (add note param if needed)
+  function handleProposalResponse(proposalId, status, note = "") {
     fetch(`${BACKEND_URL}/api/proposals/${proposalId}/status`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, note }),
     })
       .then(() => {
         setPendingProposals(prev => prev.filter(p => p._id !== proposalId));
         setSelectedProposal(null);
+        setProposalNote("");
       })
       .catch(console.error);
+  }
+
+  // Handle counter-proposal submission
+  async function handleCounterProposal(counterData) {
+    if (!counterProposal) return;
+    await fetch(`${BACKEND_URL}/api/proposals/${counterProposal._id}/counter`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...counterData,
+        from: fullName // or playerName
+      })
+    });
+    setShowCounterModal(false);
+    setCounterProposal(null);
+    // Optionally, refresh proposals here!
   }
 
   return (
@@ -264,7 +218,7 @@ export default function Dashboard({
               style={{
                 background: "#f0ad4e",
                 color: "#222",
-                border: "none",
+                border: "2.0px solid red",
                 borderRadius: "6px",
                 padding: "0.75rem 1.5rem",
                 fontWeight: "bold",
@@ -278,7 +232,7 @@ export default function Dashboard({
             </button>
           )}
 
-          {/* Upcoming Matches Section */}
+          {/* Upcoming Matches Section (show 2, expand to all) */}
           <section className={`${styles.dashboardSection} ${styles.dashboardSectionBox}`}>
             <h2 className={styles.dashboardSectionTitle}>Upcoming Scheduled Matches</h2>
             <div className={styles.dashboardHelperText}>
@@ -287,43 +241,56 @@ export default function Dashboard({
             {loading ? (
               <div>Loading...</div>
             ) : (
-              <ul className={styles.dashboardList}>
-                {upcomingMatches.length === 0 ? (
-                  <li>No matches scheduled yet.</li>
-                ) : (
-                  upcomingMatches.map((match, idx) => {
-                    const opponent =
-                      match.player === fullName ? match.opponent : match.player;
+              <>
+                <ul className={styles.dashboardList}>
+                  {(showAllMatches ? upcomingMatches : upcomingMatches.slice(0, 2)).length === 0 ? (
+                    <li>No matches scheduled yet.</li>
+                  ) : (
+                    (showAllMatches ? upcomingMatches : upcomingMatches.slice(0, 2)).map((match, idx) => {
+                      const opponent =
+                        match.player === fullName ? match.opponent : match.player;
 
-                    // Format date
-                    let formattedDate = "";
-                    if (match.date) {
-                      const [month, day, year] = match.date.split("-");
-                      const dateObj = new Date(`${year}-${month}-${day}`);
-                      formattedDate = dateObj.toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      });
-                    }
+                      // Format date
+                      let formattedDate = "";
+                      if (match.date) {
+                        const [month, day, year] = match.date.split("-");
+                        const dateObj = new Date(`${year}-${month}-${day}`);
+                        formattedDate = dateObj.toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        });
+                      }
 
-                    return (
-                      <li key={match._id || idx} className={styles.matchCard}>
-                        <button
-                          className={styles.matchCardButton}
-                          onClick={() => openModal(match)}
-                          type="button"
-                        >
-                          <span className={styles.matchCardOpponentLabel}>VS:</span>
-                          <span className={styles.matchCardOpponentName}>{opponent}</span>
-                          <span className={styles.matchCardDetail}>{formattedDate}</span>
-                          <span className={styles.matchCardDetail}>{match.location}</span>
-                        </button>
-                      </li>
-                    );
-                  })
+                      return (
+                        <li key={match._id || idx} className={styles.matchCard}>
+                          <button
+                            className={styles.matchCardButton}
+                            onClick={() => openModal(match)}
+                            type="button"
+                          >
+                            <span className={styles.matchCardOpponentLabel}>VS:</span>
+                            <span className={styles.matchCardOpponentName}>{opponent}</span>
+                            <span className={styles.matchCardDetail}>{formattedDate}</span>
+                            <span className={styles.matchCardDetail}>{match.location}</span>
+                          </button>
+                        </li>
+                      );
+                    })
+                  )}
+                </ul>
+                {upcomingMatches.length > 2 && (
+                  <button
+                    className={styles.smallShowMoreBtn}
+                    onClick={() => setShowAllMatches(v => !v)}
+                    type="button"
+                  >
+                    {showAllMatches
+                      ? "Show Less"
+                      : `Show ${upcomingMatches.length - 2} More`}
+                  </button>
                 )}
-              </ul>
+              </>
             )}
           </section>
 
@@ -369,40 +336,39 @@ export default function Dashboard({
             {loadingNotes ? (
               <div>Loading notes...</div>
             ) : (
-             <ul className={styles.dashboardList}>
-  {notes.length === 0 ? (
-    <li className={styles.dashboardNoteItem}>No news yet.</li>
-  ) : (
-    notes.map((note, idx) => (
-      <li
-        key={note._id || idx}
-        className={styles.dashboardNoteItem}
-      >
-        <span style={{ flex: 1 }}>{note.text}</span>
-        {userPin === "777777" && (
-          <button
-            onClick={() => handleDeleteNote(note._id)}
-            style={{
-              background: "#e53935",
-              color: "#fff",
-              border: "none",
-              borderRadius: 4,
-              padding: "2px 8px",
-              cursor: "pointer",
-              fontSize: "0.95em"
-            }}
-            aria-label="Delete note"
-            title="Delete note"
-            type="button"
-          >
-            Delete
-          </button>
-        )}
-      </li>
-    ))
-  )}
-</ul>
-
+              <ul className={styles.dashboardList}>
+                {notes.length === 0 ? (
+                  <li className={styles.dashboardNoteItem}>No news yet.</li>
+                ) : (
+                  notes.map((note, idx) => (
+                    <li
+                      key={note._id || idx}
+                      className={styles.dashboardNoteItem}
+                    >
+                      <span style={{ flex: 1 }}>{note.text}</span>
+                      {userPin === "777777" && (
+                        <button
+                          onClick={() => handleDeleteNote(note._id)}
+                          style={{
+                            background: "#e53935",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: 4,
+                            padding: "2px 8px",
+                            cursor: "pointer",
+                            fontSize: "0.95em"
+                          }}
+                          aria-label="Delete note"
+                          title="Delete note"
+                          type="button"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </li>
+                  ))
+                )}
+              </ul>
             )}
             {userPin === "777777" && notes.length > 0 && (
               <button
@@ -494,6 +460,7 @@ export default function Dashboard({
           proposals={pendingProposals}
           onSelect={proposal => {
             setSelectedProposal(proposal);
+            setProposalNote(""); // clear note field
             setShowProposalListModal(false);
           }}
           onClose={() => setShowProposalListModal(false)}
@@ -502,14 +469,41 @@ export default function Dashboard({
 
       {/* Confirmation Modal for a selected proposal */}
       {selectedProposal && (
-        <ConfirmationModal
-          open={!!selectedProposal}
-          proposal={selectedProposal}
-          onConfirm={() => handleProposalResponse(selectedProposal._id, "confirmed")}
-          onDecline={() => handleProposalResponse(selectedProposal._id, "declined")}
-          onClose={() => setSelectedProposal(null)}
-        />
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent} style={{maxWidth: 420, margin: "auto"}}>
+            <ConfirmMatchDetails
+              proposal={selectedProposal}
+              userNote={proposalNote}
+              setUserNote={setProposalNote}
+              onConfirm={() => {
+                handleProposalResponse(selectedProposal._id, "confirmed", proposalNote);
+                setSelectedProposal(null);
+                setProposalNote("");
+              }}
+              onClose={() => {
+                setSelectedProposal(null);
+                setProposalNote("");
+              }}
+              onCounterPropose={() => {
+                setCounterProposal(selectedProposal);
+                setShowCounterModal(true);
+                setSelectedProposal(null);
+              }}
+            />
+          </div>
+        </div>
       )}
+
+      {/* Counter Proposal Modal */}
+      <CounterProposalModal
+        proposal={counterProposal}
+        open={showCounterModal}
+        onClose={() => {
+          setShowCounterModal(false);
+          setCounterProposal(null);
+        }}
+        onSubmit={handleCounterProposal}
+      />
 
       <StandingsModal
         open={showStandings}
