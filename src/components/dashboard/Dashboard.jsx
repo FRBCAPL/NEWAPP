@@ -177,14 +177,15 @@ export default function Dashboard({
       });
   }, []);
 
-  // Fetch proposals for this player
+  // --- FETCH PROPOSALS BY NAME (NEW) ---
   useEffect(() => {
-    if (!senderEmail) return;
-    fetch(`${BACKEND_URL}/api/proposals?receiver=${encodeURIComponent(senderEmail)}`)
+    if (!playerName || !playerLastName) return;
+    const fullName = `${playerName} ${playerLastName}`.trim();
+    fetch(`${BACKEND_URL}/api/proposals/by-name?receiverName=${encodeURIComponent(fullName)}`)
       .then(res => res.json())
       .then(data => setPendingProposals(data.filter(p => p.status === "pending")))
       .catch(() => setPendingProposals([]));
-  }, [senderEmail]);
+  }, [playerName, playerLastName]);
 
   // Add note (admin only)
   const handleAddNote = async () => {
