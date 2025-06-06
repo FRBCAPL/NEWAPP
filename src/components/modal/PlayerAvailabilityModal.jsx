@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styles from "./PlayerModal.module.css";
 
 /**
@@ -14,6 +14,47 @@ export default function PlayerAvailabilityModal({
 }) {
   const [showContact, setShowContact] = useState(false);
   const [timer, setTimer] = useState(10);
+
+  // --- Draggable logic ---
+  const [drag, setDrag] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+
+  const onMouseDown = (e) => {
+    if (e.button !== 0) return; // Only left mouse button
+    setDragging(true);
+    dragStart.current = {
+      x: e.clientX - drag.x,
+      y: e.clientY - drag.y,
+    };
+    document.body.style.userSelect = "none";
+  };
+  const onMouseMove = (e) => {
+    if (!dragging) return;
+    setDrag({
+      x: e.clientX - dragStart.current.x,
+      y: e.clientY - dragStart.current.y,
+    });
+  };
+  const onMouseUp = () => {
+    setDragging(false);
+    document.body.style.userSelect = "";
+  };
+
+  useEffect(() => {
+    if (dragging) {
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mouseup", onMouseUp);
+    } else {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [dragging]);
+  // --- End draggable logic ---
 
   useEffect(() => {
     let interval;
@@ -49,22 +90,41 @@ export default function PlayerAvailabilityModal({
     <div className={styles.modalOverlay}>
       <div
         className={styles.modalContent}
+        style={{
+          transform: `translate(${drag.x}px, ${drag.y}px)`,
+          cursor: dragging ? "grabbing" : "default",
+        }}
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label={`Availability for ${player.firstName} ${player.lastName}`}
       >
-        <button
-          className={styles.closeBtn}
-          onClick={onClose}
-          aria-label="Close"
-          type="button"
+        {/* Header as drag handle */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "grab",
+            userSelect: "none",
+            marginBottom: "1em",
+            position: "relative"
+          }}
+          onMouseDown={onMouseDown}
         >
-          &times;
-        </button>
-        <h2 className={styles.playerModalTitle}>
-          Player: <br /> {player.firstName} {player.lastName}
-        </h2>
+          <h2 className={styles.playerModalTitle} style={{ margin: 0, flex: 1 }}>
+            Player: <br /> {player.firstName} {player.lastName}
+          </h2>
+          <button
+            className={styles.closeBtn}
+            onClick={onClose}
+            aria-label="Close"
+            type="button"
+            style={{ position: "absolute", right: 0, top: 0 }}
+          >
+            &times;
+          </button>
+        </div>
 
         {/* Preferred Locations */}
         <div className={styles.playerModalSection}>
@@ -122,78 +182,77 @@ export default function PlayerAvailabilityModal({
         </div>
 
         {/* Contact Info */}
-      <div className={styles.playerModalSection}>
-  <h3 className={styles.playerModalSectionTitle}>Contact Info</h3>
-  {showContact ? (
-    <div>
-      {/* Preferred Contact Methods: only show after expanding */}
-      <div className={styles.playerModalContactPref}>
-        <b>Preferred Contact Methods:</b>{" "}
-        {Array.isArray(player.preferredContacts) && player.preferredContacts.length > 0
-          ? player.preferredContacts
-              .map((method) => capitalizeWords(method.trim()))
-              .join(" • ")
-          : "No preference specified"}
-      </div>
-      {prefers("email") && player.email && (
-        <div className={styles.playerModalContact}>
-          <b>Email:</b> {player.email}
-        </div>
-      )}
-      {(prefers("phone") || prefers("call")) && player.phone && (
-        <div className={styles.playerModalContact}>
-          <b>Phone:</b> {player.phone}
-        </div>
-      )}
-      {prefers("text") && player.text && (
-        <div className={styles.playerModalContact}>
-          <b>Text:</b> {player.text}
-        </div>
-      )}
-      {/* Fallback: If no preferredContacts or none matched, show all available */}
-      {(
-        !Array.isArray(player.preferredContacts) ||
-        player.preferredContacts.length === 0 ||
-        (
-          !prefers("email") && !prefers("phone") && !prefers("call") && !prefers("text")
-        )
-      ) && (
-        <>
-          {player.email && (
-            <div className={styles.playerModalContact}>
-              <b>Email:</b> {player.email}
+        <div className={styles.playerModalSection}>
+          <h3 className={styles.playerModalSectionTitle}>Contact Info</h3>
+          {showContact ? (
+            <div>
+              {/* Preferred Contact Methods: only show after expanding */}
+              <div className={styles.playerModalContactPref}>
+                <b>Preferred Contact Methods:</b>{" "}
+                {Array.isArray(player.preferredContacts) && player.preferredContacts.length > 0
+                  ? player.preferredContacts
+                      .map((method) => capitalizeWords(method.trim()))
+                      .join(" • ")
+                  : "No preference specified"}
+              </div>
+              {prefers("email") && player.email && (
+                <div className={styles.playerModalContact}>
+                  <b>Email:</b> {player.email}
+                </div>
+              )}
+              {(prefers("phone") || prefers("call")) && player.phone && (
+                <div className={styles.playerModalContact}>
+                  <b>Phone:</b> {player.phone}
+                </div>
+              )}
+              {prefers("text") && player.text && (
+                <div className={styles.playerModalContact}>
+                  <b>Text:</b> {player.text}
+                </div>
+              )}
+              {/* Fallback: If no preferredContacts or none matched, show all available */}
+              {(
+                !Array.isArray(player.preferredContacts) ||
+                player.preferredContacts.length === 0 ||
+                (
+                  !prefers("email") && !prefers("phone") && !prefers("call") && !prefers("text")
+                )
+              ) && (
+                <>
+                  {player.email && (
+                    <div className={styles.playerModalContact}>
+                      <b>Email:</b> {player.email}
+                    </div>
+                  )}
+                  {player.phone && (
+                    <div className={styles.playerModalContact}>
+                      <b>Phone:</b> {player.phone}
+                    </div>
+                  )}
+                  {player.text && (
+                    <div className={styles.playerModalContact}>
+                      <b>Text:</b> {player.text}
+                    </div>
+                  )}
+                  <div className={styles.playerModalContact}>
+                    No preferred contact methods specified.
+                  </div>
+                </>
+              )}
+              <div className={styles.playerModalContactTimer}>
+                Contact info will hide in {timer} seconds
+              </div>
             </div>
+          ) : (
+            <button
+              className={styles.playerModalShowContact}
+              onClick={() => setShowContact(true)}
+              type="button"
+            >
+              Show {player.firstName}&apos;s contact info
+            </button>
           )}
-          {player.phone && (
-            <div className={styles.playerModalContact}>
-              <b>Phone:</b> {player.phone}
-            </div>
-          )}
-          {player.text && (
-            <div className={styles.playerModalContact}>
-              <b>Text:</b> {player.text}
-            </div>
-          )}
-          <div className={styles.playerModalContact}>
-            No preferred contact methods specified.
-          </div>
-        </>
-      )}
-      <div className={styles.playerModalContactTimer}>
-        Contact info will hide in {timer} seconds
-      </div>
-    </div>
-  ) : (
-    <button
-      className={styles.playerModalShowContact}
-      onClick={() => setShowContact(true)}
-      type="button"
-    >
-      Show {player.firstName}&apos;s contact info
-    </button>
-  )}
-</div>
-
+        </div>
 
         {/* Navigation Buttons */}
         <div className={styles.playerModalActions}>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { generateStartTimes, getNextDayOfWeek } from "../../utils/timeHelpers";
@@ -18,9 +18,7 @@ function formatDateMMDDYYYY(date) {
 
 // Normalize time strings like "12pm", "12:00pm", "12:00 pm", "12PM", etc. to "12:00 PM"
 function normalizeTimeString(time) {
-  // Remove extra spaces, make lowercase for matching
   let t = time.trim().replace(/\s+/g, '').toLowerCase();
-  // Match "12pm", "12:00pm", "1am", "1:30pm", etc.
   const match = t.match(/^(\d{1,2})(:\d{2})?(am|pm)$/);
   if (match) {
     const h = match[1];
@@ -28,7 +26,6 @@ function normalizeTimeString(time) {
     const ap = match[3].toUpperCase();
     return `${h}${m} ${ap}`;
   }
-  // Try to match "12:00 pm" (with space)
   const spaced = time.trim().match(/^(\d{1,2})(:\d{2})?\s?(am|pm)$/i);
   if (spaced) {
     const h = spaced[1];
@@ -39,9 +36,8 @@ function normalizeTimeString(time) {
   return time.trim();
 }
 
-/**
- * MatchProposalModal - Modal for proposing a match to an opponent.
- */
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+
 export default function MatchProposalModal({
   player,
   day,
@@ -51,6 +47,49 @@ export default function MatchProposalModal({
   senderEmail,
   onProposalComplete
 }) {
+  // --- Draggable logic ---
+  const [drag, setDrag] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+
+  const onMouseDown = (e) => {
+    // Only left mouse button
+    if (e.button !== 0) return;
+    setDragging(true);
+    dragStart.current = {
+      x: e.clientX - drag.x,
+      y: e.clientY - drag.y,
+    };
+    document.body.style.userSelect = "none";
+  };
+  const onMouseMove = (e) => {
+    if (!dragging) return;
+    setDrag({
+      x: e.clientX - dragStart.current.x,
+      y: e.clientY - dragStart.current.y,
+    });
+  };
+  const onMouseUp = () => {
+    setDragging(false);
+    document.body.style.userSelect = "";
+  };
+
+  useEffect(() => {
+    if (dragging) {
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mouseup", onMouseUp);
+    } else {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+    // eslint-disable-next-line
+  }, [dragging]);
+  // --- End draggable logic ---
+
   // --- State declarations ---
   const [time, setTime] = useState(slot);
   const [startTime, setStartTime] = useState("");
@@ -73,7 +112,6 @@ export default function MatchProposalModal({
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const selectedDay = dayNames[date.getDay()];
 
-  // Normalize both start and end times before generating start times
   const possibleStartTimes = useMemo(() => {
     if (!time || !time.includes("-")) return [];
     let [blockStart, blockEnd] = time.split(" - ").map(s => normalizeTimeString(s.trim()));
@@ -106,11 +144,32 @@ export default function MatchProposalModal({
       note: proposalMessage,
     };
 
+    // 1. Send the email as before
     sendProposalEmail(proposalData)
       .then(() => setShowConfirmation(true))
       .catch(() => {
         alert("Failed to send proposal email.");
       });
+
+    // 2. ALSO save the proposal to your backend for dashboard tracking
+ fetch(`${BACKEND_URL}/api/proposals`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    sender: senderEmail,
+    receiver: player.email,
+    senderName: senderName,
+    receiverName: `${player.firstName} ${player.lastName}`,
+    date: date.toISOString().slice(0, 10),
+    location,
+    message: proposalMessage,
+    gameType,
+    raceLength,
+      }),
+    }).catch((err) => {
+      // Optionally log or alert if saving to backend fails
+      console.error("Failed to save proposal to backend:", err);
+    });
   };
 
   const handleConfirmationClose = () => {
@@ -127,21 +186,58 @@ export default function MatchProposalModal({
     <div className={styles["match-proposal-overlay"]}>
       <div
         className={styles["match-proposal-content"]}
+        style={{
+          transform: `translate(${drag.x}px, ${drag.y}px)`,
+          cursor: dragging ? "grabbing" : "default",
+          position: "relative" // Needed for absolute close button
+        }}
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label="Propose a Match"
       >
+        {/* Close button OUTSIDE header, absolutely positioned */}
         <button
           className={styles["match-proposal-close"]}
           onClick={onClose}
           aria-label="Close"
           type="button"
+          style={{
+            position: "absolute",
+            right: "1.2rem",
+            top: "1.2rem",
+            zIndex: 10,
+            fontSize: "2em",
+            background: "none",
+            border: "none",
+            color: "#fff",
+            cursor: "pointer",
+            lineHeight: 1,
+            padding: 0
+          }}
         >
           &times;
         </button>
-        <h2 className={styles["match-proposal-title"]}>Propose a Match</h2>
 
+        {/* Header as drag handle */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "grab",
+            userSelect: "none",
+            marginBottom: "1em",
+            position: "relative"
+          }}
+          onMouseDown={onMouseDown}
+        >
+          <h2 className={styles["match-proposal-title"]} style={{ margin: 0, flex: 1, textAlign: "center" }}>
+            Propose a Match -BETA
+          </h2>
+        </div>
+
+        {/* --- Modal Content --- */}
         <div className={styles["match-proposal-row"]}>
           <b>To Opponent:</b>
           <span className={styles.opponentName}>
@@ -252,7 +348,7 @@ export default function MatchProposalModal({
           </select>
         </div>
         <div className={styles["match-proposal-row"]}>
-          <b>Message to Opponent:</b>
+          <b>Message to Opponent: This is a BETA test match</b>
           <textarea
             value={message}
             onChange={e => setMessage(e.target.value)}

@@ -1,11 +1,51 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styles from "../dashboard/dashboard.module.css";
 import EightBall from '../../assets/8ball.svg';
 import NineBall from '../../assets/nineball.svg';
 import TenBall from '../../assets/tenball.svg';
 
-
 export default function MatchDetailsModal({ open, onClose, match }) {
+  // --- DRAGGABLE LOGIC ---
+  const [drag, setDrag] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+
+  const onMouseDown = (e) => {
+    setDragging(true);
+    dragStart.current = {
+      x: e.clientX - drag.x,
+      y: e.clientY - drag.y,
+    };
+    document.body.style.userSelect = "none";
+  };
+  const onMouseMove = (e) => {
+    if (!dragging) return;
+    setDrag({
+      x: e.clientX - dragStart.current.x,
+      y: e.clientY - dragStart.current.y,
+    });
+  };
+  const onMouseUp = () => {
+    setDragging(false);
+    document.body.style.userSelect = "";
+  };
+
+  useEffect(() => {
+    if (dragging) {
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mouseup", onMouseUp);
+    } else {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+    // eslint-disable-next-line
+  }, [dragging]);
+  // --- END DRAGGABLE LOGIC ---
+
   if (!open || !match) return null;
 
   // Format date/time
@@ -27,9 +67,25 @@ export default function MatchDetailsModal({ open, onClose, match }) {
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContentSnazzy} onClick={e => e.stopPropagation()}>
+      <div
+        className={styles.modalContentSnazzy}
+        style={{
+          transform: `translate(${drag.x}px, ${drag.y}px)`,
+          cursor: dragging ? "grabbing" : "default",
+        }}
+        onClick={e => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Match Details"
+        tabIndex={-1}
+      >
         <button className={styles.modalCloseBtnSnazzy} onClick={onClose} aria-label="Close">&times;</button>
-        <div className={styles.modalHeaderSnazzy}>
+        {/* Header is the drag handle */}
+        <div
+          className={styles.modalHeaderSnazzy}
+          onMouseDown={onMouseDown}
+          style={{ cursor: "grab", userSelect: "none" }}
+        >
           <span className={styles.modalAccentBar}></span>
           <h2 className={styles.modalTitleSnazzy}>🎱 Match Details</h2>
         </div>
@@ -58,14 +114,13 @@ export default function MatchDetailsModal({ open, onClose, match }) {
             <span className={styles.modalDetailLabelSnazzy}>Location:</span>
             <span className={styles.modalDetailValueSnazzy}>{match.location}</span>
           </div>
-       {match.gameType && (
-  <div className={styles.modalDetailRowSnazzy}>
-    {renderGameTypeIcon(match.gameType)}
-    <span className={styles.modalDetailLabelSnazzy}>Game Type:</span>
-    <span className={styles.modalDetailValueSnazzy}>{match.gameType}</span>
-  </div>
-)}
-
+          {match.gameType && (
+            <div className={styles.modalDetailRowSnazzy}>
+              {renderGameTypeIcon(match.gameType)}
+              <span className={styles.modalDetailLabelSnazzy}>Game Type:</span>
+              <span className={styles.modalDetailValueSnazzy}>{match.gameType}</span>
+            </div>
+          )}
           {match.raceLength && (
             <div className={styles.modalDetailRowSnazzy}>
               <span className={styles.modalDetailIcon}>🏁</span>
@@ -78,7 +133,9 @@ export default function MatchDetailsModal({ open, onClose, match }) {
     </div>
   );
 }
+
 function renderGameTypeIcon(gameType) {
+  // ...same as before...
   if (!gameType) return <span className={styles.modalDetailIcon}>🎯</span>;
   const type = gameType.trim().toLowerCase();
   if (type === "8 ball" || type === "8-ball" || type === "8ball")
