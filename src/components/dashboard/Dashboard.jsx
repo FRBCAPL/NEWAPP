@@ -227,12 +227,13 @@ export default function Dashboard({
          
 <br />
         {/* Upcoming Matches Section (show 2, expand to all) */}
+{console.log("upcomingMatches.length:", upcomingMatches.length)}
 <section
-  className={`${styles.dashboardSection} ${styles.dashboardSectionBox}`}
+  className={`${styles.dashboardSection} ${styles.dashboardSectionBox} ${styles.matchesSection}`}
   style={{
     position: "relative",
-    overflow: "hidden",
-    backgroundColor: "#000", // solid black background
+    overflow: "visible",
+    backgroundColor: "#000",
     minHeight: "320px"
   }}
 >
@@ -247,7 +248,7 @@ export default function Dashboard({
       backgroundRepeat: "no-repeat",
       backgroundPosition: "center center",
       backgroundSize: "cover",
-      opacity: 0.40, // Adjust for more/less logo visibility
+      opacity: 0.18,
       pointerEvents: "none",
       zIndex: 0
     }}
@@ -311,10 +312,14 @@ export default function Dashboard({
                 <span className={styles.matchCardDetail}>{formattedDate}</span>
                 <span className={styles.matchCardDetail}>{match.location}</span>
               </button>
+           
+           
+           
             </li>
           );
         })
-      )}
+      )} {/* Show More/Less button */}
+   
     </ul>
     {upcomingMatches.length > 2 && (
       <button
@@ -329,6 +334,7 @@ export default function Dashboard({
     )}
   </div>
 </section>
+
 
 
           {/* Actions and Simulation */}

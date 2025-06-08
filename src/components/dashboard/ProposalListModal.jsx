@@ -48,7 +48,11 @@ function ProposalListModal({ proposals, onSelect, onClose, type = "received" }) 
         <h2 className={styles.proposalModalTitle}>
           {type === "sent" ? "Matches You Proposed" : "Pending Match Proposals"}
         </h2>
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+        <ul
+  className={styles.proposalList}
+  style={{ listStyle: "none", padding: 0, margin: 0 }}
+>
+
           {proposals.map(proposal => (
             <li key={proposal._id}>
               <button
