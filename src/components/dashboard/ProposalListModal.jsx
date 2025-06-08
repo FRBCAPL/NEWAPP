@@ -27,7 +27,8 @@ function formatTimeHHMM(timeStr) {
   return `${hour12}:${m.toString().padStart(2,"0")} ${ampm}`;
 }
 
-function ProposalListModal({ proposals, onSelect, onClose }) {
+// Add type prop: "received" (default) or "sent"
+function ProposalListModal({ proposals, onSelect, onClose, type = "received" }) {
   return (
     <div className={styles.modalOverlay} style={{
       zIndex: 9999,
@@ -44,43 +45,61 @@ function ProposalListModal({ proposals, onSelect, onClose }) {
         >
           ×
         </button>
-        <h2 className={styles.proposalModalTitle}>Pending Match Proposals</h2>
-       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-  {proposals.map(proposal => {
-    console.log('proposal.time:', proposal.time); // <-- Add here
-    return (
-      <li key={proposal._id}>
-        <button
-          onClick={() => onSelect(proposal)}
-          className={styles.proposalCardButton}
-        >
-          <div>
-            <span className={styles.proposalCardLabel}>From:</span> {proposal.senderName}
-          </div>
-          <div>
-            <span className={styles.proposalCardLabel}>Date:</span> {formatDateMMDDYYYY(proposal.date)}
-            {"  "}
-            <span className={styles.proposalCardLabel}>Time:</span> {formatTimeHHMM(proposal.time)}
-          </div>
-          <div>
-            <span className={styles.proposalCardLabel}>Location:</span> {proposal.location}
-          </div>
-          <div className={styles.proposalCardMessage}>
-            {proposal.message}
-          </div>
-        </button>
-      </li>
-    );
-  })}
-</ul>
+        <h2 className={styles.proposalModalTitle}>
+          {type === "sent" ? "Matches You Proposed" : "Pending Match Proposals"}
+        </h2>
+        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+          {proposals.map(proposal => (
+            <li key={proposal._id}>
+              <button
+                onClick={() => onSelect(proposal)}
+                className={styles.proposalCardButton}
+              >
+                <div>
+                  <span className={styles.proposalCardLabel}>
+                    {type === "sent" ? "To:" : "From:"}
+                  </span>
+                  {type === "sent" ? proposal.receiverName : proposal.senderName}
+                </div>
+                <div>
+                  <span className={styles.proposalCardLabel}>Date:</span> {formatDateMMDDYYYY(proposal.date)}
+                  {"  "}
+                  <span className={styles.proposalCardLabel}>Time:</span> {formatTimeHHMM(proposal.time)}
+                </div>
+                <div>
+                  <span className={styles.proposalCardLabel}>Location:</span> {proposal.location}
+                </div>
+                <div className={styles.proposalCardMessage}>
+                  {proposal.message}
+                </div>
+                <div>
+                  <span className={styles.proposalCardLabel}>Status:</span>
+                  <span style={{
+                    color:
+                      proposal.status === "pending"
+                        ? "#d32f2f"
+                        : proposal.status === "countered"
+                        ? "#fbc02d"
+                        : "#388e3c"
+                  }}>
+                    {proposal.status}
+                  </span>
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
 
         {proposals.length === 0 && (
           <div style={{ color: "#ffecb3", textAlign: "center", marginTop: 16 }}>
-            No pending proposals.
+            {type === "sent"
+              ? "You haven't proposed any matches yet."
+              : "No pending proposals."}
           </div>
         )}
       </div>
     </div>
   );
 }
+
 export default ProposalListModal;

@@ -1,5 +1,3 @@
-// src/components/dashboard/Dashboard.jsx
-
 import React, { useState, useEffect } from "react";
 import styles from './dashboard.module.css';
 import PoolSimulation from "../PoolSimulation.jsx";
@@ -9,6 +7,9 @@ import MatchDetailsModal from "../modal/MatchDetailsModal.jsx";
 import ProposalListModal from './ProposalListModal';
 import ConfirmMatchDetails from '../ConfirmMatchDetails';
 import CounterProposalModal from '../modal/CounterProposalModal';
+import logoImg from '../../assets/logo.png';
+
+
 
 const STANDINGS_URL = 'https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=75a741e3-5647-41e3-97e5-b2cc00a55489';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
@@ -32,6 +33,10 @@ export default function Dashboard({
   const [showProposalListModal, setShowProposalListModal] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [proposalNote, setProposalNote] = useState(""); // For modal note
+
+  // Sent proposals state
+  const [sentProposals, setSentProposals] = useState([]);
+  const [showSentProposalListModal, setShowSentProposalListModal] = useState(false);
 
   // Counter-Proposal modal state
   const [showCounterModal, setShowCounterModal] = useState(false);
@@ -114,7 +119,7 @@ export default function Dashboard({
       });
   }, []);
 
-  // --- FETCH PROPOSALS BY NAME (NEW) ---
+  // --- FETCH PROPOSALS BY NAME (received proposals) ---
   useEffect(() => {
     if (!playerName || !playerLastName) return;
     const fullName = `${playerName} ${playerLastName}`.trim();
@@ -122,6 +127,16 @@ export default function Dashboard({
       .then(res => res.json())
       .then(data => setPendingProposals(data.filter(p => ["pending", "countered"].includes(p.status))))
       .catch(() => setPendingProposals([]));
+  }, [playerName, playerLastName]);
+
+  // --- FETCH PROPOSALS BY SENDER (sent proposals) ---
+  useEffect(() => {
+    if (!playerName || !playerLastName) return;
+    const fullName = `${playerName} ${playerLastName}`.trim();
+    fetch(`${BACKEND_URL}/api/proposals/by-sender?senderName=${encodeURIComponent(fullName)}`)
+      .then(res => res.json())
+      .then(data => setSentProposals(data))
+      .catch(() => setSentProposals([]));
   }, [playerName, playerLastName]);
 
   // Add note (admin only)
@@ -209,90 +224,112 @@ export default function Dashboard({
             </span>
           </h1>
 
-          {/* --- ALERT BUTTON FOR PROPOSALS --- */}
-          {pendingProposals.length > 0 && (
-            <button
-              className={styles.proposalAlertButton}
-              onClick={() => setShowProposalListModal(true)}
-              aria-label="View pending match proposals"
-              style={{
-                background: "#f0ad4e",
-                color: "#222",
-                border: "2.0px solid red",
-                borderRadius: "6px",
-                padding: "0.75rem 1.5rem",
-                fontWeight: "bold",
-                fontSize: "1.1rem",
-                cursor: "pointer",
-                margin: "1rem 0",
-                boxShadow: "0 2px 6px #0002"
-              }}
-            >
-              🎱 You have {pendingProposals.length} match proposal{pendingProposals.length > 1 ? "s" : ""} waiting!
-            </button>
-          )}
+         
+<br />
+        {/* Upcoming Matches Section (show 2, expand to all) */}
+<section
+  className={`${styles.dashboardSection} ${styles.dashboardSectionBox}`}
+  style={{
+    position: "relative",
+    overflow: "hidden",
+    backgroundColor: "#000", // solid black background
+    minHeight: "320px"
+  }}
+>
+  {/* Logo as a background layer */}
+  <div
+    style={{
+      position: "absolute",
+      inset: 0,
+      width: "100%",
+      height: "100%",
+      backgroundImage: `url(${logoImg})`,
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "center center",
+      backgroundSize: "cover",
+      opacity: 0.40, // Adjust for more/less logo visibility
+      pointerEvents: "none",
+      zIndex: 0
+    }}
+  />
+  {/* Content layer */}
+  <div style={{ position: "relative", zIndex: 1 }}>
+    {/* Proposal Alert Buttons Row */}
+    <div className={styles.proposalAlertRow}>
+      {pendingProposals.length > 0 && (
+        <button
+          className={styles.proposalAlertButton}
+          onClick={() => setShowProposalListModal(true)}
+          aria-label="View pending match proposals"
+        >
+          📥  {pendingProposals.length} proposals waiting for you
+        </button>
+      )}
+      {sentProposals.length > 0 && (
+        <button
+          className={styles.proposalAlertButton}
+          onClick={() => setShowSentProposalListModal(true)}
+          aria-label="View matches you have proposed"
+        >
+          📤 {sentProposals.length} proposals waiting for opponent
+        </button>
+      )}
+    </div>
+    <h2 className={styles.dashboardSectionTitle}>Upcoming Scheduled Matches</h2>
+    <div className={styles.dashboardHelperText}>
+      Click Match For Details
+    </div>
+    <ul className={styles.dashboardList}>
+      {(showAllMatches ? upcomingMatches : upcomingMatches.slice(0, 2)).length === 0 ? (
+        <li>No matches scheduled yet.</li>
+      ) : (
+        (showAllMatches ? upcomingMatches : upcomingMatches.slice(0, 2)).map((match, idx) => {
+          const opponent =
+            match.player === fullName ? match.opponent : match.player;
 
-          {/* Upcoming Matches Section (show 2, expand to all) */}
-          <section className={`${styles.dashboardSection} ${styles.dashboardSectionBox}`}>
-            <h2 className={styles.dashboardSectionTitle}>Upcoming Scheduled Matches</h2>
-            <div className={styles.dashboardHelperText}>
-              Click Match For Details
-            </div>
-            {loading ? (
-              <div>Loading...</div>
-            ) : (
-              <>
-                <ul className={styles.dashboardList}>
-                  {(showAllMatches ? upcomingMatches : upcomingMatches.slice(0, 2)).length === 0 ? (
-                    <li>No matches scheduled yet.</li>
-                  ) : (
-                    (showAllMatches ? upcomingMatches : upcomingMatches.slice(0, 2)).map((match, idx) => {
-                      const opponent =
-                        match.player === fullName ? match.opponent : match.player;
+          // Format date
+          let formattedDate = "";
+          if (match.date) {
+            const [month, day, year] = match.date.split("-");
+            const dateObj = new Date(`${year}-${month}-${day}`);
+            formattedDate = dateObj.toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            });
+          }
 
-                      // Format date
-                      let formattedDate = "";
-                      if (match.date) {
-                        const [month, day, year] = match.date.split("-");
-                        const dateObj = new Date(`${year}-${month}-${day}`);
-                        formattedDate = dateObj.toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        });
-                      }
+          return (
+            <li key={match._id || idx} className={styles.matchCard}>
+              <button
+                className={styles.matchCardButton}
+                onClick={() => openModal(match)}
+                type="button"
+              >
+                <span className={styles.matchCardOpponentLabel}>VS:</span>
+                <span className={styles.matchCardOpponentName}>{opponent}</span>
+                <span className={styles.matchCardDetail}>{formattedDate}</span>
+                <span className={styles.matchCardDetail}>{match.location}</span>
+              </button>
+            </li>
+          );
+        })
+      )}
+    </ul>
+    {upcomingMatches.length > 2 && (
+      <button
+        className={styles.smallShowMoreBtn}
+        onClick={() => setShowAllMatches(v => !v)}
+        type="button"
+      >
+        {showAllMatches
+          ? "Show Less"
+          : `Show ${upcomingMatches.length - 2} More`}
+      </button>
+    )}
+  </div>
+</section>
 
-                      return (
-                        <li key={match._id || idx} className={styles.matchCard}>
-                          <button
-                            className={styles.matchCardButton}
-                            onClick={() => openModal(match)}
-                            type="button"
-                          >
-                            <span className={styles.matchCardOpponentLabel}>VS:</span>
-                            <span className={styles.matchCardOpponentName}>{opponent}</span>
-                            <span className={styles.matchCardDetail}>{formattedDate}</span>
-                            <span className={styles.matchCardDetail}>{match.location}</span>
-                          </button>
-                        </li>
-                      );
-                    })
-                  )}
-                </ul>
-                {upcomingMatches.length > 2 && (
-                  <button
-                    className={styles.smallShowMoreBtn}
-                    onClick={() => setShowAllMatches(v => !v)}
-                    type="button"
-                  >
-                    {showAllMatches
-                      ? "Show Less"
-                      : `Show ${upcomingMatches.length - 2} More`}
-                  </button>
-                )}
-              </>
-            )}
-          </section>
 
           {/* Actions and Simulation */}
           <div className={styles.dashboardActions}>
@@ -454,7 +491,7 @@ export default function Dashboard({
         </div>
       )}
 
-      {/* Proposals List Modal */}
+      {/* Proposals List Modal (received) */}
       {showProposalListModal && (
         <ProposalListModal
           proposals={pendingProposals}
@@ -464,6 +501,21 @@ export default function Dashboard({
             setShowProposalListModal(false);
           }}
           onClose={() => setShowProposalListModal(false)}
+          type="received"
+        />
+      )}
+
+      {/* Proposals List Modal (sent) */}
+      {showSentProposalListModal && (
+        <ProposalListModal
+          proposals={sentProposals}
+          onSelect={proposal => {
+            setSelectedProposal(proposal);
+            setProposalNote("");
+            setShowSentProposalListModal(false);
+          }}
+          onClose={() => setShowSentProposalListModal(false)}
+          type="sent"
         />
       )}
 

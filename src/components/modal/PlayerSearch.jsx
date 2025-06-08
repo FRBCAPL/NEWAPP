@@ -208,22 +208,24 @@ export default function PlayerSearch({
         />
       )}
 
-      {mode === "proposal" && proposal && (
-        <MatchProposalModal
-          player={proposal.player}
-          day={proposal.day}
-          slot={proposal.slot}
-          onClose={onClose}
-          senderName={senderName}
-          senderEmail={senderEmail}
-          onProposalComplete={() => {
-            setMode("search");
-            setProposal(null);
-            setSelectedPlayer(null);
-            if (onProposalComplete) onProposalComplete();
-          }}
-        />
-      )}
+    {mode === "proposal" && proposal && (
+  <MatchProposalModal
+    player={proposal.player}
+    day={proposal.day}
+    slot={proposal.slot}
+    onClose={onClose}
+    senderName={senderName}
+    senderEmail={senderEmail}
+    onProposalComplete={() => {
+      setMode("search");
+      setProposal(null);
+      setSelectedPlayer(null);
+      if (onProposalComplete) onProposalComplete();
+      onClose();  // <-- Close search modal here
+    }}
+  />
+)}
+
     </>
   );
 
