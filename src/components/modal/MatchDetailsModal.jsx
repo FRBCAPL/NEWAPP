@@ -4,6 +4,7 @@ import EightBall from '../../assets/8ball.svg';
 import NineBall from '../../assets/nineball.svg';
 import TenBall from '../../assets/tenball.svg';
 
+
 export default function MatchDetailsModal({ open, onClose, match }) {
   // --- DRAGGABLE LOGIC ---
   const [drag, setDrag] = useState({ x: 0, y: 0 });

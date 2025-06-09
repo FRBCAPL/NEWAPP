@@ -11,7 +11,7 @@ import logoImg from '../../assets/logo.png';
 
 
 
-const STANDINGS_URL = 'https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=75a741e3-5647-41e3-97e5-b2cc00a55489';
+const STANDINGS_URL = 'https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=b345a437-3415-4765-b19a-b2f7014f2cfa';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
 export default function Dashboard({
@@ -246,8 +246,8 @@ export default function Dashboard({
       height: "100%",
       backgroundImage: `url(${logoImg})`,
       backgroundRepeat: "no-repeat",
-      backgroundPosition: "center center",
-      backgroundSize: "cover",
+      backgroundPosition: "center 0%", // Move logo up (smaller % = higher)
+      backgroundSize: "500px",
       opacity: 0.18,
       pointerEvents: "none",
       zIndex: 0
@@ -279,7 +279,7 @@ export default function Dashboard({
     <h2 className={styles.dashboardSectionTitle}>Upcoming Scheduled Matches</h2>
     <div className={styles.dashboardHelperText}>
       Click Match For Details
-    </div>
+    </div><br /><br />
     <ul className={styles.dashboardList}>
       {(showAllMatches ? upcomingMatches : upcomingMatches.slice(0, 2)).length === 0 ? (
         <li>No matches scheduled yet.</li>

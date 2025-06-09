@@ -149,7 +149,7 @@
   border-radius: 10px;
   border: 1.5px solid var(--accent-red);
   color: #fff;
-  padding: 0.8rem 1.2rem;
+  padding: 0.8rem .8rem;
   margin-bottom: 1rem;
   min-height: 48px;
   box-shadow: 0 2px 8px #b91c1c22;
@@ -950,17 +950,19 @@
 }
 
 .proposalAlertButton {
+   padding-top: 0em; 
   background: #f0ad4e;
   color: #222;
   border: 2px solid #d32f2f;
   border-radius: 5px;
-  padding: 0.4em 1em;
-  font-size: 1rem;
+  padding: 0.5em .5em;   /* Increase for a larger button */
+  font-size: .9rem;    /* Increase for bigger text */
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 1px 4px #0001;
   transition: background 0.15s, border-color 0.15s;
-  min-width: 90px;
+  min-width: 120px;     /* Increase for a wider button */
+  min-height: 10px;     /* Add or increase for more height */
 }
 
 .proposalAlertButton:last-child {

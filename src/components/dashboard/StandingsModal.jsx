@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import FocusTrap from "focus-trap-react";
-import styles from "./dashboard.module.css";
+import styles from '../../styles/Modal.module.css';
 
 export default function StandingsModal({ open, onClose, standingsUrl }) {
   // Spinner state
