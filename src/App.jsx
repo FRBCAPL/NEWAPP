@@ -6,6 +6,8 @@ import ConfirmMatch from "./components/ConfirmMatch";
 import Dashboard from "./components/dashboard/Dashboard";
 import MatchChat from "./components/chat/MatchChat";
 import AdminDashboard from "./components/dashboard/AdminDashboard";
+import './styles/variables.css';
+
 
 // Modal components
 import PinLogin from "./components/modal/PinLogin";

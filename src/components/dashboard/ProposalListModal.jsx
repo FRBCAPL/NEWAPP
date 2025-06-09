@@ -1,4 +1,5 @@
-import styles from './dashboard.module.css';
+import styles from './ProposalListModal.module.css';
+
 
 function formatDateMMDDYYYY(dateStr) {
   if (!dateStr) return "";

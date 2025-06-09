@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import styles from "../dashboard/dashboard.module.css";
+import styles from './MatchDetailsModal.module.css';
+
 import EightBall from '../../assets/8ball.svg';
 import NineBall from '../../assets/nineball.svg';
 import TenBall from '../../assets/tenball.svg';
