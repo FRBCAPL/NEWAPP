@@ -64,18 +64,25 @@ export default function Dashboard({
   }
 
   // Helper: get a JS Date from match date and time strings
-  function getMatchDateTime(match) {
-    if (match.date && match.time) {
-      const [month, day, year] = match.date.split("-");
-      const isoDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-      let time = match.time;
-      if (time && /^\d{4}$/.test(time)) {
-        time = time.slice(0, 2) + ":" + time.slice(2);
-      }
-      return new Date(`${isoDate}T${time}`);
-    }
-    return new Date(0);
+ function getMatchDateTime(match) {
+  if (match.date && match.time) {
+    // Parse date as YYYY-MM-DD
+    const [year, month, day] = match.date.split("-");
+    const isoDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    // Parse time as "h:mm AM/PM"
+    let timeStr = match.time.trim().toUpperCase();
+    let [timePart, ampm] = timeStr.split(' ');
+    let [hour, minute] = timePart.split(':').map(Number);
+    if (ampm === "PM" && hour < 12) hour += 12;
+    if (ampm === "AM" && hour === 12) hour = 0;
+    const hourStr = hour.toString().padStart(2, '0');
+    const minuteStr = (minute || 0).toString().padStart(2, '0');
+    const time24 = `${hourStr}:${minuteStr}`;
+    return new Date(`${isoDate}T${time24}:00`);
   }
+  return new Date(0);
+}
+
 
   // Combine first and last name for full DB query, trimmed
   const fullName = `${playerName} ${playerLastName}`.trim();
@@ -311,8 +318,10 @@ export default function Dashboard({
                     // Format date
                     let formattedDate = "";
                     if (match.date) {
-                      const [month, day, year] = match.date.split("-");
-                      const dateObj = new Date(`${year}-${month}-${day}`);
+                     // CORRECT:
+const [year, month, day] = match.date.split("-");
+const dateObj = new Date(`${year}-${month}-${day}`);
+
                       formattedDate = dateObj.toLocaleDateString(undefined, {
                         month: "short",
                         day: "numeric",
