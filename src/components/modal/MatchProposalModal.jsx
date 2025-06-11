@@ -6,6 +6,11 @@ import ConfirmationModal from "./ConfirmationModal";
 import { sendProposalEmail } from "../../utils/emailHelpers";
 import styles from "./MatchProposalModal.module.css";
 
+// --- ADD: Stream Chat import and constants ---
+import { StreamChat } from "stream-chat";
+const streamApiKey = import.meta.env.VITE_STREAM_API_KEY;
+const adminUserId = "frbcaplgmailcom"; // your admin Stream user id
+
 // Utility: Format date as MM-DD-YYYY
 function formatDateMMDDYYYY(date) {
   if (!date) return "";
@@ -37,6 +42,58 @@ function normalizeTimeString(time) {
 }
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+
+// --- ADD: Utility to sanitize user IDs for Stream Chat ---
+function toStreamUserId(email) {
+  return email.replace(/[^a-zA-Z0-9]/g, "");
+}
+
+// --- ADD: Function to create the channel ---
+async function createMatchChannel({ senderEmail, senderName, receiverEmail, receiverName, matchName }) {
+  try {
+    const client = StreamChat.getInstance(streamApiKey);
+
+    // Get token for the sender (from your backend)
+    const res = await fetch(`${BACKEND_URL}/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: toStreamUserId(senderEmail) }),
+    });
+    const { token } = await res.json();
+    if (!token) throw new Error("Could not get chat token");
+
+    // Connect the sender if not already connected
+    if (!client.userID) {
+      await client.connectUser(
+        { id: toStreamUserId(senderEmail), name: senderName },
+        token
+      );
+    }
+
+    // REMOVE DUPLICATES FROM MEMBERS
+    const members = Array.from(new Set([
+      toStreamUserId(senderEmail),
+      toStreamUserId(receiverEmail),
+      adminUserId
+    ]));
+
+    // Create the channel with both players and the admin as members
+    const channel = client.channel('messaging', {
+      members,
+      name: matchName,
+    });
+
+    await channel.create();
+
+    // Optionally, send a welcome message
+    await channel.sendMessage({
+      text: `Chat created for your match proposal!`
+    });
+  } catch (err) {
+    console.error("Failed to create chat channel:", err);
+    alert("Failed to create chat channel: " + err.message);
+  }
+}
 
 export default function MatchProposalModal({
   player,
@@ -152,35 +209,44 @@ export default function MatchProposalModal({
       });
 
     // 2. ALSO save the proposal to your backend for dashboard tracking
-fetch(`${BACKEND_URL}/api/proposals`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    sender: senderEmail,
-    receiver: player.email,
-    senderName: senderName,
-    receiverName: `${player.firstName} ${player.lastName}`,
-    date: date.toISOString().slice(0, 10),
-    time: startTime, 
-    location,
-    message: proposalMessage,
-    gameType,
-    raceLength,
-  }),
-})
-.then(res => res.json().then(data => {
-  if (!res.ok) {
-    console.error("Backend returned error:", data);
-    alert(data.error || "Failed to save proposal to backend.");
-  } else {
-    console.log("Proposal saved!", data);
-  }
-}))
-.catch((err) => {
-  console.error("Failed to save proposal to backend:", err);
-  alert("Failed to save proposal to backend.");
-});
+    fetch(`${BACKEND_URL}/api/proposals`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sender: senderEmail,
+        receiver: player.email,
+        senderName: senderName,
+        receiverName: `${player.firstName} ${player.lastName}`,
+        date: date.toISOString().slice(0, 10),
+        time: startTime,
+        location,
+        message: proposalMessage,
+        gameType,
+        raceLength,
+      }),
+    })
+    // --- EDIT: Add channel creation after successful proposal ---
+    .then(res => res.json().then(async data => {
+      if (!res.ok) {
+        console.error("Backend returned error:", data);
+        alert(data.error || "Failed to save proposal to backend.");
+      } else {
+        console.log("Proposal saved!", data);
 
+        // Create Stream Chat channel for both players and admin
+        await createMatchChannel({
+          senderEmail: senderEmail,
+          senderName: senderName,
+          receiverEmail: player.email,
+          receiverName: `${player.firstName} ${player.lastName}`,
+          matchName: `Match: ${senderName} vs ${player.firstName} ${player.lastName}`
+        });
+      }
+    }))
+    .catch((err) => {
+      console.error("Failed to save proposal to backend:", err);
+      alert("Failed to save proposal to backend.");
+    });
   };
 
   const handleConfirmationClose = () => {

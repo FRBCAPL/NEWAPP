@@ -154,3 +154,116 @@
   pointer-events: none;
   opacity: 0.98;
 }
+.adminBadge {
+  background: #b80000;
+  color: #fff;
+  border-radius: 4px;
+  padding: 0 6px;
+  margin-left: 8px;
+  font-size: 0.85em;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.adminDeleteMessageBtn {
+  background: #e53e3e;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.18em 0.6em;
+  margin-left: 0.5em;
+  cursor: pointer;
+  font-size: 0.95em;
+  transition: background 0.15s;
+}
+.adminDeleteMessageBtn:hover {
+  background: #b80000;
+}
+.adminBadge {
+  background: #b80000;
+  color: #fff;
+  border-radius: 4px;
+  padding: 0 6px;
+  margin-left: 8px;
+  font-size: 0.85em;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.adminDeleteMessageBtn,
+.adminEditMessageBtn,
+.adminPinMessageBtn,
+.adminMuteBtn,
+.adminBanBtn {
+  background: #e53e3e;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.18em 0.6em;
+  margin-left: 0.5em;
+  cursor: pointer;
+  font-size: 0.95em;
+  transition: background 0.15s;
+}
+.adminDeleteMessageBtn:hover,
+.adminEditMessageBtn:hover,
+.adminPinMessageBtn:hover,
+.adminMuteBtn:hover,
+.adminBanBtn:hover {
+  background: #b80000;
+}
+
+.adminControls {
+  margin-top: 8px;
+}
+
+.adminUserInfo {
+  position: absolute;
+  left: 50px;
+  top: 0;
+  background: #fff;
+  color: #222;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px #0002;
+  padding: 0.5em 1em;
+  z-index: 99;
+  font-size: 0.95em;
+  min-width: 180px;
+}
+
+.adminEditInput {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.2em 0.5em;
+  margin-right: 0.5em;
+  font-size: 1em;
+}
+
+.adminAnnouncementForm {
+  display: flex;
+  align-items: center;
+  margin: 1em 0;
+  background: #ffeaea;
+  padding: 0.5em 1em;
+  border-radius: 8px;
+}
+.adminAnnouncementInput {
+  flex: 1;
+  border: 1px solid #b80000;
+  border-radius: 4px;
+  padding: 0.4em 0.7em;
+  margin-right: 0.5em;
+  font-size: 1em;
+}
+.adminAnnouncementBtn {
+  background: #b80000;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.3em 1em;
+  font-weight: bold;
+  cursor: pointer;
+}
+.adminAnnouncementBtn:hover {
+  background: #e53e3e;
+}

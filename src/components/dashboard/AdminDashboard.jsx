@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { StreamChat } from "stream-chat";
 import { useNavigate } from "react-router-dom";
+import styles from './AdminDashboard.module.css';
 
 const apiKey = import.meta.env.VITE_STREAM_API_KEY;
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://newapp-xyen.onrender.com";
@@ -94,44 +95,49 @@ export default function AdminDashboard() {
   if (!chatClient) return <div>Loading admin chat client...</div>;
 
   return (
-    <div className="admin-dashboard-root">
-      <h2>Admin Dashboard</h2>
-      <div className="admin-dashboard-nav">
+    <div className={styles.adminDashboardRoot}>
+      <div className={styles.adminDashboardNav}>
         <button onClick={() => { navigate("/"); window.location.reload(); }}>
-          Go to User Dashboard
+          🏠 User Dashboard
         </button>
         <button onClick={() => navigate("/chat")}>
-          Back to Chat
+          💬 Back to Chat
         </button>
         <button onClick={() => { localStorage.clear(); navigate("/"); window.location.reload(); }}>
-          Logout
+          🚪 Logout
         </button>
       </div>
-      <div className="admin-dashboard-content">
+      <div className={styles.adminDashboardContent}>
         {/* Channel List */}
-        <div className="admin-channel-list">
+        <div className={styles.adminChannelList}>
           <h3>Channels</h3>
-          <ul>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {channels.map((ch) => (
               <li
                 key={ch.id}
                 className={
-                  "admin-channel-list-item" +
-                  (selectedChannel?.id === ch.id ? " selected" : "")
+                  styles.adminChannelListItem +
+                  (selectedChannel?.id === ch.id ? ` ${styles.selected}` : "")
                 }
               >
                 <button
-                  className="admin-delete-channel-btn"
+                  className={styles.adminDeleteChannelBtn}
                   onClick={async (e) => {
                     e.stopPropagation();
                     await handleDeleteChannel(ch);
                   }}
+                  title="Delete Channel"
                 >
-                  Delete
+                  🗑
                 </button>
                 <span
-                  className="admin-channel-name"
+                  className={styles.adminChannelName}
                   onClick={() => setSelectedChannel(ch)}
+                  tabIndex={0}
+                  style={{ outline: "none" }}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") setSelectedChannel(ch);
+                  }}
                 >
                   {ch.data.name || ch.id}
                 </span>
@@ -140,7 +146,7 @@ export default function AdminDashboard() {
           </ul>
         </div>
         {/* Messages */}
-        <div className="admin-channel-messages">
+        <div className={styles.adminChannelMessages}>
           <h3>
             {selectedChannel
               ? `Messages in "${selectedChannel.data.name || selectedChannel.id}"`
@@ -148,15 +154,16 @@ export default function AdminDashboard() {
           </h3>
           {loading && <div>Loading messages...</div>}
           {!loading && selectedChannel && (
-            <ul>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
               {messages.map((msg) => (
-                <li key={msg.id} className="admin-message-item">
+                <li key={msg.id} className={styles.adminMessageItem}>
                   <b>{msg.user?.name || msg.user?.id}:</b> {msg.text}
                   <button
-                    className="admin-delete-message-btn"
+                    className={styles.adminDeleteMessageBtn}
                     onClick={() => handleDeleteMessage(msg.id)}
+                    title="Delete Message"
                   >
-                    Delete
+                    🗑
                   </button>
                 </li>
               ))}

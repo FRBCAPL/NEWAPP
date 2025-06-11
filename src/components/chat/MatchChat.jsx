@@ -16,6 +16,7 @@ import PlayerSearch from "../modal/PlayerSearch";
 import CustomChannelHeader from "../CustomChannelHeader";
 import CustomMessageUi from "../CustomMessageUi";
 import PoolSimulation from "../PoolSimulation";
+import AdminAnnouncementInput from "../AdminAnnouncementInput"; // <-- ADD THIS LINE
 
 import styles from "./MatchChat.module.css";
 
@@ -316,13 +317,14 @@ export default function MatchChat({ userName, userEmail, userPin, channelId }) {
 
             <div className={styles.mainChatWindow}>
               <Channel channel={channel} Message={CustomMessageUi}>
-                
-  <Window>
-    {/* --- Pool simulation as background --- */}
-    <div className={styles.messageListBackground} aria-hidden="true">
-      <PoolSimulation />
-    </div>
+                <Window>
+                  {/* --- Pool simulation as background --- */}
+                  <div className={styles.messageListBackground} aria-hidden="true">
+                    <PoolSimulation />
+                  </div>
                   <CustomChannelHeader />
+                  {/* --- ADMIN ANNOUNCEMENT INPUT HERE --- */}
+                  <AdminAnnouncementInput />
                   <MessageList />
                   <TypingIndicator />
                   <MessageInput
