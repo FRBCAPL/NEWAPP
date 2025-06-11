@@ -152,7 +152,7 @@ export default function MatchProposalModal({
       });
 
     // 2. ALSO save the proposal to your backend for dashboard tracking
- fetch(`${BACKEND_URL}/api/proposals`, {
+fetch(`${BACKEND_URL}/api/proposals`, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
@@ -161,16 +161,26 @@ export default function MatchProposalModal({
     senderName: senderName,
     receiverName: `${player.firstName} ${player.lastName}`,
     date: date.toISOString().slice(0, 10),
-     time: startTime, 
+    time: startTime, 
     location,
     message: proposalMessage,
     gameType,
     raceLength,
-      }),
-    }).catch((err) => {
-      // Optionally log or alert if saving to backend fails
-      console.error("Failed to save proposal to backend:", err);
-    });
+  }),
+})
+.then(res => res.json().then(data => {
+  if (!res.ok) {
+    console.error("Backend returned error:", data);
+    alert(data.error || "Failed to save proposal to backend.");
+  } else {
+    console.log("Proposal saved!", data);
+  }
+}))
+.catch((err) => {
+  console.error("Failed to save proposal to backend:", err);
+  alert("Failed to save proposal to backend.");
+});
+
   };
 
   const handleConfirmationClose = () => {

@@ -93,7 +93,7 @@
   border: 1.5px solid #cccaca;
   border-radius: 13px;
   padding: 1.2em 1.2em;
- padding-bottom: 1.8em;
+ padding-bottom: 1.0em;
 
   margin-bottom: 3.5em;
   box-shadow: 0 2px 12px #e5393522;
@@ -106,13 +106,15 @@
   font-size: 1.2rem;
   color: var(--accent-red);
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.0rem;
+  padding-top: 1em;
+
 }
 
 .dashboardHelperText {
   color: var(--white);
   font-size: 1rem;
-  margin-bottom: 0.6em;
+  margin-bottom: 0.7em;
   text-align: center;
   font-weight: 400;
   letter-spacing: 0.01em;
@@ -238,7 +240,7 @@
   flex-wrap: wrap;
   gap: 1.5rem;
   justify-content: center;
-  margin-top: .5rem;
+  margin-top: .2rem;
   margin-bottom: .5rem;
   width: 100%;
 }
@@ -816,10 +818,12 @@
 }
 .proposalAlertRow {
   display: flex;
-  gap: 0.5rem;
-  margin: 1rem 0;
+  gap: 3rem;
+  margin: 0.0rem 0 0.5rem 0; /* top right bottom left */
+  /* 0.25rem top, 0.5rem bottom, 0 left/right */
   justify-content: flex-start; /* or center */
 }
+
 
 .proposalAlertButton {
    padding-top: 0em; 
