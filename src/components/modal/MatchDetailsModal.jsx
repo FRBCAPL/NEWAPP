@@ -5,7 +5,6 @@ import EightBall from '../../assets/8ball.svg';
 import NineBall from '../../assets/nineball.svg';
 import TenBall from '../../assets/tenball.svg';
 
-
 export default function MatchDetailsModal({ open, onClose, match }) {
   // --- DRAGGABLE LOGIC ---
   const [drag, setDrag] = useState({ x: 0, y: 0 });
@@ -50,22 +49,35 @@ export default function MatchDetailsModal({ open, onClose, match }) {
 
   if (!open || !match) return null;
 
-  // Format date/time
-  const [month, day, year] = match.date.split("-");
-  const timeStr = match.time.length === 4
-    ? match.time.slice(0,2) + ":" + match.time.slice(2)
-    : match.time;
-  const dateObj = new Date(`${year}-${month}-${day}T${timeStr}`);
-  const formattedDate = dateObj.toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-  const formattedTime = dateObj.toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  // --- Robust Date/Time Parsing for YYYY-MM-DD and "h:mm AM/PM" ---
+  let dateObj = new Date();
+  let formattedDate = '';
+  let formattedTime = '';
+  if (match.date && match.time) {
+    // Parse date as YYYY-MM-DD
+    const [year, month, day] = match.date.split("-");
+    const isoDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    // Parse time as "h:mm AM/PM"
+    let timeStr = match.time.trim().toUpperCase();
+    let [timePart, ampm] = timeStr.split(' ');
+    let [hour, minute] = timePart.split(':').map(Number);
+    if (ampm === "PM" && hour < 12) hour += 12;
+    if (ampm === "AM" && hour === 12) hour = 0;
+    const hourStr = hour.toString().padStart(2, '0');
+    const minuteStr = (minute || 0).toString().padStart(2, '0');
+    const time24 = `${hourStr}:${minuteStr}`;
+    dateObj = new Date(`${isoDate}T${time24}:00`);
+    formattedDate = dateObj.toLocaleDateString(undefined, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+    formattedTime = dateObj.toLocaleTimeString(undefined, {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
@@ -96,9 +108,9 @@ export default function MatchDetailsModal({ open, onClose, match }) {
             <span className={styles.modalDetailIcon}>🤝</span>
             <span className={styles.modalDetailLabelSnazzy}>Players:</span>
             <span className={styles.modalDetailValueSnazzy}>
-              <span className={styles.modalOpponentName}>{match.player}</span>
+              <span className={styles.modalOpponentName}>{match.player || match.senderName}</span>
               <span className={styles.modalVs}>vs</span>
-              <span className={styles.modalOpponentName}>{match.opponent}</span>
+              <span className={styles.modalOpponentName}>{match.opponent || match.receiverName}</span>
             </span>
           </div>
           <div className={styles.modalDetailRowSnazzy}>
@@ -137,7 +149,6 @@ export default function MatchDetailsModal({ open, onClose, match }) {
 }
 
 function renderGameTypeIcon(gameType) {
-  // ...same as before...
   if (!gameType) return <span className={styles.modalDetailIcon}>🎯</span>;
   const type = gameType.trim().toLowerCase();
   if (type === "8 ball" || type === "8-ball" || type === "8ball")
