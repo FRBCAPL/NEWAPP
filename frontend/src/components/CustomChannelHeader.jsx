@@ -1,5 +1,6 @@
 import React from "react";
 import { useChannelStateContext } from "stream-chat-react";
+import styles from "./CustomChannelHeader.module.css";
 
 // Helper to get two initials from a name or ID
 function getInitials(nameOrId) {
@@ -19,7 +20,8 @@ export default function CustomChannelHeader() {
   const { channel } = useChannelStateContext();
   const channelName = channel?.data?.name || channel?.id;
   const matchDate = channel?.data?.matchDate;
-  const currentUserId = channel.getClient().user.id;
+  const currentUser = channel.getClient().user;
+  const currentUserId = currentUser.id;
 
   // Show all online members, including yourself
   const onlineMembers = Object.values(channel.state.members || {})
@@ -30,31 +32,33 @@ export default function CustomChannelHeader() {
     .filter(Boolean);
 
   return (
-    <div className="custom-channel-header">
-      <div className="custom-channel-header-row">
-        <span className="custom-channel-header-icon">💬</span>
-        <span>
-          You’re in the{" "}
-          <span className="custom-channel-header-title">
-            "{channelName}"
-          </span>{" "}
-          channel.
-        </span>
-        {matchDate && (
-          <span className="custom-channel-header-date">
-            Match Date: {new Date(matchDate).toLocaleDateString()}
+    <div className={styles.customChannelHeader}>
+      <div className={styles.customChannelHeaderRow}>
+        <div className={styles.customChannelHeaderLeft}>
+          <span className={styles.customChannelHeaderIcon}>💬</span>
+          <span>
+            You’re in the{" "}
+            <span className={styles.customChannelHeaderTitle}>
+              "{channelName}"
+            </span>{" "}
+            channel.
           </span>
-        )}
+          {matchDate && (
+            <span className={styles.customChannelHeaderDate}>
+              Match Date: {new Date(matchDate).toLocaleDateString()}
+            </span>
+          )}
+        </div>
       </div>
-      <div className="custom-channel-header-online">
-        <span className="custom-channel-header-online-label">Online:</span>
+      <div className={styles.customChannelHeaderOnline}>
+        <span className={styles.customChannelHeaderOnlineLabel}>Online:</span>
         {onlineMembers.length === 0 && (
-          <span className="custom-channel-header-none">No one online</span>
+          <span className={styles.customChannelHeaderNone}>No one online</span>
         )}
         {onlineMembers.map((name) => (
           <span
             key={name}
-            className="custom-channel-header-avatar"
+            className={styles.customChannelHeaderAvatar}
             title={name}
           >
             {getInitials(name)}

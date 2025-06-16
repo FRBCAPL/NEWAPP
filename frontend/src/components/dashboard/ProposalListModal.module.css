@@ -1,0 +1,139 @@
+:root {
+  --accent-red: #e53e3e;
+  --admin-orange: #f59e42;
+  --white: #fff;
+}
+
+/* ===============================
+   MODAL OVERLAY & CONTENT
+   =============================== */
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.proposalModalContent {
+  background: #18181b;
+  color: #fff;
+  border: 2.5px solid var(--accent-red);
+  border-radius: 1.2rem;
+  box-shadow: 0 0 32px var(--accent-red), 0 0 40px rgba(0,0,0,0.85);
+  max-width: 420px;
+  width: 95vw;
+  animation: modalBounceIn 0.5s cubic-bezier(.21,1.02,.73,1.01);
+  overflow: hidden;
+  padding: 2rem 1.2rem 1.5rem 1.2rem;
+  position: relative;
+  margin: 0 auto;
+  font-family: inherit;
+}
+
+/* ===============================
+   MODAL TITLE & CLOSE BUTTON
+   =============================== */
+.proposalModalTitle {
+  margin: 0 0 1.2rem 0;
+  font-size: 1.3rem;
+  font-weight: bold;
+  text-align: center;
+  letter-spacing: 0.02em;
+  color: var(--accent-red);
+  text-shadow: 0 1px 12px #000a;
+  z-index: 2;
+}
+
+.proposalModalCloseBtn {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.3rem;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 2em;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 10;
+  line-height: 1;
+  transition: color 0.2s, transform 0.2s;
+  padding: 0;
+  opacity: 0.7;
+}
+.proposalModalCloseBtn:hover {
+  color: #ffd6d6;
+  transform: scale(1.2) rotate(10deg);
+}
+
+/* ===============================
+   PROPOSAL LIST & CARDS
+   =============================== */
+.proposalList {
+  max-height: 60vh;
+  overflow-y: auto;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.proposalCardButton {
+  width: 100%;
+  text-align: left;
+  background: #232323;
+  border: 1.5px solid var(--accent-red);
+  border-radius: 8px;
+  padding: 1.1rem;
+  cursor: pointer;
+  font-size: 1.08rem;
+  color: #fff;
+  transition: background 0.2s, border 0.2s;
+  box-shadow: 0 2px 8px #0002;
+  margin-bottom: 1.2rem;
+}
+.proposalCardButton:hover {
+  background: #2a0909;
+  border-color: var(--admin-orange);
+}
+
+.proposalCardLabel {
+  color: var(--accent-red);
+  font-weight: 600;
+  margin-right: 0.3em;
+}
+
+.proposalCardMessage {
+  margin-top: 6px;
+  font-style: italic;
+  color: #ffecb3;
+}
+
+/* ===============================
+   ANIMATION (if used)
+   =============================== */
+@keyframes modalBounceIn {
+  0% { opacity: 0; transform: scale(0.95) translateY(-40px);}
+  70% { opacity: 1; transform: scale(1.02) translateY(8px);}
+  100% { opacity: 1; transform: scale(1) translateY(0);}
+}
+
+/* ===============================
+   RESPONSIVE ENHANCEMENTS
+   =============================== */
+@media (max-width: 500px) {
+  .proposalModalContent {
+    max-width: 99vw;
+    padding: 0.8rem 0.4rem 1rem 0.4rem;
+    border-radius: 0.7rem;
+    font-size: 0.97rem;
+  }
+  .proposalModalTitle {
+    font-size: 1.05rem;
+  }
+  .proposalCardButton {
+    font-size: 0.97rem;
+    padding: 0.7rem;
+  }
+}

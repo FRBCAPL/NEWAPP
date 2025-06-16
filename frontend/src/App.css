@@ -1,7 +1,8 @@
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  /* REMOVE padding to prevent scrollbars! */
+  /* padding: 2rem; */
   text-align: center;
   width: 100vw;
   min-width: 0;
@@ -51,28 +52,14 @@
 /* Tablet and down */
 @media (max-width: 900px) {
   #root {
-    padding: 1rem;
+    /* REMOVE padding to prevent scrollbars! */
+    /* padding: 1rem; */
     max-width: 100vw;
   }
   .logo {
     height: 4em;
     max-width: 80vw;
     padding: 1em;
-  }
-  .chat-container,
-  .dashboard-card,
-  .pin-login-card,
-  .modal-content {
-    width: 98vw !important;
-    max-width: 100vw !important;
-    min-width: 0 !important;
-    padding: 1rem !important;
-    border-radius: 10px !important;
-  }
-  .top-nav-bar {
-    flex-direction: column;
-    height: auto !important;
-    padding: 0.5rem !important;
   }
   .card {
     padding: 1em;
@@ -82,28 +69,14 @@
 /* Phone screens */
 @media (max-width: 600px) {
   #root {
-    padding: 0.5rem;
+    /* REMOVE padding to prevent scrollbars! */
+    /* padding: 0.5rem; */
     max-width: 100vw;
   }
   .logo {
     height: 2.5em;
     max-width: 95vw;
     padding: 0.5em;
-  }
-  .chat-container,
-  .dashboard-card,
-  .pin-login-card,
-  .modal-content {
-    width: 100vw !important;
-    padding: 0.5rem !important;
-    border-radius: 0 !important;
-  }
-  .top-nav-bar {
-    flex-direction: column;
-    align-items: flex-start !important;
-  }
-  .dashboard-btn, .timer-box, .chat-greeting {
-    font-size: 0.95em !important;
   }
   .card {
     padding: 0.5em;

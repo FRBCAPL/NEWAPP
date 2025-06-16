@@ -1,13 +1,25 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import ConfirmationModal from "./ConfirmationModal";
+import ConfirmationModal from "./modal/ConfirmationModal";
 import { sendConfirmationEmail } from '../utils/emailHelpers';
-import BilliardBall from "./BilliardBall"; // Adjust path if needed
+import BilliardBall from "./BilliardBall";
+import styles from "./ConfirmMatch.module.css";
+import Highlight from "./Highlight";
+
+// --- Add this helper function ---
+function to24Hour(time12h) {
+  if (!time12h) return "";
+  const [time, modifier] = time12h.split(' ');
+  let [hours, minutes] = time.split(':');
+  if (hours === '12') hours = '00';
+  if (modifier === 'PM' && hours !== '00') hours = String(parseInt(hours, 10) + 12);
+  return `${hours.padStart(2, '0')}:${minutes}`;
+}
 
 export default function ConfirmMatch() {
   const [searchParams] = useSearchParams();
   const [showModal, setShowModal] = useState(false);
-  const [userNote, setUserNote] = useState(""); // Note from confirmer
+  const [userNote, setUserNote] = useState("");
 
   // Read all details from the URL
   const from = searchParams.get('from');
@@ -17,12 +29,12 @@ export default function ConfirmMatch() {
   const time = searchParams.get('time');
   const location = searchParams.get('location');
   const proposerEmail = searchParams.get('proposerEmail');
-  const proposalNote = searchParams.get('note'); // Original note from proposer
+  const proposalNote = searchParams.get('note');
   const gameType = searchParams.get('gameType');
   const raceLength = searchParams.get('raceLength');
 
-  // This function is called when the user clicks "Confirm Match"
   const handleConfirm = () => {
+    console.log("CONFIRM BUTTON CLICKED");
     const confirmationMessage = `Hi ${from},
 
 Your match is CONFIRMED for ${day}, ${date} at ${time} (${location}).
@@ -59,121 +71,81 @@ Good luck and have fun!`;
       raceLength: raceLength || "",
     };
 
-    sendConfirmationEmail(params)
+    sendConfirmationEmail(params);
+
+    // --- Use to24Hour(time) here! ---
+    fetch('https://atlasbackend-bnng.onrender.com/api/matches', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        opponent: from ? from.trim() : "",
+        player: to ? to.trim() : "",
+        day,
+        date, // should be YYYY-MM-DD
+        time: to24Hour(time), // <--- convert to 24-hour format!
+        location,
+        gameType,
+        raceLength
+      })
+    })
       .then(() => setShowModal(true))
-      .catch((err) => {
-        alert("Failed to send confirmation email.");
+      .catch(err => {
+        alert("Failed to save match to server.");
         console.error(err);
       });
   };
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "radial-gradient(ellipse at top, #232526 0%, #181818 100%)",
-      color: "#fff",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
-    }}>
-      <div style={{
-        background: "#212121",
-        borderRadius: "1.5rem",
-        boxShadow: "0 0 32px #ff0000, 0 0 32px rgba(0,0,0,0.7)",
-        padding: "2.5rem 2rem",
-        border: "2.5px solid #ff0000",
-        textAlign: "center",
-        minWidth: 340,
-        maxWidth: 420,
-        animation: "fadeIn 0.7s"
-      }}>
-        <h1 style={{
-          color: "#ff0000",
-          marginBottom: "1.2rem",
-          letterSpacing: 1.5,
-          fontSize: "2.1rem"
-        }}>
+    <div className={styles.confirmMatchBg}>
+      <div className={styles.confirmMatchCard}>
+        <h1 className={styles.confirmMatchTitle}>
           🎱 Front Range <br />Pool League <br />Confirm Match
         </h1>
-        <p style={{
-          color: "#ffb300",
-          margin: "1rem 0 1.5rem 0",
-          fontStyle: "italic",
-          fontSize: "1.08rem"
-        }}>
+        <p className={styles.confirmMatchNotice}>
           You are about to confirm this match. <br />
           Your opponent will be notified by email!
         </p>
 
-        <div style={{
-          textAlign: "left",
-          margin: "0 auto 24px auto",
-          maxWidth: 340,
-          background: "#282828",
-          borderRadius: 10,
-          padding: "1.2rem 1.2rem 0.7rem 1.2rem",
-          boxShadow: "0 0 12px #ff000033"
-        }}>
-
-          <div style={{ marginBottom: 10, fontSize: "1.07rem" }}>
+        <div className={styles.confirmMatchDetails}>
+          <div className={styles.detailRow}>
             <span role="img" aria-label="you">🧑</span> <strong>You:</strong> {to || "N/A"}
           </div>
-          <div style={{ marginBottom: 10, fontSize: "1.07rem" }}>
+          <div className={styles.detailRow}>
             <span role="img" aria-label="opponent">🤝</span> <strong>Opponent:</strong> {from || "N/A"}
           </div>
-
-          <div style={{ marginBottom: 10 }}>
+          <div className={styles.detailRow}>
             <span role="img" aria-label="calendar">📅</span> <strong>Day:</strong> {day || "N/A"}
           </div>
-          <div style={{ marginBottom: 10 }}>
+          <div className={styles.detailRow}>
             <span role="img" aria-label="date">🗓️</span> <strong>Date:</strong> {date || "N/A"}
           </div>
-          <div style={{ marginBottom: 10 }}>
+          <div className={styles.detailRow}>
             <span role="img" aria-label="clock">⏰</span> <strong>Time:</strong> {time || "N/A"}
           </div>
-
           {gameType && (
-            <div style={{ marginBottom: 10 }}>
-              <span role="img" aria-label="game"></span>  <BilliardBall gameType={gameType} size={16} /> <strong>Game Type:</strong> {gameType}
+            <div className={styles.detailRow}>
+              <BilliardBall gameType={gameType} size={16} /> <strong>Game Type:</strong> {gameType}
             </div>
           )}
-
           {raceLength && (
-            <div style={{ marginBottom: 10 }}>
+            <div className={styles.detailRow}>
               <span role="img" aria-label="race">🏁</span> <strong>Race to:</strong> {raceLength}
             </div>
           )}
-
-          <div style={{ marginBottom: 10 }}>
+          <div className={styles.detailRow}>
             <span role="img" aria-label="location">📍</span> <strong>Location:</strong> {location || "N/A"}
           </div>
         </div>
 
-        {/* Moved opponent's note below match details */}
         {proposalNote && (
-          <div style={{
-            margin: "1rem 0 0.5rem 0",
-            background: "#191919",
-            borderLeft: "3px solid #ff0000",
-            borderRadius: 6,
-            padding: "0.7rem 0.9rem",
-            fontStyle: "italic",
-            color: "#ffb300",
-            fontSize: "1.02rem",
-            textAlign: "left"
-          }}>
+          <div className={styles.proposalNote}>
             <span role="img" aria-label="note">📝</span> <strong>Note from opponent:</strong><br />
             {proposalNote}
           </div>
         )}
 
-        {/* Note input section for confirmer */}
-        <div style={{
-          margin: "1.5rem auto 0.5rem auto",
-          maxWidth: 340,
-          textAlign: "left"
-        }}>
-          <label htmlFor="note" style={{ fontWeight: "bold", color: "#ffb300" }}>
+        <div className={styles.noteSection}>
+          <label htmlFor="note" className={styles.noteLabel}>
             📝 Add a note (optional):
           </label>
           <textarea
@@ -182,34 +154,12 @@ Good luck and have fun!`;
             onChange={e => setUserNote(e.target.value)}
             rows={3}
             placeholder="Write a message to your opponent…"
-            style={{
-              width: "100%",
-              marginTop: 8,
-              borderRadius: 6,
-              border: "1px solid #ff0000",
-              background: "#181818",
-              color: "#fff",
-              fontSize: "1rem",
-              padding: "0.6rem",
-              resize: "vertical"
-            }}
+            className={styles.noteTextarea}
           />
         </div>
 
         <button
-          style={{
-            background: "linear-gradient(90deg, #ff0000 60%, #ff6a00 100%)",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            padding: "0.8rem 1.8rem",
-            fontWeight: "bold",
-            fontSize: "1.15rem",
-            marginTop: 8,
-            boxShadow: "0 2px 12px #ff000066",
-            cursor: "pointer",
-            transition: "transform 0.1s",
-          }}
+          className={styles.confirmBtn}
           onMouseDown={e => e.currentTarget.style.transform = "scale(0.97)"}
           onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
           onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
@@ -231,15 +181,7 @@ Good luck and have fun!`;
           location={location}
           onClose={() => setShowModal(false)}
         />
-
       </div>
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(30px);}
-          to { opacity: 1; transform: translateY(0);}
-        }
-      `}</style>
     </div>
   );
 }
