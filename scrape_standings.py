@@ -3,12 +3,19 @@ from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import json
 import time
+import tempfile
 
 STANDINGS_URL = "https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=b345a437-3415-4765-b19a-b2f7014f2cfa"
+
+# Create a unique temp directory for Chrome's user data
+user_data_dir = tempfile.mkdtemp()
 
 options = Options()
 options.add_argument('--headless')  # Run in headless mode (no window)
 options.add_argument('--disable-gpu')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+options.add_argument(f'--user-data-dir={user_data_dir}')
 
 driver = webdriver.Chrome(options=options)
 driver.get(STANDINGS_URL)
@@ -38,3 +45,4 @@ if table:
     print(f"Saved {len(standings)} players to standings.json")
 else:
     print("Could not find standings table.")
+# comment to push
