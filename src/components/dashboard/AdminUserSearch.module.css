@@ -1,0 +1,96 @@
+.searchContainer {
+  border: 2px solid #b71c1c;
+  padding: 24px;
+  border-radius: 8px;
+  margin: 24px;
+  background: #181818;
+}
+
+.searchTitle {
+  margin-bottom: 12px;
+  color: #fff;
+}
+
+.searchForm {
+  margin-bottom: 16px;
+}
+
+.searchInput {
+  padding: 8px;
+  width: 250px;
+  border: 1px solid #b71c1c;
+  border-radius: 4px;
+  background: #232323;
+  color: #fff;
+}
+
+.searchButton {
+  margin-left: 8px;
+  padding: 8px 16px;
+  background: #b71c1c;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.resultsTable {
+  width: 100%;
+  background: #232323;
+  color: #fff;
+  border-collapse: collapse;
+}
+
+.resultsHeader {
+  background: #b71c1c;
+  color: #fff;
+}
+
+.resultsCell {
+  border: 1px solid #b71c1c;
+  padding: 8px;
+}
+
+.divisionBadge {
+  display: inline-block;
+  color: #ff3333;           /* red text color */
+  background: transparent;  /* no background */
+  border-radius: 12px;
+  padding: 2px 10px;
+  margin-right: 6px;
+  margin-bottom: 2px;
+  font-weight: 600;         /* semi-bold text */
+  font-size: 12px;          /* adjust size */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* example font */
+  text-transform: uppercase; /* uppercase text */
+  letter-spacing: 0.05em;    /* spacing between letters */
+}
+
+
+
+.removeBtn {
+  margin-left: 4px;
+  color: #b71c1c; /* or your preferred red */
+  background: none;           /* remove background */
+  border: none;               /* remove border */
+  border-radius: 0;           /* remove any rounding */
+  width: auto;                /* no fixed width */
+  height: auto;               /* no fixed height */
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;            /* adjust if you want */
+  line-height: 1;
+  padding: 0 2px;
+}
+
+
+.addBtn {
+  margin-left: 8px;
+  background: #b71c1c;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+}

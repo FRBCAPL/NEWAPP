@@ -4,6 +4,7 @@ import BilliardBall from "./BilliardBall";
 
 export default function ConfirmMatchDetails({
   proposal,
+  phase,
   userNote,
   setUserNote,
   onConfirm,

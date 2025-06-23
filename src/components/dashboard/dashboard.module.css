@@ -45,7 +45,7 @@
   color: #fff;
   border-radius: 18px;
   box-shadow: 0 4px 32px #e53e3e22, 0 0 16px #e53e3e11;
-  padding: 1.5rem 1rem 1rem 1rem;
+  padding: 0rem 1rem 1rem 1rem;
   display: flex;
   flex-direction: column;
   gap: .0rem;
@@ -69,7 +69,7 @@
   text-shadow: 0 0 8px var(--accent-red);
   font-size: 2rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0rem;
   letter-spacing: 0.02em;
 }
 .dashboardUserName {
@@ -77,14 +77,14 @@
   font-weight: bold;
   font-size: 1.2em;
   display: block;
-  margin-top: 0.2em;
+  margin-top: 0em;
 }
 
 .dashboardSection {
   background: var(--secondary-black);
   border-radius: 12px;
   padding: 1rem 1.5rem;
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.5rem;
   box-shadow: 0 2px 8px rgba(229,62,62,0.06);
 }
 .dashboardSectionBox {
@@ -95,7 +95,7 @@
   padding: 1.2em 1.2em;
  padding-bottom: 1.0em;
 
-  margin-bottom: 3.5em;
+  margin-bottom: .4em;
   box-shadow: 0 2px 12px #e5393522;
   z-index: 1;
 }
@@ -124,7 +124,7 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  padding-bottom: 3em;
+  padding-bottom: 1em;
 }
 
 
@@ -488,7 +488,7 @@
   .dashboardSection,
   .dashboardSectionBox {
     padding: 0.5rem 0.6rem;
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.5rem;
   }
   .dashboardActions {
     flex-direction: column;
@@ -818,10 +818,9 @@
 }
 .proposalAlertRow {
   display: flex;
-  gap: 3rem;
-  margin: 0.0rem 0 0.5rem 0; /* top right bottom left */
-  /* 0.25rem top, 0.5rem bottom, 0 left/right */
-  justify-content: flex-start; /* or center */
+  gap: 0.7rem;          /* Much tighter spacing between buttons */
+  margin: 0 0 0.0rem 0; /* Less space above/below the row */
+  justify-content: flex-start;
 }
 
 
@@ -851,4 +850,3 @@
   padding-bottom: 1.5em;
   /* NO flex: 1, NO min-height, NO overflow-y */
 }
-

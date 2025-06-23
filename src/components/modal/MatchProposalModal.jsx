@@ -102,9 +102,12 @@ export default function MatchProposalModal({
   onClose,
   senderName,
   senderEmail,
-  onProposalComplete
+  onProposalComplete,
+  phase
 }) {
-  // --- Draggable logic ---
+ console.log("MatchProposalModal senderEmail:", senderEmail);
+console.log("MatchProposalModal player.email:", player?.email);
+ // --- Draggable logic ---
   const [drag, setDrag] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -182,50 +185,88 @@ export default function MatchProposalModal({
 
   // --- Handlers ---
   const handleSend = () => {
-    const proposalMessage =
-      message && message.trim().length > 0
-        ? message
-        : `Hi ${player.firstName} ${player.lastName},\n${senderName} would like to schedule a match with you. `;
+  // Debug: Log all fields being sent to backend
+  console.log("Submitting proposal:", {
+    sender: senderEmail,
+    receiver: player.email,
+    senderName: senderName,
+    receiverName: `${player.firstName} ${player.lastName}`,
+    date: date && date.toISOString ? date.toISOString().slice(0, 10) : date,
+    time: startTime,
+    location,
+    message,
+    gameType,
+    raceLength,
+    phase
+  });
 
-    const proposalData = {
-      to_email: player.email,
-      to_name: `${player.firstName} ${player.lastName}`,
-      from_name: senderName,
-      from_email: senderEmail,
-      day: selectedDay,
+  // Defensive: Check for missing required fields
+  if (
+    !senderEmail ||
+    !player.email ||
+    !senderName ||
+    !player.firstName ||
+    !player.lastName ||
+    !date ||
+    !location ||
+    !phase
+  ) {
+    alert("Missing required fields. Please check all selections and try again.\n\n" +
+      `sender: ${senderEmail}\n` +
+      `receiver: ${player.email}\n` +
+      `senderName: ${senderName}\n` +
+      `receiverName: ${player.firstName} ${player.lastName}\n` +
+      `date: ${date}\n` +
+      `location: ${location}\n` +
+      `phase: ${phase}\n`
+    );
+    return;
+  }
+
+  const proposalMessage =
+    message && message.trim().length > 0
+      ? message
+      : `Hi ${player.firstName} ${player.lastName},\n${senderName} would like to schedule a match with you. `;
+
+  const proposalData = {
+    to_email: player.email,
+    to_name: `${player.firstName} ${player.lastName}`,
+    from_name: senderName,
+    from_email: senderEmail,
+    day: selectedDay,
+    date: date.toISOString().slice(0, 10),
+    time: startTime,
+    location,
+    gameType,
+    raceLength,
+    note: proposalMessage,
+  };
+
+  // 1. Send the email as before
+  sendProposalEmail(proposalData)
+    .then(() => setShowConfirmation(true))
+    .catch(() => {
+      alert("Failed to send proposal email.");
+    });
+
+  // 2. ALSO save the proposal to your backend for dashboard tracking
+  fetch(`${BACKEND_URL}/api/proposals`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sender: senderEmail,
+      receiver: player.email,
+      senderName: senderName,
+      receiverName: `${player.firstName} ${player.lastName}`,
       date: date.toISOString().slice(0, 10),
       time: startTime,
       location,
+      message: proposalMessage,
       gameType,
       raceLength,
-      note: proposalMessage,
-    };
-
-    // 1. Send the email as before
-    sendProposalEmail(proposalData)
-      .then(() => setShowConfirmation(true))
-      .catch(() => {
-        alert("Failed to send proposal email.");
-      });
-
-    // 2. ALSO save the proposal to your backend for dashboard tracking
-    fetch(`${BACKEND_URL}/api/proposals`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sender: senderEmail,
-        receiver: player.email,
-        senderName: senderName,
-        receiverName: `${player.firstName} ${player.lastName}`,
-        date: date.toISOString().slice(0, 10),
-        time: startTime,
-        location,
-        message: proposalMessage,
-        gameType,
-        raceLength,
-      }),
-    })
-    // --- EDIT: Add channel creation after successful proposal ---
+      phase
+    }),
+  })
     .then(res => res.json().then(async data => {
       if (!res.ok) {
         console.error("Backend returned error:", data);
@@ -247,7 +288,8 @@ export default function MatchProposalModal({
       console.error("Failed to save proposal to backend:", err);
       alert("Failed to save proposal to backend.");
     });
-  };
+};
+
 
   const handleConfirmationClose = () => {
     setShowConfirmation(false);
@@ -313,6 +355,28 @@ export default function MatchProposalModal({
             Propose a Match -BETA
           </h2>
         </div>
+        <div
+  style={{
+    margin: "0.5em 0 1.2em 0",
+    padding: "0.5em 1em",
+    background: phase === "challenge" ? "#e53935" : "#222",
+    color: "#fff",
+    borderRadius: "6px",
+    fontWeight: "bold",
+    fontSize: "1.1em",
+    letterSpacing: "0.5px",
+    display: "inline-block"
+  }}
+>
+  {phase === "challenge" ? "Challenge Phase" : "Scheduled Match Phase"}
+</div>
+{phase === "challenge" && (
+  <div style={{ color: "#fff", fontSize: "0.95em", marginBottom: "1em" }}>
+    <em>
+      Challenge matches have special rules. You can challenge up to 4 spots above, and match/defense limits apply.
+    </em>
+  </div>
+)}
 
         {/* --- Modal Content --- */}
         <div className={styles["match-proposal-row"]}>

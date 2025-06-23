@@ -13,6 +13,7 @@ export default function ConfirmationModal({
   location,
   proposalNote,
   confirmationNote,
+  phase,
   onClose
 }) {
   if (!open) return null;
@@ -36,7 +37,9 @@ export default function ConfirmationModal({
           background: "#f8f8f8", color: "#222", borderRadius: 8,
           padding: "1rem 1.2rem", margin: "1.2rem 0 1.2rem 0",
           textAlign: "left", fontSize: "1.05rem", border: "1px solid #ff0000"
-        }}>
+        }}> <div style={{ marginBottom: 6 }}>
+            <strong>Phase:</strong> {phase === "scheduled" ? "Phase 1 (Scheduled)" : phase === "challenge" ? "Phase 2 (challenge)" : phase}
+          </div>
           <div style={{ marginBottom: 6 }}>
             <strong>Game Type:</strong> <BilliardBall gameType={gameType} size={16}/> {gameType}
           </div>

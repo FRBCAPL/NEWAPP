@@ -6,13 +6,8 @@ import ConfirmMatch from "./components/ConfirmMatch";
 import Dashboard from "./components/dashboard/Dashboard";
 import MatchChat from "./components/chat/MatchChat";
 import AdminDashboard from "./components/dashboard/AdminDashboard";
-import './styles/variables.css';
-
-
-// Modal components
 import PinLogin from "./components/modal/PinLogin";
-import PlayerSearch from "./components/modal/PlayerSearch";
-
+import "./styles/variables.css";
 import "./styles/global.css";
 
 // --- MainApp must be a component, not a function inside App ---
@@ -22,49 +17,26 @@ function MainApp({
   userLastName,
   userEmail,
   userPin,
-  showPlayerSearch,
   handleLoginSuccess,
-  handleScheduleMatch,
-  handlePlayerSelected,
-  handleClosePlayerSearch,
-  handleLogout,
+  handleLogout
 }) {
   const navigate = useNavigate();
-
-  // Optionally auto-show player search if flagged in localStorage
-  useEffect(() => {
-    if (localStorage.getItem("showPlayerSearch") === "true") {
-      handleScheduleMatch();
-      localStorage.removeItem("showPlayerSearch");
-    }
-    // eslint-disable-next-line
-  }, []);
 
   return (
     <>
       {!isAuthenticated ? (
         <PinLogin onSuccess={handleLoginSuccess} />
       ) : (
-        <>
-          <Dashboard
-            playerName={userFirstName}
-            playerLastName={userLastName}
-            onScheduleMatch={handleScheduleMatch}
-            onOpenChat={() => (window.location.hash = "#/chat")}
-            onLogout={handleLogout}
-            userPin={userPin}
-            onGoToAdmin={() => navigate("/admin")}
-          />
-          {showPlayerSearch && !!userEmail && (
-            <PlayerSearch
-              onSelect={handlePlayerSelected}
-              onClose={handleClosePlayerSearch}
-              excludeName={`${userFirstName} ${userLastName}`}
-              senderName={`${userFirstName} ${userLastName}`}
-              senderEmail={userEmail}
-            />
-          )}
-        </>
+        <Dashboard
+          playerName={userFirstName}
+          playerLastName={userLastName}
+          senderEmail={userEmail}
+          onScheduleMatch={() => {}} // Not used anymore, can remove if you want
+          onOpenChat={() => (window.location.hash = "#/chat")}
+          onLogout={handleLogout}
+          userPin={userPin}
+          onGoToAdmin={() => navigate("/admin")}
+        />
       )}
     </>
   );
@@ -75,7 +47,6 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userFirstName, setUserFirstName] = useState("");
   const [userLastName, setUserLastName] = useState("");
-  const [showPlayerSearch, setShowPlayerSearch] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [userPin, setUserPin] = useState("");
 
@@ -120,22 +91,12 @@ function App() {
     setUserEmail("");
     setUserPin("");
     setIsAuthenticated(false);
-    setShowPlayerSearch(false);
-    // Only remove your app's keys, not all localStorage:
     localStorage.removeItem("userFirstName");
     localStorage.removeItem("userLastName");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("userPin");
     localStorage.removeItem("isAuthenticated");
   };
-
-  // --- Modal handlers ---
-  const handleScheduleMatch = () => setShowPlayerSearch(true);
-  const handlePlayerSelected = (player) => {
-    setShowPlayerSearch(false);
-    alert(`You selected: ${player.firstName} ${player.lastName}`);
-  };
-  const handleClosePlayerSearch = () => setShowPlayerSearch(false);
 
   // --- Main Router ---
   return (
@@ -173,11 +134,12 @@ function App() {
               <Dashboard
                 playerName={userFirstName}
                 playerLastName={userLastName}
-                onScheduleMatch={handleScheduleMatch}
+                senderEmail={userEmail}
+                onScheduleMatch={() => {}}
                 onOpenChat={() => (window.location.hash = "#/chat")}
                 onLogout={handleLogout}
                 userPin={userPin}
-                onGoToAdmin={() => { /* This won't work here, use MainApp for navigation */ }}
+                onGoToAdmin={() => {}}
               />
             ) : (
               <Navigate to="/" />
@@ -193,11 +155,7 @@ function App() {
               userLastName={userLastName}
               userEmail={userEmail}
               userPin={userPin}
-              showPlayerSearch={showPlayerSearch}
               handleLoginSuccess={handleLoginSuccess}
-              handleScheduleMatch={handleScheduleMatch}
-              handlePlayerSelected={handlePlayerSelected}
-              handleClosePlayerSearch={handleClosePlayerSearch}
               handleLogout={handleLogout}
             />
           }

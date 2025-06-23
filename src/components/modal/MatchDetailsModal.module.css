@@ -179,3 +179,18 @@
     padding: 0.15em 0.3em;
   }
 }
+.markCompletedBtn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 0.6em 1.4em;
+  font-size: 1.05em;
+  cursor: pointer;
+  margin-top: 1em;
+  transition: background 0.2s;
+}
+.markCompletedBtn:disabled {
+  background: #aaa;
+  cursor: not-allowed;
+}

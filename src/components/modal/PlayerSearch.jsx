@@ -55,6 +55,7 @@ function parseAvailability(str) {
  * @param {string} senderName - name of the user sending the proposal
  * @param {string} senderEmail - email of the user sending the proposal
  * @param {function} onProposalComplete - callback after proposal is sent
+ * @param {string} phase - the selected phase ("phase1" or "phase2")
  */
 export default function PlayerSearch({
   onClose,
@@ -62,6 +63,7 @@ export default function PlayerSearch({
   senderName,
   senderEmail,
   onProposalComplete,
+  phase,
 }) {
   const [players, setPlayers] = useState([]);
   const [search, setSearch] = useState("");
@@ -82,24 +84,21 @@ export default function PlayerSearch({
           setLoading(false);
           return;
         }
-       const playerList = rows
-  .slice(1)
-  .map(row => ({
-    firstName: row[0] || "",
-    lastName: row[1] || "",
-    email: row[2] || "",
-    phone: row[3] || "",
-    locations: row[8] || "",
-    availability: parseAvailability(row[7] || ""),
-    pin: row[11] || "",
-    // ADD THIS LINE:
-    preferredContacts: (row[10] || "")
-      .split(/\r?\n/) // Split on both Windows and Unix newlines
-
-      .map(method => method.trim().toLowerCase())
-      .filter(Boolean),
-  }))
-
+        const playerList = rows
+          .slice(1)
+          .map(row => ({
+            firstName: row[0] || "",
+            lastName: row[1] || "",
+            email: row[2] || "",
+            phone: row[3] || "",
+            locations: row[8] || "",
+            availability: parseAvailability(row[7] || ""),
+            pin: row[11] || "",
+            preferredContacts: (row[10] || "")
+              .split(/\r?\n/)
+              .map(method => method.trim().toLowerCase())
+              .filter(Boolean),
+          }))
           .filter(
             p =>
               p.email &&
@@ -201,31 +200,36 @@ export default function PlayerSearch({
         <PlayerAvailabilityModal
           player={selectedPlayer}
           onClose={onClose}
-          onProposeMatch={(day, slot) => {
-            setProposal({ player: selectedPlayer, day, slot });
+          onProposeMatch={(day, slot, phaseValue) => {
+            console.log("Received phaseValue from modal:", phaseValue);
+            setProposal({ player: selectedPlayer, day, slot, phase: phaseValue });
             setMode("proposal");
           }}
+          phase={phase}
         />
       )}
 
-    {mode === "proposal" && proposal && (
-  <MatchProposalModal
-    player={proposal.player}
-    day={proposal.day}
-    slot={proposal.slot}
-    onClose={onClose}
-    senderName={senderName}
-    senderEmail={senderEmail}
-    onProposalComplete={() => {
-      setMode("search");
-      setProposal(null);
-      setSelectedPlayer(null);
-      if (onProposalComplete) onProposalComplete();
-      onClose();  // <-- Close search modal here
-    }}
-  />
-)}
-
+      {mode === "proposal" && proposal && (
+        <>
+          {console.log("proposal.phase", proposal.phase)}
+          <MatchProposalModal
+            player={proposal.player}
+            day={proposal.day}
+            slot={proposal.slot}
+            onClose={onClose}
+            senderName={senderName}
+            senderEmail={senderEmail}
+            onProposalComplete={() => {
+              setMode("search");
+              setProposal(null);
+              setSelectedPlayer(null);
+              if (onProposalComplete) onProposalComplete();
+              onClose();
+            }}
+            phase={proposal.phase === "phase2" ? "challenge" : "scheduled"}
+          />
+        </>
+      )}
     </>
   );
 

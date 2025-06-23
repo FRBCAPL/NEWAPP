@@ -5,7 +5,9 @@ import EightBall from '../../assets/8ball.svg';
 import NineBall from '../../assets/nineball.svg';
 import TenBall from '../../assets/tenball.svg';
 
-export default function MatchDetailsModal({ open, onClose, match }) {
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
+
+export default function MatchDetailsModal({ open, onClose, match, onCompleted }) {
   // --- DRAGGABLE LOGIC ---
   const [drag, setDrag] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
@@ -46,6 +48,29 @@ export default function MatchDetailsModal({ open, onClose, match }) {
     // eslint-disable-next-line
   }, [dragging]);
   // --- END DRAGGABLE LOGIC ---
+
+  // --- Mark as Completed Logic ---
+  const [loading, setLoading] = useState(false);
+
+  const handleMarkCompleted = async () => {
+    if (!match || !match._id) return;
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${BACKEND_URL}/api/proposals/${match._id}/completed`,
+        { method: "PATCH" }
+      );
+      if (res.ok) {
+        if (onCompleted) onCompleted(match._id);
+        onClose();
+      } else {
+        alert("Failed to mark as completed.");
+      }
+    } catch (err) {
+      alert("Network error.");
+    }
+    setLoading(false);
+  };
 
   if (!open || !match) return null;
 
@@ -143,6 +168,23 @@ export default function MatchDetailsModal({ open, onClose, match }) {
             </div>
           )}
         </div>
+        {/* Mark as Completed Button */}
+        {!match.completed && (
+          <div style={{ textAlign: "center", margin: "1em 0" }}>
+            <button
+              className={styles.markCompletedBtn}
+              onClick={handleMarkCompleted}
+              disabled={loading}
+            >
+              {loading ? "Marking..." : "Mark as Completed"}
+            </button>
+          </div>
+        )}
+        {match.completed && (
+          <div style={{ textAlign: "center", color: "green", margin: "1em 0" }}>
+            ✅ Match Completed
+          </div>
+        )}
       </div>
     </div>
   );

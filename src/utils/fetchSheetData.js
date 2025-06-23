@@ -16,3 +16,4 @@ export default async function fetchSheetData(sheetID, range) {
   const response = await axios.get(url);
   return response.data.values; // Array of rows
 }
+console.log("API_KEY from env:", API_KEY);
