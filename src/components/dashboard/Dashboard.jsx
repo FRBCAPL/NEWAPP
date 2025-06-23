@@ -875,10 +875,15 @@ export default function Dashboard({
           )}
         </div>
       </div>
-
+{console.log("playerSchedule", playerSchedule)}
+{console.log("matchesToSchedule", matchesToSchedule)}
+{console.log("opponentsToSchedule", opponentsToSchedule)}
+{console.log("selectedDivision", selectedDivision)}
       {/* Opponents Modal */}
      <OpponentsModal
+     
   open={showOpponents}
+  
   onClose={() => setShowOpponents(false)}
   opponents={opponentsToSchedule}
   onOpponentClick={handleOpponentClick}
@@ -893,6 +898,7 @@ export default function Dashboard({
     excludeName={fullName}
     senderName={fullName}
     senderEmail={senderEmail}
+    selectedDivision={selectedDivision}
     phase={effectivePhase}
     onProposalComplete={() => setShowPlayerSearch(false)}
   />
@@ -923,12 +929,14 @@ export default function Dashboard({
               player: selectedOpponent,
               day,
               slot,
+               selectedDivision, 
               phase: effectivePhase
             });
             setShowProposalModal(true);
             setShowPlayerAvailability(false);
             setSelectedOpponent(null);
           }}
+              selectedDivision={selectedDivision}
           phase={effectivePhase}
         />
       )}
@@ -939,6 +947,7 @@ export default function Dashboard({
     player={proposalData.player}
     day={proposalData.day}
     slot={proposalData.slot}
+     selectedDivision={proposalData.selectedDivision} 
     phase={proposalData.phase || effectivePhase}
     onClose={() => setShowProposalModal(false)}
     senderName={`${playerName} ${playerLastName}`}

@@ -103,6 +103,7 @@ export default function MatchProposalModal({
   senderName,
   senderEmail,
   onProposalComplete,
+  selectedDivision,
   phase
 }) {
  console.log("MatchProposalModal senderEmail:", senderEmail);
@@ -513,7 +514,7 @@ console.log("MatchProposalModal player.email:", player?.email);
           open={showConfirmation}
           message="Your match proposal has been sent! The opponent will receive an email with all the details."
            division= {selectedDivision}
-           phase={effectivePhase}
+            phase={phase}
            gameType={gameType}
           raceLength={raceLength}
           day={selectedDay}

@@ -8,6 +8,71 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 const apiKey = import.meta.env.VITE_STREAM_API_KEY;
 const adminUserId = "frbcaplgmailcom";
 
+// --- Division Schedule Updater ---
+function DivisionScheduleUpdater({ backendUrl }) {
+  const [divisions, setDivisions] = useState([]);
+  const [scrapeDivision, setScrapeDivision] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState("");
+
+  useEffect(() => {
+    fetch(`${backendUrl}/admin/divisions`)
+      .then(res => res.json())
+      .then(data => {
+        const divs = data.map(d => d.name);
+        setDivisions(divs);
+        setScrapeDivision(divs[0] || "");
+      })
+      .catch(() => setDivisions([]));
+  }, [backendUrl]);
+
+  return (
+    <div style={{ margin: "12px 0" }}>
+      <h3>Update Schedule for Division</h3>
+      <select
+        value={scrapeDivision}
+        onChange={e => setScrapeDivision(e.target.value)}
+        style={{ marginRight: 8, padding: 4, borderRadius: 4 }}
+      >
+        {divisions.map(div =>
+          <option key={div} value={div}>{div}</option>
+        )}
+      </select>
+      <button
+        onClick={async () => {
+          setLoading(true);
+          setResult("");
+          try {
+            const res = await fetch(`${backendUrl}/admin/update-schedule`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ division: scrapeDivision })
+            });
+            const msg = await res.text();
+            setResult("✅ " + msg);
+          } catch (err) {
+            setResult("❌ " + err.message);
+          }
+          setLoading(false);
+        }}
+        disabled={loading || !scrapeDivision}
+        style={{
+          background: "#673ab7",
+          color: "#fff",
+          border: "none",
+          borderRadius: 5,
+          padding: "8px 16px",
+          fontWeight: "bold",
+          cursor: loading ? "not-allowed" : "pointer"
+        }}
+      >
+        {loading ? "Updating..." : "Update Schedule"}
+      </button>
+      {result && <div style={{ marginTop: 8 }}>{result}</div>}
+    </div>
+  );
+}
+
 // --- Button Components ---
 function SyncUsersButton({ backendUrl }) {
   const [loading, setLoading] = useState(false);
@@ -48,7 +113,6 @@ function SyncUsersButton({ backendUrl }) {
     </div>
   );
 }
-
 function UpdateScheduleButton({ backendUrl }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
@@ -207,9 +271,7 @@ function CreateDivisionForm({ backendUrl, onDivisionCreated }) {
           onChange={e => setName(e.target.value)}
           required
           style={{ marginBottom: 10 }} 
-          
         />
-
         <input
           type="text"
           placeholder="Description (optional)"
@@ -596,11 +658,10 @@ export default function AdminDashboard() {
         {/* LEFT COLUMN: Admin controls */}
         <div className={styles.adminDashboardContent}>
           <div className={styles.adminToolbar}>
-            <UpdateScheduleButton backendUrl={BACKEND_URL} />  
+            <DivisionScheduleUpdater backendUrl={BACKEND_URL} />
             <UpdateStandingsButton backendUrl={BACKEND_URL} />
             <SyncUsersButton backendUrl={BACKEND_URL} />
-            
-          <ConvertDivisionsButton backendUrl={BACKEND_URL} />
+            <ConvertDivisionsButton backendUrl={BACKEND_URL} />
           </div>
           <CreateDivisionForm backendUrl={BACKEND_URL} onDivisionCreated={() => {}} />
           <AdminUserSearch backendUrl={BACKEND_URL} />

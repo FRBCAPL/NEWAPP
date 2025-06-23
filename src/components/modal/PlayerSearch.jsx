@@ -63,6 +63,7 @@ export default function PlayerSearch({
   senderName,
   senderEmail,
   onProposalComplete,
+  selectedDivision,
   phase,
 }) {
   const [players, setPlayers] = useState([]);
@@ -197,37 +198,46 @@ export default function PlayerSearch({
       )}
 
       {mode === "availability" && selectedPlayer && (
-        <PlayerAvailabilityModal
-          player={selectedPlayer}
-          onClose={onClose}
-          onProposeMatch={(day, slot, phaseValue) => {
-            console.log("Received phaseValue from modal:", phaseValue);
-            setProposal({ player: selectedPlayer, day, slot, phase: phaseValue });
-            setMode("proposal");
-          }}
-          phase={phase}
-        />
+       <PlayerAvailabilityModal
+  player={selectedPlayer}
+  onClose={onClose}
+  onProposeMatch={(day, slot, phaseValue, divisionValue) => {
+    setProposal({
+      player: selectedPlayer,
+      day,
+      slot,
+      phase: phaseValue,
+      selectedDivision: divisionValue || selectedDivision // fallback
+    });
+    setMode("proposal");
+  }}
+  phase={phase}
+  selectedDivision={selectedDivision}
+/>
+
       )}
 
       {mode === "proposal" && proposal && (
         <>
           {console.log("proposal.phase", proposal.phase)}
-          <MatchProposalModal
-            player={proposal.player}
-            day={proposal.day}
-            slot={proposal.slot}
-            onClose={onClose}
-            senderName={senderName}
-            senderEmail={senderEmail}
-            onProposalComplete={() => {
-              setMode("search");
-              setProposal(null);
-              setSelectedPlayer(null);
-              if (onProposalComplete) onProposalComplete();
-              onClose();
-            }}
-            phase={proposal.phase === "phase2" ? "challenge" : "scheduled"}
-          />
+         <MatchProposalModal
+  player={proposal.player}
+  day={proposal.day}
+  slot={proposal.slot}
+  onClose={onClose}
+  senderName={senderName}
+  senderEmail={senderEmail}
+  onProposalComplete={() => {
+    setMode("search");
+    setProposal(null);
+    setSelectedPlayer(null);
+    if (onProposalComplete) onProposalComplete();
+    onClose();
+  }}
+  phase={proposal.phase === "phase2" ? "challenge" : "scheduled"}
+  selectedDivision={proposal.selectedDivision || selectedDivision}
+/>
+
         </>
       )}
     </>

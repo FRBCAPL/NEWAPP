@@ -13,6 +13,7 @@ export default function PlayerAvailabilityModal({
   onClose,
   senderEmail,
   onProposeMatch,
+    selectedDivision,
   phase,
 }) {
   if (!player) return null;
@@ -181,16 +182,18 @@ export default function PlayerAvailabilityModal({
                     className={styles.playerModalSlot}
                     key={i}
                     onClick={() => {
-                      onProposeMatch && onProposeMatch(day, slot, phase);
-                    }}
+  onProposeMatch && onProposeMatch(day, slot, phase, selectedDivision);
+}}
+
                     tabIndex={0}
                     role="button"
                     aria-label={`Propose match on ${day} at ${slot}`}
                     onKeyPress={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        onProposeMatch && onProposeMatch(day, slot, phase);
-                      }
-                    }}
+  if (e.key === "Enter" || e.key === " ") {
+    onProposeMatch && onProposeMatch(day, slot, phase, selectedDivision);
+  }
+}}
+
                   >
                     {slot}
                   </div>
