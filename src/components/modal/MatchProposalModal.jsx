@@ -264,7 +264,8 @@ console.log("MatchProposalModal player.email:", player?.email);
       message: proposalMessage,
       gameType,
       raceLength,
-      phase
+      phase,
+      division: selectedDivision 
     }),
   })
     .then(res => res.json().then(async data => {
@@ -511,7 +512,9 @@ console.log("MatchProposalModal player.email:", player?.email);
         <ConfirmationModal
           open={showConfirmation}
           message="Your match proposal has been sent! The opponent will receive an email with all the details."
-          gameType={gameType}
+           division= {selectedDivision}
+           phase={effectivePhase}
+           gameType={gameType}
           raceLength={raceLength}
           day={selectedDay}
           date={formatDateMMDDYYYY(date)}

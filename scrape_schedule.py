@@ -49,7 +49,8 @@ for division_name, url in DIVISION_URLS.items():
 
 driver.quit()
 
-REACT_PUBLIC_PATH = "/Users/slamp/my-app/atlasbackend/public/schedule.json"
+REACT_PUBLIC_PATH = "./public/schedule.json" 
+
 with open(REACT_PUBLIC_PATH, "w", encoding="utf-8") as f:
     json.dump(all_matches, f, indent=2)
 
