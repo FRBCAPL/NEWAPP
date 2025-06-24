@@ -57,7 +57,7 @@ export default function MatchDetailsModal({ open, onClose, match, onCompleted })
     setLoading(true);
     try {
       const res = await fetch(
-        `${BACKEND_URL}/api/proposals/${match._id}/completed`,
+        `${BACKEND_URL}/api/matches/completed/${match._id}`,
         { method: "PATCH" }
       );
       if (res.ok) {
@@ -168,22 +168,16 @@ export default function MatchDetailsModal({ open, onClose, match, onCompleted })
             </div>
           )}
         </div>
-        {/* Mark as Completed Button */}
-        {!match.completed && (
-          <div style={{ textAlign: "center", margin: "1em 0" }}>
-            <button
-              className={styles.markCompletedBtn}
-              onClick={handleMarkCompleted}
-              disabled={loading}
-            >
-              {loading ? "Marking..." : "Mark as Completed"}
-            </button>
-          </div>
-        )}
-        {match.completed && (
-          <div style={{ textAlign: "center", color: "green", margin: "1em 0" }}>
-            ✅ Match Completed
-          </div>
+        {!match.counterProposal?.completed && (
+          <button
+            className={styles.modalActionBtn}
+            onClick={handleMarkCompleted}
+            disabled={loading}
+            style={{ marginTop: 16, minWidth: 180 }}
+            type="button"
+          >
+            {loading ? "Marking..." : "Mark as Completed"}
+          </button>
         )}
       </div>
     </div>

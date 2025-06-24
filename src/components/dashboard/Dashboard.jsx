@@ -14,6 +14,13 @@ import MatchProposalModal from "../modal/MatchProposalModal";
 import PlayerSearch from "../modal/PlayerSearch";
 import fetchSheetData from "../../utils/fetchSheetData";
 
+// Import new services and hooks
+import { useProposals } from '../../hooks/useProposals';
+import { useMatches } from '../../hooks/useMatches';
+import { proposalService } from '../../services/proposalService';
+import { userService } from '../../services/userService';
+import { noteService } from '../../services/noteService';
+
 const sheetID = "1tvMgMHsRwQxsR6lMNlSnztmwpK7fhZeNEyqjTqmRFRc";
 const pinSheetName = "BCAPL SIGNUP";
 const STANDINGS_URLS = {
@@ -73,16 +80,9 @@ function AdminSyncButton({ backendUrl, onSyncComplete }) {
     setLoading(true);
     setResult("");
     try {
-      const res = await fetch(`${backendUrl}/admin/sync-users`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      });
-      if (res.ok) {
-        setResult("✅ Users synced successfully!");
-        if (onSyncComplete) onSyncComplete();
-      } else {
-        setResult("❌ Sync failed.");
-      }
+      await userService.syncUsers();
+      setResult("✅ Users synced successfully!");
+      if (onSyncComplete) onSyncComplete();
     } catch (err) {
       setResult("❌ Sync failed.");
     }
@@ -156,15 +156,10 @@ export default function Dashboard({
   const [divisions, setDivisions] = useState([]);
   const [selectedDivision, setSelectedDivision] = useState("");
   const [showStandings, setShowStandings] = useState(false);
-  const [upcomingMatches, setUpcomingMatches] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const [pendingProposals, setPendingProposals] = useState([]);
   const [showProposalListModal, setShowProposalListModal] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [proposalNote, setProposalNote] = useState("");
 
-  const [sentProposals, setSentProposals] = useState([]);
   const [showSentProposalListModal, setShowSentProposalListModal] = useState(false);
 
   const [showCounterModal, setShowCounterModal] = useState(false);
@@ -202,13 +197,25 @@ export default function Dashboard({
 
   const [players, setPlayers] = useState([]);
 
+  // Use custom hooks for proposals and matches
+  const fullName = `${playerName} ${playerLastName}`.trim();
+  const { pendingProposals, sentProposals, loading: proposalsLoading, refetch: refetchProposals } = useProposals(fullName, selectedDivision);
+  const { matches: upcomingMatches, completedMatches, scheduledConfirmedMatches, loading: matchesLoading, refetch: refetchMatches } = useMatches(fullName, selectedDivision);
+
   // Proposal counts for instant UI update
   const [pendingCount, setPendingCount] = useState(0);
   const [sentCount, setSentCount] = useState(0);
 
-  // Completed and scheduled/confirmed matches
-  const [completedMatches, setCompletedMatches] = useState([]);
-  const [scheduledConfirmedMatches, setScheduledConfirmedMatches] = useState([]);
+  useEffect(() => {
+    setPendingCount(pendingProposals.length);
+  }, [pendingProposals]);
+  
+  useEffect(() => {
+    setSentCount(sentProposals.length);
+  }, [sentProposals]);
+
+  // Use override if set
+  const effectivePhase = phaseOverride || currentPhase;
 
   useEffect(() => {
     let isMounted = true;
@@ -267,13 +274,10 @@ export default function Dashboard({
 }, [selectedDivision]);
 
 
-  const fullName = `${playerName} ${playerLastName}`.trim();
-
   // Division logic
   useEffect(() => {
     if (!senderEmail) return;
-    fetch(`${BACKEND_URL}/api/user/${encodeURIComponent(senderEmail)}`)
-      .then(res => res.json())
+    userService.getUser(senderEmail)
       .then(user => {
         let divs = [];
         if (user.divisions && user.divisions.length) {
@@ -311,20 +315,132 @@ export default function Dashboard({
     }
   }, [divisions]);
 
+  // SCHEDULED MATCH COUNT LOGIC: useEffect that depends on both scheduledMatches and upcomingMatches
   useEffect(() => {
-    setPendingCount(pendingProposals.length);
-  }, [pendingProposals]);
+    if (!playerName || !playerLastName || !selectedDivision) return;
+    // SCHEDULED MATCHES LOGIC
+    const fullName = `${playerName} ${playerLastName}`.trim();
+    const playerSchedule = scheduledMatches.filter(
+      m => m.division === selectedDivision &&
+        ((m.player1 && m.player1.trim().toLowerCase() === fullName.toLowerCase()) ||
+        (m.player2 && m.player2.trim().toLowerCase() === fullName.toLowerCase()))
+    );
+    const requiredOpponents = playerSchedule.map(m =>
+      m.player1 && m.player1.trim().toLowerCase() === fullName.toLowerCase()
+        ? m.player2
+        : m.player1
+    );
+    const uniqueOpponents = Array.from(new Set(requiredOpponents.map(o => o.trim().toLowerCase())));
+    let scheduledCount = 0;
+    uniqueOpponents.forEach(opponentName => {
+      const hasScheduledMatch = upcomingMatches.some(m =>
+        m.division === selectedDivision &&
+        (
+          (m.senderName && m.senderName.trim().toLowerCase() === fullName.toLowerCase() &&
+           m.receiverName && m.receiverName.trim().toLowerCase() === opponentName) ||
+          (m.receiverName && m.receiverName.trim().toLowerCase() === fullName.toLowerCase() &&
+           m.senderName && m.senderName.trim().toLowerCase() === opponentName)
+        ) &&
+        (m.phase === "scheduled" || !m.phase) &&
+        !["declined", "canceled"].includes(m.status)
+      );
+      if (hasScheduledMatch) scheduledCount++;
+    });
+    setScheduledCompleted(scheduledCount);
+    setCurrentPhase(scheduledCount >= 6 ? "challenge" : "scheduled");
+  }, [playerName, playerLastName, selectedDivision, scheduledMatches, upcomingMatches]);
+
   useEffect(() => {
-    setSentCount(sentProposals.length);
-  }, [sentProposals]);
+    setLoadingNotes(true);
+    noteService.getAllNotes()
+      .then(notes => {
+        setNotes(notes);
+        setLoadingNotes(false);
+      })
+      .catch(() => {
+        setNotes([]);
+        setLoadingNotes(false);
+      });
+  }, []);
 
-  // Use override if set
-  const effectivePhase = phaseOverride || currentPhase;
+  useEffect(() => {
+    if (!playerName || !playerLastName || !selectedDivision) return;
+    // The custom hooks handle fetching proposals and matches automatically
+    // No need to manually call fetch functions anymore
 
+    const interval = setInterval(() => {
+      // Refresh data every 2 minutes using the custom hooks
+      refetchProposals();
+      refetchMatches();
+    }, 2 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [playerName, playerLastName, selectedDivision, refetchProposals, refetchMatches]);
+
+  const handleAddNote = async () => {
+    setNoteError("");
+    try {
+      const note = await noteService.createNote(newNote.trim());
+      setNotes([note, ...notes]);
+      setNewNote("");
+      setShowNoteModal(false);
+    } catch (err) {
+      setNoteError("Failed to add note");
+    }
+  };
+
+  const handleDeleteNote = async (id) => {
+    if (!window.confirm("Delete this note?")) return;
+    try {
+      await noteService.deleteNote(id);
+      setNotes(notes.filter(note => note._id !== id));
+    } catch (err) {
+      console.error('Failed to delete note:', err);
+    }
+  };
+
+  const handleClearNotes = async () => {
+    if (!window.confirm("Are you sure you want to clear all notes?")) return;
+    try {
+      for (const note of notes) {
+        await noteService.deleteNote(note._id);
+      }
+      setNotes([]);
+    } catch (err) {
+      console.error('Failed to clear notes:', err);
+    }
+  };
+
+  function handleProposalResponse(proposalId, status, note = "") {
+    proposalService.updateProposalStatus(proposalId, status, note)
+      .then(() => {
+        setSelectedProposal(null);
+        setProposalNote("");
+        refetchMatches();
+        refetchProposals();
+      })
+      .catch(console.error);
+  }
+
+  async function handleCounterProposal(counterData) {
+    if (!counterProposal) return;
+    try {
+      await proposalService.counterProposal(counterProposal._id, counterData);
+      setShowCounterModal(false);
+      setCounterProposal(null);
+      refetchMatches();
+      refetchProposals();
+    } catch (err) {
+      console.error('Failed to counter proposal:', err);
+    }
+  }
+
+  // Helper functions
   function openModal(match) {
     setSelectedMatch(match);
     setModalOpen(true);
   }
+  
   function closeModal() {
     setModalOpen(false);
     setSelectedMatch(null);
@@ -419,209 +535,6 @@ export default function Dashboard({
     } else {
       setShowPlayerSearch(true);
     }
-  }
-
-  // --- fetchUpcomingMatches: fetch and set upcoming, completed, and scheduled/confirmed matches ---
-  function fetchUpcomingMatches() {
-    setLoading(true);
-    fetch(`${BACKEND_URL}/api/all-matches?player=${encodeURIComponent(fullName.trim())}` +
-          (selectedDivision ? `&division=${encodeURIComponent(selectedDivision)}` : ""))
-      .then(res => res.json())
-      .then(matches => {
-        // "Confirmed but not completed"
-        const scheduledConfirmed = matches.filter(
-          match =>
-            match.status && match.status.toLowerCase() === "confirmed" &&
-            match.counterProposal &&
-            (
-              !match.counterProposal.phase ||
-              match.counterProposal.phase.toLowerCase() === "scheduled"
-            ) &&
-            !match.counterProposal.completed // false or missing
-        );
-        setScheduledConfirmedMatches(scheduledConfirmed);
-
-        // "Completed"
-        const completed = matches.filter(
-          match =>
-            match.status && match.status.toLowerCase() === "confirmed" &&
-            match.counterProposal &&
-            (
-              !match.counterProposal.phase ||
-              match.counterProposal.phase.toLowerCase() === "scheduled"
-            ) &&
-            match.counterProposal.completed === true
-        );
-        setCompletedMatches(completed);
-
-        // Your existing logic for upcomingMatches (scheduled/confirmed, not completed)
-        const filtered = scheduledConfirmed;
-        filtered.sort((a, b) => getMatchDateTime(a) - getMatchDateTime(b));
-        setUpcomingMatches(filtered);
-        setLoading(false);
-      })
-      .catch(err => {
-        setUpcomingMatches([]);
-        setCompletedMatches([]);
-        setScheduledConfirmedMatches([]);
-        setLoading(false);
-      });
-  }
-
-  // SCHEDULED MATCH COUNT LOGIC: useEffect that depends on both scheduledMatches and upcomingMatches
-  useEffect(() => {
-    if (!playerName || !playerLastName || !selectedDivision) return;
-    // SCHEDULED MATCHES LOGIC
-    const fullName = `${playerName} ${playerLastName}`.trim();
-    const playerSchedule = scheduledMatches.filter(
-      m => m.division === selectedDivision &&
-        ((m.player1 && m.player1.trim().toLowerCase() === fullName.toLowerCase()) ||
-        (m.player2 && m.player2.trim().toLowerCase() === fullName.toLowerCase()))
-    );
-    const requiredOpponents = playerSchedule.map(m =>
-      m.player1 && m.player1.trim().toLowerCase() === fullName.toLowerCase()
-        ? m.player2
-        : m.player1
-    );
-    const uniqueOpponents = Array.from(new Set(requiredOpponents.map(o => o.trim().toLowerCase())));
-    let scheduledCount = 0;
-    uniqueOpponents.forEach(opponentName => {
-      const hasScheduledMatch = upcomingMatches.some(m =>
-        m.division === selectedDivision &&
-        (
-          (m.senderName && m.senderName.trim().toLowerCase() === fullName.toLowerCase() &&
-           m.receiverName && m.receiverName.trim().toLowerCase() === opponentName) ||
-          (m.receiverName && m.receiverName.trim().toLowerCase() === fullName.toLowerCase() &&
-           m.senderName && m.senderName.trim().toLowerCase() === opponentName)
-        ) &&
-        (m.phase === "scheduled" || !m.phase) &&
-        !["declined", "canceled"].includes(m.status)
-      );
-      if (hasScheduledMatch) scheduledCount++;
-    });
-    setScheduledCompleted(scheduledCount);
-    setCurrentPhase(scheduledCount >= 6 ? "challenge" : "scheduled");
-  }, [playerName, playerLastName, selectedDivision, scheduledMatches, upcomingMatches]);
-
-  useEffect(() => {
-    setLoadingNotes(true);
-    fetch(`${BACKEND_URL}/api/notes`)
-      .then(res => res.json())
-      .then(notes => {
-        setNotes(notes);
-        setLoadingNotes(false);
-      })
-      .catch(() => {
-        setNotes([]);
-        setLoadingNotes(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    if (!playerName || !playerLastName || !selectedDivision) return;
-    fetchUpcomingMatches();
-    fetchPendingProposals();
-    fetchSentProposals();
-
-    const interval = setInterval(() => {
-      fetchUpcomingMatches();
-      fetchPendingProposals();
-      fetchSentProposals();
-    }, 2 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, [playerName, playerLastName, selectedDivision]);
-
-  function fetchPendingProposals() {
-    if (!playerName || !playerLastName) return;
-    const fullNameTrimmed = `${playerName} ${playerLastName}`.trim();
-    fetch(`${BACKEND_URL}/api/proposals/by-name?receiverName=${encodeURIComponent(fullNameTrimmed)}` +
-          (selectedDivision ? `&division=${encodeURIComponent(selectedDivision)}` : ""))
-      .then(res => res.json())
-      .then(data => setPendingProposals(data.filter(p => ["pending", "countered"].includes(p.status))))
-      .catch(() => setPendingProposals([]));
-  }
-
-  function fetchSentProposals() {
-    if (!playerName || !playerLastName) return;
-    const fullNameTrimmed = `${playerName} ${playerLastName}`.trim();
-    fetch(`${BACKEND_URL}/api/proposals/by-sender?senderName=${encodeURIComponent(fullNameTrimmed)}` +
-          (selectedDivision ? `&division=${encodeURIComponent(selectedDivision)}` : ""))
-      .then(res => res.json())
-      .then(data => setSentProposals(data))
-      .catch(() => setSentProposals([]));
-  }
-
-  const handleAddNote = async () => {
-    setNoteError("");
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/notes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: newNote.trim() })
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        setNoteError(err.error || "Failed to add note");
-        return;
-      }
-      const note = await res.json();
-      setNotes([note, ...notes]);
-      setNewNote("");
-      setShowNoteModal(false);
-    } catch (err) {
-      setNoteError("Failed to add note");
-    }
-  };
-
-  const handleDeleteNote = async (id) => {
-    if (!window.confirm("Delete this note?")) return;
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/notes/${id}`, { method: "DELETE" });
-      if (res.ok) setNotes(notes.filter(note => note._id !== id));
-    } catch (err) {}
-  };
-
-  const handleClearNotes = async () => {
-    if (!window.confirm("Are you sure you want to clear all notes?")) return;
-    for (const note of notes) {
-      await fetch(`${BACKEND_URL}/api/notes/${note._id}`, { method: "DELETE" });
-    }
-    setNotes([]);
-  };
-
-  function handleProposalResponse(proposalId, status, note = "") {
-    fetch(`${BACKEND_URL}/api/proposals/${proposalId}/status`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, note }),
-    })
-      .then(() => {
-        setPendingProposals(prev => prev.filter(p => p._id !== proposalId));
-        setSelectedProposal(null);
-        setProposalNote("");
-        fetchUpcomingMatches();
-        fetchPendingProposals();
-        fetchSentProposals();
-      })
-      .catch(console.error);
-  }
-
-  async function handleCounterProposal(counterData) {
-    if (!counterProposal) return;
-    await fetch(`${BACKEND_URL}/api/proposals/${counterProposal._id}/counter`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...counterData,
-        from: fullName
-      })
-    });
-    setShowCounterModal(false);
-    setCounterProposal(null);
-    fetchUpcomingMatches();
-    fetchPendingProposals();
-    fetchSentProposals();
   }
 
   return (
@@ -746,7 +659,6 @@ export default function Dashboard({
                   (showAllMatches ? upcomingMatches : upcomingMatches.slice(0, 2)).map((match, idx) => {
                     const opponent =
                       match.senderName === fullName ? match.receiverName : match.senderName;
-
                     let formattedDate = "";
                     if (match.date) {
                       const [year, month, day] = match.date.split("-");
@@ -757,7 +669,7 @@ export default function Dashboard({
                         year: "numeric",
                       });
                     }
-
+                    const isCompleted = match.counterProposal && match.counterProposal.completed === true;
                     return (
                       <li key={match._id || idx} className={styles.matchCard}>
                         <button
@@ -770,6 +682,24 @@ export default function Dashboard({
                           <span className={styles.matchCardDetail}>{formattedDate}</span>
                           <span className={styles.matchCardDetail}>{match.location}</span>
                         </button>
+                        {!isCompleted && (
+                          <button
+                            className={styles.dashboardBtn}
+                            style={{ marginLeft: 12, minWidth: 120 }}
+                            onClick={async () => {
+                              try {
+                                await proposalService.markCompleted(match._id);
+                                refetchMatches();
+                                refetchProposals();
+                              } catch (err) {
+                                alert("Failed to mark as completed. Please try again.");
+                              }
+                            }}
+                            type="button"
+                          >
+                            Mark as Completed
+                          </button>
+                        )}
                       </li>
                     );
                   })
@@ -1018,9 +948,8 @@ export default function Dashboard({
     onProposalComplete={() => {
       setShowProposalModal(false);
       setProposalData(null);
-      fetchUpcomingMatches();
-      fetchPendingProposals();
-      fetchSentProposals();
+      refetchMatches();
+      refetchProposals();
     }}
   />
 )}
@@ -1109,10 +1038,12 @@ export default function Dashboard({
         proposal={selectedProposal}
         userNote={proposalNote}
         setUserNote={setProposalNote}
-        onConfirm={() => {
-          handleProposalResponse(selectedProposal._id, "confirmed", proposalNote);
+        onConfirm={async () => {
+          await proposalService.updateProposalStatus(selectedProposal._id, "confirmed", proposalNote);
           setSelectedProposal(null);
           setProposalNote("");
+          refetchMatches();
+          refetchProposals();
         }}
         onClose={() => {
           setSelectedProposal(null);
