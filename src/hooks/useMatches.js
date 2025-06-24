@@ -16,36 +16,45 @@ export const useMatches = (playerName, division) => {
         matchService.getCompletedMatches(playerName, division)
       ]);
       
-      // "Confirmed but not completed"
+      // Debug: log raw backend data
+      console.log('useMatches raw allMatches:', allMatches);
+      console.log('useMatches raw completed:', completed);
+      
+      // New logic: include both proposals and scheduled matches as upcoming
+      const upcoming = allMatches.filter(match => {
+        if (match.type === 'scheduled') return true;
+        if (match.type === 'proposal') {
+          return (
+            match.status && match.status.toLowerCase() === 'confirmed' &&
+            match.counterProposal &&
+            (!match.counterProposal.phase || match.counterProposal.phase.toLowerCase() === 'scheduled') &&
+            match.counterProposal.completed !== true
+          );
+        }
+        return false;
+      });
+      // Completed: proposals that are confirmed and completed
+      const completedMatches = allMatches.filter(match =>
+        match.type === 'proposal' &&
+        match.status && match.status.toLowerCase() === 'confirmed' &&
+        match.counterProposal &&
+        (!match.counterProposal.phase || match.counterProposal.phase.toLowerCase() === 'scheduled') &&
+        match.counterProposal.completed === true
+      );
+      // Optionally sort upcoming by date
+      upcoming.sort((a, b) => getMatchDateTime(a) - getMatchDateTime(b));
+      setMatches(upcoming);
+      setCompletedMatches(completedMatches);
+      // Keep scheduledConfirmedMatches for legacy use (proposals only)
       const scheduledConfirmed = allMatches.filter(
         match =>
-          match.status && match.status.toLowerCase() === "confirmed" &&
+          match.type === 'proposal' &&
+          match.status && match.status.toLowerCase() === 'confirmed' &&
           match.counterProposal &&
-          (
-            !match.counterProposal.phase ||
-            match.counterProposal.phase.toLowerCase() === "scheduled"
-          ) &&
-          !match.counterProposal.completed // false or missing
+          (!match.counterProposal.phase || match.counterProposal.phase.toLowerCase() === 'scheduled') &&
+          match.counterProposal.completed !== true
       );
       setScheduledConfirmedMatches(scheduledConfirmed);
-
-      // "Completed"
-      const completedMatches = allMatches.filter(
-        match =>
-          match.status && match.status.toLowerCase() === "confirmed" &&
-          match.counterProposal &&
-          (
-            !match.counterProposal.phase ||
-            match.counterProposal.phase.toLowerCase() === "scheduled"
-          ) &&
-          match.counterProposal.completed === true
-      );
-      setCompletedMatches(completedMatches);
-
-      // Your existing logic for upcomingMatches (scheduled/confirmed, not completed)
-      const filtered = scheduledConfirmed;
-      filtered.sort((a, b) => getMatchDateTime(a) - getMatchDateTime(b));
-      setMatches(filtered);
       setError(null);
     } catch (err) {
       setError(err.message);

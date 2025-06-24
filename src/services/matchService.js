@@ -6,7 +6,7 @@ export const matchService = {
       player: playerName,
       ...(division && { division })
     });
-    return ApiService.get(`/api/all-matches?${params}`);
+    return ApiService.get(`/api/matches/all-matches?${params}`);
   },
 
   async getCompletedMatches(playerName, division) {
@@ -14,7 +14,7 @@ export const matchService = {
       player: playerName,
       ...(division && { division })
     });
-    return ApiService.get(`/api/completed-matches?${params}`);
+    return ApiService.get(`/api/matches/completed-matches?${params}`);
   },
 
   async createMatch(matchData) {

@@ -125,6 +125,7 @@
   flex: 1 1 auto;
   min-height: 0;
   padding-bottom: 1em;
+  overflow: visible;
 }
 
 
@@ -136,6 +137,7 @@
   padding: 0;
   margin: 0;
   color: var(--gray);
+  overflow: visible;
 }
 
 /* ===============================
@@ -156,7 +158,7 @@
   min-height: 48px;
   box-shadow: 0 2px 8px #b91c1c22;
   transition: box-shadow 0.2s, border-color 0.2s;
-  overflow-x: auto;
+  overflow: visible;
   box-sizing: border-box;
 }
 .matchCard:hover {
@@ -196,8 +198,6 @@
   white-space: nowrap;
   min-width: 0;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .matchCardOpponentLabel {
@@ -557,13 +557,14 @@
     max-height: 60vw;
   }
   .matchCard {
-    padding: 0.4rem 0.1rem;
+    flex-wrap: wrap;
     font-size: 0.92rem;
-    min-height: 28px;
+    padding: 0.3rem 0.2rem;
   }
   .matchCardButton {
-    gap: 0.45em;
-    font-size: 0.93rem;
+    flex-wrap: wrap;
+    font-size: 0.91rem;
+    gap: 0.3em;
   }
   .matchCardDetail,
   .matchCardOpponentName,
@@ -844,9 +845,36 @@
   background: #00aa85;
   border-color: #ff1100;
 }
-.matchesSection {
+
+.matchCardContentWrapper {
   display: flex;
-  flex-direction: column;
-  padding-bottom: 1.5em;
-  /* NO flex: 1, NO min-height, NO overflow-y */
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+}
+
+.matchCardDoneBtn {
+  margin-left: auto;
+}
+
+@media (max-width: 500px) {
+  .matchCardContentWrapper {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+  .matchCardButton {
+    width: 100%;
+    justify-content: flex-start;
+    font-size: 1em;
+    margin-bottom: 2px;
+  }
+  .matchCardDoneBtn {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 6px;
+    font-size: 1.05em;
+    height: 38px;
+    padding: 8px 0;
+  }
 }

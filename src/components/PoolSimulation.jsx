@@ -5,6 +5,7 @@ import tenBall from "../assets/tenball.svg";
 import eightBall from "../assets/8ball.svg";
 import cueBall from "../assets/cueball.svg";
 import styles from "./modal/PinLogin.module.css";
+import logoImg from '../assets/logo.png';
 
 // --- Constants ---
 const BALLS = [
@@ -564,43 +565,31 @@ export default function PoolSimulation() {
           display: "block",
           objectFit: "fill",
           position: "absolute",
-          top: 0,
+          top: 1,
           left: 0,
           zIndex: 1,
-          pointerEvents: "none"
+          pointerEvents: "none",
+          opacity: 1,
+          filter: 'opacity(1) contrast(1.25) brightness(1.18)'
         }}
       />
       {/* Centered Words, scaled */}
       <div
-        className={styles.pinLoginTitle}
         style={{
           position: "absolute",
           left: 0,
-          top: "38%",
+          top: 0,
           width: "100%",
-          textAlign: "center",
+          height: "100%",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           pointerEvents: "none",
           userSelect: "none",
           zIndex: 2,
-          opacity: 0.55,
-          lineHeight: 1.1,
-          fontWeight: "bold",
-          color: "#000",
-          fontSize: "24px",
-          textShadow: `
-            1px 0 0 #ff0000,
-            -1px 0 0 #ff0000,
-            0 1px 0 #ff0000,
-            0 -1px 0 #ff0000,
-            1px 1px 0 #ff0000,
-            -1px -1px 0 #ff0000,
-            1px -1px 0 #ff0000,
-            -1px 1px 0 #ff0000
-          `
         }}
       >
-        <div>Front Range</div>
-        <div>Pool League</div>
+        <img src={logoImg} alt="League Logo" style={{ maxWidth: 320, maxHeight: 120, width: '100%', height: 'auto', filter: 'drop-shadow(0 2px 8px #000)', opacity: 0.55 }} />
       </div>
       {BALLS.map(ball =>
         <img
@@ -618,7 +607,8 @@ export default function PoolSimulation() {
             zIndex: 10,
             opacity: balls.current[ball.key]?.visible === false ? 0 : 1,
             transition: "none",
-            pointerEvents: "none"
+            pointerEvents: "none",
+            filter: 'opacity(1) contrast(1.25) brightness(1.18)'
           }}
         />
       )}

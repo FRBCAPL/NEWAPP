@@ -202,6 +202,12 @@ export default function Dashboard({
   const { pendingProposals, sentProposals, loading: proposalsLoading, refetch: refetchProposals } = useProposals(fullName, selectedDivision);
   const { matches: upcomingMatches, completedMatches, scheduledConfirmedMatches, loading: matchesLoading, refetch: refetchMatches } = useMatches(fullName, selectedDivision);
 
+  // DEBUG LOGGING - REMOVE AFTER FIXING
+  console.log("upcomingMatches", upcomingMatches);
+  console.log("completedMatches", completedMatches);
+  console.log("pendingProposals", pendingProposals);
+  console.log("sentProposals", sentProposals);
+
   // Proposal counts for instant UI update
   const [pendingCount, setPendingCount] = useState(0);
   const [sentCount, setSentCount] = useState(0);
@@ -474,33 +480,60 @@ export default function Dashboard({
       ((m.player1 && m.player1.trim().toLowerCase() === fullName.toLowerCase()) ||
       (m.player2 && m.player2.trim().toLowerCase() === fullName.toLowerCase()))
   );
-
-  // --- Robust scheduled match count: field-by-field comparison ---
-  function isScheduledInBackend(schedMatch) {
-    const schedOpponent = schedMatch.player1 && schedMatch.player1.trim().toLowerCase() === fullName.toLowerCase()
-      ? schedMatch.player2 : schedMatch.player1;
-    return upcomingMatches.some(backendMatch => {
-      const backendOpponent = backendMatch.senderName && backendMatch.senderName.trim().toLowerCase() === fullName.toLowerCase()
-        ? backendMatch.receiverName : backendMatch.senderName;
-      return (
-        backendMatch.division === selectedDivision &&
-        backendOpponent && schedOpponent &&
-        backendOpponent.trim().toLowerCase() === schedOpponent.trim().toLowerCase() &&
-        normalizeDate(backendMatch.date) === normalizeDate(schedMatch.date) &&
-        (backendMatch.location || "").trim().toLowerCase() === (schedMatch.location || "").trim().toLowerCase()
-      );
-    });
+  // Debug: log the playerSchedule array and first object
+  console.log('playerSchedule (full array):', playerSchedule);
+  if (playerSchedule.length > 0) {
+    console.log('playerSchedule[0]:', playerSchedule[0]);
   }
 
-  const matchesToSchedule = playerSchedule.filter(m => !isScheduledInBackend(m));
+  // Greedy matching: each confirmed match is only matched to one scheduled match
+  function getMatchesToSchedule() {
+    const usedConfirmed = new Set();
+    const matchesToSchedule = [];
+    for (const schedMatch of playerSchedule) {
+      // Skip if this scheduled match is already completed
+      const schedOpponent = schedMatch.player1 && schedMatch.player1.trim().toLowerCase() === fullName.toLowerCase()
+        ? schedMatch.player2 : schedMatch.player1;
+      const isCompleted = completedMatches.some(cm => {
+        const cmPlayers = [cm.senderName?.trim().toLowerCase(), cm.receiverName?.trim().toLowerCase()];
+        return (
+          cm.division === selectedDivision &&
+          cmPlayers.includes(fullName.toLowerCase()) &&
+          cmPlayers.includes(schedOpponent?.trim().toLowerCase())
+        );
+      });
+      if (isCompleted) continue; // Don't count this match if completed
+      let found = false;
+      for (let i = 0; i < upcomingMatches.length; i++) {
+        if (usedConfirmed.has(i)) continue;
+        const backendMatch = upcomingMatches[i];
+        const backendPlayers = [backendMatch.senderName?.trim().toLowerCase(), backendMatch.receiverName?.trim().toLowerCase()];
+        if (
+          backendMatch.division === selectedDivision &&
+          backendPlayers.includes(fullName.toLowerCase()) &&
+          backendPlayers.includes(schedOpponent?.trim().toLowerCase())
+        ) {
+          usedConfirmed.add(i);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        matchesToSchedule.push(schedMatch);
+      }
+    }
+    return matchesToSchedule;
+  }
+
+  const matchesToSchedule = getMatchesToSchedule();
   const numToSchedule = matchesToSchedule.length;
 
-  // Prepare the opponents list for the modal
+  // Prepare the opponents list for the modal (only for uncompleted matches)
   const opponentsToSchedule = matchesToSchedule.map(m =>
     m.player1 && m.player1.trim().toLowerCase() === fullName.toLowerCase()
-      ? m.player2
-      : m.player1
-  );
+      ? m.player2?.trim().toLowerCase()
+      : m.player1?.trim().toLowerCase()
+  ).filter(Boolean);
 
   function handleOpponentClick(opponentName) {
     const playerObj = players.find(
@@ -666,38 +699,40 @@ export default function Dashboard({
                       });
                     }
                     const isCompleted = match.counterProposal && match.counterProposal.completed === true;
-                    // Defensive: treat as not completed if counterProposal is missing
                     const actuallyCompleted = !!(match.counterProposal && match.counterProposal.completed === true);
                     return (
-                      <li key={match._id || idx} className={styles.matchCard}>
-                        <button
-                          className={styles.matchCardButton}
-                          onClick={() => openModal(match)}
-                          type="button"
-                        >
-                          <span className={styles.matchCardOpponentLabel}>VS:</span>
-                          <span className={styles.matchCardOpponentName}>{opponent}</span>
-                          <span className={styles.matchCardDetail}>{formattedDate}</span>
-                          <span className={styles.matchCardDetail}>{match.location}</span>
-                        </button>
-                        {!actuallyCompleted && (
+                      <li key={match._id || idx} className={styles.matchCard} style={{padding: '0.4rem 0.5rem', fontSize: '0.98em', marginBottom: 8}}>
+                        <div className={styles.matchCardContentWrapper}>
                           <button
-                            className={styles.dashboardBtn}
-                            style={{ marginLeft: 12, minWidth: 120 }}
-                            onClick={async () => {
-                              try {
-                                await proposalService.markCompleted(match._id);
-                                refetchMatches();
-                                refetchProposals();
-                              } catch (err) {
-                                alert("Failed to mark as completed. Please try again.");
-                              }
-                            }}
+                            className={styles.matchCardButton}
+                            onClick={() => openModal(match)}
                             type="button"
+                            style={{padding: 0, margin: 0, minHeight: 0, fontSize: '0.98em', display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none'}}
                           >
-                            Mark as Completed
+                            <span className={styles.matchCardOpponentLabel} style={{fontSize: '1em', marginRight: 4}}>VS:</span>
+                            <span className={styles.matchCardOpponentName} style={{fontSize: '1em', marginRight: 8}}>{opponent}</span>
+                            <span className={styles.matchCardDetail} style={{fontSize: '0.97em', marginRight: 8}}>{formattedDate}</span>
+                            <span className={styles.matchCardDetail} style={{fontSize: '0.97em'}}>{match.location}</span>
                           </button>
-                        )}
+                          {!actuallyCompleted && (
+                            <button
+                              className={styles.dashboardBtn + ' ' + styles.matchCardDoneBtn}
+                              style={{ marginLeft: 0, minWidth: 90, padding: '6px 0', fontSize: '1em', height: 34, lineHeight: '22px', marginTop: 6 }}
+                              onClick={async () => {
+                                try {
+                                  await proposalService.markCompleted(match._id);
+                                  refetchMatches();
+                                  refetchProposals();
+                                } catch (err) {
+                                  alert("Failed to mark as completed. Please try again.");
+                                }
+                              }}
+                              type="button"
+                            >
+                              Mark Done
+                            </button>
+                          )}
+                        </div>
                       </li>
                     );
                   })
@@ -867,8 +902,7 @@ export default function Dashboard({
         </div>
       </div>
 {console.log("playerSchedule", playerSchedule)}
-{console.log("matchesToSchedule", matchesToSchedule)}
-{console.log("opponentsToSchedule", opponentsToSchedule)}
+{console.log("matchesToSchedule", opponentsToSchedule)}
 {console.log("selectedDivision", selectedDivision)}
       {/* Opponents Modal */}
      <OpponentsModal
