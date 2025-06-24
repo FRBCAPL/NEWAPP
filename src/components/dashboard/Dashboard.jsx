@@ -566,6 +566,15 @@ export default function Dashboard({
     }
   }
 
+  // Defensive filter: only show matches for the selected division (in case backend fails)
+  const filteredUpcomingMatches = upcomingMatches.filter(m =>
+    m.division && selectedDivision &&
+    m.division.trim().toLowerCase() === selectedDivision.trim().toLowerCase()
+  );
+
+  // Debug: log the filtered upcoming matches
+  console.log('filteredUpcomingMatches:', filteredUpcomingMatches);
+
   return (
     <div className={styles.dashboardBg}>
       <div className={styles.dashboardFrame}>
@@ -682,22 +691,75 @@ export default function Dashboard({
               </div>
               <br /><br /><br />
               <ul className={styles.dashboardList}>
-                {(showAllMatches ? upcomingMatches : upcomingMatches.slice(0, 2)).length === 0 ? (
+                {(showAllMatches ? filteredUpcomingMatches : filteredUpcomingMatches.slice(0, 2)).length === 0 ? (
                   <li>No matches scheduled yet.</li>
                 ) : (
-                  (showAllMatches ? upcomingMatches : upcomingMatches.slice(0, 2)).map((match, idx) => {
-                    const opponent =
-                      match.senderName === fullName ? match.receiverName : match.senderName;
-                    let formattedDate = "";
-                    if (match.date) {
-                      const [year, month, day] = match.date.split("-");
-                      const dateObj = new Date(`${year}-${month}-${day}`);
-                      formattedDate = dateObj.toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      });
+                  (showAllMatches ? filteredUpcomingMatches : filteredUpcomingMatches.slice(0, 2)).map((match, idx) => {
+                    // Determine opponent and date based on match type
+                    let opponent = '';
+                    let formattedDate = '';
+                    if (match.type === 'scheduled') {
+                      // Use player1/player2 and parse M/D/YYYY
+                      if (match.player1 && match.player2) {
+                        if (match.player1.trim().toLowerCase() === fullName.trim().toLowerCase()) {
+                          opponent = match.player2;
+                        } else {
+                          opponent = match.player1;
+                        }
+                      }
+                      if (match.date) {
+                        // Parse M/D/YYYY
+                        const parts = match.date.split('/');
+                        if (parts.length === 3) {
+                          const [month, day, year] = parts;
+                          const dateObj = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
+                          if (!isNaN(dateObj.getTime())) {
+                            formattedDate = dateObj.toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            });
+                          } else {
+                            formattedDate = '[Invalid Date]';
+                          }
+                        } else {
+                          formattedDate = '[Invalid Date]';
+                        }
+                      } else {
+                        formattedDate = '[No Date]';
+                      }
+                    } else {
+                      // Assume proposal type: use senderName/receiverName and parse YYYY-MM-DD
+                      if (match.senderName && match.receiverName) {
+                        if (match.senderName.trim().toLowerCase() === fullName.trim().toLowerCase()) {
+                          opponent = match.receiverName;
+                        } else {
+                          opponent = match.senderName;
+                        }
+                      }
+                      if (match.date) {
+                        const parts = match.date.split('-');
+                        if (parts.length === 3) {
+                          const [year, month, day] = parts;
+                          const dateObj = new Date(`${year}-${month}-${day}`);
+                          if (!isNaN(dateObj.getTime())) {
+                            formattedDate = dateObj.toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            });
+                          } else {
+                            formattedDate = '[Invalid Date]';
+                          }
+                        } else {
+                          formattedDate = '[Invalid Date]';
+                        }
+                      } else {
+                        formattedDate = '[No Date]';
+                      }
                     }
+                    // Debug: log each match object
+                    console.log('Rendering match:', match);
                     const isCompleted = match.counterProposal && match.counterProposal.completed === true;
                     const actuallyCompleted = !!(match.counterProposal && match.counterProposal.completed === true);
                     return (
@@ -710,9 +772,9 @@ export default function Dashboard({
                             style={{padding: 0, margin: 0, minHeight: 0, fontSize: '0.98em', display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none'}}
                           >
                             <span className={styles.matchCardOpponentLabel} style={{fontSize: '1em', marginRight: 4}}>VS:</span>
-                            <span className={styles.matchCardOpponentName} style={{fontSize: '1em', marginRight: 8}}>{opponent}</span>
+                            <span className={styles.matchCardOpponentName} style={{fontSize: '1em', marginRight: 8}}>{opponent || '[Unknown Opponent]'}</span>
                             <span className={styles.matchCardDetail} style={{fontSize: '0.97em', marginRight: 8}}>{formattedDate}</span>
-                            <span className={styles.matchCardDetail} style={{fontSize: '0.97em'}}>{match.location}</span>
+                            <span className={styles.matchCardDetail} style={{fontSize: '0.97em'}}>{match.location || '[No Location]'}</span>
                           </button>
                           {!actuallyCompleted && (
                             <button
@@ -738,7 +800,7 @@ export default function Dashboard({
                   })
                 )}
               </ul>
-              {upcomingMatches.length > 2 && (
+              {filteredUpcomingMatches.length > 2 && (
                 <button
                   className={styles.smallShowMoreBtn}
                   onClick={() => setShowAllMatches(v => !v)}
@@ -746,7 +808,7 @@ export default function Dashboard({
                 >
                   {showAllMatches
                     ? "Show Less"
-                    : `Show ${upcomingMatches.length - 2} More`}
+                    : `Show ${filteredUpcomingMatches.length - 2} More`}
                 </button>
               )}
 
