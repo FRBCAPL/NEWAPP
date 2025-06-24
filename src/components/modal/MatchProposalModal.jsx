@@ -106,9 +106,8 @@ export default function MatchProposalModal({
   selectedDivision,
   phase
 }) {
- console.log("MatchProposalModal senderEmail:", senderEmail);
-console.log("MatchProposalModal player.email:", player?.email);
- // --- Draggable logic ---
+  console.log("MatchProposalModal phase prop:", phase);
+  // --- Draggable logic ---
   const [drag, setDrag] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -186,112 +185,94 @@ console.log("MatchProposalModal player.email:", player?.email);
 
   // --- Handlers ---
   const handleSend = () => {
-  // Debug: Log all fields being sent to backend
-  console.log("Submitting proposal:", {
-    sender: senderEmail,
-    receiver: player.email,
-    senderName: senderName,
-    receiverName: `${player.firstName} ${player.lastName}`,
-    date: date && date.toISOString ? date.toISOString().slice(0, 10) : date,
-    time: startTime,
-    location,
-    message,
-    gameType,
-    raceLength,
-    phase
-  });
+    // Defensive: Check for missing required fields
+    if (
+      !senderEmail ||
+      !player.email ||
+      !senderName ||
+      !player.firstName ||
+      !player.lastName ||
+      !date ||
+      !location ||
+      !phase
+    ) {
+      alert("Missing required fields. Please check all selections and try again.\n\n" +
+        `sender: ${senderEmail}\n` +
+        `receiver: ${player.email}\n` +
+        `senderName: ${senderName}\n` +
+        `receiverName: ${player.firstName} ${player.lastName}\n` +
+        `date: ${date}\n` +
+        `location: ${location}\n` +
+        `phase: ${phase}\n`
+      );
+      return;
+    }
 
-  // Defensive: Check for missing required fields
-  if (
-    !senderEmail ||
-    !player.email ||
-    !senderName ||
-    !player.firstName ||
-    !player.lastName ||
-    !date ||
-    !location ||
-    !phase
-  ) {
-    alert("Missing required fields. Please check all selections and try again.\n\n" +
-      `sender: ${senderEmail}\n` +
-      `receiver: ${player.email}\n` +
-      `senderName: ${senderName}\n` +
-      `receiverName: ${player.firstName} ${player.lastName}\n` +
-      `date: ${date}\n` +
-      `location: ${location}\n` +
-      `phase: ${phase}\n`
-    );
-    return;
-  }
+    const proposalMessage =
+      message && message.trim().length > 0
+        ? message
+        : `Hi ${player.firstName} ${player.lastName},\n${senderName} would like to schedule a match with you. `;
 
-  const proposalMessage =
-    message && message.trim().length > 0
-      ? message
-      : `Hi ${player.firstName} ${player.lastName},\n${senderName} would like to schedule a match with you. `;
-
-  const proposalData = {
-    to_email: player.email,
-    to_name: `${player.firstName} ${player.lastName}`,
-    from_name: senderName,
-    from_email: senderEmail,
-    day: selectedDay,
-    date: date.toISOString().slice(0, 10),
-    time: startTime,
-    location,
-    gameType,
-    raceLength,
-    note: proposalMessage,
-  };
-
-  // 1. Send the email as before
-  sendProposalEmail(proposalData)
-    .then(() => setShowConfirmation(true))
-    .catch(() => {
-      alert("Failed to send proposal email.");
-    });
-
-  // 2. ALSO save the proposal to your backend for dashboard tracking
-  fetch(`${BACKEND_URL}/api/proposals`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sender: senderEmail,
-      receiver: player.email,
-      senderName: senderName,
-      receiverName: `${player.firstName} ${player.lastName}`,
+    const proposalData = {
+      to_email: player.email,
+      to_name: `${player.firstName} ${player.lastName}`,
+      from_name: senderName,
+      from_email: senderEmail,
+      day: selectedDay,
       date: date.toISOString().slice(0, 10),
       time: startTime,
       location,
-      message: proposalMessage,
       gameType,
       raceLength,
-      phase,
-      division: selectedDivision 
-    }),
-  })
-    .then(res => res.json().then(async data => {
-      if (!res.ok) {
-        console.error("Backend returned error:", data);
-        alert(data.error || "Failed to save proposal to backend.");
-      } else {
-        console.log("Proposal saved!", data);
+      note: proposalMessage,
+    };
 
-        // Create Stream Chat channel for both players and admin
-        await createMatchChannel({
-          senderEmail: senderEmail,
-          senderName: senderName,
-          receiverEmail: player.email,
-          receiverName: `${player.firstName} ${player.lastName}`,
-          matchName: `Match: ${senderName} vs ${player.firstName} ${player.lastName}`
-        });
-      }
-    }))
-    .catch((err) => {
-      console.error("Failed to save proposal to backend:", err);
-      alert("Failed to save proposal to backend.");
-    });
-};
+    // 1. Send the email as before
+    sendProposalEmail(proposalData)
+      .then(() => setShowConfirmation(true))
+      .catch(() => {
+        alert("Failed to send proposal email.");
+      });
 
+    // 2. ALSO save the proposal to your backend for dashboard tracking
+    fetch(`${BACKEND_URL}/api/proposals`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sender: senderEmail,
+        receiver: player.email,
+        senderName: senderName,
+        receiverName: `${player.firstName} ${player.lastName}`,
+        date: date.toISOString().slice(0, 10),
+        time: startTime,
+        location,
+        message: proposalMessage,
+        gameType,
+        raceLength,
+        phase,
+        division: selectedDivision 
+      }),
+    })
+      .then(res => res.json().then(async data => {
+        if (!res.ok) {
+          console.error("Backend returned error:", data);
+          alert(data.error || "Failed to save proposal to backend.");
+        } else {
+          // Create Stream Chat channel for both players and admin
+          await createMatchChannel({
+            senderEmail: senderEmail,
+            senderName: senderName,
+            receiverEmail: player.email,
+            receiverName: `${player.firstName} ${player.lastName}`,
+            matchName: `Match: ${senderName} vs ${player.firstName} ${player.lastName}`
+          });
+        }
+      }))
+      .catch((err) => {
+        console.error("Failed to save proposal to backend:", err);
+        alert("Failed to save proposal to backend.");
+      });
+  };
 
   const handleConfirmationClose = () => {
     setShowConfirmation(false);
@@ -357,28 +338,45 @@ console.log("MatchProposalModal player.email:", player?.email);
             Propose a Match -BETA
           </h2>
         </div>
-        <div
-  style={{
-    margin: "0.5em 0 1.2em 0",
-    padding: "0.5em 1em",
-    background: phase === "challenge" ? "#e53935" : "#222",
-    color: "#fff",
-    borderRadius: "6px",
-    fontWeight: "bold",
-    fontSize: "1.1em",
-    letterSpacing: "0.5px",
-    display: "inline-block"
-  }}
->
-  {phase === "challenge" ? "Challenge Phase" : "Scheduled Match Phase"}
-</div>
-{phase === "challenge" && (
-  <div style={{ color: "#fff", fontSize: "0.95em", marginBottom: "1em" }}>
-    <em>
-      Challenge matches have special rules. You can challenge up to 4 spots above, and match/defense limits apply.
-    </em>
-  </div>
-)}
+        {/* Phase and Division display */}
+        <div style={{ display: "flex", alignItems: "center", marginBottom: "1em" }}>
+          <div
+            style={{
+              margin: "0.5em 0 0.5em 0",
+              padding: "0.5em 1em",
+              background: phase === "challenge" ? "#e53935" : "#222",
+              color: "#fff",
+              borderRadius: "6px",
+              fontWeight: "bold",
+              fontSize: "1.1em",
+              letterSpacing: "0.5px",
+              display: "inline-block"
+            }}
+          >
+            {phase === "challenge" ? "Challenge Phase" : "Scheduled Match Phase"}
+          </div>
+          {selectedDivision && (
+            <div
+              style={{
+                color: "#fff",
+                background: "#222",
+                borderRadius: "6px",
+                padding: "0.25em 1em",
+                marginLeft: "1em",
+                display: "inline-block"
+              }}
+            >
+              Division: <b>{selectedDivision}</b>
+            </div>
+          )}
+        </div>
+        {phase === "challenge" && (
+          <div style={{ color: "#fff", fontSize: "0.95em", marginBottom: "1em" }}>
+            <em>
+              Challenge matches have special rules. You can challenge up to 4 spots above, and match/defense limits apply.
+            </em>
+          </div>
+        )}
 
         {/* --- Modal Content --- */}
         <div className={styles["match-proposal-row"]}>
@@ -513,9 +511,9 @@ console.log("MatchProposalModal player.email:", player?.email);
         <ConfirmationModal
           open={showConfirmation}
           message="Your match proposal has been sent! The opponent will receive an email with all the details."
-           division= {selectedDivision}
-            phase={phase}
-           gameType={gameType}
+          division={selectedDivision}
+          phase={phase}
+          gameType={gameType}
           raceLength={raceLength}
           day={selectedDay}
           date={formatDateMMDDYYYY(date)}

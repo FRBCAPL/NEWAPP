@@ -223,12 +223,23 @@ export default function Dashboard({
     return () => { isMounted = false; };
   }, []);
 
-  useEffect(() => {
-    fetch(`${BACKEND_URL}/static/schedule.json`)
-      .then(res => res.json())
-      .then(data => setScheduledMatches(data))
-      .catch(() => setScheduledMatches([]));
-  }, []);
+ useEffect(() => {
+  if (!selectedDivision) {
+    setScheduledMatches([]);
+    return;
+  }
+  const safeDivision = selectedDivision.replace(/[^A-Za-z0-9]/g, '_');
+ const scheduleUrl = `${BACKEND_URL}/static/schedule_${safeDivision}.json`;
+
+  fetch(scheduleUrl)
+    .then(res => {
+      if (!res.ok) throw new Error("Schedule not found");
+      return res.json();
+    })
+    .then(data => setScheduledMatches(data))
+    .catch(() => setScheduledMatches([]));
+}, [selectedDivision]);
+
 
   const fullName = `${playerName} ${playerLastName}`.trim();
 
@@ -284,7 +295,7 @@ export default function Dashboard({
       .then(matches => {
         const scheduled = matches.filter(m => (m.phase === "scheduled" || !m.phase) && m.completed).length;
         setScheduledCompleted(scheduled);
-        setCurrentPhase(scheduled >= 6 ? "challenege" : "scheduled");
+        setCurrentPhase(scheduled >= 6 ? "challenge" : "scheduled");
       });
   }, [playerName, playerLastName, selectedDivision, upcomingMatches]);
 
@@ -590,7 +601,7 @@ export default function Dashboard({
 
           {/* Phase status */}
           <div style={{ marginBottom: 8, color: "#888" }}>
-            Phase: <b>{effectivePhase === "scheduled" ? "1 (Scheduled)" : "2 (challenge)"}</b>
+            Phase: <b>{effectivePhase === "scheduled" ? "1 (Scheduled)" : "2 (Challenge)"}</b>
             {effectivePhase === "scheduled" && (
               <> — {scheduledCompleted} of 6 matches completed</>
             )}
@@ -855,10 +866,10 @@ export default function Dashboard({
              
               <button
                 className={styles.dashboardAdminBtn}
-                onClick={() => setPhaseOverride(phaseOverride === "challenge" ? "scheduled" : "challenege")}
+                onClick={() => setPhaseOverride(phaseOverride === "challenge" ? "scheduled" : "challenge")}
                 type="button"
               >
-                {phaseOverride === "challenge" ? "Switch to Phase 1 (Scheduled)" : "Switch to Phase 2 (challenge)"}
+                {phaseOverride === "challenge" ? "Switch to Phase 1 (Scheduled)" : "Switch to Phase 2 (Challenge)"}
               </button>
               {phaseOverride && (
                 <button
@@ -925,6 +936,7 @@ export default function Dashboard({
           }}
           player={selectedOpponent}
           onProposeMatch={(day, slot) => {
+              console.log("Opening proposal modal with phase:", effectivePhase);
             setProposalData({
               player: selectedOpponent,
               day,
@@ -961,8 +973,7 @@ export default function Dashboard({
 
 
 
-      {/* Standings Modal */}
-      // ...other JSX...
+      
 
 {/* Standings Modal */}
 {console.log("selectedDivision:", selectedDivision)}

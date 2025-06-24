@@ -3,6 +3,7 @@ import { StreamChat } from "stream-chat";
 import { useNavigate } from "react-router-dom";
 import styles from './AdminDashboard.module.css';
 import userSearchStyles from './AdminUserSearch.module.css';
+import UnenteredMatchesModal from "./UnenteredMatchesModal";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 const apiKey = import.meta.env.VITE_STREAM_API_KEY;
@@ -566,6 +567,7 @@ export default function AdminDashboard() {
   const [selectedChannel, setSelectedChannel] = useState(null);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showUnenteredModal, setShowUnenteredModal] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -662,6 +664,25 @@ export default function AdminDashboard() {
             <UpdateStandingsButton backendUrl={BACKEND_URL} />
             <SyncUsersButton backendUrl={BACKEND_URL} />
             <ConvertDivisionsButton backendUrl={BACKEND_URL} />
+            <button
+              onClick={() => setShowUnenteredModal(true)}
+              style={{
+                background: "#222",
+                color: "#fff",
+                border: "none",
+                borderRadius: 5,
+                padding: "8px 16px",
+                fontWeight: "bold",
+                margin: "12px 0",
+                cursor: "pointer"
+              }}
+            >
+              View Unentered LMS Matches
+            </button>
+            <UnenteredMatchesModal
+              open={showUnenteredModal}
+              onClose={() => setShowUnenteredModal(false)}
+            />
           </div>
           <CreateDivisionForm backendUrl={BACKEND_URL} onDivisionCreated={() => {}} />
           <AdminUserSearch backendUrl={BACKEND_URL} />

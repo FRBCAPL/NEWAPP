@@ -55,7 +55,7 @@ function parseAvailability(str) {
  * @param {string} senderName - name of the user sending the proposal
  * @param {string} senderEmail - email of the user sending the proposal
  * @param {function} onProposalComplete - callback after proposal is sent
- * @param {string} phase - the selected phase ("phase1" or "phase2")
+ * @param {string} phase - the selected phase ("challenge" or "scheduled")
  */
 export default function PlayerSearch({
   onClose,
@@ -198,46 +198,44 @@ export default function PlayerSearch({
       )}
 
       {mode === "availability" && selectedPlayer && (
-       <PlayerAvailabilityModal
-  player={selectedPlayer}
-  onClose={onClose}
-  onProposeMatch={(day, slot, phaseValue, divisionValue) => {
-    setProposal({
-      player: selectedPlayer,
-      day,
-      slot,
-      phase: phaseValue,
-      selectedDivision: divisionValue || selectedDivision // fallback
-    });
-    setMode("proposal");
-  }}
-  phase={phase}
-  selectedDivision={selectedDivision}
-/>
-
+        <PlayerAvailabilityModal
+          player={selectedPlayer}
+          onClose={onClose}
+          onProposeMatch={(day, slot, phaseValue, divisionValue) => {
+            setProposal({
+              player: selectedPlayer,
+              day,
+              slot,
+              phase: phaseValue,
+              selectedDivision: divisionValue || selectedDivision // fallback
+            });
+            setMode("proposal");
+          }}
+          phase={phase}
+          selectedDivision={selectedDivision}
+        />
       )}
 
       {mode === "proposal" && proposal && (
         <>
           {console.log("proposal.phase", proposal.phase)}
-         <MatchProposalModal
-  player={proposal.player}
-  day={proposal.day}
-  slot={proposal.slot}
-  onClose={onClose}
-  senderName={senderName}
-  senderEmail={senderEmail}
-  onProposalComplete={() => {
-    setMode("search");
-    setProposal(null);
-    setSelectedPlayer(null);
-    if (onProposalComplete) onProposalComplete();
-    onClose();
-  }}
-  phase={proposal.phase === "phase2" ? "challenge" : "scheduled"}
-  selectedDivision={proposal.selectedDivision || selectedDivision}
-/>
-
+          <MatchProposalModal
+            player={proposal.player}
+            day={proposal.day}
+            slot={proposal.slot}
+            onClose={onClose}
+            senderName={senderName}
+            senderEmail={senderEmail}
+            onProposalComplete={() => {
+              setMode("search");
+              setProposal(null);
+              setSelectedPlayer(null);
+              if (onProposalComplete) onProposalComplete();
+              onClose();
+            }}
+            phase={proposal.phase}  // <-- FIXED: Pass phase directly!
+            selectedDivision={proposal.selectedDivision || selectedDivision}
+          />
         </>
       )}
     </>
