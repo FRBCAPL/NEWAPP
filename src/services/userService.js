@@ -2,7 +2,7 @@ import ApiService from './api';
 
 export const userService = {
   async getUser(idOrEmail) {
-    return ApiService.get(`/api/user/${encodeURIComponent(idOrEmail)}`);
+    return ApiService.get(`/api/users/${encodeURIComponent(idOrEmail)}`);
   },
 
   async syncUsers() {

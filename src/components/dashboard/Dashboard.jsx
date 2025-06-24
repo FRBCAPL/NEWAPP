@@ -280,6 +280,7 @@ export default function Dashboard({
     userService.getUser(senderEmail)
       .then(user => {
         let divs = [];
+        console.log('user.divisions', user.divisions); // Debug log
         if (user.divisions && user.divisions.length) {
           if (typeof user.divisions === "string") {
             divs = user.divisions.split(",").map(s => s.trim());
@@ -290,11 +291,6 @@ export default function Dashboard({
               user.divisions[0].includes(",")
             ) {
               divs = user.divisions[0].split(",").map(s => s.trim());
-            } else if (
-              typeof user.divisions[0] === "object" &&
-              user.divisions[0] !== null
-            ) {
-              divs = user.divisions.map(d => d.name || d);
             } else {
               divs = user.divisions;
             }
