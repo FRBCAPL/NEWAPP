@@ -666,6 +666,8 @@ export default function Dashboard({
                       });
                     }
                     const isCompleted = match.counterProposal && match.counterProposal.completed === true;
+                    // Defensive: treat as not completed if counterProposal is missing
+                    const actuallyCompleted = !!(match.counterProposal && match.counterProposal.completed === true);
                     return (
                       <li key={match._id || idx} className={styles.matchCard}>
                         <button
@@ -678,7 +680,7 @@ export default function Dashboard({
                           <span className={styles.matchCardDetail}>{formattedDate}</span>
                           <span className={styles.matchCardDetail}>{match.location}</span>
                         </button>
-                        {!isCompleted && (
+                        {!actuallyCompleted && (
                           <button
                             className={styles.dashboardBtn}
                             style={{ marginLeft: 12, minWidth: 120 }}

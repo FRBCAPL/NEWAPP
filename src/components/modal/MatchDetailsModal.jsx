@@ -168,7 +168,7 @@ export default function MatchDetailsModal({ open, onClose, match, onCompleted })
             </div>
           )}
         </div>
-        {!match.counterProposal?.completed && (
+        {!(match.counterProposal && match.counterProposal.completed) && (
           <button
             className={styles.modalActionBtn}
             onClick={handleMarkCompleted}
