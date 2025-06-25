@@ -250,7 +250,7 @@ export default function MatchProposalModal({
         gameType,
         raceLength,
         phase,
-        division: selectedDivision 
+        divisions: [selectedDivision]
       }),
     })
       .then(res => res.json().then(async data => {

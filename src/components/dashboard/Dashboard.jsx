@@ -683,10 +683,10 @@ export default function Dashboard({
               </div>
               <br /><br /><br />
               <ul className={styles.dashboardList}>
-                {(showAllMatches ? filteredUpcomingMatches : filteredUpcomingMatches.slice(0, 2)).length === 0 ? (
+                {(showAllMatches ? upcomingMatches : upcomingMatches.slice(0, 2)).length === 0 ? (
                   <li>No matches scheduled yet.</li>
                 ) : (
-                  (showAllMatches ? filteredUpcomingMatches : filteredUpcomingMatches.slice(0, 2)).map((match, idx) => {
+                  (showAllMatches ? upcomingMatches : upcomingMatches.slice(0, 2)).map((match, idx) => {
                     // Determine opponent and date based on match type
                     let opponent = '';
                     let formattedDate = '';
