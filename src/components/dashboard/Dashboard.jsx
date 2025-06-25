@@ -286,21 +286,13 @@ export default function Dashboard({
     userService.getUser(senderEmail)
       .then(user => {
         let divs = [];
-        console.log('user.divisions', user.divisions); // Debug log
-        if (user.divisions && user.divisions.length) {
-          if (typeof user.divisions === "string") {
-            divs = user.divisions.split(",").map(s => s.trim());
-          } else if (Array.isArray(user.divisions)) {
-            if (
-              user.divisions.length === 1 &&
-              typeof user.divisions[0] === "string" &&
-              user.divisions[0].includes(",")
-            ) {
-              divs = user.divisions[0].split(",").map(s => s.trim());
-            } else {
-              divs = user.divisions;
-            }
-          }
+        // Always expect user.divisions to be an array
+        if (Array.isArray(user.divisions)) {
+          divs = user.divisions.map(s => s.trim()).filter(Boolean);
+        } else if (typeof user.divisions === "string") {
+          divs = user.divisions.split(",").map(s => s.trim()).filter(Boolean);
+        } else {
+          divs = [];
         }
         setDivisions(divs);
       })

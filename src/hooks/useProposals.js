@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { proposalService } from '../services/proposalService';
 
+// This hook expects the backend to filter proposals using $in on 'divisions' array
 export const useProposals = (playerName, division) => {
   const [pendingProposals, setPendingProposals] = useState([]);
   const [sentProposals, setSentProposals] = useState([]);

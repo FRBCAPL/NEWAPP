@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { matchService } from '../services/matchService';
 
+// This hook expects the backend to filter matches using $in on 'divisions' array
 export const useMatches = (playerName, division) => {
   const [matches, setMatches] = useState([]);
   const [completedMatches, setCompletedMatches] = useState([]);
@@ -20,18 +21,14 @@ export const useMatches = (playerName, division) => {
       console.log('useMatches raw allMatches:', allMatches);
       console.log('useMatches raw completed:', completed);
       
-      // New logic: include both proposals and scheduled matches as upcoming
+      // Only include confirmed proposals as upcoming matches
       const upcoming = allMatches.filter(match => {
-        if (match.type === 'scheduled') return true;
-        if (match.type === 'proposal') {
-          return (
-            match.status && match.status.toLowerCase() === 'confirmed' &&
-            match.counterProposal &&
-            (!match.counterProposal.phase || match.counterProposal.phase.toLowerCase() === 'scheduled') &&
-            match.counterProposal.completed !== true
-          );
-        }
-        return false;
+        return (
+          match.status && match.status.toLowerCase() === 'confirmed' &&
+          match.counterProposal &&
+          (!match.counterProposal.phase || match.counterProposal.phase.toLowerCase() === 'scheduled') &&
+          match.counterProposal.completed !== true
+        );
       });
       // Completed: proposals that are confirmed and completed
       const completedMatches = allMatches.filter(match =>
