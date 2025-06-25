@@ -489,7 +489,7 @@ export default function Dashboard({
       const isCompleted = completedMatches.some(cm => {
         const cmPlayers = [cm.senderName?.trim().toLowerCase(), cm.receiverName?.trim().toLowerCase()];
         return (
-          cm.division === selectedDivision &&
+          Array.isArray(cm.divisions) && cm.divisions.includes(selectedDivision) &&
           cmPlayers.includes(fullName.toLowerCase()) &&
           cmPlayers.includes(schedOpponent?.trim().toLowerCase())
         );
@@ -501,7 +501,7 @@ export default function Dashboard({
         const backendMatch = upcomingMatches[i];
         const backendPlayers = [backendMatch.senderName?.trim().toLowerCase(), backendMatch.receiverName?.trim().toLowerCase()];
         if (
-          backendMatch.division === selectedDivision &&
+          Array.isArray(backendMatch.divisions) && backendMatch.divisions.includes(selectedDivision) &&
           backendPlayers.includes(fullName.toLowerCase()) &&
           backendPlayers.includes(schedOpponent?.trim().toLowerCase())
         ) {
