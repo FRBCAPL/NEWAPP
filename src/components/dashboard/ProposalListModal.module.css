@@ -17,19 +17,20 @@
   justify-content: center;
 }
 
-.proposalModalContent {
+.proposalListModalContent {
   background: #18181b;
   color: #fff;
   border: 2.5px solid var(--accent-red);
-  border-radius: 1.2rem;
+  border-radius: 18px;
   box-shadow: 0 0 32px var(--accent-red), 0 0 40px rgba(0,0,0,0.85);
-  max-width: 420px;
-  width: 95vw;
+  max-width: 600px;
+  width: auto;
+  min-width: 320px;
+  margin: 0 auto;
   animation: modalBounceIn 0.5s cubic-bezier(.21,1.02,.73,1.01);
   overflow: hidden;
   padding: 2rem 1.2rem 1.5rem 1.2rem;
   position: relative;
-  margin: 0 auto;
   font-family: inherit;
 }
 
@@ -72,8 +73,6 @@
    PROPOSAL LIST & CARDS
    =============================== */
 .proposalList {
-  max-height: 60vh;
-  overflow-y: auto;
   list-style: none;
   padding: 0;
   margin: 0;
@@ -122,18 +121,11 @@
 /* ===============================
    RESPONSIVE ENHANCEMENTS
    =============================== */
-@media (max-width: 500px) {
-  .proposalModalContent {
-    max-width: 99vw;
-    padding: 0.8rem 0.4rem 1rem 0.4rem;
-    border-radius: 0.7rem;
-    font-size: 0.97rem;
-  }
-  .proposalModalTitle {
-    font-size: 1.05rem;
-  }
-  .proposalCardButton {
-    font-size: 0.97rem;
-    padding: 0.7rem;
+@media (max-width: 700px) {
+  .proposalListModalContent {
+    max-width: 98vw;
+    min-width: 0;
+    width: auto;
+    padding: 1em 0.7em;
   }
 }

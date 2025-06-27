@@ -102,6 +102,18 @@ export const useMatches = (playerName, division) => {
     scheduledConfirmedMatches,
     loading,
     error,
-    refetch: fetchMatches
+    refetch: fetchMatches,
+    markMatchCompleted: (matchToComplete) => {
+      // Immediately update local state when a match is marked as completed
+      setMatches(prev => prev.filter(match => match._id !== matchToComplete._id));
+      setCompletedMatches(prev => {
+        const completedMatch = { ...matchToComplete };
+        if (!completedMatch.counterProposal) {
+          completedMatch.counterProposal = {};
+        }
+        completedMatch.counterProposal.completed = true;
+        return [...prev, completedMatch];
+      });
+    }
   };
 }; 

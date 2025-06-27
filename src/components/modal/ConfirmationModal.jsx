@@ -26,7 +26,7 @@ export default function ConfirmationModal({
     }}>
       <div style={{
         background: "#fff", color: "#222", borderRadius: "1.2rem",
-        minWidth: 320, maxWidth: 400, padding: "2rem 2.2rem",
+        minWidth: 320, maxWidth: 400, width: 'auto', margin: '0 auto', padding: "2rem 2.2rem",
         boxShadow: "0 0 24px #ff0000, 0 0 32px rgba(0,0,0,0.7)",
         textAlign: "center"
       }}>

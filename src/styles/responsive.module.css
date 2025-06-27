@@ -30,7 +30,6 @@ html, body, #root {
   min-height: 0;
   box-sizing: border-box;
   overflow-x: hidden;
-  overflow-y: auto;
   background: #000;
   color: #fff;
 }
@@ -152,7 +151,6 @@ body {
   height: calc(100% - 56px);
   margin-top: 56px;
   min-height: 0;
-  overflow: hidden;
 }
 
 .sidebar {

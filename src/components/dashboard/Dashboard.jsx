@@ -178,7 +178,6 @@ export default function Dashboard({
 
   // Phase logic
   const [currentPhase, setCurrentPhase] = useState("scheduled");
-  const [scheduledCompleted, setScheduledCompleted] = useState(0);
 
   const [scheduledMatches, setScheduledMatches] = useState([]);
   const [showOpponents, setShowOpponents] = useState(false);
@@ -196,11 +195,16 @@ export default function Dashboard({
   const [proposalData, setProposalData] = useState(null);
 
   const [players, setPlayers] = useState([]);
+  
+  // State to track matches to schedule count
+  const [numToSchedule, setNumToSchedule] = useState(0);
+  const [totalCompleted, setTotalCompleted] = useState(0);
+  const [currentPhaseTotal, setCurrentPhaseTotal] = useState(0);
 
   // Use custom hooks for proposals and matches
   const fullName = `${playerName} ${playerLastName}`.trim();
   const { pendingProposals, sentProposals, loading: proposalsLoading, refetch: refetchProposals } = useProposals(fullName, selectedDivision);
-  const { matches: upcomingMatches, completedMatches, scheduledConfirmedMatches, loading: matchesLoading, refetch: refetchMatches } = useMatches(fullName, selectedDivision);
+  const { matches: upcomingMatches, completedMatches, scheduledConfirmedMatches, loading: matchesLoading, refetch: refetchMatches, markMatchCompleted } = useMatches(fullName, selectedDivision);
 
   // DEBUG LOGGING - REMOVE AFTER FIXING
   console.log("upcomingMatches", upcomingMatches);
@@ -222,6 +226,96 @@ export default function Dashboard({
 
   // Use override if set
   const effectivePhase = phaseOverride || currentPhase;
+
+  // Calculate persistent counters that don't reset on page reload
+  useEffect(() => {
+    if (!playerName || !playerLastName || !selectedDivision) return;
+    
+    // Calculate total required matches from schedule
+    const playerSchedule = scheduledMatches.filter(
+      m => m.division === selectedDivision &&
+        ((m.player1 && m.player1.trim().toLowerCase() === fullName.toLowerCase()) ||
+        (m.player2 && m.player2.trim().toLowerCase() === fullName.toLowerCase()))
+    );
+    
+    // Debug: log the player schedule
+    console.log('Player schedule for', fullName, ':', playerSchedule);
+    
+    // Count total matches (not unique opponents) - each match in schedule counts as 1
+    const totalRequired = playerSchedule.length;
+    
+    // Debug: log the total matches
+    console.log('Total required matches for', fullName, ':', totalRequired);
+    
+    // Set total completed from backend data
+    setTotalCompleted(completedMatches.length);
+    
+    // Phase 1 (Scheduled): 6 matches, Phase 2 (Challenge): 4 matches
+    const phase1Matches = 6;
+    const phase2Matches = 4;
+    const totalPhaseMatches = phase1Matches + phase2Matches;
+    
+    // Determine current phase - only if no override is set
+    if (!phaseOverride) {
+      let currentPhaseName;
+      if (completedMatches.length >= totalPhaseMatches) {
+        currentPhaseName = "completed"; // All phases done
+      } else if (completedMatches.length >= phase1Matches) {
+        currentPhaseName = "challenge"; // Phase 2
+      } else {
+        currentPhaseName = "scheduled"; // Phase 1
+      }
+      
+      setCurrentPhase(currentPhaseName);
+    }
+    
+    // Calculate matches to schedule for current phase
+    // Consider both confirmed and completed matches
+    const confirmedMatches = upcomingMatches.filter(match => 
+      match.status === "confirmed" && 
+      match.counterProposal && 
+      match.counterProposal.completed !== true
+    );
+    const totalScheduledOrCompleted = confirmedMatches.length + completedMatches.length;
+    
+    let toSchedule;
+    let phaseTotal;
+    
+    // Use effectivePhase for calculations
+    if (effectivePhase === "completed") {
+      toSchedule = 0;
+      phaseTotal = totalPhaseMatches;
+    } else if (effectivePhase === "challenge") {
+      // Phase 2: remaining matches after Phase 1
+      const remainingInPhase2 = totalPhaseMatches - totalScheduledOrCompleted;
+      toSchedule = Math.max(0, remainingInPhase2);
+      phaseTotal = phase2Matches;
+    } else {
+      // Phase 1: remaining matches in Phase 1
+      const remainingInPhase1 = phase1Matches - totalScheduledOrCompleted;
+      toSchedule = Math.max(0, remainingInPhase1);
+      phaseTotal = phase1Matches;
+    }
+    
+    setNumToSchedule(toSchedule);
+    setCurrentPhaseTotal(phaseTotal);
+    
+    console.log('Persistent counters - Total required:', totalRequired, 'Total completed:', completedMatches.length, 'Confirmed (not completed):', confirmedMatches.length, 'Total scheduled/completed:', totalScheduledOrCompleted, 'To schedule:', toSchedule, 'Phase:', effectivePhase, 'Phase total:', phaseTotal);
+  }, [playerName, playerLastName, selectedDivision, scheduledMatches, completedMatches, upcomingMatches, phaseOverride, effectivePhase]);
+
+  // Calculate total required matches for display
+  const totalRequiredMatches = (() => {
+    if (!playerName || !playerLastName || !selectedDivision) return 0;
+    
+    const playerSchedule = scheduledMatches.filter(
+      m => m.division === selectedDivision &&
+        ((m.player1 && m.player1.trim().toLowerCase() === fullName.toLowerCase()) ||
+        (m.player2 && m.player2.trim().toLowerCase() === fullName.toLowerCase()))
+    );
+    
+    // Count total matches (not unique opponents) - each match in schedule counts as 1
+    return playerSchedule.length;
+  })();
 
   useEffect(() => {
     let isMounted = true;
@@ -308,41 +402,6 @@ export default function Dashboard({
       setSelectedDivision("");
     }
   }, [divisions]);
-
-  // SCHEDULED MATCH COUNT LOGIC: useEffect that depends on both scheduledMatches and upcomingMatches
-  useEffect(() => {
-    if (!playerName || !playerLastName || !selectedDivision) return;
-    // SCHEDULED MATCHES LOGIC
-    const fullName = `${playerName} ${playerLastName}`.trim();
-    const playerSchedule = scheduledMatches.filter(
-      m => m.division === selectedDivision &&
-        ((m.player1 && m.player1.trim().toLowerCase() === fullName.toLowerCase()) ||
-        (m.player2 && m.player2.trim().toLowerCase() === fullName.toLowerCase()))
-    );
-    const requiredOpponents = playerSchedule.map(m =>
-      m.player1 && m.player1.trim().toLowerCase() === fullName.toLowerCase()
-        ? m.player2
-        : m.player1
-    );
-    const uniqueOpponents = Array.from(new Set(requiredOpponents.map(o => o.trim().toLowerCase())));
-    let scheduledCount = 0;
-    uniqueOpponents.forEach(opponentName => {
-      const hasScheduledMatch = upcomingMatches.some(m =>
-        m.division === selectedDivision &&
-        (
-          (m.senderName && m.senderName.trim().toLowerCase() === fullName.toLowerCase() &&
-           m.receiverName && m.receiverName.trim().toLowerCase() === opponentName) ||
-          (m.receiverName && m.receiverName.trim().toLowerCase() === fullName.toLowerCase() &&
-           m.senderName && m.senderName.trim().toLowerCase() === opponentName)
-        ) &&
-        (m.phase === "scheduled" || !m.phase) &&
-        !["declined", "canceled"].includes(m.status)
-      );
-      if (hasScheduledMatch) scheduledCount++;
-    });
-    setScheduledCompleted(scheduledCount);
-    setCurrentPhase(scheduledCount >= 6 ? "challenge" : "scheduled");
-  }, [playerName, playerLastName, selectedDivision, scheduledMatches, upcomingMatches]);
 
   useEffect(() => {
     setLoadingNotes(true);
@@ -482,6 +541,12 @@ export default function Dashboard({
   function getMatchesToSchedule() {
     const usedConfirmed = new Set();
     const matchesToSchedule = [];
+    
+    // Debug logging
+    console.log('getMatchesToSchedule - playerSchedule:', playerSchedule.length);
+    console.log('getMatchesToSchedule - completedMatches:', completedMatches.length);
+    console.log('getMatchesToSchedule - upcomingMatches:', upcomingMatches.length);
+    
     for (const schedMatch of playerSchedule) {
       // Skip if this scheduled match is already completed
       const schedOpponent = schedMatch.player1 && schedMatch.player1.trim().toLowerCase() === fullName.toLowerCase()
@@ -494,7 +559,10 @@ export default function Dashboard({
           cmPlayers.includes(schedOpponent?.trim().toLowerCase())
         );
       });
-      if (isCompleted) continue; // Don't count this match if completed
+      if (isCompleted) {
+        console.log('Skipping completed match with opponent:', schedOpponent);
+        continue; // Don't count this match if completed
+      }
       let found = false;
       for (let i = 0; i < upcomingMatches.length; i++) {
         if (usedConfirmed.has(i)) continue;
@@ -514,11 +582,12 @@ export default function Dashboard({
         matchesToSchedule.push(schedMatch);
       }
     }
+    
+    console.log('getMatchesToSchedule - final count:', matchesToSchedule.length);
     return matchesToSchedule;
   }
 
   const matchesToSchedule = getMatchesToSchedule();
-  const numToSchedule = matchesToSchedule.length;
 
   // Prepare the opponents list for the modal (only for uncompleted matches)
   const opponentsToSchedule = matchesToSchedule.map(m =>
@@ -551,9 +620,15 @@ export default function Dashboard({
   }
 
   function handleScheduleMatch() {
+    console.log("🚀 handleScheduleMatch called - effectivePhase:", effectivePhase);
+    console.log("🚀 handleScheduleMatch called - phaseOverride:", phaseOverride);
+    console.log("🚀 handleScheduleMatch called - currentPhase:", currentPhase);
+    
     if (effectivePhase === "scheduled") {
+      console.log("🚀 Opening Opponents Modal (Phase 1)");
       setShowOpponents(true);
     } else {
+      console.log("🚀 Opening PlayerSearch Modal (Phase 2)");
       setShowPlayerSearch(true);
     }
   }
@@ -568,7 +643,13 @@ export default function Dashboard({
   console.log('filteredUpcomingMatches:', filteredUpcomingMatches);
 
   return (
-    <div className={styles.dashboardBg}>
+  
+  
+  
+  
+  
+  
+  <div className={styles.dashboardBg}>
       <div className={styles.dashboardFrame}>
         <div className={styles.dashboardCard}>
           <h1 className={styles.dashboardTitle}>
@@ -602,9 +683,9 @@ export default function Dashboard({
 
           {/* --- Completed Matches Count (above upcoming matches area) --- */}
           <div style={{ marginBottom: 8, color: "#888", fontWeight: 500 }}>
-            {completedMatches.length === 0
+            {totalCompleted === 0
               ? "No matches completed yet!"
-              : `${completedMatches.length} matches completed.`}
+              : `${totalCompleted} matches completed.`}
           </div>
 
           {/* --- Upcoming Matches Section --- */}
@@ -775,8 +856,15 @@ export default function Dashboard({
                               onClick={async () => {
                                 try {
                                   await proposalService.markCompleted(match._id);
-                                  refetchMatches();
-                                  refetchProposals();
+                                  // Immediately update local state to fix counter issues
+                                  markMatchCompleted(match);
+                                  
+                                  // Only update completed counter - matches to schedule was already updated when confirmed
+                                  setTotalCompleted(prev => prev + 1);
+                                  
+                                  // Temporarily comment out refetch to debug
+                                  // refetchMatches();
+                                  // refetchProposals();
                                 } catch (err) {
                                   alert("Failed to mark as completed. Please try again.");
                                 }
@@ -809,13 +897,16 @@ export default function Dashboard({
                 <div style={{ marginBottom: 8, color: "#888", fontWeight: 500 }}>
                   {numToSchedule === 0
                     ? "All required matches are scheduled!"
-                    : `You have ${numToSchedule} of ${playerSchedule.length} matches left to schedule.`}
+                    : `You have ${numToSchedule} of ${currentPhaseTotal} matches left to schedule.`}
                 </div>
                 <button
                   className={styles.dashboardBtn}
                   type="button"
                   style={{ marginTop: 8 }}
-                  onClick={handleScheduleMatch}
+                  onClick={() => {
+                    console.log("🔘 Schedule Match button clicked!");
+                    handleScheduleMatch();
+                  }}
                 >
                   Schedule a Match
                 </button>
@@ -972,16 +1063,19 @@ export default function Dashboard({
 
       {/* Player Search Modal (Phase 2) */}
     {showPlayerSearch && (
-  <PlayerSearch
-    onClose={() => setShowPlayerSearch(false)}
-    excludeName={fullName}
-    senderName={fullName}
-    senderEmail={senderEmail}
-    selectedDivision={selectedDivision}
-    phase={effectivePhase}
-    onProposalComplete={() => setShowPlayerSearch(false)}
-  />
-)}
+      <>
+        {console.log("🔍 PlayerSearch Modal Opening - Phase:", effectivePhase)}
+        <PlayerSearch
+          onClose={() => setShowPlayerSearch(false)}
+          excludeName={fullName}
+          senderName={fullName}
+          senderEmail={senderEmail}
+          selectedDivision={selectedDivision}
+          phase={effectivePhase}
+          onProposalComplete={() => setShowPlayerSearch(false)}
+        />
+      </>
+    )}
 
 {showAdminPlayerSearch && (
   <PlayerSearch

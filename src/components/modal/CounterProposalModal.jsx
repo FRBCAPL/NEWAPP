@@ -25,7 +25,7 @@ export default function CounterProposalModal({ proposal, open, onClose, onSubmit
   // Modal JSX to be rendered in portal
   const modal = (
     <div className={styles.counterProposalOverlay}>
-      <div className={styles.modalContent} style={{ maxWidth: 420, margin: "auto" }}>
+      <div className={styles.modalContent} style={{ maxWidth: 400, width: 'auto', minWidth: 320, margin: '0 auto' }}>
         <h2>Counter-Propose Match</h2>
         <div className={styles.detailRow}>
           <label>Date:</label>

@@ -31,12 +31,11 @@
   box-shadow: var(--modal-shadow);
   padding: 18px 14px 14px 14px;
   min-width: 250px;
-  max-width: 400px;
-  width: 95vw;
+  max-width: 600px;
+  width: auto;
+  margin: 0 auto;
   font-family: 'Segoe UI', Arial, sans-serif;
   animation: modalIn 0.22s cubic-bezier(.45,1.8,.5,1) both;
-  max-height: 90vh;
-  overflow-y: auto;
   text-align: center;
 }
 

@@ -19,27 +19,26 @@
 }
 
 .pinLoginFrame {
-  display: flex;           /* <-- Add this line! */
-  flex-direction: column;  /* Stack children vertically */
-  align-items: center;     /* Center horizontally */
-  justify-content: center; /* Center vertically if you want */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   background: #000;
   padding: 6px;
   border-radius: 16px;
-  width: 100%;
-  max-width: 600px;
+  width: auto;
+  max-width: 400px;
   box-sizing: border-box;
-  margin: auto;
+  margin: 0 auto;
 }
 
-
 .pinLoginCard {
-  width: 100%;
-  max-width: 600px;
+  width: auto;
+  max-width: 400px;
   margin: 0 auto;
   padding: 1.5rem 1.2rem;
   background: #111;
-   border-radius: 20px; 
+  border-radius: 20px;
   border: 4px solid #e53e3e;
   box-shadow: 0 4px 32px #08080822, 0 0 16px #00000011;
   display: flex;
@@ -47,8 +46,6 @@
   align-items: center;
   box-sizing: border-box;
 }
-
-
 
 .simulationOuterWrapper {
   width: 100%;
@@ -79,11 +76,6 @@
   display: block;
 }
 
-
-
-
-
-
 .tableImg {
   width: 100%;
   height: 100%;
@@ -97,7 +89,6 @@
   border-radius: 10px;
   box-sizing: border-box;
 }
-
 
 /* ========== Headings ========== */
 .pinLoginTitle {

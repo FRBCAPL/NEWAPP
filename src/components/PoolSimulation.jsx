@@ -545,6 +545,18 @@ export default function PoolSimulation() {
   }
 
   // --- Render ---
+  // Felt bounds for logo overlay
+  const FELT_LEFT = 18.25;
+  const FELT_RIGHT = 570.77;
+  const FELT_TOP = 20.20;
+  const FELT_BOTTOM = 270.18;
+  // Add a margin inside the felt for the logo
+  const LOGO_MARGIN = 28; // px, adjust for realism
+  const logoLeft = FELT_LEFT + LOGO_MARGIN;
+  const logoTop = FELT_TOP + LOGO_MARGIN;
+  const logoWidth = (FELT_RIGHT - FELT_LEFT) - LOGO_MARGIN * 2;
+  const logoHeight = (FELT_BOTTOM - FELT_TOP) - LOGO_MARGIN * 2;
+
   return (
     <div
       style={{
@@ -573,24 +585,24 @@ export default function PoolSimulation() {
           filter: 'opacity(1) contrast(1.25) brightness(1.18)'
         }}
       />
-      {/* Centered Words, scaled */}
-      <div
+      {/* Logo overlay, fits felt area with margin */}
+      <img
+        src={logoImg}
+        alt="League Logo"
         style={{
           position: "absolute",
-          left: 0,
-          top: 0,
-          width: "100%",
-          height: "100%",
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          pointerEvents: "none",
-          userSelect: "none",
+          left: logoLeft,
+          top: logoTop,
+          width: logoWidth,
+          height: logoHeight,
+          objectFit: "contain",
           zIndex: 2,
+          opacity: 0.55,
+          filter: 'drop-shadow(0 2px 8px #000)',
+          pointerEvents: "none",
+          userSelect: "none"
         }}
-      >
-        <img src={logoImg} alt="League Logo" style={{ maxWidth: 320, maxHeight: 120, width: '100%', height: 'auto', filter: 'drop-shadow(0 2px 8px #000)', opacity: 0.55 }} />
-      </div>
+      />
       {BALLS.map(ball =>
         <img
           key={ball.key}

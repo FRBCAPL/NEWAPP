@@ -196,22 +196,39 @@ function ConvertDivisionsButton({ backendUrl }) {
 function UpdateStandingsButton({ backendUrl }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
+  const [detailedOutput, setDetailedOutput] = useState("");
+  
   const handleUpdate = async () => {
     setLoading(true);
     setResult("");
+    setDetailedOutput("");
+    
     try {
       const res = await fetch(`${backendUrl}/admin/update-standings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
       const data = await res.json();
-      if (res.ok) setResult("✅ Standings updated successfully!");
-      else setResult("❌ Update failed: " + (data.error || "Unknown error"));
+      
+      if (res.ok) {
+        setResult("✅ All standings updated successfully!");
+        // Show detailed output if available
+        if (data.message && data.message.includes("Scraping Summary")) {
+          setDetailedOutput(data.message);
+        }
+      } else {
+        setResult("❌ Update failed: " + (data.error || "Unknown error"));
+        if (data.error) {
+          setDetailedOutput(data.error);
+        }
+      }
     } catch (err) {
-      setResult("❌ Update failed.");
+      setResult("❌ Update failed: Network error");
+      setDetailedOutput(err.message);
     }
     setLoading(false);
   };
+  
   return (
     <div style={{ margin: "12px 0" }}>
       <button
@@ -227,9 +244,22 @@ function UpdateStandingsButton({ backendUrl }) {
           fontWeight: "bold"
         }}
       >
-        {loading ? "Updating Standings..." : "Update Standings"}
+        {loading ? "🔄 Updating All Standings..." : "📊 Update All Standings"}
       </button>
-      {result && <div style={{ marginTop: 8 }}>{result}</div>}
+      {result && <div style={{ marginTop: 8, fontWeight: "bold" }}>{result}</div>}
+      {detailedOutput && (
+        <div style={{ 
+          marginTop: 8, 
+          padding: 8, 
+          backgroundColor: "#f5f5f5", 
+          borderRadius: 4,
+          fontSize: "0.9em",
+          whiteSpace: "pre-wrap",
+          fontFamily: "monospace"
+        }}>
+          {detailedOutput}
+        </div>
+      )}
     </div>
   );
 }

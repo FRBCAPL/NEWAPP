@@ -457,6 +457,7 @@ export default function PoolSimulation() {
           lineHeight: 1.1,
           fontWeight: "bold",
           color: "#000",
+          fontSize: "0.45rem",
           textShadow: `
             1px 0 0 #ff0000,
             -1px 0 0 #ff0000,

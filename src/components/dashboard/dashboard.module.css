@@ -7,6 +7,9 @@
   --admin-orange-dark: #e07b00;
   --white: #fff;
   --gray: #a1a1aa;
+  --standings-modal-max-width: 1200px;
+  --standings-modal-min-width: 400px;
+  --standings-modal-height: 88vh;
 }
 
 /* ===============================
@@ -32,10 +35,7 @@
   border-radius: 24px;
   box-sizing: border-box;
   overflow-x: auto;
-  overflow-y: auto;
 }
-
-
 
 .dashboardCard {
   width: 100%;
@@ -49,7 +49,6 @@
   display: flex;
   flex-direction: column;
   gap: .0rem;
-  overflow-y: auto;
   box-sizing: border-box;
   animation: fadeInUp 0.6s ease forwards;
   transition: box-shadow 0.3s, transform 0.3s;
@@ -100,8 +99,6 @@
   z-index: 1;
 }
 
-
-
 .dashboardSectionTitle {
   font-size: 1.2rem;
   color: var(--accent-red);
@@ -125,9 +122,7 @@
   flex: 1 1 auto;
   min-height: 0;
   padding-bottom: 1em;
-  overflow: visible;
 }
-
 
 /* ===============================
    LISTS
@@ -357,15 +352,16 @@
   70% { opacity: 1; transform: scale(1.02) translateY(8px);}
   100% { opacity: 1; transform: scale(1) translateY(0);}
 }
-.modalContent {
+.dashboardModalContent {
   background: #232323;
   color: #fff;
   border: 2px solid var(--accent-red);
   border-radius: 1.2rem;
   box-shadow: 0 0 32px var(--accent-red), 0 0 40px rgba(0,0,0,0.85);
-  max-width: 900px;
-  width: 96vw;
-  height: 85vh;
+  max-width: 600px;
+  width: auto;
+  min-width: 320px;
+  height: 70vh;
   display: flex;
   flex-direction: column;
   animation: modalBounceIn 0.5s cubic-bezier(.21,1.02,.73,1.01);
@@ -527,7 +523,7 @@
     font-size: 0.95rem;
     margin-right: 0.5em;
   }
-  .modalContent {
+  .dashboardModalContent {
     max-width: 99vw;
     border-radius: 0.7rem;
     height: 90vh;
@@ -572,15 +568,11 @@
     font-size: 0.92rem;
     margin-right: 0.3em;
   }
-  .modalContent {
+  .dashboardModalContent {
     border-radius: 0.5rem;
     font-size: 0.97rem;
   }
 }
-
-
-
-
 
 /* Responsive Modal */
 
@@ -601,20 +593,6 @@
   margin-bottom: -0.1em;
   display: inline-block;
 }
-/* Ensures the modal is large enough */
-.modalContent {
-  width: 90vw;
-  max-width: 900px;
-  min-width: 320px;
-  height: 80vh;
-  max-height: 90vh;
-  min-height: 400px;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  /* ...other styles... */
-}
-
 /* Wrapper for iframe to fill available space */
 .iframeWrapper {
   flex: 1 1 auto;
@@ -630,9 +608,9 @@
 .modalIframe {
   width: 100%;
   height: 100%;
-  border: none;
+  min-width: var(--standings-modal-min-width);
   min-height: 300px;
-  min-width: 200px;
+  border: none;
   background: #fff;
   flex: 1 1 auto;
   z-index: 2;
@@ -648,8 +626,8 @@
   border: 2.5px solid var(--accent-red);
   border-radius: 1.2rem;
   box-shadow: 0 0 32px var(--accent-red), 0 0 40px rgba(0,0,0,0.85);
-  max-width: 420px;
-  width: 95vw;
+  max-width: 600px;
+  width: auto;
   animation: modalBounceIn 0.5s cubic-bezier(.21,1.02,.73,1.01);
   overflow: hidden;
   padding: 2rem 1.2rem 1.5rem 1.2rem;
@@ -747,24 +725,7 @@
   align-items: center;
   justify-content: center;
 }
-.modalOverlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.45);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.modalContent {
-  background: #fff;
-  padding: 2rem 1.5rem 1.5rem 1.5rem;
-  border-radius: 10px;
-  min-width: 320px;
-  max-width: 95vw;
-  box-shadow: 0 8px 32px #0002;
-  position: relative;
-}
+
 .closeBtn {
   position: absolute;
   right: 1rem;
@@ -782,10 +743,7 @@
 }
 .proposalList {
   max-height: 60vh;
-  overflow-y: auto;
 }
-
-
 
 .proposalCard {
   margin: 0 0 1rem 0;
@@ -823,7 +781,6 @@
   margin: 0 0 0.0rem 0; /* Less space above/below the row */
   justify-content: flex-start;
 }
-
 
 .proposalAlertButton {
    padding-top: 0em; 
@@ -877,4 +834,10 @@
     height: 38px;
     padding: 8px 0;
   }
+}
+
+.dashboardModalContent.standingsModalContent {
+  max-width: 1200px !important;
+  min-width: 900px;
+  height: var(--standings-modal-height);
 }

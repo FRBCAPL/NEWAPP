@@ -4,6 +4,11 @@ import styles from './OpponentsModal.module.css';
 export default function OpponentsModal({ open, onClose, opponents, onOpponentClick, phase }) {
   if (!open) return null;
 
+  // Helper to capitalize first letter of each word
+  function capitalizeName(name) {
+    return name.replace(/\b\w/g, c => c.toUpperCase());
+  }
+
   return (
     <div className={styles.opponentModalOverlay} onClick={onClose}>
       <div className={styles.opponentModalBox} onClick={e => e.stopPropagation()}>
@@ -29,7 +34,7 @@ export default function OpponentsModal({ open, onClose, opponents, onOpponentCli
                 }}
                 title={`View ${opponent}'s availability`}
               >
-                <strong>{opponent}</strong>
+                <strong>{capitalizeName(opponent)}</strong>
               </li>
             ))
           )}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import FocusTrap from "focus-trap-react";
-import styles from '../../styles/Modal.module.css';
+import styles from './dashboard.module.css';
 
 export default function StandingsModal({ open, onClose, standingsUrl }) {
   // Spinner state
@@ -63,7 +63,7 @@ export default function StandingsModal({ open, onClose, standingsUrl }) {
     <div className={styles.modalOverlay} onClick={onClose}>
       <FocusTrap>
         <div
-          className={styles.modalContent}
+          className={`${styles.dashboardModalContent} ${styles.standingsModalContent}`}
           style={{
             transform: `translate(${drag.x}px, ${drag.y}px)`,
             cursor: dragging ? "grabbing" : "default",

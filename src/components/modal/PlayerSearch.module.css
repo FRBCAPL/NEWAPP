@@ -48,6 +48,18 @@
   text-align: center;
 }
 
+.playerSearchPhaseIndicator {
+  background: #2a0909;
+  border: 1px solid var(--chat-red);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+  color: #ffecb3;
+  font-size: 0.9rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(229, 57, 53, 0.2);
+}
+
 .playerSearchClose {
   position: absolute;
   top: 1rem;
