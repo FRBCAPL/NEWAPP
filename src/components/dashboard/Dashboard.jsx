@@ -153,6 +153,7 @@ export default function Dashboard({
   onScheduleMatch,
   senderEmail,
 }) {
+  // State for user data
   const [divisions, setDivisions] = useState([]);
   const [selectedDivision, setSelectedDivision] = useState("");
   const [showStandings, setShowStandings] = useState(false);
@@ -205,12 +206,6 @@ export default function Dashboard({
   const fullName = `${playerName} ${playerLastName}`.trim();
   const { pendingProposals, sentProposals, loading: proposalsLoading, refetch: refetchProposals } = useProposals(fullName, selectedDivision);
   const { matches: upcomingMatches, completedMatches, scheduledConfirmedMatches, loading: matchesLoading, refetch: refetchMatches, markMatchCompleted } = useMatches(fullName, selectedDivision);
-
-  // DEBUG LOGGING - REMOVE AFTER FIXING
-  console.log("upcomingMatches", upcomingMatches);
-  console.log("completedMatches", completedMatches);
-  console.log("pendingProposals", pendingProposals);
-  console.log("sentProposals", sentProposals);
 
   // Proposal counts for instant UI update
   const [pendingCount, setPendingCount] = useState(0);
@@ -286,8 +281,9 @@ export default function Dashboard({
       toSchedule = 0;
       phaseTotal = totalPhaseMatches;
     } else if (effectivePhase === "challenge") {
-      // Phase 2: remaining matches after Phase 1
-      const remainingInPhase2 = totalPhaseMatches - totalScheduledOrCompleted;
+      // Phase 2: remaining matches in Phase 2 only
+      const completedInPhase1 = Math.min(completedMatches.length, phase1Matches);
+      const remainingInPhase2 = phase2Matches - (completedMatches.length - completedInPhase1);
       toSchedule = Math.max(0, remainingInPhase2);
       phaseTotal = phase2Matches;
     } else {
@@ -600,6 +596,7 @@ export default function Dashboard({
     const playerObj = players.find(
       p => `${p.firstName} ${p.lastName}`.trim().toLowerCase() === opponentName.trim().toLowerCase()
     );
+    
     if (!playerObj) {
       alert("Player data not found for: " + opponentName);
       return;
@@ -678,6 +675,17 @@ export default function Dashboard({
                   <span style={{ fontWeight: 600 }}>{divisions[0]}</span>
                 )}
               </label>
+              &nbsp;&nbsp;&nbsp;
+              <span style={{ 
+                fontSize: "0.9em", 
+                padding: "4px 8px", 
+                borderRadius: "4px", 
+                backgroundColor: effectivePhase === "challenge" ? "#e53e3e" : "#28a745",
+                color: "white",
+                fontWeight: "600"
+              }}>
+                Phase {effectivePhase === "challenge" ? "2" : effectivePhase === "scheduled" ? "1" : "Complete"}
+              </span>
             </div>
           )}
 
@@ -685,7 +693,7 @@ export default function Dashboard({
           <div style={{ marginBottom: 8, color: "#888", fontWeight: 500 }}>
             {totalCompleted === 0
               ? "No matches completed yet!"
-              : `${totalCompleted} matches completed.`}
+              : `${totalCompleted} of ${totalRequiredMatches} matches completed.`}
           </div>
 
           {/* --- Upcoming Matches Section --- */}
@@ -1007,6 +1015,25 @@ export default function Dashboard({
             Logout
           </button>
 
+          {/* TEMPORARY TEST BUTTON */}
+          <button
+            style={{
+              background: "#28a745",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              padding: "0.7rem 1.4rem",
+              margin: "10px",
+              cursor: "pointer"
+            }}
+            onClick={() => {
+              console.log("FORCE OPENING MODAL");
+              setShowOpponents(true);
+            }}
+          >
+            FORCE OPEN MODAL
+          </button>
+
           {userPin === "777777" && (
             <>
               <button
@@ -1051,14 +1078,13 @@ export default function Dashboard({
 {console.log("selectedDivision", selectedDivision)}
       {/* Opponents Modal */}
      <OpponentsModal
-     
-  open={showOpponents}
-  
-  onClose={() => setShowOpponents(false)}
-  opponents={opponentsToSchedule}
-  onOpponentClick={handleOpponentClick}
-  phase={effectivePhase}
-/>
+      open={showOpponents}
+      onClose={() => setShowOpponents(false)}
+      opponents={opponentsToSchedule}
+      onOpponentClick={handleOpponentClick}
+      phase={effectivePhase}
+     />
+     {console.log("🎯 OpponentsModal render - open:", showOpponents, "opponents:", opponentsToSchedule.length)}
 
 
       {/* Player Search Modal (Phase 2) */}

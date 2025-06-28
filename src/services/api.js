@@ -3,6 +3,8 @@ const API_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 class ApiService {
   static async request(endpoint, options = {}) {
     const url = `${API_BASE}${endpoint}`;
+    console.log('🌐 API call to:', url);
+    
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -11,11 +13,16 @@ class ApiService {
       ...options,
     });
     
+    console.log('🌐 API response status:', response.status);
+    
     if (!response.ok) {
+      console.error('🌐 API error:', response.status, response.statusText);
       throw new Error(`API Error: ${response.status}`);
     }
     
-    return response.json();
+    const data = await response.json();
+    console.log('🌐 API response data:', data);
+    return data;
   }
 
   static get(endpoint) {

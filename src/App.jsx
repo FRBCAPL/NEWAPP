@@ -11,6 +11,7 @@ import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
 import csiLogo from "./assets/csi_logo.png";
 import usaplLogo from "./assets/usapl_logo.png";
+import fargorateLogo from "./assets/fargorate-logo.png";
 import "./styles/variables.css";
 import "./styles/global.css";
 
@@ -42,7 +43,7 @@ function BackgroundLogo() {
   const [vh, setVh] = useState(window.innerHeight);
   const logoW = 120, logoH = 120; // Use the largest logo size for safety
   // Generate random configs for each logo on mount
-  const [randomConfigs] = useState(() => [0,1,2,3].map(() => {
+  const [randomConfigs] = useState(() => [0,1,2,3,4].map(() => {
     // Clamp radii so logos never go off screen
     const maxRx = (vw / 2) - (logoW / 2) - 10;
     const maxRy = (vh / 2) - (logoH / 2) - 10;
@@ -102,6 +103,7 @@ function BackgroundLogo() {
   const bcapl = useRandomFloatingLogoPath(randomConfigs[1]);
   const csi = useRandomFloatingLogoPath(randomConfigs[2]);
   const usapl = useRandomFloatingLogoPath(randomConfigs[3]);
+  const fargorate = useRandomFloatingLogoPath(randomConfigs[4]);
 
   // Helper for style
   const logoStyle = (logo, width, opacity, filter) => ({
@@ -127,6 +129,8 @@ function BackgroundLogo() {
       <img src={csiLogo} alt="CSI Logo Background" style={logoStyle(csi, 120, 0.40, "drop-shadow(0 0 12px #e53e3e44)")} />
       {/* USAPL Logo: adjust opacity (third argument) below */}
       <img src={usaplLogo} alt="USAPL Logo Background" style={logoStyle(usapl, 140, 0.50, "drop-shadow(0 0 10px #e53e3e33)")} />
+      {/* Fargorate Logo: adjust opacity (third argument) below */}
+      <img src={fargorateLogo} alt="Fargorate Logo Background" style={logoStyle(fargorate, 140, 0.50, "drop-shadow(0 0 10px #e53e3e33)")} />
     </>
   );
 }

@@ -11,12 +11,16 @@ export const useMatches = (playerName, division) => {
 
   const fetchMatches = async () => {
     try {
+      console.log('🔄 fetchMatches called with playerName:', playerName, 'division:', division);
       setLoading(true);
+      
+      console.log('🔄 About to call matchService.getAllMatches...');
       const [allMatches, completed] = await Promise.all([
         matchService.getAllMatches(playerName, division),
         matchService.getCompletedMatches(playerName, division)
       ]);
       
+      console.log('🔄 API calls completed');
       // Debug: log raw backend data
       console.log('useMatches raw allMatches:', allMatches);
       console.log('useMatches raw completed:', completed);

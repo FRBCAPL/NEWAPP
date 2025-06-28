@@ -9,11 +9,14 @@ const API_KEY = import.meta.env.VITE_GOOGLE_SHEETS_API_KEY;
  * @returns {Promise<Array>} - Array of rows (arrays of cell values)
  */
 export default async function fetchSheetData(sheetID, range) {
-  if (!API_KEY) throw new Error("Google Sheets API key is missing.");
+  if (!API_KEY) {
+    console.error("Google Sheets API key is missing. Please set VITE_GOOGLE_SHEETS_API_KEY environment variable.");
+    throw new Error("Google Sheets API key is missing.");
+  }
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetID}/values/${encodeURIComponent(
     range
   )}?key=${API_KEY}`;
+  
   const response = await axios.get(url);
   return response.data.values; // Array of rows
 }
-console.log("API_KEY from env:", API_KEY);
