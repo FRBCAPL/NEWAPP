@@ -93,12 +93,13 @@ export default function StandingsModal({ open, onClose, standingsUrl }) {
             <h2 className={styles.modalTitle}>League Standings</h2>
           </div>
           {/* Iframe and spinner */}
-          <div className={styles.iframeWrapper}>
+          <div className={styles.iframeWrapper} style={{flex: '1 1 auto', height: '100%'}}>
             {loading && <div className={styles.spinner}></div>}
             <iframe
               src={standingsUrl}
               title="League Standings"
               className={styles.modalIframe}
+              style={{width: '100%', height: '100%'}}
               onLoad={() => setLoading(false)}
             />
             <div className={styles.iframeShade}></div>

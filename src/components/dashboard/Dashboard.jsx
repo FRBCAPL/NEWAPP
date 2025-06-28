@@ -924,28 +924,21 @@ export default function Dashboard({
 
           {/* News & Updates Section with Chat/Standings Buttons */}
           <section className={`${styles.dashboardSection} ${styles.dashboardSectionBox}`}>
-            <div style={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center", 
-              marginBottom: 16 
-            }}>
+            <div className={styles.newsUpdatesHeader}>
               <button
                 className={styles.dashboardBtn}
                 onClick={onOpenChat}
                 type="button"
-                style={{ minWidth: 120 }}
               >
                 💬 Open Chat
               </button>
-              <h2 className={styles.dashboardSectionTitle} style={{ margin: 0 }}>
+              <h2 className={styles.dashboardSectionTitle}>
                 News & Updates
               </h2>
               <button
                 className={styles.dashboardBtn}
                 type="button"
                 onClick={() => setShowStandings(true)}
-                style={{ minWidth: 120 }}
               >
                 📊 View Standings
               </button>
@@ -1013,25 +1006,6 @@ export default function Dashboard({
             type="button"
           >
             Logout
-          </button>
-
-          {/* TEMPORARY TEST BUTTON */}
-          <button
-            style={{
-              background: "#28a745",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              padding: "0.7rem 1.4rem",
-              margin: "10px",
-              cursor: "pointer"
-            }}
-            onClick={() => {
-              console.log("FORCE OPENING MODAL");
-              setShowOpponents(true);
-            }}
-          >
-            FORCE OPEN MODAL
           </button>
 
           {userPin === "777777" && (
