@@ -811,14 +811,14 @@
   color: #222;
   border: 2px solid #d32f2f;
   border-radius: 5px;
-  padding: 0.5em .5em;   /* Increase for a larger button */
-  font-size: .9rem;    /* Increase for bigger text */
+  padding: 0.3em 0.4em;   /* Reduced padding for smaller button */
+  font-size: 0.8rem;    /* Reduced font size */
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 1px 4px #0001;
   transition: background 0.15s, border-color 0.15s;
-  min-width: 120px;     /* Increase for a wider button */
-  min-height: 10px;     /* Add or increase for more height */
+  min-width: 100px;     /* Reduced min-width */
+  min-height: 8px;     /* Reduced min-height */
 }
 
 .proposalAlertButton:last-child {

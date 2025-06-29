@@ -195,3 +195,33 @@
   background: #aaa;
   cursor: not-allowed;
 }
+
+.modalActionBtn {
+  background: linear-gradient(90deg, #232323 60%, #e53e3e 100%);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 0.7em 1.7em;
+  font-size: 1.08em;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1.2em;
+  min-width: 180px;
+  box-shadow: 0 2px 16px #e53e3e33;
+  opacity: 0.18;
+  filter: blur(0.5px) grayscale(0.2);
+  transition: opacity 0.22s, filter 0.22s, background 0.22s, box-shadow 0.22s;
+}
+.modalActionBtn:hover, .modalActionBtn:focus {
+  opacity: 1;
+  filter: none;
+  background: linear-gradient(90deg, #e53e3e 60%, #232323 100%);
+  box-shadow: 0 4px 24px #e53e3e77, 0 0 8px #fff2;
+}
+.modalActionBtn:disabled {
+  background: #aaa;
+  color: #eee;
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}

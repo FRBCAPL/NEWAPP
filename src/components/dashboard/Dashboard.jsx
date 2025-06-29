@@ -13,6 +13,8 @@ import PlayerAvailabilityModal from "../modal/PlayerAvailabilityModal";
 import MatchProposalModal from "../modal/MatchProposalModal";
 import PlayerSearch from "../modal/PlayerSearch";
 import fetchSheetData from "../../utils/fetchSheetData";
+import ProposalDetailsModal from './ProposalDetailsModal';
+import EditProposalModal from './EditProposalModal';
 
 // Import new services and hooks
 import { useProposals } from '../../hooks/useProposals';
@@ -143,6 +145,50 @@ function AdminUpdateStandingsButton({ backendUrl }) {
   );
 }
 
+// Utility function to format date as MM-DD-YYYY
+function formatDateMMDDYYYY(dateStr) {
+  if (!dateStr) return 'N/A';
+  
+  // Handle YYYY-MM-DD format (which might be UTC)
+  if (dateStr.includes('-') && dateStr.length === 10) {
+    const [year, month, day] = dateStr.split('-');
+    // Create date in local timezone to avoid UTC shift
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const localMonth = String(date.getMonth() + 1).padStart(2, '0');
+    const localDay = String(date.getDate()).padStart(2, '0');
+    const localYear = date.getFullYear();
+    return `${localMonth}-${localDay}-${localYear}`;
+  }
+  
+  // Handle different date formats
+  let date;
+  if (dateStr.includes('-')) {
+    // Already in YYYY-MM-DD format
+    date = new Date(dateStr);
+  } else if (dateStr.includes('/')) {
+    // Handle M/D/YYYY or MM/DD/YYYY format
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const [month, day, year] = parts;
+      date = new Date(year, month - 1, day);
+    } else {
+      return dateStr; // Return as-is if can't parse
+    }
+  } else {
+    return dateStr; // Return as-is if unknown format
+  }
+  
+  if (isNaN(date.getTime())) {
+    return dateStr; // Return original if invalid date
+  }
+  
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  
+  return `${month}-${day}-${year}`;
+}
+
 export default function Dashboard({
   playerName,
   playerLastName,
@@ -210,6 +256,10 @@ export default function Dashboard({
   // Proposal counts for instant UI update
   const [pendingCount, setPendingCount] = useState(0);
   const [sentCount, setSentCount] = useState(0);
+
+  // Add state for new modal
+  const [showProposalDetailsModal, setShowProposalDetailsModal] = useState(false);
+  const [showEditProposalModal, setShowEditProposalModal] = useState(false);
 
   useEffect(() => {
     setPendingCount(pendingProposals.length);
@@ -639,6 +689,12 @@ export default function Dashboard({
   // Debug: log the filtered upcoming matches
   console.log('filteredUpcomingMatches:', filteredUpcomingMatches);
 
+  // Update the logic where a match/proposal is clicked:
+  function handleProposalClick(match) {
+    setSelectedMatch(match);
+    setModalOpen(true);
+  }
+
   return (
   
   
@@ -795,11 +851,7 @@ export default function Dashboard({
                           const [month, day, year] = parts;
                           const dateObj = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
                           if (!isNaN(dateObj.getTime())) {
-                            formattedDate = dateObj.toLocaleDateString(undefined, {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            });
+                            formattedDate = formatDateMMDDYYYY(match.date);
                           } else {
                             formattedDate = '[Invalid Date]';
                           }
@@ -824,11 +876,7 @@ export default function Dashboard({
                           const [year, month, day] = parts;
                           const dateObj = new Date(`${year}-${month}-${day}`);
                           if (!isNaN(dateObj.getTime())) {
-                            formattedDate = dateObj.toLocaleDateString(undefined, {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            });
+                            formattedDate = formatDateMMDDYYYY(match.date);
                           } else {
                             formattedDate = '[Invalid Date]';
                           }
@@ -848,7 +896,7 @@ export default function Dashboard({
                         <div className={styles.matchCardContentWrapper}>
                           <button
                             className={styles.matchCardButton}
-                            onClick={() => openModal(match)}
+                            onClick={() => handleProposalClick(match)}
                             type="button"
                             style={{padding: 0, margin: 0, minHeight: 0, fontSize: '0.98em', display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none'}}
                           >
@@ -860,7 +908,26 @@ export default function Dashboard({
                           {!actuallyCompleted && (
                             <button
                               className={styles.dashboardBtn + ' ' + styles.matchCardDoneBtn}
-                              style={{ marginLeft: 0, minWidth: 90, padding: '6px 0', fontSize: '1em', height: 34, lineHeight: '22px', marginTop: 6 }}
+                              style={{ 
+                                marginLeft: 0, 
+                                minWidth: 70, 
+                                padding: '4px 8px', 
+                                fontSize: '0.75em', 
+                                height: 28, 
+                                lineHeight: '20px', 
+                                marginTop: 6,
+                                opacity: 0.18,
+                                filter: 'blur(0.5px) grayscale(0.2)',
+                                transition: 'opacity 0.22s, filter 0.22s, background 0.22s'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.opacity = '1';
+                                e.target.style.filter = 'none';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.opacity = '0.18';
+                                e.target.style.filter = 'blur(0.5px) grayscale(0.2)';
+                              }}
                               onClick={async () => {
                                 try {
                                   await proposalService.markCompleted(match._id);
@@ -879,7 +946,7 @@ export default function Dashboard({
                               }}
                               type="button"
                             >
-                              Mark Done
+                              Complete
                             </button>
                           )}
                         </div>
@@ -1188,9 +1255,20 @@ export default function Dashboard({
         <ProposalListModal
           proposals={pendingProposals}
           onSelect={proposal => {
+            // Determine if current user is proposer
+            const isProposer = (
+              (senderEmail && proposal.senderEmail && senderEmail.toLowerCase() === proposal.senderEmail.toLowerCase()) ||
+              (`${playerName} ${playerLastName}`.toLowerCase() === (proposal.senderName || '').toLowerCase())
+            );
+            console.log('ProposalListModal onSelect:', { proposal, isProposer });
             setSelectedProposal(proposal);
             setProposalNote("");
             setShowProposalListModal(false);
+            setShowProposalDetailsModal(isProposer);
+            console.log('State after onSelect:', {
+              selectedProposal: proposal,
+              showProposalDetailsModal: isProposer
+            });
           }}
           onClose={() => setShowProposalListModal(false)}
           type="received"
@@ -1201,9 +1279,24 @@ export default function Dashboard({
         <ProposalListModal
           proposals={sentProposals}
           onSelect={proposal => {
+            // Determine if current user is proposer
+            const isProposer = (
+              (senderEmail && proposal.senderEmail && senderEmail.toLowerCase() === proposal.senderEmail.toLowerCase()) ||
+              (`${playerName} ${playerLastName}`.toLowerCase() === (proposal.senderName || '').toLowerCase())
+            );
+            console.log('ProposalListModal onSelect (sent):', { proposal, isProposer });
+            console.log('Debug - senderEmail:', senderEmail);
+            console.log('Debug - proposal.senderEmail:', proposal.senderEmail);
+            console.log('Debug - playerName + lastName:', `${playerName} ${playerLastName}`);
+            console.log('Debug - proposal.senderName:', proposal.senderName);
             setSelectedProposal(proposal);
             setProposalNote("");
             setShowSentProposalListModal(false);
+            setShowProposalDetailsModal(isProposer);
+            console.log('State after onSelect (sent):', {
+              selectedProposal: proposal,
+              showProposalDetailsModal: isProposer
+            });
           }}
           onClose={() => setShowSentProposalListModal(false)}
           type="sent"
@@ -1211,7 +1304,7 @@ export default function Dashboard({
       )}
 
       {/* Confirm Match Details Modal */}
-   {selectedProposal && (
+   {selectedProposal && !showProposalDetailsModal && (
   <div className={styles.modalOverlay}>
     <div className={styles.modalContent} style={{maxWidth: 420, margin: "auto"}}>
       <ConfirmMatchDetails
@@ -1235,6 +1328,8 @@ export default function Dashboard({
           setSelectedProposal(null);
         }}
         phase={effectivePhase}
+        currentUserName={`${playerName} ${playerLastName}`}
+        currentUserEmail={senderEmail}
       />
     </div>
   </div>
@@ -1251,6 +1346,53 @@ export default function Dashboard({
         }}
         onSubmit={handleCounterProposal}
       />
+
+      {/* Proposal Details Modal */}
+      {(() => {
+        console.log('ProposalDetailsModal render check:', {
+          selectedProposal: !!selectedProposal,
+          showProposalDetailsModal,
+          shouldRender: selectedProposal && showProposalDetailsModal
+        });
+        return selectedProposal && showProposalDetailsModal && (
+          <ProposalDetailsModal
+            proposal={selectedProposal}
+            open={showProposalDetailsModal}
+            onClose={() => {
+              setShowProposalDetailsModal(false);
+              setSelectedProposal(null);
+            }}
+            onEdit={() => {
+              setShowEditProposalModal(true);
+            }}
+            onMessage={() => {
+              // Optionally open a chat or message modal here
+              alert('Message opponent coming soon!');
+            }}
+          />
+        );
+      })()}
+
+      {/* Edit Proposal Modal */}
+      {selectedProposal && showEditProposalModal && (
+        <EditProposalModal
+          proposal={selectedProposal}
+          open={showEditProposalModal}
+          onClose={() => {
+            setShowEditProposalModal(false);
+          }}
+          onSave={(updatedProposal) => {
+            // Update the selected proposal with the new data
+            setSelectedProposal(updatedProposal);
+            // Refresh the proposals list
+            refetchProposals();
+            // Close the edit modal
+            setShowEditProposalModal(false);
+          }}
+          selectedDivision={selectedDivision}
+          phase={effectivePhase}
+        />
+      )}
     </div>
   );
 }

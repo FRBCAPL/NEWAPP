@@ -3,6 +3,19 @@ import styles from './ProposalListModal.module.css';
 
 function formatDateMMDDYYYY(dateStr) {
   if (!dateStr) return "";
+  
+  // Handle YYYY-MM-DD format (which might be UTC)
+  if (dateStr.includes('-') && dateStr.length === 10) {
+    const [year, month, day] = dateStr.split('-');
+    // Create date in local timezone to avoid UTC shift
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const localMonth = String(date.getMonth() + 1).padStart(2, '0');
+    const localDay = String(date.getDate()).padStart(2, '0');
+    const localYear = date.getFullYear();
+    return `${localMonth}/${localDay}/${localYear}`;
+  }
+  
+  // Handle other formats
   const [year, month, day] = dateStr.split(/[-/]/);
   return `${month}/${day}/${year}`;
 }

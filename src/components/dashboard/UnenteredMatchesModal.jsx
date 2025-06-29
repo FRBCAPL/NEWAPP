@@ -1,5 +1,49 @@
 import React, { useEffect, useState } from "react";
 
+// Utility function to format date as MM-DD-YYYY
+function formatDateMMDDYYYY(dateStr) {
+  if (!dateStr) return 'N/A';
+  
+  // Handle YYYY-MM-DD format (which might be UTC)
+  if (dateStr.includes('-') && dateStr.length === 10) {
+    const [year, month, day] = dateStr.split('-');
+    // Create date in local timezone to avoid UTC shift
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const localMonth = String(date.getMonth() + 1).padStart(2, '0');
+    const localDay = String(date.getDate()).padStart(2, '0');
+    const localYear = date.getFullYear();
+    return `${localMonth}-${localDay}-${localYear}`;
+  }
+  
+  // Handle different date formats
+  let date;
+  if (dateStr.includes('-')) {
+    // Already in YYYY-MM-DD format
+    date = new Date(dateStr);
+  } else if (dateStr.includes('/')) {
+    // Handle M/D/YYYY or MM/DD/YYYY format
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const [month, day, year] = parts;
+      date = new Date(year, month - 1, day);
+    } else {
+      return dateStr; // Return as-is if can't parse
+    }
+  } else {
+    return dateStr; // Return as-is if unknown format
+  }
+  
+  if (isNaN(date.getTime())) {
+    return dateStr; // Return original if invalid date
+  }
+  
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  
+  return `${month}-${day}-${year}`;
+}
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
 export default function UnenteredMatchesModal({ open, onClose }) {
@@ -92,7 +136,7 @@ export default function UnenteredMatchesModal({ open, onClose }) {
               }}>
                 <span>
                   <span style={{ color: "#fff" }}>
-                    <b>{m.date}</b> — <span style={{ color: "#c00" }}>{m.senderName}</span> vs <span style={{ color: "#c00" }}>{m.receiverName}</span>
+                    <b>{formatDateMMDDYYYY(m.date)}</b> — <span style={{ color: "#c00" }}>{m.senderName}</span> vs <span style={{ color: "#c00" }}>{m.receiverName}</span>
                     {m.location && <span style={{ color: "#fff" }}> @ {m.location}</span>}
                   </span>
                 </span>

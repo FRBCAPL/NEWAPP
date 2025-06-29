@@ -5,6 +5,50 @@ import EightBall from '../../assets/8ball.svg';
 import NineBall from '../../assets/nineball.svg';
 import TenBall from '../../assets/tenball.svg';
 
+// Utility function to format date as MM-DD-YYYY
+function formatDateMMDDYYYY(dateStr) {
+  if (!dateStr) return 'N/A';
+  
+  // Handle YYYY-MM-DD format (which might be UTC)
+  if (dateStr.includes('-') && dateStr.length === 10) {
+    const [year, month, day] = dateStr.split('-');
+    // Create date in local timezone to avoid UTC shift
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const localMonth = String(date.getMonth() + 1).padStart(2, '0');
+    const localDay = String(date.getDate()).padStart(2, '0');
+    const localYear = date.getFullYear();
+    return `${localMonth}-${localDay}-${localYear}`;
+  }
+  
+  // Handle different date formats
+  let date;
+  if (dateStr.includes('-')) {
+    // Already in YYYY-MM-DD format
+    date = new Date(dateStr);
+  } else if (dateStr.includes('/')) {
+    // Handle M/D/YYYY or MM/DD/YYYY format
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const [month, day, year] = parts;
+      date = new Date(year, month - 1, day);
+    } else {
+      return dateStr; // Return as-is if can't parse
+    }
+  } else {
+    return dateStr; // Return as-is if unknown format
+  }
+  
+  if (isNaN(date.getTime())) {
+    return dateStr; // Return original if invalid date
+  }
+  
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  
+  return `${month}-${day}-${year}`;
+}
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 
 export default function MatchDetailsModal({ open, onClose, match, onCompleted }) {
@@ -92,12 +136,7 @@ export default function MatchDetailsModal({ open, onClose, match, onCompleted })
     const minuteStr = (minute || 0).toString().padStart(2, '0');
     const time24 = `${hourStr}:${minuteStr}`;
     dateObj = new Date(`${isoDate}T${time24}:00`);
-    formattedDate = dateObj.toLocaleDateString(undefined, {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+    formattedDate = formatDateMMDDYYYY(match.date);
     formattedTime = dateObj.toLocaleTimeString(undefined, {
       hour: "numeric",
       minute: "2-digit",

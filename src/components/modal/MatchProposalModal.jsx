@@ -21,6 +21,16 @@ function formatDateMMDDYYYY(date) {
   return `${month}-${day}-${year}`;
 }
 
+// Utility: Format date as YYYY-MM-DD (local timezone, not UTC)
+function formatDateYYYYMMDD(date) {
+  if (!date) return "";
+  const d = new Date(date);
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${year}-${month}-${day}`;
+}
+
 // Normalize time strings like "12pm", "12:00pm", "12:00 pm", "12PM", etc. to "12:00 PM"
 function normalizeTimeString(time) {
   let t = time.trim().replace(/\s+/g, '').toLowerCase();
@@ -157,7 +167,7 @@ export default function MatchProposalModal({
   const [message, setMessage] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [gameType, setGameType] = useState("8 Ball");
-  const [raceLength, setRaceLength] = useState(7);
+  const [raceLength, setRaceLength] = useState(phase === "scheduled" || phase === "challenge" ? 5 : 7);
 
   // --- Derived values ---
   const locationOptions = player.locations
@@ -219,7 +229,7 @@ export default function MatchProposalModal({
       from_name: senderName,
       from_email: senderEmail,
       day: selectedDay,
-      date: date.toISOString().slice(0, 10),
+      date: formatDateYYYYMMDD(date),
       time: startTime,
       location,
       gameType,
@@ -243,7 +253,7 @@ export default function MatchProposalModal({
         receiver: player.email,
         senderName: senderName,
         receiverName: `${player.firstName} ${player.lastName}`,
-        date: date.toISOString().slice(0, 10),
+        date: formatDateYYYYMMDD(date),
         time: startTime,
         location,
         message: proposalMessage,
@@ -463,16 +473,38 @@ export default function MatchProposalModal({
             className={styles["match-proposal-select"]}
             aria-label="Select race length"
           >
-            {[...Array(13)].map((_, i) => {
-              const value = i + 3;
-              return (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              );
-            })}
+            {(() => {
+              // For phases 1 and 2, only allow race to 5
+              if (phase === "scheduled" || phase === "challenge") {
+                return (
+                  <option value={5}>
+                    5
+                  </option>
+                );
+              }
+              // For other phases, allow the full range (3-15)
+              return [...Array(13)].map((_, i) => {
+                const value = i + 3;
+                return (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                );
+              });
+            })()}
           </select>
         </div>
+        {(phase === "scheduled" || phase === "challenge") && (
+          <div style={{ 
+            color: "#ffc107", 
+            fontSize: "0.9em", 
+            marginBottom: "1em",
+            fontStyle: "italic",
+            textAlign: "center"
+          }}>
+            ⚠️ Race to 5 is required for {phase === "scheduled" ? "Scheduled Match" : "Challenge"} Phase
+          </div>
+        )}
 
         <div className={styles["match-proposal-row"]}>
           <b>Location:</b>

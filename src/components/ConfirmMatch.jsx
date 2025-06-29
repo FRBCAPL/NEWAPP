@@ -6,6 +6,50 @@ import BilliardBall from "./BilliardBall";
 import styles from "./ConfirmMatch.module.css";
 import Highlight from "./Highlight";
 
+// Utility function to format date as MM-DD-YYYY
+function formatDateMMDDYYYY(dateStr) {
+  if (!dateStr) return 'N/A';
+  
+  // Handle YYYY-MM-DD format (which might be UTC)
+  if (dateStr.includes('-') && dateStr.length === 10) {
+    const [year, month, day] = dateStr.split('-');
+    // Create date in local timezone to avoid UTC shift
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const localMonth = String(date.getMonth() + 1).padStart(2, '0');
+    const localDay = String(date.getDate()).padStart(2, '0');
+    const localYear = date.getFullYear();
+    return `${localMonth}-${localDay}-${localYear}`;
+  }
+  
+  // Handle different date formats
+  let date;
+  if (dateStr.includes('-')) {
+    // Already in YYYY-MM-DD format
+    date = new Date(dateStr);
+  } else if (dateStr.includes('/')) {
+    // Handle M/D/YYYY or MM/DD/YYYY format
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const [month, day, year] = parts;
+      date = new Date(year, month - 1, day);
+    } else {
+      return dateStr; // Return as-is if can't parse
+    }
+  } else {
+    return dateStr; // Return as-is if unknown format
+  }
+  
+  if (isNaN(date.getTime())) {
+    return dateStr; // Return original if invalid date
+  }
+  
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  
+  return `${month}-${day}-${year}`;
+}
+
 // --- Add this helper function ---
 function to24Hour(time12h) {
   if (!time12h) return "";
@@ -117,7 +161,7 @@ Good luck and have fun!`;
             <span role="img" aria-label="calendar">📅</span> <strong>Day:</strong> {day || "N/A"}
           </div>
           <div className={styles.detailRow}>
-            <span role="img" aria-label="date">🗓️</span> <strong>Date:</strong> {date || "N/A"}
+            <span role="img" aria-label="date">🗓️</span> <strong>Date:</strong> {formatDateMMDDYYYY(date)}
           </div>
           <div className={styles.detailRow}>
             <span role="img" aria-label="clock">⏰</span> <strong>Time:</strong> {time || "N/A"}
