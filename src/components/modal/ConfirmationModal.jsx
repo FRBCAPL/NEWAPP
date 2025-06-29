@@ -1,5 +1,6 @@
 import React from "react";
 import BilliardBall from "../BilliardBall";
+import DraggableModal from "./DraggableModal";
 
 // Utility function to format date as MM-DD-YYYY
 function formatDateMMDDYYYY(dateStr) {
@@ -62,25 +63,22 @@ export default function ConfirmationModal({
   if (!open) return null;
 
   return (
-    <div style={{
-      position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-      background: "rgba(0,0,0,0.7)", display: "flex",
-      alignItems: "center", justifyContent: "center", zIndex: 9999
-    }}>
-      <div style={{
-        background: "#fff", color: "#222", borderRadius: "1.2rem",
-        minWidth: 320, maxWidth: 400, width: 'auto', margin: '0 auto', padding: "2rem 2.2rem",
-        boxShadow: "0 0 24px #ff0000, 0 0 32px rgba(0,0,0,0.7)",
-        textAlign: "center"
-      }}>
-        <p style={{ fontWeight: "bold", fontSize: "1.15rem" }}>{message}</p>
+    <DraggableModal
+      open={open}
+      onClose={onClose}
+      title="Match Confirmed!"
+      maxWidth="450px"
+    >
+      <div style={{ textAlign: "center" }}>
+        <p style={{ fontWeight: "bold", fontSize: "1.15rem", marginBottom: "1.2rem" }}>{message}</p>
         
         {/* Match Summary */}
         <div style={{
           background: "#f8f8f8", color: "#222", borderRadius: 8,
           padding: "1rem 1.2rem", margin: "1.2rem 0 1.2rem 0",
           textAlign: "left", fontSize: "1.05rem", border: "1px solid #ff0000"
-        }}> <div style={{ marginBottom: 6 }}>
+        }}>
+          <div style={{ marginBottom: 6 }}>
             <strong>Phase:</strong> {phase === "scheduled" ? "Phase 1 (Scheduled)" : phase === "challenge" ? "Phase 2 (challenge)" : phase}
           </div>
           <div style={{ marginBottom: 6 }}>
@@ -140,6 +138,6 @@ export default function ConfirmationModal({
           Close
         </button>
       </div>
-    </div>
+    </DraggableModal>
   );
 }

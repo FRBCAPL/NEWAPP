@@ -1,7 +1,6 @@
 // src/components/modal/CounterProposalModal.jsx
 import React, { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
-import styles from "../ConfirmMatch.module.css";
+import DraggableModal from "./DraggableModal";
 
 export default function CounterProposalModal({ proposal, open, onClose, onSubmit }) {
   // Form state
@@ -12,84 +11,151 @@ export default function CounterProposalModal({ proposal, open, onClose, onSubmit
 
   // Sync fields when modal opens or proposal changes
   useEffect(() => {
-    if (open && proposal) {
+    if (proposal && open) {
       setDate(proposal.date || "");
       setTime(proposal.time || "");
       setLocation(proposal.location || "");
       setNote("");
     }
-  }, [open, proposal]);
+  }, [proposal, open]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!date || !time || !location) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+    onSubmit({ date, time, location, note });
+  };
 
   if (!open || !proposal) return null;
 
-  // Modal JSX to be rendered in portal
-  const modal = (
-    <div className={styles.counterProposalOverlay}>
-      <div className={styles.modalContent} style={{ maxWidth: 400, width: 'auto', minWidth: 320, margin: '0 auto' }}>
-        <h2>Counter-Propose Match</h2>
-        <div className={styles.detailRow}>
-          <label>Date:</label>
+  return (
+    <DraggableModal
+      open={open}
+      onClose={onClose}
+      title="🔄 Counter Proposal"
+      maxWidth="450px"
+    >
+      <form onSubmit={handleSubmit} style={{ textAlign: "left" }}>
+        <div style={{ marginBottom: "1rem" }}>
+          <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
+            Date:
+          </label>
           <input
             type="date"
             value={date}
-            onChange={e => setDate(e.target.value)}
+            onChange={(e) => setDate(e.target.value)}
             required
+            style={{
+              width: "100%",
+              padding: "0.5rem",
+              background: "#333",
+              color: "#fff",
+              border: "1px solid #555",
+              borderRadius: "4px"
+            }}
           />
         </div>
-        <div className={styles.detailRow}>
-          <label>Time:</label>
+
+        <div style={{ marginBottom: "1rem" }}>
+          <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
+            Time:
+          </label>
           <input
             type="time"
             value={time}
-            onChange={e => setTime(e.target.value)}
+            onChange={(e) => setTime(e.target.value)}
             required
+            style={{
+              width: "100%",
+              padding: "0.5rem",
+              background: "#333",
+              color: "#fff",
+              border: "1px solid #555",
+              borderRadius: "4px"
+            }}
           />
         </div>
-        <div className={styles.detailRow}>
-          <label>Location:</label>
+
+        <div style={{ marginBottom: "1rem" }}>
+          <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
+            Location:
+          </label>
           <input
             type="text"
             value={location}
-            onChange={e => setLocation(e.target.value)}
+            onChange={(e) => setLocation(e.target.value)}
             required
+            placeholder="Enter location"
+            style={{
+              width: "100%",
+              padding: "0.5rem",
+              background: "#333",
+              color: "#fff",
+              border: "1px solid #555",
+              borderRadius: "4px"
+            }}
           />
         </div>
-        <div className={styles.detailRow}>
-          <label>Note (optional):</label>
+
+        <div style={{ marginBottom: "1.5rem" }}>
+          <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
+            Note (optional):
+          </label>
           <textarea
             value={note}
-            onChange={e => setNote(e.target.value)}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Add a note explaining your counter proposal..."
             rows={3}
-            placeholder="Add a note or reason for the counter-proposal"
-            className={styles.noteTextarea}
+            style={{
+              width: "100%",
+              padding: "0.5rem",
+              background: "#333",
+              color: "#fff",
+              border: "1px solid #555",
+              borderRadius: "4px",
+              resize: "vertical"
+            }}
           />
         </div>
-        <div style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 10,
-          marginTop: 18,
-          justifyContent: "center"
-        }}>
+
+        <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
           <button
-            className={styles.confirmBtn}
-            onClick={() => onSubmit({ date, time, location, note })}
-            disabled={!date || !time || !location}
+            type="submit"
+            style={{
+              background: "#e53e3e",
+              color: "#fff",
+              border: "none",
+              borderRadius: "6px",
+              padding: "0.7rem 1.5rem",
+              fontSize: "1rem",
+              fontWeight: "bold",
+              cursor: "pointer",
+              minWidth: "120px"
+            }}
           >
-            Send Counter-Proposal
+            Submit Counter
           </button>
           <button
-            className={styles.confirmBtn}
-            style={{ background: "#aaa" }}
-            onClick={onClose}
             type="button"
+            onClick={onClose}
+            style={{
+              background: "#6c757d",
+              color: "#fff",
+              border: "none",
+              borderRadius: "6px",
+              padding: "0.7rem 1.5rem",
+              fontSize: "1rem",
+              fontWeight: "bold",
+              cursor: "pointer",
+              minWidth: "120px"
+            }}
           >
             Cancel
           </button>
         </div>
-      </div>
-    </div>
+      </form>
+    </DraggableModal>
   );
-
-  return createPortal(modal, document.body);
 }

@@ -4,6 +4,7 @@ import Highlight from "../Highlight";
 import fetchSheetData from "../../utils/fetchSheetData";
 import PlayerAvailabilityModal from "./PlayerAvailabilityModal";
 import MatchProposalModal from "./MatchProposalModal";
+import DraggableModal from "./DraggableModal";
 import styles from "./PlayerSearch.module.css";
 
 // --- Google Sheet details (safe for public read-only use) ---
@@ -333,123 +334,199 @@ export default function PlayerSearch({
   const modalContent = (
     <>
       {mode === "search" && (
-        <div className={styles.overlay}>
-          <div className={styles.overlayBackground} onClick={onClose} />
-          <div className={styles.modal} role="dialog" aria-modal="true" aria-label="Player Search">
-            <div className={styles.playerSearchModal}>
-              <button
-                className={styles.playerSearchClose}
-                onClick={onClose}
-                aria-label="Close"
-              >
-                &times;
-              </button>
-              <h2 className={styles.playerSearchTitle}>Player Search</h2>
-              
-              {/* Phase 2: Direct list of eligible opponents */}
-              {phase === "challenge" ? (
-                <>
-                  {console.log("🎯 Phase 2 UI rendering - players count:", players.length)}
-                  {console.log("🎯 Phase 2 UI rendering - players:", players.map(p => `${p.firstName} ${p.lastName}`))}
-                  <div className={styles.playerSearchPhaseIndicator}>
-                    <strong>Phase 2 (Challenge):</strong> You can only challenge players ranked 4 spots above in the standings.<br/>
-                    <span style={{fontSize: '1rem', color: '#fff', marginTop: 8, display: 'block'}}>
-                      <b>Your Position:</b> #{userPosition ?? 'N/A'}
-                    </span>
-                    {players.length > 0 && (
-                      <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', opacity: 0.9 }}>
-                        {players.length} eligible opponent{players.length !== 1 ? 's' : ''} available
-                      </div>
-                    )}
+        <DraggableModal
+          open={true}
+          onClose={onClose}
+          title="🔍 Player Search"
+          maxWidth="500px"
+        >
+          {/* Phase 2: Direct list of eligible opponents */}
+          {phase === "challenge" ? (
+            <>
+              {console.log("🎯 Phase 2 UI rendering - players count:", players.length)}
+              {console.log("🎯 Phase 2 UI rendering - players:", players.map(p => `${p.firstName} ${p.lastName}`))}
+              <div style={{
+                background: "rgba(229, 62, 62, 0.1)",
+                border: "1px solid #e53e3e",
+                borderRadius: "6px",
+                padding: "1rem",
+                marginBottom: "1.5rem",
+                color: "#fff"
+              }}>
+                <strong>Phase 2 (Challenge):</strong> You can only challenge players ranked 4 spots above in the standings.<br/>
+                <span style={{fontSize: '1rem', color: '#fff', marginTop: 8, display: 'block'}}>
+                  <b>Your Position:</b> #{userPosition ?? 'N/A'}
+                </span>
+                {players.length > 0 && (
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', opacity: 0.9 }}>
+                    {players.length} eligible opponent{players.length !== 1 ? 's' : ''} available
                   </div>
-                  {loading ? (
-                    <p>Loading players...</p>
+                )}
+              </div>
+              {loading ? (
+                <p style={{ color: "#fff", textAlign: "center" }}>Loading players...</p>
+              ) : (
+                <div style={{
+                  maxHeight: "60vh",
+                  overflowY: "auto"
+                }}>
+                  {players.length === 0 ? (
+                    <p style={{ color: "#888", textAlign: "center", fontStyle: "italic" }}>
+                      No eligible opponents found within 4 spots above you in the standings.
+                    </p>
                   ) : (
-                    <ul className={styles.playerSearchList}>
-                      {players.length === 0 && (
-                        <li className={styles.playerSearchEmpty}>
-                          No eligible opponents found within 4 spots above you in the standings.
-                        </li>
-                      )}
+                    <div style={{
+                      display: "grid",
+                      gap: "8px"
+                    }}>
                       {players.map((p, i) => {
                         const oppName = `${p.firstName} ${p.lastName}`;
                         const oppPosition = getPlayerPosition(standings, oppName);
                         return (
-                          <li key={i}>
+                          <button
+                            key={i}
+                            onClick={() => {
+                              setSelectedPlayer(p);
+                              setMode("availability");
+                            }}
+                            style={{
+                              background: "linear-gradient(135deg, #232323 0%, #2a0909 100%)",
+                              color: "#fff",
+                              border: "2px solid #e53e3e",
+                              borderRadius: "8px",
+                              padding: "1rem",
+                              fontSize: "1.1rem",
+                              fontWeight: "600",
+                              cursor: "pointer",
+                              transition: "all 0.2s ease",
+                              textAlign: "left"
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.background = "linear-gradient(135deg, #e53e3e 0%, #c00 100%)";
+                              e.target.style.transform = "translateY(-2px)";
+                              e.target.style.boxShadow = "0 4px 12px rgba(229, 62, 62, 0.3)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.background = "linear-gradient(135deg, #232323 0%, #2a0909 100%)";
+                              e.target.style.transform = "translateY(0)";
+                              e.target.style.boxShadow = "none";
+                            }}
+                          >
+                            <span style={{fontWeight: 'bold', color: '#fff'}}>
+                              #{oppPosition ?? 'N/A'} {oppName}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            // Phase 1: Search UI as before
+            <>
+              {/* Instructional text appears when there are search results */}
+              {search.length >= 3 && filteredPlayers.length > 0 && (
+                <div style={{
+                  color: "#e53e3e",
+                  fontSize: "0.9rem",
+                  marginBottom: "1rem",
+                  textAlign: "center"
+                }}>
+                  Click opponent's name to see availability.
+                </div>
+              )}
+              <input
+                type="text"
+                placeholder="Type at least 3 letters to search..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                autoFocus
+                aria-label="Search for player"
+                style={{
+                  width: "100%",
+                  padding: "0.75rem",
+                  background: "#333",
+                  color: "#fff",
+                  border: "1px solid #555",
+                  borderRadius: "6px",
+                  fontSize: "1rem",
+                  marginBottom: "1rem"
+                }}
+              />
+              {loading ? (
+                <p style={{ color: "#fff", textAlign: "center" }}>Loading players...</p>
+              ) : (
+                <>
+                  {search.length < 3 ? (
+                    <p style={{
+                      color: "#888",
+                      textAlign: "center",
+                      fontStyle: "italic"
+                    }}>
+                      Please enter at least 3 letters to search for a player.
+                    </p>
+                  ) : (
+                    <div style={{
+                      maxHeight: "60vh",
+                      overflowY: "auto"
+                    }}>
+                      {filteredPlayers.length === 0 ? (
+                        <p style={{
+                          color: "#888",
+                          textAlign: "center",
+                          fontStyle: "italic"
+                        }}>
+                          No players found.
+                        </p>
+                      ) : (
+                        <div style={{
+                          display: "grid",
+                          gap: "8px"
+                        }}>
+                          {filteredPlayers.map((p, i) => (
                             <button
-                              className={styles.playerSearchListBtn}
+                              key={i}
                               onClick={() => {
                                 setSelectedPlayer(p);
                                 setMode("availability");
                               }}
-                              type="button"
+                              style={{
+                                background: "linear-gradient(135deg, #232323 0%, #2a0909 100%)",
+                                color: "#fff",
+                                border: "2px solid #e53e3e",
+                                borderRadius: "8px",
+                                padding: "1rem",
+                                fontSize: "1.1rem",
+                                fontWeight: "600",
+                                cursor: "pointer",
+                                transition: "all 0.2s ease",
+                                textAlign: "left"
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.background = "linear-gradient(135deg, #e53e3e 0%, #c00 100%)";
+                                e.target.style.transform = "translateY(-2px)";
+                                e.target.style.boxShadow = "0 4px 12px rgba(229, 62, 62, 0.3)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.background = "linear-gradient(135deg, #232323 0%, #2a0909 100%)";
+                                e.target.style.transform = "translateY(0)";
+                                e.target.style.boxShadow = "none";
+                              }}
                             >
-                              <span style={{fontWeight: 'bold', color: '#fff'}}>
-                                #{oppPosition ?? 'N/A'} {oppName}
-                              </span>
+                              <Highlight text={`${p.firstName} ${p.lastName}`} query={search} />
                             </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </>
-              ) : (
-                // Phase 1: Search UI as before
-                <>
-                  {/* Instructional text appears when there are search results */}
-                  {search.length >= 3 && filteredPlayers.length > 0 && (
-                    <div className={styles.playerSearchInstruction}>
-                      Click opponent's name to see availability.
-                    </div>
-                  )}
-                  <input
-                    type="text"
-                    className={styles.playerSearchInput}
-                    placeholder="Type at least 3 letters to search..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    autoFocus
-                    aria-label="Search for player"
-                  />
-                  {loading ? (
-                    <p>Loading players...</p>
-                  ) : (
-                    <>
-                      {search.length < 3 ? (
-                        <p className={styles.playerSearchHint}>
-                          Please enter at least 3 letters to search for a player.
-                        </p>
-                      ) : (
-                        <ul className={styles.playerSearchList}>
-                          {filteredPlayers.length === 0 && (
-                            <li className={styles.playerSearchEmpty}>
-                              No players found.
-                            </li>
-                          )}
-                          {filteredPlayers.map((p, i) => (
-                            <li key={i}>
-                              <button
-                                className={styles.playerSearchListBtn}
-                                onClick={() => {
-                                  setSelectedPlayer(p);
-                                  setMode("availability");
-                                }}
-                                type="button"
-                              >
-                                <Highlight text={`${p.firstName} ${p.lastName}`} query={search} />
-                              </button>
-                            </li>
                           ))}
-                        </ul>
+                        </div>
                       )}
-                    </>
+                    </div>
                   )}
                 </>
               )}
-            </div>
-          </div>
-        </div>
+            </>
+          )}
+        </DraggableModal>
       )}
 
       {mode === "availability" && selectedPlayer && (

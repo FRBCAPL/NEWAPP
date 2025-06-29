@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import styles from './dashboard.module.css';
 import PoolSimulation from "../PoolSimulation.jsx";
 import ResponsiveWrapper from "../ResponsiveWrapper";
@@ -15,6 +15,7 @@ import PlayerSearch from "../modal/PlayerSearch";
 import fetchSheetData from "../../utils/fetchSheetData";
 import ProposalDetailsModal from './ProposalDetailsModal';
 import EditProposalModal from './EditProposalModal';
+import LoadingSpinner, { LoadingButton, SkeletonLoader } from "../LoadingSpinner";
 
 // Import new services and hooks
 import { useProposals } from '../../hooks/useProposals';
@@ -260,6 +261,11 @@ export default function Dashboard({
   // Add state for new modal
   const [showProposalDetailsModal, setShowProposalDetailsModal] = useState(false);
   const [showEditProposalModal, setShowEditProposalModal] = useState(false);
+
+  // New state for loading state of Complete button
+  const [completingMatchId, setCompletingMatchId] = useState(null);
+  const [isCreatingProposal, setIsCreatingProposal] = useState(false);
+  const [isLoadingNotes, setIsLoadingNotes] = useState(false);
 
   useEffect(() => {
     setPendingCount(pendingProposals.length);
@@ -636,11 +642,18 @@ export default function Dashboard({
   const matchesToSchedule = getMatchesToSchedule();
 
   // Prepare the opponents list for the modal (only for uncompleted matches)
-  const opponentsToSchedule = matchesToSchedule.map(m =>
-    m.player1 && m.player1.trim().toLowerCase() === fullName.toLowerCase()
-      ? m.player2?.trim().toLowerCase()
-      : m.player1?.trim().toLowerCase()
-  ).filter(Boolean);
+  const opponentsToSchedule = matchesToSchedule
+    .map(m => {
+      const name = m.player1 && m.player1.trim().toLowerCase() === fullName.toLowerCase()
+        ? m.player2?.trim()
+        : m.player1?.trim();
+      if (!name) return null;
+      // Find the player object by name
+      return players.find(
+        p => `${p.firstName} ${p.lastName}`.trim().toLowerCase() === name.toLowerCase()
+      );
+    })
+    .filter(Boolean);
 
   function handleOpponentClick(opponentName) {
     const playerObj = players.find(
@@ -906,8 +919,10 @@ export default function Dashboard({
                             <span className={styles.matchCardDetail} style={{fontSize: '0.97em'}}>{match.location || '[No Location]'}</span>
                           </button>
                           {!actuallyCompleted && (
-                            <button
+                            <LoadingButton
                               className={styles.dashboardBtn + ' ' + styles.matchCardDoneBtn}
+                              loading={completingMatchId === match._id}
+                              loadingText="Completing..."
                               style={{ 
                                 marginLeft: 0, 
                                 minWidth: 70, 
@@ -921,15 +936,20 @@ export default function Dashboard({
                                 transition: 'opacity 0.22s, filter 0.22s, background 0.22s'
                               }}
                               onMouseEnter={(e) => {
-                                e.target.style.opacity = '1';
-                                e.target.style.filter = 'none';
+                                if (completingMatchId !== match._id) {
+                                  e.target.style.opacity = '1';
+                                  e.target.style.filter = 'none';
+                                }
                               }}
                               onMouseLeave={(e) => {
-                                e.target.style.opacity = '0.18';
-                                e.target.style.filter = 'blur(0.5px) grayscale(0.2)';
+                                if (completingMatchId !== match._id) {
+                                  e.target.style.opacity = '0.18';
+                                  e.target.style.filter = 'blur(0.5px) grayscale(0.2)';
+                                }
                               }}
                               onClick={async () => {
                                 try {
+                                  setCompletingMatchId(match._id);
                                   await proposalService.markCompleted(match._id);
                                   // Immediately update local state to fix counter issues
                                   markMatchCompleted(match);
@@ -942,12 +962,14 @@ export default function Dashboard({
                                   // refetchProposals();
                                 } catch (err) {
                                   alert("Failed to mark as completed. Please try again.");
+                                } finally {
+                                  setCompletingMatchId(null);
                                 }
                               }}
                               type="button"
                             >
                               Complete
-                            </button>
+                            </LoadingButton>
                           )}
                         </div>
                       </li>
@@ -1011,7 +1033,7 @@ export default function Dashboard({
               </button>
             </div>
             {loadingNotes ? (
-              <div>Loading notes...</div>
+              <SkeletonLoader lines={3} height="16px" />
             ) : (
               <ul className={styles.dashboardList}>
                 {notes.length === 0 ? (

@@ -1,10 +1,10 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { generateStartTimes, getNextDayOfWeek } from "../../utils/timeHelpers";
 import ConfirmationModal from "./ConfirmationModal";
 import { sendProposalEmail } from "../../utils/emailHelpers";
-import styles from "./MatchProposalModal.module.css";
+import DraggableModal from "./DraggableModal";
 
 // --- ADD: Stream Chat import and constants ---
 import { StreamChat } from "stream-chat";
@@ -117,48 +117,6 @@ export default function MatchProposalModal({
   phase
 }) {
   console.log("MatchProposalModal phase prop:", phase);
-  // --- Draggable logic ---
-  const [drag, setDrag] = useState({ x: 0, y: 0 });
-  const [dragging, setDragging] = useState(false);
-  const dragStart = useRef({ x: 0, y: 0 });
-
-  const onMouseDown = (e) => {
-    // Only left mouse button
-    if (e.button !== 0) return;
-    setDragging(true);
-    dragStart.current = {
-      x: e.clientX - drag.x,
-      y: e.clientY - drag.y,
-    };
-    document.body.style.userSelect = "none";
-  };
-  const onMouseMove = (e) => {
-    if (!dragging) return;
-    setDrag({
-      x: e.clientX - dragStart.current.x,
-      y: e.clientY - dragStart.current.y,
-    });
-  };
-  const onMouseUp = () => {
-    setDragging(false);
-    document.body.style.userSelect = "";
-  };
-
-  useEffect(() => {
-    if (dragging) {
-      window.addEventListener("mousemove", onMouseMove);
-      window.addEventListener("mouseup", onMouseUp);
-    } else {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-    }
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-    };
-    // eslint-disable-next-line
-  }, [dragging]);
-  // --- End draggable logic ---
 
   // --- State declarations ---
   const [time, setTime] = useState(slot);
@@ -199,361 +157,323 @@ export default function MatchProposalModal({
     if (
       !senderEmail ||
       !player.email ||
-      !senderName ||
-      !player.firstName ||
-      !player.lastName ||
-      !date ||
+      !startTime ||
       !location ||
-      !phase
+      !date
     ) {
-      alert("Missing required fields. Please check all selections and try again.\n\n" +
-        `sender: ${senderEmail}\n` +
-        `receiver: ${player.email}\n` +
-        `senderName: ${senderName}\n` +
-        `receiverName: ${player.firstName} ${player.lastName}\n` +
-        `date: ${date}\n` +
-        `location: ${location}\n` +
-        `phase: ${phase}\n`
-      );
+      alert("Please fill in all required fields.");
       return;
     }
 
-    const proposalMessage =
-      message && message.trim().length > 0
-        ? message
-        : `Hi ${player.firstName} ${player.lastName},\n${senderName} would like to schedule a match with you. `;
-
+    // Create the proposal data
     const proposalData = {
-      to_email: player.email,
-      to_name: `${player.firstName} ${player.lastName}`,
-      from_name: senderName,
-      from_email: senderEmail,
-      day: selectedDay,
+      senderEmail,
+      senderName,
+      receiverEmail: player.email,
+      receiverName: player.name,
       date: formatDateYYYYMMDD(date),
       time: startTime,
       location,
+      message,
       gameType,
       raceLength,
-      note: proposalMessage,
+      phase,
+      divisions: [selectedDivision]
     };
 
-    // 1. Send the email as before
-    sendProposalEmail(proposalData)
-      .then(() => setShowConfirmation(true))
-      .catch(() => {
-        alert("Failed to send proposal email.");
-      });
-
-    // 2. ALSO save the proposal to your backend for dashboard tracking
+    // Send the proposal
     fetch(`${BACKEND_URL}/api/proposals`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sender: senderEmail,
-        receiver: player.email,
-        senderName: senderName,
-        receiverName: `${player.firstName} ${player.lastName}`,
-        date: formatDateYYYYMMDD(date),
-        time: startTime,
-        location,
-        message: proposalMessage,
-        gameType,
-        raceLength,
-        phase,
-        divisions: [selectedDivision]
-      }),
+      body: JSON.stringify(proposalData),
     })
-      .then(res => res.json().then(async data => {
-        if (!res.ok) {
-          console.error("Backend returned error:", data);
-          alert(data.error || "Failed to save proposal to backend.");
-        } else {
-          // Create Stream Chat channel for both players and admin
-          await createMatchChannel({
-            senderEmail: senderEmail,
-            senderName: senderName,
-            receiverEmail: player.email,
-            receiverName: `${player.firstName} ${player.lastName}`,
-            matchName: `Match: ${senderName} vs ${player.firstName} ${player.lastName}`
-          });
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.error) {
+          throw new Error(data.error);
         }
-      }))
+
+        // Create chat channel
+        createMatchChannel({
+          senderEmail,
+          senderName,
+          receiverEmail: player.email,
+          receiverName: player.name,
+          matchName: `${senderName} vs ${player.name} - ${formatDateMMDDYYYY(date)}`
+        });
+
+        // Send email notification
+        sendProposalEmail({
+          to: player.email,
+          toName: player.name,
+          fromName: senderName,
+          date: formatDateMMDDYYYY(date),
+          time: startTime,
+          location,
+          message,
+          gameType,
+          raceLength
+        });
+
+        // Show confirmation
+        setShowConfirmation(true);
+      })
       .catch((err) => {
-        console.error("Failed to save proposal to backend:", err);
-        alert("Failed to save proposal to backend.");
+        console.error("Failed to send proposal:", err);
+        alert("Failed to send proposal: " + err.message);
       });
   };
 
   const handleConfirmationClose = () => {
     setShowConfirmation(false);
+    onClose();
     if (onProposalComplete) {
       onProposalComplete();
-    } else if (onClose) {
-      onClose();
     }
   };
 
-  // --- Render ---
   return (
-    <div className={styles["match-proposal-overlay"]}>
-      <div
-        className={styles["match-proposal-content"]}
-        style={{
-          transform: `translate(${drag.x}px, ${drag.y}px)`,
-          cursor: dragging ? "grabbing" : "default",
-          position: "relative" // Needed for absolute close button
-        }}
-        onClick={e => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Propose a Match"
+    <>
+      <DraggableModal
+        open={true}
+        onClose={onClose}
+        title={`🎱 Propose Match to ${player.name}`}
+        maxWidth="500px"
       >
-        {/* Close button OUTSIDE header, absolutely positioned */}
-        <button
-          className={styles["match-proposal-close"]}
-          onClick={onClose}
-          aria-label="Close"
-          type="button"
-          style={{
-            position: "absolute",
-            right: "1.2rem",
-            top: "1.2rem",
-            zIndex: 10,
-            fontSize: "2em",
-            background: "none",
-            border: "none",
-            color: "#fff",
-            cursor: "pointer",
-            lineHeight: 1,
-            padding: 0
-          }}
-        >
-          &times;
-        </button>
-
-        {/* Header as drag handle */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "grab",
-            userSelect: "none",
-            marginBottom: "1em",
-            position: "relative"
-          }}
-          onMouseDown={onMouseDown}
-        >
-          <h2 className={styles["match-proposal-title"]} style={{ margin: 0, flex: 1, textAlign: "center" }}>
-            Propose a Match -BETA
-          </h2>
-        </div>
-        {/* Phase and Division display */}
-        <div style={{ display: "flex", alignItems: "center", marginBottom: "1em" }}>
-          <div
-            style={{
-              margin: "0.5em 0 0.5em 0",
-              padding: "0.5em 1em",
-              background: phase === "challenge" ? "#e53935" : "#222",
-              color: "#fff",
-              borderRadius: "6px",
-              fontWeight: "bold",
-              fontSize: "1.1em",
-              letterSpacing: "0.5px",
-              display: "inline-block"
-            }}
-          >
-            {phase === "challenge" ? "Challenge Phase" : "Scheduled Match Phase"}
+        <div style={{ textAlign: "left", marginBottom: "1.5rem" }}>
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
+              Day:
+            </label>
+            <span style={{ color: "#fff", fontSize: "1.1rem" }}>{selectedDay}</span>
           </div>
-          {selectedDivision && (
-            <div
-              style={{
-                color: "#fff",
-                background: "#222",
-                borderRadius: "6px",
-                padding: "0.25em 1em",
-                marginLeft: "1em",
-                display: "inline-block"
-              }}
-            >
-              Division: <b>{selectedDivision}</b>
-            </div>
-          )}
-        </div>
-        {phase === "challenge" && (
-          <div style={{ color: "#fff", fontSize: "0.95em", marginBottom: "1em" }}>
-            <em>
-              Challenge matches have special rules. You can challenge up to 4 spots above, and match/defense limits apply.
-            </em>
-          </div>
-        )}
 
-        {/* --- Modal Content --- */}
-        <div className={styles["match-proposal-row"]}>
-          <b>To Opponent:</b>
-          <span className={styles.opponentName}>
-            {player.firstName} {player.lastName}
-          </span>
-        </div>
-        <div className={`${styles["match-proposal-row"]} ${styles["match-proposal-day-row"]}`}>
-          <b className={styles["match-proposal-day-label"]}>Day:</b>
-          <span className={styles["match-proposal-day-value"]}>{selectedDay}</span>
-        </div>
-        <div className={styles["match-proposal-row"]}>
-          <b>Date:</b>
-          <div className={styles["match-proposal-date-highlight"]}>
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
+              Date:
+            </label>
             <DatePicker
               selected={date}
               onChange={setDate}
               minDate={new Date()}
-              dateFormat="MMMM d, yyyy"
-              popperPlacement="bottom"
-              showPopperArrow={false}
-              wrapperClassName="custom-datepicker"
-              className={styles["match-proposal-date-input"]}
-              aria-label="Select match date"
+              dateFormat="MM/dd/yyyy"
+              style={{
+                background: "#333",
+                color: "#fff",
+                border: "1px solid #555",
+                borderRadius: "4px",
+                padding: "8px",
+                width: "100%"
+              }}
             />
           </div>
-        </div>
-        <div className={styles["match-proposal-row"]}>
-          <b>Time Block:</b>
-          <select
-            value={time}
-            onChange={e => setTime(e.target.value)}
-            className={styles["match-proposal-select"]}
-            aria-label="Select time block"
-          >
-            {allSlots.map((s, i) => (
-              <option key={i} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </div>
-        {possibleStartTimes.length > 0 && (
-          <div className={styles["match-proposal-row"]}>
-            <b>Start Time:</b>
+
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
+              Time Block:
+            </label>
             <select
-              value={startTime}
-              onChange={e => setStartTime(e.target.value)}
-              className={styles["match-proposal-select"]}
-              aria-label="Select start time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              style={{
+                background: "#333",
+                color: "#fff",
+                border: "1px solid #555",
+                borderRadius: "4px",
+                padding: "8px",
+                width: "100%"
+              }}
             >
-              <option value="">Select...</option>
-              {possibleStartTimes.map((t, i) => (
-                <option key={i} value={t}>
-                  {t}
-                </option>
+              <option value="">Select time block</option>
+              {allSlots.map((slot, index) => (
+                <option key={index} value={slot}>{slot}</option>
               ))}
             </select>
           </div>
-        )}
 
-        <div className={styles["match-proposal-row"]}>
-          <b>Game Type:</b>
-          <select
-            value={gameType}
-            onChange={e => setGameType(e.target.value)}
-            className={styles["match-proposal-select"]}
-            aria-label="Select game type"
-          >
-            <option value="8 Ball">8 Ball</option>
-            <option value="9 Ball">9 Ball</option>
-            <option value="10 Ball">10 Ball</option>
-            <option value="One Pocket">One Pocket</option>
-            <option value="Mixed">Mixed ~ Any combination 8/9/10</option>
-          </select>
-        </div>
+          {time && (
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
+                Start Time:
+              </label>
+              <select
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                style={{
+                  background: "#333",
+                  color: "#fff",
+                  border: "1px solid #555",
+                  borderRadius: "4px",
+                  padding: "8px",
+                  width: "100%"
+                }}
+              >
+                <option value="">Select start time</option>
+                {possibleStartTimes.map((time, index) => (
+                  <option key={index} value={time}>{time}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
-        <div className={styles["match-proposal-row"]}>
-          <b>Race Length:</b>
-          <select
-            value={raceLength}
-            onChange={e => setRaceLength(Number(e.target.value))}
-            className={styles["match-proposal-select"]}
-            aria-label="Select race length"
-          >
-            {(() => {
-              // For phases 1 and 2, only allow race to 5
-              if (phase === "scheduled" || phase === "challenge") {
-                return (
-                  <option value={5}>
-                    5
-                  </option>
-                );
-              }
-              // For other phases, allow the full range (3-15)
-              return [...Array(13)].map((_, i) => {
-                const value = i + 3;
-                return (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                );
-              });
-            })()}
-          </select>
-        </div>
-        {(phase === "scheduled" || phase === "challenge") && (
-          <div style={{ 
-            color: "#ffc107", 
-            fontSize: "0.9em", 
-            marginBottom: "1em",
-            fontStyle: "italic",
-            textAlign: "center"
-          }}>
-            ⚠️ Race to 5 is required for {phase === "scheduled" ? "Scheduled Match" : "Challenge"} Phase
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
+              Location:
+            </label>
+            <select
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              style={{
+                background: "#333",
+                color: "#fff",
+                border: "1px solid #555",
+                borderRadius: "4px",
+                padding: "8px",
+                width: "100%"
+              }}
+            >
+              <option value="">Select location</option>
+              {locationOptions.map((loc, index) => (
+                <option key={index} value={loc}>{loc}</option>
+              ))}
+            </select>
           </div>
-        )}
 
-        <div className={styles["match-proposal-row"]}>
-          <b>Location:</b>
-          <select
-            value={location}
-            onChange={e => setLocation(e.target.value)}
-            className={`${styles["match-proposal-select"]} ${styles["match-proposal-location-select"]}`}
-            aria-label="Select location"
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
+              Game Type:
+            </label>
+            <select
+              value={gameType}
+              onChange={(e) => setGameType(e.target.value)}
+              style={{
+                background: "#333",
+                color: "#fff",
+                border: "1px solid #555",
+                borderRadius: "4px",
+                padding: "8px",
+                width: "100%"
+              }}
+            >
+              <option value="8 Ball">8 Ball</option>
+              <option value="9 Ball">9 Ball</option>
+              <option value="10 Ball">10 Ball</option>
+              <option value="Mixed">Mixed</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
+              Race to:
+            </label>
+            <select
+              value={raceLength}
+              onChange={(e) => setRaceLength(Number(e.target.value))}
+              style={{
+                background: "#333",
+                color: "#fff",
+                border: "1px solid #555",
+                borderRadius: "4px",
+                padding: "8px",
+                width: "100%"
+              }}
+            >
+              {(() => {
+                // For phases 1 and 2, only allow race to 5
+                if (phase === "scheduled" || phase === "challenge") {
+                  return <option value={5}>5</option>;
+                }
+                // For other phases, allow the full range (3-15)
+                return [...Array(13)].map((_, i) => {
+                  const value = i + 3;
+                  return (
+                    <option key={value} value={value}>{value}</option>
+                  );
+                });
+              })()}
+            </select>
+          </div>
+
+          {(phase === "scheduled" || phase === "challenge") && (
+            <div style={{ 
+              color: "#ffc107", 
+              fontSize: "0.9em", 
+              marginBottom: "1em",
+              fontStyle: "italic",
+              textAlign: "center"
+            }}>
+              ⚠️ Race to 5 is required for {phase === "scheduled" ? "Scheduled Match" : "Challenge"} Phase
+            </div>
+          )}
+
+          <div style={{ marginBottom: "1.5rem" }}>
+            <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
+              Message (optional):
+            </label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Add a personal message to your opponent..."
+              rows={3}
+              style={{
+                background: "#333",
+                color: "#fff",
+                border: "1px solid #555",
+                borderRadius: "4px",
+                padding: "8px",
+                width: "100%",
+                resize: "vertical"
+              }}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+          <button
+            onClick={handleSend}
+            disabled={!startTime || !location}
+            style={{
+              background: "#e53e3e",
+              color: "#fff",
+              border: "none",
+              borderRadius: "6px",
+              padding: "0.7rem 1.5rem",
+              fontSize: "1rem",
+              fontWeight: "bold",
+              cursor: "pointer",
+              minWidth: "120px",
+              opacity: (!startTime || !location) ? 0.5 : 1
+            }}
           >
-            <option value="">Select...</option>
-            {locationOptions.map((loc, idx) => (
-              <option key={idx} value={loc}>{loc}</option>
-            ))}
-          </select>
+            Send Proposal
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              background: "#6c757d",
+              color: "#fff",
+              border: "none",
+              borderRadius: "6px",
+              padding: "0.7rem 1.5rem",
+              fontSize: "1rem",
+              fontWeight: "bold",
+              cursor: "pointer",
+              minWidth: "120px"
+            }}
+          >
+            Cancel
+          </button>
         </div>
-        <div className={styles["match-proposal-row"]}>
-          <b>Message to Opponent: This is a BETA test match</b>
-          <textarea
-            value={message}
-            onChange={e => setMessage(e.target.value)}
-            placeholder="Write a message to your opponent…"
-            rows={3}
-            className={styles["match-proposal-textarea"]}
-            aria-label="Message to opponent"
-          />
-        </div>
+      </DraggableModal>
 
-        <button
-          disabled={!startTime || !location}
-          onClick={handleSend}
-          className={styles["match-proposal-send-btn"]}
-          type="button"
-        >
-          Send Proposal
-        </button>
+      {showConfirmation && (
         <ConfirmationModal
           open={showConfirmation}
-          message="Your match proposal has been sent! The opponent will receive an email with all the details."
-          division={selectedDivision}
-          phase={phase}
-          gameType={gameType}
-          raceLength={raceLength}
-          day={selectedDay}
-          date={formatDateMMDDYYYY(date)}
-          time={startTime}
-          location={location}
           onClose={handleConfirmationClose}
+          title="✅ Proposal Sent!"
+          message={`Your match proposal has been sent to ${player.name}. They will receive an email notification and can respond through the app.`}
         />
-      </div>
-    </div>
+      )}
+    </>
   );
 }

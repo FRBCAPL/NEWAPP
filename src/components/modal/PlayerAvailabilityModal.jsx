@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import styles from "./PlayerModal.module.css";
+import React, { useState, useEffect } from "react";
+import DraggableModal from "./DraggableModal";
 
 /**
  * PlayerAvailabilityModal - Shows a player's locations, availability, and contact info.
@@ -13,53 +13,12 @@ export default function PlayerAvailabilityModal({
   onClose,
   senderEmail,
   onProposeMatch,
-    selectedDivision,
+  selectedDivision,
   phase,
 }) {
   if (!player) return null;
   const [showContact, setShowContact] = useState(false);
   const [timer, setTimer] = useState(10);
-
-  // --- Draggable logic ---
-  const [drag, setDrag] = useState({ x: 0, y: 0 });
-  const [dragging, setDragging] = useState(false);
-  const dragStart = useRef({ x: 0, y: 0 });
-
-  const onMouseDown = (e) => {
-    if (e.button !== 0) return; // Only left mouse button
-    setDragging(true);
-    dragStart.current = {
-      x: e.clientX - drag.x,
-      y: e.clientY - drag.y,
-    };
-    document.body.style.userSelect = "none";
-  };
-  const onMouseMove = (e) => {
-    if (!dragging) return;
-    setDrag({
-      x: e.clientX - dragStart.current.x,
-      y: e.clientY - dragStart.current.y,
-    });
-  };
-  const onMouseUp = () => {
-    setDragging(false);
-    document.body.style.userSelect = "";
-  };
-
-  useEffect(() => {
-    if (dragging) {
-      window.addEventListener("mousemove", onMouseMove);
-      window.addEventListener("mouseup", onMouseUp);
-    } else {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-    }
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-    };
-  }, [dragging]);
-  // --- End draggable logic ---
 
   useEffect(() => {
     let interval;
@@ -92,61 +51,32 @@ export default function PlayerAvailabilityModal({
   }
 
   return (
-    <div
-      className={styles.modalOverlay}
-      onClick={onClose} // <-- Close modal when clicking background
-      role="presentation"
+    <DraggableModal
+      open={true}
+      onClose={onClose}
+      title={`👤 ${player.firstName} ${player.lastName}`}
+      maxWidth="600px"
     >
-      <div
-        className={styles.modalContent}
-        style={{
-          transform: `translate(${drag.x}px, ${drag.y}px)`,
-          cursor: dragging ? "grabbing" : "default",
-        }}
-        onClick={(e) => e.stopPropagation()} // Prevent overlay click from closing if inside modal
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Availability for ${player.firstName} ${player.lastName}`}
-      >
-        {/* Header as drag handle */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "grab",
-            userSelect: "none",
-            marginBottom: "1em",
-            position: "relative",
-          }}
-          onMouseDown={onMouseDown}
-        >
-          <h2
-            className={styles.playerModalTitle}
-            style={{ margin: 0, flex: 1 }}
-          >
-            Player: <br /> {player.firstName} {player.lastName}
-          </h2>
-          <button
-            className={styles.closeBtn}
-            onClick={onClose}
-            aria-label="Close"
-            type="button"
-            style={{ position: "absolute", right: 0, top: 0 }}
-          >
-            &times;
-          </button>
+      <div style={{ textAlign: "left" }}>
+        <div style={{
+          fontSize: "0.9rem",
+          color: "#888",
+          marginBottom: "1.5rem",
+          textAlign: "center"
+        }}>
+          {phase === "scheduled" ? "Phase 1 (Scheduled)" : phase === "challenge" ? "Phase 2 (Challenge)" : phase}
         </div>
-<span style={{ fontSize: 14, color: "#888", marginLeft: 8 }}>
-  {phase === "scheduled" ? "Phase 1 (Scheduled)" : phase === "challenge" ? "Phase 2 (challenge)" : phase}
-</span>
 
         {/* Preferred Locations */}
-        <div className={styles.playerModalSection}>
-          <h3 className={styles.playerModalSectionTitle}>
+        <div style={{ marginBottom: "1.5rem" }}>
+          <h3 style={{
+            color: "#e53e3e",
+            marginBottom: "0.5rem",
+            fontSize: "1.1rem"
+          }}>
             Preferred Locations:
           </h3>
-          <div className={styles.playerModalSectionValue}>
+          <div style={{ color: "#fff" }}>
             {player.locations
               ? player.locations
                   .split(/\r?\n/)
@@ -155,7 +85,7 @@ export default function PlayerAvailabilityModal({
                     <span key={loc + idx}>
                       {loc}
                       {idx < arr.length - 1 && (
-                        <span className={styles.locationSeparator}> • </span>
+                        <span style={{ color: "#e53e3e", margin: "0 0.5rem" }}> • </span>
                       )}
                     </span>
                   ))
@@ -164,142 +94,157 @@ export default function PlayerAvailabilityModal({
         </div>
 
         {/* Availability Grid */}
-        <div className={styles.playerModalSection}>
-          <h3 className={styles.playerModalSectionTitle}>Availability:</h3>
-          <div className={styles.playerModalInstruction}>
-            Pick a timeblock within a day
-            <br /> to schedule a match with this opponent.
+        <div style={{ marginBottom: "1.5rem" }}>
+          <h3 style={{
+            color: "#e53e3e",
+            marginBottom: "0.5rem",
+            fontSize: "1.1rem"
+          }}>
+            Availability:
+          </h3>
+          <div style={{
+            color: "#fff",
+            fontSize: "0.9rem",
+            marginBottom: "1rem",
+            textAlign: "center",
+            fontStyle: "italic"
+          }}>
+            Pick a timeblock within a day to schedule a match with this opponent.
           </div>
-          <div className={styles.playerModalGrid}>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(6, 1fr)",
+            gap: "8px"
+          }}>
             {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div className={styles.playerModalDay} key={day}>
-                <div className={styles.playerModalDayLabel}>{day}</div>
-                {(player.availability[day] || []).length === 0 && (
-                  <div className={styles.playerModalSlotEmpty}>—</div>
-                )}
-                {(player.availability[day] || []).map((slot, i) => (
-                  <div
-                    className={styles.playerModalSlot}
-                    key={i}
-                    onClick={() => {
-  onProposeMatch && onProposeMatch(day, slot, phase, selectedDivision);
-}}
-
-                    tabIndex={0}
-                    role="button"
-                    aria-label={`Propose match on ${day} at ${slot}`}
-                    onKeyPress={(e) => {
-  if (e.key === "Enter" || e.key === " ") {
-    onProposeMatch && onProposeMatch(day, slot, phase, selectedDivision);
-  }
-}}
-
-                  >
-                    {slot}
+              <div key={day} style={{ textAlign: "center" }}>
+                <div style={{
+                  color: "#e53e3e",
+                  fontWeight: "bold",
+                  marginBottom: "0.5rem",
+                  fontSize: "0.9rem"
+                }}>
+                  {day}
+                </div>
+                {(player.availability[day] || []).length === 0 ? (
+                  <div style={{
+                    color: "#666",
+                    fontSize: "0.8rem",
+                    padding: "0.5rem",
+                    background: "#222",
+                    borderRadius: "4px"
+                  }}>
+                    —
                   </div>
-                ))}
+                ) : (
+                  (player.availability[day] || []).map((slot, i) => (
+                    <div
+                      key={i}
+                      onClick={() => {
+                        onProposeMatch && onProposeMatch(day, slot, phase, selectedDivision);
+                      }}
+                      style={{
+                        background: "linear-gradient(135deg, #232323 0%, #2a0909 100%)",
+                        color: "#fff",
+                        border: "1px solid #e53e3e",
+                        borderRadius: "6px",
+                        padding: "0.5rem",
+                        fontSize: "0.8rem",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        marginBottom: "0.5rem"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = "linear-gradient(135deg, #e53e3e 0%, #c00 100%)";
+                        e.target.style.transform = "translateY(-1px)";
+                        e.target.style.boxShadow = "0 2px 8px rgba(229, 62, 62, 0.3)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = "linear-gradient(135deg, #232323 0%, #2a0909 100%)";
+                        e.target.style.transform = "translateY(0)";
+                        e.target.style.boxShadow = "none";
+                      }}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`Propose match on ${day} at ${slot}`}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          onProposeMatch && onProposeMatch(day, slot, phase, selectedDivision);
+                        }
+                      }}
+                    >
+                      {slot}
+                    </div>
+                  ))
+                )}
               </div>
             ))}
           </div>
         </div>
 
-        {/* Contact Info */}
-        <div className={styles.playerModalSection}>
-          <h3 className={styles.playerModalSectionTitle}>Contact Info</h3>
-          {showContact ? (
-            <div>
-              {/* Preferred Contact Methods: only show after expanding */}
-              <div className={styles.playerModalContactPref}>
-                <b>Preferred Contact Methods:</b>{" "}
-                {Array.isArray(player.preferredContacts) &&
-                player.preferredContacts.length > 0
-                  ? player.preferredContacts
-                      .map((method) => capitalizeWords(method.trim()))
-                      .join(" • ")
-                  : "No preference specified"}
-              </div>
-              {prefers("email") && player.email && (
-                <div className={styles.playerModalContact}>
-                  <b>Email:</b> {player.email}
+        {/* Contact Information */}
+        <div style={{ marginBottom: "1.5rem" }}>
+          <h3 style={{
+            color: "#e53e3e",
+            marginBottom: "0.5rem",
+            fontSize: "1.1rem"
+          }}>
+            Contact Information:
+          </h3>
+          <div style={{ color: "#fff" }}>
+            {showContact ? (
+              <div style={{
+                background: "rgba(229, 62, 62, 0.1)",
+                border: "1px solid #e53e3e",
+                borderRadius: "6px",
+                padding: "1rem"
+              }}>
+                <div style={{ marginBottom: "0.5rem" }}>
+                  <strong>Email:</strong> {player.email || "Not provided"}
                 </div>
-              )}
-              {(prefers("phone") || prefers("call")) && player.phone && (
-                <div className={styles.playerModalContact}>
-                  <b>Phone:</b> {player.phone}
-                </div>
-              )}
-              {prefers("text") && player.text && (
-                <div className={styles.playerModalContact}>
-                  <b>Text:</b> {player.text}
-                </div>
-              )}
-              {/* Fallback: If no preferredContacts or none matched, show all available */}
-              {(!Array.isArray(player.preferredContacts) ||
-                player.preferredContacts.length === 0 ||
-                (!prefers("email") &&
-                  !prefers("phone") &&
-                  !prefers("call") &&
-                  !prefers("text"))) && (
-                <>
-                  {player.email && (
-                    <div className={styles.playerModalContact}>
-                      <b>Email:</b> {player.email}
-                    </div>
-                  )}
-                  {player.phone && (
-                    <div className={styles.playerModalContact}>
-                      <b>Phone:</b> {player.phone}
-                    </div>
-                  )}
-                  {player.text && (
-                    <div className={styles.playerModalContact}>
-                      <b>Text:</b> {player.text}
-                    </div>
-                  )}
-                  <div className={styles.playerModalContact}>
-                    No preferred contact methods specified.
+                {player.phone && (
+                  <div style={{ marginBottom: "0.5rem" }}>
+                    <strong>Phone:</strong> {player.phone}
                   </div>
-                </>
-              )}
-              <div className={styles.playerModalContactTimer}>
-                Contact info will hide in {timer} seconds
+                )}
+                {player.text && (
+                  <div style={{ marginBottom: "0.5rem" }}>
+                    <strong>Text:</strong> {player.text}
+                  </div>
+                )}
+                {player.preferredContacts && player.preferredContacts.length > 0 && (
+                  <div>
+                    <strong>Preferred Contact:</strong> {player.preferredContacts.join(", ")}
+                  </div>
+                )}
+                <div style={{
+                  color: "#ffc107",
+                  fontSize: "0.9rem",
+                  marginTop: "0.5rem"
+                }}>
+                  Auto-hiding in {timer} seconds...
+                </div>
               </div>
-            </div>
-          ) : (
-            <button
-              className={styles.playerModalShowContact}
-              onClick={() => setShowContact(true)}
-              type="button"
-            >
-              Show {player.firstName}&apos;s contact info
-            </button>
-          )}
-        </div>
-
-        {/* Navigation Buttons */}
-        <div className={styles.playerModalActions}>
-          <button
-            className={styles.playerModalBtn}
-            onClick={() => {
-              window.location.hash = "#/search";
-              onClose();
-            }}
-            type="button"
-          >
-            New Search
-          </button>
-          <button
-            className={styles.playerModalBtn}
-            onClick={() => {
-              window.location.hash = "#/dashboard";
-              onClose();
-            }}
-            type="button"
-          >
-            Go to Dashboard
-          </button>
+            ) : (
+              <button
+                onClick={() => setShowContact(true)}
+                style={{
+                  background: "#e53e3e",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "0.7rem 1.5rem",
+                  fontSize: "1rem",
+                  fontWeight: "bold",
+                  cursor: "pointer"
+                }}
+              >
+                Show Contact Info
+              </button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </DraggableModal>
   );
 }
