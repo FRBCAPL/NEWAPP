@@ -421,7 +421,7 @@ function AdminUserSearch({ backendUrl }) {
                   </select>
                   <button
                     disabled={!selectedDivision}
-                    onClick={() => handleAdd(user.id, selectedDivision)}
+                    onClick={() => handleAdd(user.email, selectedDivision)}
                     className={userSearchStyles.addBtn}
                   >Add</button>
                 </td>
@@ -543,7 +543,7 @@ function DivisionManager({ backendUrl }) {
                     <td>{(user.divisions || []).join(", ")}</td>
                     <td>
                       <button
-                        onClick={() => handleRemoveDivision(user.id, selectedDivision)}
+                        onClick={() => handleRemoveDivision(user.email, selectedDivision)}
                         style={{ color: "red", border: "none", background: "none", cursor: "pointer" }}
                       >
                         Remove
@@ -573,7 +573,7 @@ function DivisionManager({ backendUrl }) {
                     <td>{user.email}</td>
                     <td>
                       <button
-                        onClick={() => handleAddDivision(user.id, selectedDivision)}
+                        onClick={() => handleAddDivision(user.email, selectedDivision)}
                         style={{ color: "green", border: "none", background: "none", cursor: "pointer" }}
                       >
                         Add
@@ -679,22 +679,21 @@ export default function AdminDashboard() {
         <button onClick={() => { navigate("/"); window.location.reload(); }}>
           🏠 User Dashboard
         </button>
-        <button onClick={() => navigate("/chat")}>
-          💬 Back to Chat
-        </button>
+        <button onClick={() => navigate("/chat")}>💬 Back to Chat</button>
         <button onClick={() => { localStorage.clear(); navigate("/"); window.location.reload(); }}>
           🚪 Logout
         </button>
       </div>
-      <div className={styles.adminDashboardMainRow}>
-        {/* LEFT COLUMN: Admin controls */}
-        <div className={styles.adminDashboardContent}>
-          <div className={styles.adminToolbar}>
+      <div className={styles.adminDashboardMainColumn}>
+        {/* FLEX ROW: BUTTONS LEFT, ADMIN SECTIONS RIGHT */}
+        <div className={styles.adminRowWrapper}>
+          <div className={styles.adminButtonStack}>
             <DivisionScheduleUpdater backendUrl={BACKEND_URL} />
             <UpdateStandingsButton backendUrl={BACKEND_URL} />
             <SyncUsersButton backendUrl={BACKEND_URL} />
             <ConvertDivisionsButton backendUrl={BACKEND_URL} />
             <button
+              className={styles.adminActionButton}
               onClick={() => setShowUnenteredModal(true)}
               style={{
                 background: "#222",
@@ -703,7 +702,7 @@ export default function AdminDashboard() {
                 borderRadius: 5,
                 padding: "8px 16px",
                 fontWeight: "bold",
-                margin: "12px 0",
+                margin: "8px 0",
                 cursor: "pointer"
               }}
             >
@@ -714,12 +713,14 @@ export default function AdminDashboard() {
               onClose={() => setShowUnenteredModal(false)}
             />
           </div>
-          <CreateDivisionForm backendUrl={BACKEND_URL} onDivisionCreated={() => {}} />
-          <AdminUserSearch backendUrl={BACKEND_URL} />
-          <DivisionManager backendUrl={BACKEND_URL} />
+          <div className={styles.adminSectionRow}>
+            <div className={styles.adminSection}><CreateDivisionForm backendUrl={BACKEND_URL} onDivisionCreated={() => {}} /></div>
+            <div className={styles.adminSection}><AdminUserSearch backendUrl={BACKEND_URL} /></div>
+            <div className={styles.adminSection}><DivisionManager backendUrl={BACKEND_URL} /></div>
+          </div>
         </div>
-        {/* RIGHT COLUMN: Stream chat */}
-        <div className={styles.adminDashboardChatColumn}>
+        {/* CHAT CONTROLS BELOW ADMIN CONTROLS */}
+        <div className={styles.adminChatWrapper}>
           <div className={styles.adminChannelList}>
             <h3>Channels</h3>
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>

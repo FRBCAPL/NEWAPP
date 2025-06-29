@@ -1,9 +1,12 @@
 .searchContainer {
   border: 2px solid #b71c1c;
-  padding: 24px;
+  padding: 1.2rem 0.5rem;
   border-radius: 8px;
-  margin: 24px;
+  margin: 0 0 1.2rem 0;
   background: #181818;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .searchTitle {
@@ -12,20 +15,26 @@
 }
 
 .searchForm {
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
 }
 
 .searchInput {
   padding: 8px;
-  width: 250px;
+  flex: 1 1 180px;
+  min-width: 120px;
   border: 1px solid #b71c1c;
   border-radius: 4px;
   background: #232323;
   color: #fff;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .searchButton {
-  margin-left: 8px;
   padding: 8px 16px;
   background: #b71c1c;
   color: #fff;
@@ -33,6 +42,7 @@
   border-radius: 4px;
   font-weight: bold;
   cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .resultsTable {
@@ -40,6 +50,15 @@
   background: #232323;
   color: #fff;
   border-collapse: collapse;
+  overflow-x: auto;
+  display: block;
+  max-width: 100%;
+}
+
+.resultsTable thead, .resultsTable tbody {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
 }
 
 .resultsHeader {
@@ -50,6 +69,7 @@
 .resultsCell {
   border: 1px solid #b71c1c;
   padding: 8px;
+  word-break: break-word;
 }
 
 .divisionBadge {
@@ -67,8 +87,6 @@
   letter-spacing: 0.05em;    /* spacing between letters */
 }
 
-
-
 .removeBtn {
   margin-left: 4px;
   color: #b71c1c; /* or your preferred red */
@@ -84,7 +102,6 @@
   padding: 0 2px;
 }
 
-
 .addBtn {
   margin-left: 8px;
   background: #b71c1c;
@@ -93,4 +110,21 @@
   border-radius: 4px;
   padding: 4px 10px;
   cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .searchContainer {
+    padding: 0.7rem 0.2rem;
+  }
+  .resultsTable {
+    font-size: 0.95em;
+  }
+}
+@media (max-width: 500px) {
+  .searchContainer {
+    padding: 0.4rem 0.1rem;
+  }
+  .resultsTable {
+    font-size: 0.9em;
+  }
 }

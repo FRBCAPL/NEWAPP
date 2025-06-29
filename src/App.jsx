@@ -225,71 +225,78 @@ function App() {
   return (
     <HashRouter>
       <BackgroundLogo />
-      <main className="main-app-content">
-        <AppHeader />
-        <Routes>
-          <Route path="/confirm-match" element={<ConfirmMatch />} />
-          <Route
-            path="/chat"
-            element={
-              isAuthenticated ? (
-                <MatchChat
-                  userName={`${userFirstName} ${userLastName}`}
-                  userEmail={userEmail}
-                  userPin={userPin}
+      <Routes>
+        <Route
+          path="/admin"
+          element={
+            isAuthenticated && userPin === "777777" ? (
+              <div className="admin-app-content"><AdminDashboard /></div>
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <main className="main-app-content">
+              <AppHeader />
+              <Routes>
+                <Route path="/confirm-match" element={<ConfirmMatch />} />
+                <Route
+                  path="/chat"
+                  element={
+                    isAuthenticated ? (
+                      <MatchChat
+                        userName={`${userFirstName} ${userLastName}`}
+                        userEmail={userEmail}
+                        userPin={userPin}
+                      />
+                    ) : (
+                      <Navigate to="/" />
+                    )
+                  }
                 />
-              ) : (
-                <Navigate to="/" />
-              )
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              isAuthenticated && userPin === "777777" ? (
-                <AdminDashboard />
-              ) : (
-                <Navigate to="/" />
-              )
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              isAuthenticated ? (
-                <Dashboard
-                  playerName={userFirstName}
-                  playerLastName={userLastName}
-                  senderEmail={userEmail}
-                  onScheduleMatch={() => {}}
-                  onOpenChat={() => (window.location.hash = "#/chat")}
-                  onLogout={handleLogout}
-                  userPin={userPin}
-                  onGoToAdmin={() => {}}
+                <Route
+                  path="/dashboard"
+                  element={
+                    isAuthenticated ? (
+                      <Dashboard
+                        playerName={userFirstName}
+                        playerLastName={userLastName}
+                        senderEmail={userEmail}
+                        onScheduleMatch={() => {}}
+                        onOpenChat={() => (window.location.hash = "#/chat")}
+                        onLogout={handleLogout}
+                        userPin={userPin}
+                        onGoToAdmin={() => {}}
+                      />
+                    ) : (
+                      <Navigate to="/" />
+                    )
+                  }
                 />
-              ) : (
-                <Navigate to="/" />
-              )
-            }
-          />
-          <Route
-            path="/"
-            element={
-              <MainApp
-                isAuthenticated={isAuthenticated}
-                userFirstName={userFirstName}
-                userLastName={userLastName}
-                userEmail={userEmail}
-                userPin={userPin}
-                handleLoginSuccess={handleLoginSuccess}
-                handleLogout={handleLogout}
-              />
-            }
-          />
-          {/* Catch-all route */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </main>
+                <Route
+                  path="/"
+                  element={
+                    <MainApp
+                      isAuthenticated={isAuthenticated}
+                      userFirstName={userFirstName}
+                      userLastName={userLastName}
+                      userEmail={userEmail}
+                      userPin={userPin}
+                      handleLoginSuccess={handleLoginSuccess}
+                      handleLogout={handleLogout}
+                    />
+                  }
+                />
+                {/* Catch-all route */}
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </main>
+          }
+        />
+      </Routes>
     </HashRouter>
   );
 }
