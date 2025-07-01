@@ -724,6 +724,10 @@ export default function Dashboard({
               {playerName} {playerLastName}
             </span>
           </h1>
+          <div className={styles.announcement}>
+            <p>This is the BETA version. </p>Matches that are created, scheduled, and confirmed will NOT be played.<br />
+            This is for testing purposes only.
+          </div>
           <br />
           {/* --- Division Selector --- */}
           {divisions.length > 0 && (
@@ -1187,16 +1191,17 @@ export default function Dashboard({
           }}
           player={selectedOpponent}
           onProposeMatch={(day, slot) => {
-              setProposalData({
-                player: selectedOpponent,
-                day,
-                slot,
-                selectedDivision, 
-                phase: effectivePhase
-              });
-              setShowProposalModal(true);
-              setShowPlayerAvailability(false);
-              setSelectedOpponent(null);
+            console.log("selectedOpponent in onProposeMatch:", selectedOpponent);
+            setProposalData({
+              player: selectedOpponent,
+              day,
+              slot,
+              selectedDivision, 
+              phase: effectivePhase
+            });
+            setShowProposalModal(true);
+            setShowPlayerAvailability(false);
+            setSelectedOpponent(null);
           }}
           selectedDivision={selectedDivision}
           phase={effectivePhase}

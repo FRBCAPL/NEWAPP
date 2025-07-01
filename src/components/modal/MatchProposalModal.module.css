@@ -64,10 +64,10 @@
 
 /* ========== Title ========== */
 .match-proposal-title {
-  color: var(--title-color);
+  color: #fff;
   font-size: 1.7rem;
   font-weight: bold;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
   text-align: center;
   letter-spacing: 0.01em;
 }
@@ -82,7 +82,6 @@
   display: block;
   width: 100%;
 }
-
 
 /* ========== Inputs, Selects, Textareas ========== */
 .match-proposal-select,
@@ -153,12 +152,12 @@
 
 .match-proposal-date-highlight {
   display: inline-block;
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--title-color);
   background: #232323;
   border-radius: 8px;
-  padding: 8px 18px;
+  padding: 6px 10px;
   margin: 8px 0;
   letter-spacing: 0.03em;
   box-shadow: 0 2px 8px #e5393530;
@@ -237,8 +236,16 @@
   letter-spacing: 0.02em;
 }
 .opponentName {
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: 900;
   display: block;
   margin-top: 0.2rem;
+}
+
+.match-proposal-division, .match-proposal-phase {
+  /* color: var(--title-color); */
+}
+
+.match-proposal-label-red {
+  color: var(--title-color);
 }

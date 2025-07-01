@@ -5,6 +5,7 @@ import { generateStartTimes, getNextDayOfWeek } from "../../utils/timeHelpers";
 import ConfirmationModal from "./ConfirmationModal";
 import { sendProposalEmail } from "../../utils/emailHelpers";
 import DraggableModal from "./DraggableModal";
+import styles from "./MatchProposalModal.module.css";
 
 // --- ADD: Stream Chat import and constants ---
 import { StreamChat } from "stream-chat";
@@ -105,6 +106,13 @@ async function createMatchChannel({ senderEmail, senderName, receiverEmail, rece
   }
 }
 
+// Add a constant for the BETA message
+const BETA_MESSAGE = "This is a BETA test match. Matches that are created, scheduled, and confirmed will NOT be played.\n\n";
+
+// Add a normalization function for slot strings
+const normalizeSlot = (slot) =>
+  slot.replace(/[–—−]/g, "-").replace(/\s*-\s*/g, " - ").trim();
+
 export default function MatchProposalModal({
   player,
   day,
@@ -116,7 +124,9 @@ export default function MatchProposalModal({
   selectedDivision,
   phase
 }) {
+  console.log("MatchProposalModal player prop:", player);
   console.log("MatchProposalModal phase prop:", phase);
+  console.log("MatchProposalModal slot prop:", slot, JSON.stringify(slot));
 
   // --- State declarations ---
   const [time, setTime] = useState(slot);
@@ -141,36 +151,32 @@ export default function MatchProposalModal({
   const selectedDay = dayNames[date.getDay()];
 
   const possibleStartTimes = useMemo(() => {
-    if (!time || !time.includes("-")) return [];
-    let [blockStart, blockEnd] = time.split(" - ").map(s => normalizeTimeString(s.trim()));
+    if (!slot) return [];
+    const normalized = normalizeSlot(slot);
+    if (!normalized.includes(" - ")) return [];
+    let [blockStart, blockEnd] = normalized.split(" - ").map(s => normalizeTimeString(s.trim()));
     if (!blockStart || !blockEnd) return [];
-    return generateStartTimes(blockStart, blockEnd, 30);
-  }, [time]);
+    const times = generateStartTimes(blockStart, blockEnd, 30);
+    console.log("MatchProposalModal possibleStartTimes:", times);
+    return times;
+  }, [slot]);
 
   useEffect(() => {
     setStartTime("");
-  }, [time]);
+  }, [slot]);
 
   // --- Handlers ---
   const handleSend = () => {
-    // Defensive: Check for missing required fields
-    if (
-      !senderEmail ||
-      !player.email ||
-      !startTime ||
-      !location ||
-      !date
-    ) {
+    if (!senderEmail || !player.email || !startTime || !location || !date) {
       alert("Please fill in all required fields.");
       return;
     }
-
     // Create the proposal data
     const proposalData = {
       senderEmail,
       senderName,
       receiverEmail: player.email,
-      receiverName: player.name,
+      receiverName: player.firstName ? `${player.firstName} ${player.lastName}` : player.name,
       date: formatDateYYYYMMDD(date),
       time: startTime,
       location,
@@ -180,7 +186,7 @@ export default function MatchProposalModal({
       phase,
       divisions: [selectedDivision]
     };
-
+    console.log("Proposal data to send:", proposalData);
     // Send the proposal
     fetch(`${BACKEND_URL}/api/proposals`, {
       method: "POST",
@@ -189,28 +195,30 @@ export default function MatchProposalModal({
     })
       .then((res) => res.json())
       .then((data) => {
+        console.log("Backend response:", data);
         if (data.error) {
           throw new Error(data.error);
         }
-
         // Create chat channel
         createMatchChannel({
           senderEmail,
           senderName,
           receiverEmail: player.email,
-          receiverName: player.name,
-          matchName: `${senderName} vs ${player.name} - ${formatDateMMDDYYYY(date)}`
+          receiverName: player.firstName ? `${player.firstName} ${player.lastName}` : player.name,
+          matchName: `${senderName} vs ${player.firstName ? `${player.firstName} ${player.lastName}` : player.name} - ${formatDateMMDDYYYY(date)}`
         });
 
         // Send email notification
         sendProposalEmail({
-          to: player.email,
-          toName: player.name,
-          fromName: senderName,
-          date: formatDateMMDDYYYY(date),
+          to_email: player.email,
+          to_name: player.firstName ? `${player.firstName} ${player.lastName}` : player.name,
+          from_name: senderName,
+          from_email: senderEmail,
+          day: selectedDay,
+          date: formatDateYYYYMMDD(date),
           time: startTime,
           location,
-          message,
+          note: message,
           gameType,
           raceLength
         });
@@ -237,52 +245,43 @@ export default function MatchProposalModal({
       <DraggableModal
         open={true}
         onClose={onClose}
-        title={`🎱 Propose Match to ${player.name}`}
+        title={<span className={styles['match-proposal-title']}>{`Propose a Match - BETA`}</span>}
         maxWidth="500px"
       >
-        <div style={{ textAlign: "left", marginBottom: "1.5rem" }}>
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
-              Day:
-            </label>
-            <span style={{ color: "#fff", fontSize: "1.1rem" }}>{selectedDay}</span>
+        <div className={styles['match-proposal-content']}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 12 }}>
+            <div className={styles['match-proposal-phase']}>
+              <b>
+                <span style={{ color: '#fff' }}>
+                  {phase === 'scheduled' ? 'Phase 1:' : phase === 'challenge' ? 'Phase 2:' : ''}
+                </span>
+                <span className={styles['match-proposal-label-red']} style={{ marginLeft: 4 }}>
+                  {phase === 'scheduled' ? 'Scheduled Match Phase' : phase === 'challenge' ? 'Challenge Phase' : ''}
+                </span>
+              </b>
+            </div>
+            <div className={styles['match-proposal-division']}>
+              <b><span style={{ color: '#fff' }}>Division:</span></b> <span className={styles['match-proposal-label-red']}>{selectedDivision}</span>
+            </div>
           </div>
-
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
-              Date:
-            </label>
-            <DatePicker
-              selected={date}
-              onChange={setDate}
-              minDate={new Date()}
-              dateFormat="MM/dd/yyyy"
-              style={{
-                background: "#333",
-                color: "#fff",
-                border: "1px solid #555",
-                borderRadius: "4px",
-                padding: "8px",
-                width: "100%"
-              }}
-            />
+          <div className={styles['match-proposal-row']} style={{ marginBottom: 10 }}>
+            <b>To Opponent:</b>
+            <div className={styles['opponentName']} style={{ fontWeight: 'bold', fontSize: '1.25rem', margin: '2px 0' }}>{player.firstName ? `${player.firstName} ${player.lastName}` : player.name}</div>
+            <span style={{ color: '#fff', fontSize: '1rem' }}>Day: </span>
+            <span className={styles['match-proposal-day-value']} style={{ color: '#e53e3e', fontWeight: 600 }}>{selectedDay}</span>
           </div>
-
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
-              Time Block:
-            </label>
+          <div className={styles['match-proposal-row']} style={{ marginBottom: 10 }}>
+            <b>Date:</b>
+            <div className={styles['match-proposal-date-highlight']}>
+              {date ? date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
+            </div>
+          </div>
+          <div className={styles['match-proposal-row']} style={{ marginBottom: 10 }}>
+            <b>Time Block:</b>
             <select
+              className={styles['match-proposal-select']}
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              style={{
-                background: "#333",
-                color: "#fff",
-                border: "1px solid #555",
-                borderRadius: "4px",
-                padding: "8px",
-                width: "100%"
-              }}
             >
               <option value="">Select time block</option>
               {allSlots.map((slot, index) => (
@@ -290,70 +289,25 @@ export default function MatchProposalModal({
               ))}
             </select>
           </div>
-
-          {time && (
-            <div style={{ marginBottom: "1rem" }}>
-              <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
-                Start Time:
-              </label>
-              <select
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                style={{
-                  background: "#333",
-                  color: "#fff",
-                  border: "1px solid #555",
-                  borderRadius: "4px",
-                  padding: "8px",
-                  width: "100%"
-                }}
-              >
-                <option value="">Select start time</option>
-                {possibleStartTimes.map((time, index) => (
-                  <option key={index} value={time}>{time}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
-              Location:
-            </label>
+          <div className={styles['match-proposal-row']} style={{ marginBottom: 10 }}>
+            <b>Start Time:</b>
             <select
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              style={{
-                background: "#333",
-                color: "#fff",
-                border: "1px solid #555",
-                borderRadius: "4px",
-                padding: "8px",
-                width: "100%"
-              }}
+              className={styles['match-proposal-select']}
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
             >
-              <option value="">Select location</option>
-              {locationOptions.map((loc, index) => (
-                <option key={index} value={loc}>{loc}</option>
+              <option value="">Select...</option>
+              {possibleStartTimes.map((time, index) => (
+                <option key={index} value={time}>{time}</option>
               ))}
             </select>
           </div>
-
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
-              Game Type:
-            </label>
+          <div className={styles['match-proposal-row']} style={{ marginBottom: 10 }}>
+            <b>Game Type:</b>
             <select
+              className={styles['match-proposal-select']}
               value={gameType}
               onChange={(e) => setGameType(e.target.value)}
-              style={{
-                background: "#333",
-                color: "#fff",
-                border: "1px solid #555",
-                borderRadius: "4px",
-                padding: "8px",
-                width: "100%"
-              }}
             >
               <option value="8 Ball">8 Ball</option>
               <option value="9 Ball">9 Ball</option>
@@ -361,29 +315,17 @@ export default function MatchProposalModal({
               <option value="Mixed">Mixed</option>
             </select>
           </div>
-
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
-              Race to:
-            </label>
+          <div className={styles['match-proposal-row']} style={{ marginBottom: 10 }}>
+            <b>Race Length:</b>
             <select
+              className={styles['match-proposal-select']}
               value={raceLength}
               onChange={(e) => setRaceLength(Number(e.target.value))}
-              style={{
-                background: "#333",
-                color: "#fff",
-                border: "1px solid #555",
-                borderRadius: "4px",
-                padding: "8px",
-                width: "100%"
-              }}
             >
               {(() => {
-                // For phases 1 and 2, only allow race to 5
                 if (phase === "scheduled" || phase === "challenge") {
                   return <option value={5}>5</option>;
                 }
-                // For other phases, allow the full range (3-15)
                 return [...Array(13)].map((_, i) => {
                   const value = i + 3;
                   return (
@@ -393,75 +335,44 @@ export default function MatchProposalModal({
               })()}
             </select>
           </div>
-
-          {(phase === "scheduled" || phase === "challenge") && (
-            <div style={{ 
-              color: "#ffc107", 
-              fontSize: "0.9em", 
-              marginBottom: "1em",
-              fontStyle: "italic",
-              textAlign: "center"
-            }}>
-              ⚠️ Race to 5 is required for {phase === "scheduled" ? "Scheduled Match" : "Challenge"} Phase
-            </div>
-          )}
-
-          <div style={{ marginBottom: "1.5rem" }}>
-            <label style={{ display: "block", marginBottom: "0.5rem", color: "#e53e3e", fontWeight: "bold" }}>
-              Message (optional):
-            </label>
+          <div className={styles['match-proposal-row']} style={{ marginBottom: 10 }}>
+            <b>Location:</b>
+            <select
+              className={styles['match-proposal-location-select']}
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            >
+              <option value="">Select...</option>
+              {locationOptions.map((loc, index) => (
+                <option key={index} value={loc}>{loc}</option>
+              ))}
+            </select>
+          </div>
+          <div className={styles['match-proposal-row']} style={{ marginBottom: 10 }}>
+            <b>Message to Opponent:</b>
             <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Add a personal message to your opponent..."
-              rows={3}
-              style={{
-                background: "#333",
-                color: "#fff",
-                border: "1px solid #555",
-                borderRadius: "4px",
-                padding: "8px",
-                width: "100%",
-                resize: "vertical"
+              className={styles['match-proposal-textarea']}
+              value={BETA_MESSAGE + message}
+              onChange={e => {
+                // Prevent editing or deleting the BETA message
+                const input = e.target.value;
+                if (input.startsWith(BETA_MESSAGE)) {
+                  setMessage(input.slice(BETA_MESSAGE.length));
+                } else {
+                  // If user tries to delete or edit the BETA message, reset it
+                  setMessage("");
+                }
               }}
+              placeholder="Add a comment to your opponent..."
+              rows={5}
             />
           </div>
-        </div>
-
-        <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
           <button
+            className={styles['match-proposal-send-btn']}
             onClick={handleSend}
             disabled={!startTime || !location}
-            style={{
-              background: "#e53e3e",
-              color: "#fff",
-              border: "none",
-              borderRadius: "6px",
-              padding: "0.7rem 1.5rem",
-              fontSize: "1rem",
-              fontWeight: "bold",
-              cursor: "pointer",
-              minWidth: "120px",
-              opacity: (!startTime || !location) ? 0.5 : 1
-            }}
           >
             Send Proposal
-          </button>
-          <button
-            onClick={onClose}
-            style={{
-              background: "#6c757d",
-              color: "#fff",
-              border: "none",
-              borderRadius: "6px",
-              padding: "0.7rem 1.5rem",
-              fontSize: "1rem",
-              fontWeight: "bold",
-              cursor: "pointer",
-              minWidth: "120px"
-            }}
-          >
-            Cancel
           </button>
         </div>
       </DraggableModal>
@@ -470,8 +381,15 @@ export default function MatchProposalModal({
         <ConfirmationModal
           open={showConfirmation}
           onClose={handleConfirmationClose}
-          title="✅ Proposal Sent!"
-          message={`Your match proposal has been sent to ${player.name}. They will receive an email notification and can respond through the app.`}
+          message={`Your match proposal has been sent to ${player.firstName ? `${player.firstName} ${player.lastName}` : player.name}. They will receive an email notification and can respond through the app.`}
+          phase={phase}
+          gameType={gameType}
+          raceLength={raceLength}
+          day={selectedDay}
+          date={formatDateYYYYMMDD(date)}
+          time={startTime}
+          location={location}
+          proposalNote={message}
         />
       )}
     </>

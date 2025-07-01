@@ -73,9 +73,13 @@
    PROPOSAL LIST & CARDS
    =============================== */
 .proposalList {
+  height: 400px !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: block !important;
+  padding-right: 0;
   list-style: none;
   padding: 0;
-  margin: 0;
 }
 
 .proposalCardButton {
@@ -84,13 +88,15 @@
   background: #232323;
   border: 1.5px solid var(--accent-red);
   border-radius: 8px;
-  padding: 1.1rem;
+  padding: 0.7rem 0.7rem 0.7rem 0.9rem;
   cursor: pointer;
-  font-size: 1.08rem;
+  font-size: 0.98rem;
   color: #fff;
   transition: background 0.2s, border 0.2s;
   box-shadow: 0 2px 8px #0002;
-  margin-bottom: 1.2rem;
+  margin-bottom: 0.7rem;
+  word-break: break-word;
+  overflow: hidden;
 }
 .proposalCardButton:hover {
   background: #2a0909;
@@ -127,5 +133,65 @@
     min-width: 0;
     width: auto;
     padding: 1em 0.7em;
+  }
+}
+
+.modalContent {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-bottom: 2.5rem;
+}
+
+/* Vertically center the modal */
+:global(.draggable-modal-root) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+/* Responsive modal width */
+:global(.draggable-modal-box) {
+  width: 95vw;
+  max-width: 600px;
+  min-width: 320px;
+}
+
+.confirmDialogOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.4);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirmDialogBox {
+  background: #222;
+  color: #fff;
+  border-radius: 10px;
+  padding: 2rem 2.5rem;
+  box-shadow: 0 4px 32px #000a;
+  max-width: 90vw;
+  min-width: 260px;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  :global(.draggable-modal-box) {
+    max-width: 98vw;
+    min-width: 0;
+    padding: 0.5rem;
+  }
+  .modalContent {
+    max-height: 50vh;
+    padding-bottom: 1.5rem;
+  }
+  .confirmDialogBox {
+    padding: 1rem 0.5rem;
   }
 }

@@ -72,7 +72,8 @@ export default function PlayerAvailabilityModal({
           <h3 style={{
             color: "#e53e3e",
             marginBottom: "0.5rem",
-            fontSize: "1.1rem"
+            fontSize: "1.1rem",
+            textAlign: "center"
           }}>
             Preferred Locations:
           </h3>
@@ -98,7 +99,8 @@ export default function PlayerAvailabilityModal({
           <h3 style={{
             color: "#e53e3e",
             marginBottom: "0.5rem",
-            fontSize: "1.1rem"
+            fontSize: "1.1rem",
+            textAlign: "center"
           }}>
             Availability:
           </h3>
@@ -111,87 +113,151 @@ export default function PlayerAvailabilityModal({
           }}>
             Pick a timeblock within a day to schedule a match with this opponent.
           </div>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(6, 1fr)",
-            gap: "8px"
-          }}>
-            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div key={day} style={{ textAlign: "center" }}>
-                <div style={{
-                  color: "#e53e3e",
-                  fontWeight: "bold",
-                  marginBottom: "0.5rem",
-                  fontSize: "0.9rem"
-                }}>
-                  {day}
-                </div>
-                {(player.availability[day] || []).length === 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+              {["Mon", "Tue", "Wed"].map((day) => (
+                <div key={day} style={{ textAlign: "center" }}>
                   <div style={{
-                    color: "#666",
-                    fontSize: "0.8rem",
-                    padding: "0.5rem",
-                    background: "#222",
-                    borderRadius: "4px"
+                    color: "#e53e3e",
+                    fontWeight: "bold",
+                    marginBottom: "0.5rem",
+                    fontSize: "0.9rem"
                   }}>
-                    —
+                    {day}
                   </div>
-                ) : (
-                  (player.availability[day] || []).map((slot, i) => (
-                    <div
-                      key={i}
-                      onClick={() => {
-                        onProposeMatch && onProposeMatch(day, slot, phase, selectedDivision);
-                      }}
-                      style={{
-                        background: "linear-gradient(135deg, #232323 0%, #2a0909 100%)",
-                        color: "#fff",
-                        border: "1px solid #e53e3e",
-                        borderRadius: "6px",
-                        padding: "0.5rem",
-                        fontSize: "0.8rem",
-                        cursor: "pointer",
-                        transition: "all 0.2s ease",
-                        marginBottom: "0.5rem"
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = "linear-gradient(135deg, #e53e3e 0%, #c00 100%)";
-                        e.target.style.transform = "translateY(-1px)";
-                        e.target.style.boxShadow = "0 2px 8px rgba(229, 62, 62, 0.3)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = "linear-gradient(135deg, #232323 0%, #2a0909 100%)";
-                        e.target.style.transform = "translateY(0)";
-                        e.target.style.boxShadow = "none";
-                      }}
-                      tabIndex={0}
-                      role="button"
-                      aria-label={`Propose match on ${day} at ${slot}`}
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          onProposeMatch && onProposeMatch(day, slot, phase, selectedDivision);
-                        }
-                      }}
-                    >
-                      {slot}
+                  {(player.availability[day] || []).length === 0 ? (
+                    <div style={{
+                      color: "#666",
+                      fontSize: "0.8rem",
+                      padding: "0.5rem",
+                      background: "#222",
+                      borderRadius: "4px"
+                    }}>
+                      —
                     </div>
-                  ))
-                )}
-              </div>
-            ))}
+                  ) : (
+                    (player.availability[day] || []).map((slot, i) => (
+                      <div
+                        key={i}
+                        onClick={() => {
+                          onProposeMatch && onProposeMatch(day, slot, phase, selectedDivision);
+                        }}
+                        style={{
+                          background: "linear-gradient(135deg, #232323 0%, #2a0909 100%)",
+                          color: "#fff",
+                          border: "1px solid #e53e3e",
+                          borderRadius: "6px",
+                          padding: "0.5rem",
+                          fontSize: "0.8rem",
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                          marginBottom: "0.5rem"
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = "linear-gradient(135deg, #e53e3e 0%, #c00 100%)";
+                          e.target.style.transform = "translateY(-1px)";
+                          e.target.style.boxShadow = "0 2px 8px rgba(229, 62, 62, 0.3)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = "linear-gradient(135deg, #232323 0%, #2a0909 100%)";
+                          e.target.style.transform = "translateY(0)";
+                          e.target.style.boxShadow = "none";
+                        }}
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`Propose match on ${day} at ${slot}`}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            onProposeMatch && onProposeMatch(day, slot, phase, selectedDivision);
+                          }
+                        }}
+                      >
+                        {slot}
+                      </div>
+                    ))
+                  )}
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+              {["Thu", "Fri", "Sat"].map((day) => (
+                <div key={day} style={{ textAlign: "center" }}>
+                  <div style={{
+                    color: "#e53e3e",
+                    fontWeight: "bold",
+                    marginBottom: "0.5rem",
+                    fontSize: "0.9rem"
+                  }}>
+                    {day}
+                  </div>
+                  {(player.availability[day] || []).length === 0 ? (
+                    <div style={{
+                      color: "#666",
+                      fontSize: "0.8rem",
+                      padding: "0.5rem",
+                      background: "#222",
+                      borderRadius: "4px"
+                    }}>
+                      —
+                    </div>
+                  ) : (
+                    (player.availability[day] || []).map((slot, i) => (
+                      <div
+                        key={i}
+                        onClick={() => {
+                          onProposeMatch && onProposeMatch(day, slot, phase, selectedDivision);
+                        }}
+                        style={{
+                          background: "linear-gradient(135deg, #232323 0%, #2a0909 100%)",
+                          color: "#fff",
+                          border: "1px solid #e53e3e",
+                          borderRadius: "6px",
+                          padding: "0.5rem",
+                          fontSize: "0.8rem",
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                          marginBottom: "0.5rem"
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = "linear-gradient(135deg, #e53e3e 0%, #c00 100%)";
+                          e.target.style.transform = "translateY(-1px)";
+                          e.target.style.boxShadow = "0 2px 8px rgba(229, 62, 62, 0.3)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = "linear-gradient(135deg, #232323 0%, #2a0909 100%)";
+                          e.target.style.transform = "translateY(0)";
+                          e.target.style.boxShadow = "none";
+                        }}
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`Propose match on ${day} at ${slot}`}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            onProposeMatch && onProposeMatch(day, slot, phase, selectedDivision);
+                          }
+                        }}
+                      >
+                        {slot}
+                      </div>
+                    ))
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Contact Information */}
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div style={{ marginBottom: "1.5rem", textAlign: "center" }}>
           <h3 style={{
             color: "#e53e3e",
             marginBottom: "0.5rem",
-            fontSize: "1.1rem"
+            fontSize: "1.1rem",
+            textAlign: "center"
           }}>
             Contact Information:
           </h3>
-          <div style={{ color: "#fff" }}>
+          <div style={{ color: "#fff", textAlign: "center" }}>
             {showContact ? (
               <div style={{
                 background: "rgba(229, 62, 62, 0.1)",

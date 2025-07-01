@@ -23,5 +23,9 @@ export const proposalService = {
 
   async markCompleted(proposalId) {
     return ApiService.patch(`/api/matches/completed/${proposalId}`);
+  },
+
+  async cancelProposal(proposalId) {
+    return ApiService.post(`/api/proposals/${proposalId}/cancel`);
   }
 }; 

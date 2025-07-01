@@ -103,38 +103,6 @@ export default function DraggableModal({
         aria-label={title}
         tabIndex={-1}
       >
-        {/* Close button */}
-        <button 
-          className="modal-close-btn"
-          onClick={onClose} 
-          aria-label="Close"
-          style={{
-            position: "absolute",
-            top: "0.6rem",
-            right: "1.2rem",
-            background: "none",
-            border: "none",
-            color: "#fff",
-            fontSize: "2em",
-            fontWeight: "bold",
-            cursor: "pointer",
-            zIndex: 10,
-            lineHeight: 1,
-            transition: "color 0.2s, transform 0.2s",
-            padding: 0
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.color = "#ffd6d6";
-            e.target.style.transform = "scale(1.2) rotate(10deg)";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.color = "#fff";
-            e.target.style.transform = "scale(1) rotate(0deg)";
-          }}
-        >
-          &times;
-        </button>
-
         {/* Draggable header */}
         <div
           className="modal-header"
@@ -142,13 +110,15 @@ export default function DraggableModal({
           style={{
             display: "flex",
             alignItems: "center",
+            justifyContent: "space-between",
             background: "#e53e3e",
             padding: "1.1rem 1.5rem 0.7rem 1.5rem",
             borderTopLeftRadius: "1.2rem",
             borderTopRightRadius: "1.2rem",
             position: "relative",
             cursor: "grab",
-            userSelect: "none"
+            userSelect: "none",
+            gap: "1rem"
           }}
         >
           <span 
@@ -168,18 +138,50 @@ export default function DraggableModal({
           <h2 
             className="modal-title"
             style={{
-              margin: "0 auto",
+              margin: 0,
               fontSize: "1.3rem",
               fontWeight: "bold",
               textAlign: "center",
               letterSpacing: "0.02em",
               color: "#fff",
               textShadow: "0 1px 12px #000a",
-              zIndex: 2
+              zIndex: 2,
+              flex: 1,
+              wordBreak: "break-word",
+              minWidth: 0
             }}
           >
             {title}
           </h2>
+          {/* Close button moved here for flex layout */}
+          <button 
+            className="modal-close-btn"
+            onClick={onClose} 
+            aria-label="Close"
+            style={{
+              background: "none",
+              border: "none",
+              color: "#fff",
+              fontSize: "2em",
+              fontWeight: "bold",
+              cursor: "pointer",
+              zIndex: 10,
+              lineHeight: 1,
+              transition: "color 0.2s, transform 0.2s",
+              padding: 0,
+              marginLeft: "1rem"
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.color = "#ffd6d6";
+              e.target.style.transform = "scale(1.2) rotate(10deg)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.color = "#fff";
+              e.target.style.transform = "scale(1) rotate(0deg)";
+            }}
+          >
+            &times;
+          </button>
         </div>
 
         {/* Modal content */}
@@ -216,4 +218,4 @@ export default function DraggableModal({
       `}</style>
     </div>
   );
-} 
+}
