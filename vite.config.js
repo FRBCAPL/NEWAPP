@@ -8,18 +8,10 @@ export default defineConfig(({ mode }) => {
   const envDir = path.resolve(__dirname);
   const envFile = path.join(envDir, '.env');
   
-  console.log('🔧 Vite config - Environment variables loaded:');
-  console.log('🔧 Mode:', mode);
-  console.log('🔧 Env directory:', envDir);
-  console.log('🔧 Env file path:', envFile);
-  console.log('🔧 Env file exists:', fs.existsSync(envFile));
-  
   // Manually read and parse .env file since Vite's loadEnv isn't working
   let env = {};
   if (fs.existsSync(envFile)) {
-    console.log('🔧 Manually reading .env file...');
     const envContent = fs.readFileSync(envFile, 'utf8');
-    console.log('🔧 .env file content:', envContent);
     
     // Remove BOM characters and split into lines
     const cleanContent = envContent.replace(/^\uFEFF/, ''); // Remove BOM
@@ -27,22 +19,16 @@ export default defineConfig(({ mode }) => {
     
     lines.forEach((line, index) => {
       line = line.trim();
-      console.log(`🔧 Line ${index + 1}: "${line}"`);
       if (line && !line.startsWith('#') && line.includes('=')) {
         const [key, ...valueParts] = line.split('=');
         const value = valueParts.join('=').trim();
         if (key.startsWith('VITE_')) {
           env[key] = value;
-          console.log(`🔧 Parsed: ${key} = ${value}`);
         }
       }
     });
   }
   
-  console.log('🔧 VITE_BACKEND_URL:', env.VITE_BACKEND_URL);
-  console.log('🔧 VITE_GOOGLE_SHEETS_API_KEY:', env.VITE_GOOGLE_SHEETS_API_KEY ? 'SET' : 'NOT SET');
-  console.log('🔧 VITE_STREAM_API_KEY:', env.VITE_STREAM_API_KEY ? 'SET' : 'NOT SET');
-
   return {
     base: './',
     plugins: [react()],

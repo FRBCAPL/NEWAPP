@@ -417,8 +417,6 @@ export default function Dashboard({
       return res.json();
     })
     .then(data => {
-      console.log('Loaded schedule data for', selectedDivision, ':', data.length, 'matches');
-      console.log('Sample match:', data[0]);
       setScheduledMatches(data);
     })
     .catch((error) => {
@@ -602,21 +600,10 @@ export default function Dashboard({
     }).filter(Boolean)
   ));
 
-  // Debug: log the playerSchedule array and first object
-  console.log('playerSchedule (full array):', playerSchedule);
-  if (playerSchedule.length > 0) {
-    console.log('playerSchedule[0]:', playerSchedule[0]);
-  }
-
   // Greedy matching: each confirmed match is only matched to one scheduled match
   function getMatchesToSchedule() {
     const usedConfirmed = new Set();
     const matchesToSchedule = [];
-    
-    // Debug logging
-    console.log('getMatchesToSchedule - playerSchedule:', playerSchedule.length);
-    console.log('getMatchesToSchedule - completedMatches:', completedMatches.length);
-    console.log('getMatchesToSchedule - upcomingMatches:', scheduledConfirmedMatches.length);
     
     for (const schedMatch of playerSchedule) {
       // Skip if this scheduled match is already completed
@@ -631,7 +618,6 @@ export default function Dashboard({
         );
       });
       if (isCompleted) {
-        console.log('Skipping completed match with opponent:', schedOpponent);
         continue; // Don't count this match if completed
       }
       let found = false;
@@ -654,7 +640,6 @@ export default function Dashboard({
       }
     }
     
-    console.log('getMatchesToSchedule - final count:', matchesToSchedule.length);
     return matchesToSchedule;
   }
 
@@ -699,15 +684,9 @@ export default function Dashboard({
   }
 
   function handleScheduleMatch() {
-    console.log("🚀 handleScheduleMatch called - effectivePhase:", effectivePhase);
-    console.log("🚀 handleScheduleMatch called - phaseOverride:", phaseOverride);
-    console.log("🚀 handleScheduleMatch called - currentPhase:", currentPhase);
-    
     if (effectivePhase === "scheduled") {
-      console.log("🚀 Opening Opponents Modal (Phase 1)");
       setShowOpponents(true);
     } else {
-      console.log("🚀 Opening PlayerSearch Modal (Phase 2)");
       setShowPlayerSearch(true);
     }
   }
@@ -717,9 +696,6 @@ export default function Dashboard({
     m.divisions && selectedDivision &&
     Array.isArray(m.divisions) && m.divisions.includes(selectedDivision)
   );
-
-  // Debug: log the filtered upcoming matches
-  console.log('filteredUpcomingMatches:', filteredUpcomingMatches);
 
   // Update the logic where a match/proposal is clicked:
   function handleProposalClick(match) {
@@ -1080,7 +1056,6 @@ export default function Dashboard({
                           }
                         }
                         // Debug: log each match object
-                        console.log('Rendering match:', match);
                         const isCompleted = match.completed === true;
                         const actuallyCompleted = !!match.completed;
                         return (
@@ -1186,7 +1161,6 @@ export default function Dashboard({
                 <button
                   className={styles.smallShowMoreBtn}
                   onClick={() => {
-                    console.log("Show More clicked");
                     setShowAllMatchesModal(true);
                   }}
                   type="button"
@@ -1208,7 +1182,6 @@ export default function Dashboard({
                   type="button"
                   style={{ marginTop: 8, marginBottom: 0 }}
                   onClick={() => {
-                    console.log("🔘 Schedule Match button clicked!");
                     handleScheduleMatch();
                   }}
                 >
@@ -1362,9 +1335,6 @@ export default function Dashboard({
           )}
         </div>
       </div>
-{console.log("playerSchedule", playerSchedule)}
-{console.log("matchesToSchedule", opponentsToSchedule)}
-{console.log("selectedDivision", selectedDivision)}
       {/* Opponents Modal */}
      <OpponentsModal
       open={showOpponents}
@@ -1373,13 +1343,11 @@ export default function Dashboard({
       onOpponentClick={handleOpponentClick}
       phase={effectivePhase}
      />
-     {console.log("🎯 OpponentsModal render - open:", showOpponents, "opponents:", opponentsToSchedule.length)}
 
 
       {/* Player Search Modal (Phase 2) */}
     {showPlayerSearch && (
       <>
-        {console.log("🔍 PlayerSearch Modal Opening - Phase:", effectivePhase)}
         <PlayerSearch
           onClose={() => setShowPlayerSearch(false)}
           excludeName={fullName}
@@ -1413,7 +1381,6 @@ export default function Dashboard({
           }}
           player={selectedOpponent}
           onProposeMatch={(day, slot) => {
-            console.log("selectedOpponent in onProposeMatch:", selectedOpponent);
             setProposalData({
               player: selectedOpponent,
               day,
@@ -1509,15 +1476,10 @@ export default function Dashboard({
               (senderEmail && proposal.senderEmail && senderEmail.toLowerCase() === proposal.senderEmail.toLowerCase()) ||
               (`${playerName} ${playerLastName}`.toLowerCase() === (proposal.senderName || '').toLowerCase())
             );
-            console.log('ProposalListModal onSelect:', { proposal, isProposer });
             setSelectedProposal(proposal);
             setProposalNote("");
             setShowProposalListModal(false);
             setShowProposalDetailsModal(isProposer);
-            console.log('State after onSelect:', {
-              selectedProposal: proposal,
-              showProposalDetailsModal: isProposer
-            });
           }}
           onClose={() => setShowProposalListModal(false)}
           type="received"
@@ -1533,19 +1495,10 @@ export default function Dashboard({
               (senderEmail && proposal.senderEmail && senderEmail.toLowerCase() === proposal.senderEmail.toLowerCase()) ||
               (`${playerName} ${playerLastName}`.toLowerCase() === (proposal.senderName || '').toLowerCase())
             );
-            console.log('ProposalListModal onSelect (sent):', { proposal, isProposer });
-            console.log('Debug - senderEmail:', senderEmail);
-            console.log('Debug - proposal.senderEmail:', proposal.senderEmail);
-            console.log('Debug - playerName + lastName:', `${playerName} ${playerLastName}`);
-            console.log('Debug - proposal.senderName:', proposal.senderName);
             setSelectedProposal(proposal);
             setProposalNote("");
             setShowSentProposalListModal(false);
             setShowProposalDetailsModal(isProposer);
-            console.log('State after onSelect (sent):', {
-              selectedProposal: proposal,
-              showProposalDetailsModal: isProposer
-            });
           }}
           onClose={() => setShowSentProposalListModal(false)}
           type="sent"
@@ -1604,11 +1557,6 @@ export default function Dashboard({
 
       {/* Proposal Details Modal */}
       {(() => {
-        console.log('ProposalDetailsModal render check:', {
-          selectedProposal: !!selectedProposal,
-          showProposalDetailsModal,
-          shouldRender: selectedProposal && showProposalDetailsModal
-        });
         return selectedProposal && showProposalDetailsModal && (
           <ProposalDetailsModal
             proposal={selectedProposal}

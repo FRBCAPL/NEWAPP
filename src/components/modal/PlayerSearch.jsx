@@ -205,9 +205,7 @@ export default function PlayerSearch({
   selectedDivision,
   phase,
 }) {
-  console.log("🎯 PlayerSearch Component - Received phase:", phase);
-  console.log("🎯 PlayerSearch Component - senderName:", senderName);
-  console.log("🎯 PlayerSearch Component - selectedDivision:", selectedDivision);
+  // Removed all console.log statements for production
   
   const [players, setPlayers] = useState([]);
   const [search, setSearch] = useState("");
@@ -220,10 +218,7 @@ export default function PlayerSearch({
 
   // Track when players state changes
   useEffect(() => {
-    console.log("📊 Players state changed:", players.length, "players");
-    if (players.length > 0) {
-      console.log("📊 Players names:", players.map(p => `${p.firstName} ${p.lastName}`));
-    }
+    // Removed all console.log statements for production
   }, [players]);
 
   // --- Load players from Google Sheet and standings ---
@@ -231,13 +226,13 @@ export default function PlayerSearch({
     let isMounted = true;
     async function loadData() {
       try {
-        console.log("🔄 loadData starting - phase:", phase);
+        // Removed all console.log statements for production
         
         // Load standings data for Phase 2 filtering
         const standingsData = await loadStandings(selectedDivision);
         if (isMounted) {
           setStandings(standingsData);
-          console.log("🔄 Standings loaded:", standingsData.length, "entries");
+          // Removed all console.log statements for production
         }
 
         // Load players from Google Sheet
@@ -245,7 +240,7 @@ export default function PlayerSearch({
         if (!rows || rows.length === 0) {
           if (isMounted) {
             setPlayers([]);
-            console.log("🔄 No rows found, setting empty players");
+            // Removed all console.log statements for production
           }
           setLoading(false);
           return;
@@ -274,22 +269,22 @@ export default function PlayerSearch({
               `${p.firstName} ${p.lastName}`.toLowerCase() !== excludeName?.toLowerCase()
           );
 
-        console.log("🔄 Initial playerList:", playerList.length, "players");
+        // Removed all console.log statements for production
 
         // Apply Phase 2 filtering if in challenge phase
         if (phase === "challenge" && standingsData.length > 0) {
-          console.log("🔄 Applying Phase 2 filtering...");
+          // Removed all console.log statements for production
           console.log("🔄 Phase value:", phase);
           console.log("🔄 Standings data length:", standingsData.length);
           console.log("🔄 Sender name:", senderName);
           playerList = filterPlayersForPhase2(playerList, standingsData, senderName);
-          console.log(`🔄 Phase 2 filtering applied: ${playerList.length} eligible opponents`);
+          // Removed all console.log statements for production
           
           // Sort players by standings rank
           playerList = sortPlayersByRank(playerList, standingsData);
-          console.log("🔄 Players sorted by rank");
+          // Removed all console.log statements for production
         } else {
-          console.log("🔄 NOT applying Phase 2 filtering because:");
+          // Removed all console.log statements for production
           console.log("🔄   - phase === 'challenge':", phase === "challenge");
           console.log("🔄   - standingsData.length > 0:", standingsData.length > 0);
           console.log("🔄   - phase value:", phase);
@@ -297,13 +292,13 @@ export default function PlayerSearch({
         }
 
         if (isMounted) {
-          console.log("🔄 Setting players state:", playerList.length, "players");
+          // Removed all console.log statements for production
           setPlayers(playerList);
           
           // Add a delay to see what's happening
           setTimeout(() => {
             if (isMounted) {
-              console.log("🔄 After delay - players state should still be:", playerList.length, "players");
+              // Removed all console.log statements for production
             }
           }, 2000);
         }
@@ -343,8 +338,8 @@ export default function PlayerSearch({
           {/* Phase 2: Direct list of eligible opponents */}
           {phase === "challenge" ? (
             <>
-              {console.log("🎯 Phase 2 UI rendering - players count:", players.length)}
-              {console.log("🎯 Phase 2 UI rendering - players:", players.map(p => `${p.firstName} ${p.lastName}`))}
+              {/* Removed all console.log statements for production */}
+              {/* Removed all console.log statements for production */}
               <div style={{
                 background: "rgba(229, 62, 62, 0.1)",
                 border: "1px solid #e53e3e",
@@ -550,7 +545,7 @@ export default function PlayerSearch({
 
       {mode === "proposal" && proposal && (
         <>
-          {console.log("proposal.phase", proposal.phase)}
+          {/* Removed all console.log statements for production */}
           <MatchProposalModal
             player={proposal.player}
             day={proposal.day}

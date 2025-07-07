@@ -17,6 +17,7 @@
     "debug": "^4.4.1",
     "emailjs-com": "^3.2.0",
     "focus-trap-react": "^11.0.4",
+    "helmet": "^8.1.0",
     "mongodb": "^6.17.0",
     "react": "^19.1.0",
     "react-datepicker": "^8.3.0",
