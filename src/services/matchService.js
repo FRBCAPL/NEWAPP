@@ -1,10 +1,11 @@
 import ApiService from './api';
 
 export const matchService = {
-  async getAllMatches(playerName, division) {
+  async getAllMatches(playerName, division, phase) {
     const params = new URLSearchParams({
       player: playerName,
-      ...(division && { division })
+      ...(division && { division }),
+      ...(phase && { phase })
     });
     return ApiService.get(`/api/matches/all-matches?${params}`);
   },

@@ -64,10 +64,15 @@ function formatTimeHHMM(timeStr) {
 
 // Add type prop: "received" (default) or "sent"
 function ProposalListModal({ proposals, onSelect, onClose, type = "received" }) {
+  console.log('Proposals:', proposals);
   const [confirmCancelId, setConfirmCancelId] = useState(null);
   const [loadingCancel, setLoadingCancel] = useState(false);
   const [error, setError] = useState("");
   const [localProposals, setLocalProposals] = useState(proposals);
+  const [activeTab, setActiveTab] = useState('all');
+  const counterProposals = proposals.filter(p => p.isCounter);
+  const regularProposals = proposals.filter(p => !p.isCounter);
+  const showProposals = activeTab === 'counter' ? counterProposals : regularProposals;
 
   const handleCancel = async (proposalId) => {
     setLoadingCancel(true);
@@ -91,11 +96,79 @@ function ProposalListModal({ proposals, onSelect, onClose, type = "received" }) 
       maxWidth="600px"
     >
       <div className={styles.modalContent} style={{ position: 'relative', maxHeight: 'none', overflowY: 'visible' }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          <button
+            onClick={() => setActiveTab('all')}
+            style={{
+              background: activeTab === 'all' ? '#e53e3e' : '#333',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '0.5rem 1.2rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: activeTab === 'all' ? '0 2px 8px #e53e3e44' : 'none',
+              position: 'relative'
+            }}
+          >
+            All Proposals ({regularProposals.length})
+            {regularProposals.length > 0 && (
+              <span style={{
+                background: '#fff',
+                color: '#e53e3e',
+                borderRadius: '50%',
+                padding: '2px 8px',
+                fontSize: '0.85em',
+                fontWeight: 'bold',
+                marginLeft: 8,
+                position: 'absolute',
+                top: '-8px',
+                right: '-12px',
+                minWidth: 24,
+                textAlign: 'center',
+                boxShadow: '0 1px 4px #0002'
+              }}>{regularProposals.length}</span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('counter')}
+            style={{
+              background: activeTab === 'counter' ? '#ff9800' : '#333',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '0.5rem 1.2rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: activeTab === 'counter' ? '0 2px 8px #ff980044' : 'none',
+              position: 'relative'
+            }}
+          >
+            Counter Proposals ({counterProposals.length})
+            {counterProposals.length > 0 && (
+              <span style={{
+                background: '#fff',
+                color: '#ff9800',
+                borderRadius: '50%',
+                padding: '2px 8px',
+                fontSize: '0.85em',
+                fontWeight: 'bold',
+                marginLeft: 8,
+                position: 'absolute',
+                top: '-8px',
+                right: '-12px',
+                minWidth: 24,
+                textAlign: 'center',
+                boxShadow: '0 1px 4px #0002'
+              }}>{counterProposals.length}</span>
+            )}
+          </button>
+        </div>
         <ul
           className={styles.proposalList}
           style={{ listStyle: "none", padding: 0, margin: 0 }}
         >
-          {localProposals.map(proposal => (
+          {showProposals.map(proposal => (
             <li key={proposal._id} style={{ position: 'relative' }}>
               <button
                 onClick={() => onSelect(proposal)}
@@ -106,6 +179,18 @@ function ProposalListModal({ proposals, onSelect, onClose, type = "received" }) 
                     {type === "sent" ? "To:" : "From:"}
                   </span>
                   {type === "sent" ? proposal.receiverName : proposal.senderName}
+                  {proposal.isCounter && (
+                    <span style={{
+                      background: '#ff9800',
+                      color: '#fff',
+                      borderRadius: '6px',
+                      padding: '2px 8px',
+                      fontSize: '0.85em',
+                      marginLeft: '8px',
+                      fontWeight: 'bold',
+                      display: 'inline-block'
+                    }}>Counter Proposal</span>
+                  )}
                 </div>
                 <div>
                   <span className={styles.proposalCardLabel}>Date:</span> {formatDateMMDDYYYY(proposal.date)}
@@ -147,7 +232,7 @@ function ProposalListModal({ proposals, onSelect, onClose, type = "received" }) 
           ))}
         </ul>
 
-        {localProposals.length === 0 && (
+        {showProposals.length === 0 && (
           <div style={{ color: "#ffecb3", textAlign: "center", marginTop: 16 }}>
             {type === "sent"
               ? "You haven't proposed any matches yet."

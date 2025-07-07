@@ -85,17 +85,23 @@ export default function DraggableModal({
           background: "linear-gradient(120deg, #232323 80%, #2a0909 100%)",
           color: "#fff",
           border: "2px solid #e53e3e",
-          borderRadius: "1.2rem",
+          borderRadius: window.innerWidth <= 400 ? "0" : "1.2rem",
           boxShadow: "0 0 32px #e53e3e, 0 0 40px rgba(0,0,0,0.85)",
-          maxWidth: maxWidth,
-          width: "auto",
-          minWidth: "320px",
-          margin: "0 auto",
+          width: window.innerWidth <= 400 ? "100vw" : (maxWidth === "90vw" ? "90vw" : "auto"),
+          maxWidth: window.innerWidth <= 400 ? "100vw" : maxWidth,
+          minWidth: 0,
+          margin: window.innerWidth <= 400 ? "0" : "0 auto",
+          left: 0,
+          right: 0,
           animation: "modalBounceIn 0.5s cubic-bezier(.21,1.02,.73,1.01)",
-          overflow: "hidden",
           padding: 0,
           position: "relative",
-          fontFamily: "inherit"
+          fontFamily: "inherit",
+          boxSizing: "border-box",
+          height: window.innerWidth <= 500 ? "95vh" : "auto",
+          maxHeight: window.innerWidth <= 500 ? "95vh" : "85vh",
+          display: "flex",
+          flexDirection: "column"
         }}
         onClick={e => e.stopPropagation()}
         role="dialog"
@@ -139,7 +145,7 @@ export default function DraggableModal({
             className="modal-title"
             style={{
               margin: 0,
-              fontSize: "1.3rem",
+              fontSize: window.innerWidth <= 500 ? "1.1rem" : "1.3rem",
               fontWeight: "bold",
               textAlign: "center",
               letterSpacing: "0.02em",
@@ -188,7 +194,10 @@ export default function DraggableModal({
         <div 
           className="modal-content"
           style={{
-            padding: "1.4rem 1.5rem 1.2rem 1.5rem",
+            ...(window.innerWidth <= 500
+              ? { flex: "1 1 auto", minHeight: 0, overflowY: "auto" }
+              : { overflowY: "auto" }),
+            padding: window.innerWidth <= 500 ? "1rem 1rem 0.8rem 1rem" : "1.4rem 1.5rem 1.2rem 1.5rem",
             background: "none"
           }}
         >
@@ -214,6 +223,22 @@ export default function DraggableModal({
           .modal-content {
             padding: 1rem 0.6rem 0.8rem 0.6rem !important;
           }
+        }
+        /* Custom scrollbar for modal-content */
+        .modal-content::-webkit-scrollbar {
+          width: 10px;
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+          background: #e53e3e;
+          border-radius: 6px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+          background: #232323;
+          border-radius: 6px;
+        }
+        .modal-content {
+          scrollbar-width: thin;
+          scrollbar-color: #e53e3e #232323;
         }
       `}</style>
     </div>

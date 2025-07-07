@@ -66,62 +66,100 @@ export default function ProposalDetailsModal({ proposal, open, onClose, onEdit, 
     gameType, raceLength, message, proposalNote
   } = proposal;
 
+  const isMobile = window.innerWidth <= 500;
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleConfirm() {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/proposals/${proposal._id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'confirmed' })
+      });
+      if (!response.ok) throw new Error('Failed to confirm proposal');
+      if (onClose) onClose();
+    } catch (err) {
+      setError(err.message || 'Failed to confirm proposal');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const modalContent = (
     <DraggableModal
       open={open}
       onClose={onClose}
       title="🎱 Proposal Details"
-      maxWidth="480px"
+      maxWidth={isMobile ? "99vw" : "480px"}
     >
-      <div style={{textAlign: 'left', marginBottom: '1.5rem'}}>
-        <div className={styles.modalDetailRowSnazzy}>
-          <strong style={{color: '#e53e3e', minWidth: '120px'}}>You (Proposer):</strong> 
-          <span style={{color: '#fff', marginLeft: '8px'}}>{senderName || 'N/A'}</span>
+      {proposal.isCounter && (
+        <div style={{
+          color: '#ff9800',
+          fontWeight: 'bold',
+          marginBottom: 8,
+          fontSize: '1.05em',
+          textAlign: 'center'
+        }}>
+          This is a counter proposal from {proposal.counteredBy || 'your opponent'}
         </div>
-        <div className={styles.modalDetailRowSnazzy}>
-          <strong style={{color: '#e53e3e', minWidth: '120px'}}>Opponent:</strong> 
-          <span style={{color: '#fff', marginLeft: '8px'}}>{receiverName || 'N/A'}</span>
+      )}
+      <div style={{
+        textAlign: 'left',
+        marginBottom: isMobile ? '0.7rem' : '1.5rem',
+        fontSize: isMobile ? '0.95rem' : '1.05rem',
+        padding: isMobile ? '0.2rem 0.2rem' : undefined
+      }}>
+        <div className={styles.modalDetailRowSnazzy} style={{padding: isMobile ? '0.2em 0.3em' : undefined}}>
+          <strong style={{color: '#e53e3e', minWidth: isMobile ? '80px' : '120px', fontSize: isMobile ? '0.95em' : undefined}}>You:</strong> 
+          <span style={{color: '#fff', marginLeft: isMobile ? '4px' : '8px'}}>{senderName || 'N/A'}</span>
+        </div>
+        <div className={styles.modalDetailRowSnazzy} style={{padding: isMobile ? '0.2em 0.3em' : undefined}}>
+          <strong style={{color: '#e53e3e', minWidth: isMobile ? '80px' : '120px', fontSize: isMobile ? '0.95em' : undefined}}>Opponent:</strong> 
+          <span style={{color: '#fff', marginLeft: isMobile ? '4px' : '8px'}}>{receiverName || 'N/A'}</span>
         </div>
         {day && (
-          <div className={styles.modalDetailRowSnazzy}>
-            <strong style={{color: '#e53e3e', minWidth: '120px'}}>Day:</strong> 
-            <span style={{color: '#fff', marginLeft: '8px'}}>{day}</span>
+          <div className={styles.modalDetailRowSnazzy} style={{padding: isMobile ? '0.2em 0.3em' : undefined}}>
+            <strong style={{color: '#e53e3e', minWidth: isMobile ? '80px' : '120px', fontSize: isMobile ? '0.95em' : undefined}}>Day:</strong> 
+            <span style={{color: '#fff', marginLeft: isMobile ? '4px' : '8px'}}>{day}</span>
           </div>
         )}
-        <div className={styles.modalDetailRowSnazzy}>
-          <strong style={{color: '#e53e3e', minWidth: '120px'}}>Date:</strong> 
-          <span style={{color: '#fff', marginLeft: '8px'}}>{formatDateMMDDYYYY(date)}</span>
+        <div className={styles.modalDetailRowSnazzy} style={{padding: isMobile ? '0.2em 0.3em' : undefined}}>
+          <strong style={{color: '#e53e3e', minWidth: isMobile ? '80px' : '120px', fontSize: isMobile ? '0.95em' : undefined}}>Date:</strong> 
+          <span style={{color: '#fff', marginLeft: isMobile ? '4px' : '8px'}}>{formatDateMMDDYYYY(date)}</span>
         </div>
-        <div className={styles.modalDetailRowSnazzy}>
-          <strong style={{color: '#e53e3e', minWidth: '120px'}}>Time:</strong> 
-          <span style={{color: '#fff', marginLeft: '8px'}}>{time || 'N/A'}</span>
+        <div className={styles.modalDetailRowSnazzy} style={{padding: isMobile ? '0.2em 0.3em' : undefined}}>
+          <strong style={{color: '#e53e3e', minWidth: isMobile ? '80px' : '120px', fontSize: isMobile ? '0.95em' : undefined}}>Time:</strong> 
+          <span style={{color: '#fff', marginLeft: isMobile ? '4px' : '8px'}}>{time || 'N/A'}</span>
         </div>
-        <div className={styles.modalDetailRowSnazzy}>
-          <strong style={{color: '#e53e3e', minWidth: '120px'}}>Location:</strong> 
-          <span style={{color: '#fff', marginLeft: '8px'}}>{location || 'N/A'}</span>
+        <div className={styles.modalDetailRowSnazzy} style={{padding: isMobile ? '0.2em 0.3em' : undefined}}>
+          <strong style={{color: '#e53e3e', minWidth: isMobile ? '80px' : '120px', fontSize: isMobile ? '0.95em' : undefined}}>Location:</strong> 
+          <span style={{color: '#fff', marginLeft: isMobile ? '4px' : '8px'}}>{location || 'N/A'}</span>
         </div>
         {gameType && (
-          <div className={styles.modalDetailRowSnazzy}>
-            <BilliardBall gameType={gameType} size={16} />
-            <strong style={{color: '#e53e3e', minWidth: '120px'}}>Game Type:</strong> 
-            <span style={{color: '#fff', marginLeft: '8px'}}>{gameType}</span>
+          <div className={styles.modalDetailRowSnazzy} style={{padding: isMobile ? '0.2em 0.3em' : undefined}}>
+            <BilliardBall gameType={gameType} size={isMobile ? 12 : 16} />
+            <strong style={{color: '#e53e3e', minWidth: isMobile ? '80px' : '120px', fontSize: isMobile ? '0.95em' : undefined}}>Game:</strong> 
+            <span style={{color: '#fff', marginLeft: isMobile ? '4px' : '8px'}}>{gameType}</span>
           </div>
         )}
         {raceLength && (
-          <div className={styles.modalDetailRowSnazzy}>
-            <strong style={{color: '#e53e3e', minWidth: '120px'}}>Race to:</strong> 
-            <span style={{color: '#fff', marginLeft: '8px'}}>{raceLength}</span>
+          <div className={styles.modalDetailRowSnazzy} style={{padding: isMobile ? '0.2em 0.3em' : undefined}}>
+            <strong style={{color: '#e53e3e', minWidth: isMobile ? '80px' : '120px', fontSize: isMobile ? '0.95em' : undefined}}>Race:</strong> 
+            <span style={{color: '#fff', marginLeft: isMobile ? '4px' : '8px'}}>{raceLength}</span>
           </div>
         )}
         {proposalNote && (
           <div style={{
-            margin: '16px 0 0 0',
-            padding: '0.8rem 1rem',
+            margin: isMobile ? '8px 0 0 0' : '16px 0 0 0',
+            padding: isMobile ? '0.4rem 0.5rem' : '0.8rem 1rem',
             background: 'rgba(255, 193, 7, 0.1)',
             borderLeft: '3px solid #ffc107',
             borderRadius: '6px',
             color: '#ffc107',
-            fontSize: '0.95rem',
+            fontSize: isMobile ? '0.9rem' : '0.95rem',
             textAlign: 'left'
           }}>
             <span role="img" aria-label="note">📝</span> <strong>Note:</strong><br />
@@ -129,7 +167,14 @@ export default function ProposalDetailsModal({ proposal, open, onClose, onEdit, 
           </div>
         )}
       </div>
-      <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 24 }}>
+      <div style={{ 
+        display: 'flex', 
+        gap: isMobile ? 6 : 12, 
+        justifyContent: 'center', 
+        marginTop: isMobile ? 10 : 24, 
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'stretch' : 'center'
+      }}>
         {onEdit && (
           <button 
             className={styles.dashboardBtn} 
@@ -137,10 +182,12 @@ export default function ProposalDetailsModal({ proposal, open, onClose, onEdit, 
             style={{ 
               background: '#e53e3e', 
               color: '#fff',
-              minWidth: '120px'
+              minWidth: isMobile ? '90px' : '120px',
+              fontSize: isMobile ? '0.95em' : undefined,
+              padding: isMobile ? '0.5em 0.7em' : undefined
             }}
           >
-            Edit Proposal
+            Edit
           </button>
         )}
         {onMessage && (
@@ -150,10 +197,28 @@ export default function ProposalDetailsModal({ proposal, open, onClose, onEdit, 
             style={{ 
               background: '#007bff', 
               color: '#fff',
-              minWidth: '120px'
+              minWidth: isMobile ? '90px' : '120px',
+              fontSize: isMobile ? '0.95em' : undefined,
+              padding: isMobile ? '0.5em 0.7em' : undefined
             }}
           >
-            Message Opponent
+            Msg
+          </button>
+        )}
+        {proposal.isCounter && proposal.status === 'countered' && (
+          <button
+            className={styles.dashboardBtn}
+            onClick={handleConfirm}
+            disabled={loading}
+            style={{
+              background: '#43a047',
+              color: '#fff',
+              minWidth: isMobile ? '90px' : '120px',
+              fontSize: isMobile ? '0.95em' : undefined,
+              padding: isMobile ? '0.5em 0.7em' : undefined
+            }}
+          >
+            {loading ? 'Confirming...' : 'Confirm'}
           </button>
         )}
         <button 
@@ -162,12 +227,15 @@ export default function ProposalDetailsModal({ proposal, open, onClose, onEdit, 
           style={{ 
             background: '#6c757d', 
             color: '#fff',
-            minWidth: '120px'
+            minWidth: isMobile ? '90px' : '120px',
+            fontSize: isMobile ? '0.95em' : undefined,
+            padding: isMobile ? '0.5em 0.7em' : undefined
           }}
         >
           Close
         </button>
       </div>
+      {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
     </DraggableModal>
   );
 

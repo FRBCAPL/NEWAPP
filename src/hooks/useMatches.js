@@ -1,67 +1,31 @@
 import { useState, useEffect } from 'react';
 import { matchService } from '../services/matchService';
 
-// This hook expects the backend to filter matches using $in on 'divisions' array
-export const useMatches = (playerName, division) => {
-  const [matches, setMatches] = useState([]);
-  const [completedMatches, setCompletedMatches] = useState([]);
+export const useMatches = (playerName, division, phase) => {
   const [scheduledConfirmedMatches, setScheduledConfirmedMatches] = useState([]);
+  const [completedMatches, setCompletedMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchMatches = async () => {
     try {
-      console.log('🔄 fetchMatches called with playerName:', playerName, 'division:', division);
       setLoading(true);
+      const allMatches = await matchService.getAllMatches(playerName, division, phase);
       
-      console.log('🔄 About to call matchService.getAllMatches...');
-      const [allMatches, completed] = await Promise.all([
-        matchService.getAllMatches(playerName, division),
-        matchService.getCompletedMatches(playerName, division)
-      ]);
+      // Use only the top-level 'completed' field - handle both false and undefined
+      const scheduled = allMatches.filter(match => match.status === 'confirmed' && (match.completed === false || match.completed === undefined));
+      const completed = allMatches.filter(match => match.status === 'confirmed' && match.completed === true);
       
-      console.log('🔄 API calls completed');
-      // Debug: log raw backend data
-      console.log('useMatches raw allMatches:', allMatches);
-      console.log('useMatches raw completed:', completed);
-      
-      // Only include confirmed proposals as upcoming matches
-      const upcoming = allMatches.filter(match => {
-        return (
-          match.status && match.status.toLowerCase() === 'confirmed' &&
-          match.counterProposal &&
-          (!match.counterProposal.phase || match.counterProposal.phase.toLowerCase() === 'scheduled') &&
-          match.counterProposal.completed !== true
-        );
-      });
-      // Completed: proposals that are confirmed and completed
-      const completedMatches = allMatches.filter(match =>
-        match.type === 'proposal' &&
-        match.status && match.status.toLowerCase() === 'confirmed' &&
-        match.counterProposal &&
-        (!match.counterProposal.phase || match.counterProposal.phase.toLowerCase() === 'scheduled') &&
-        match.counterProposal.completed === true
-      );
-      // Optionally sort upcoming by date
-      upcoming.sort((a, b) => getMatchDateTime(a) - getMatchDateTime(b));
-      setMatches(upcoming);
-      setCompletedMatches(completedMatches);
-      // Keep scheduledConfirmedMatches for legacy use (proposals only)
-      const scheduledConfirmed = allMatches.filter(
-        match =>
-          match.type === 'proposal' &&
-          match.status && match.status.toLowerCase() === 'confirmed' &&
-          match.counterProposal &&
-          (!match.counterProposal.phase || match.counterProposal.phase.toLowerCase() === 'scheduled') &&
-          match.counterProposal.completed !== true
-      );
-      setScheduledConfirmedMatches(scheduledConfirmed);
+      // Sort by date
+      scheduled.sort((a, b) => getMatchDateTime(a) - getMatchDateTime(b));
+      completed.sort((a, b) => getMatchDateTime(a) - getMatchDateTime(b));
+      setScheduledConfirmedMatches(scheduled);
+      setCompletedMatches(completed);
       setError(null);
     } catch (err) {
       setError(err.message);
-      setMatches([]);
-      setCompletedMatches([]);
       setScheduledConfirmedMatches([]);
+      setCompletedMatches([]);
     } finally {
       setLoading(false);
     }
@@ -98,24 +62,20 @@ export const useMatches = (playerName, division) => {
     if (playerName && division) {
       fetchMatches();
     }
-  }, [playerName, division]);
+  }, [playerName, division, phase]);
 
   return {
-    matches,
+    matches: scheduledConfirmedMatches,
     completedMatches,
-    scheduledConfirmedMatches,
+    scheduledConfirmedMatches, // for legacy
     loading,
     error,
     refetch: fetchMatches,
     markMatchCompleted: (matchToComplete) => {
       // Immediately update local state when a match is marked as completed
-      setMatches(prev => prev.filter(match => match._id !== matchToComplete._id));
+      setScheduledConfirmedMatches(prev => prev.filter(match => match._id !== matchToComplete._id));
       setCompletedMatches(prev => {
-        const completedMatch = { ...matchToComplete };
-        if (!completedMatch.counterProposal) {
-          completedMatch.counterProposal = {};
-        }
-        completedMatch.counterProposal.completed = true;
+        const completedMatch = { ...matchToComplete, completed: true };
         return [...prev, completedMatch];
       });
     }

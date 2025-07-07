@@ -39,6 +39,8 @@
   text-align: center;
 }
 
+
+
 /* ========== Animation ========== */
 @keyframes modalIn {
   from { opacity: 0; }

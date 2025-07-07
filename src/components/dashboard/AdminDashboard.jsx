@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import styles from './AdminDashboard.module.css';
 import userSearchStyles from './AdminUserSearch.module.css';
 import UnenteredMatchesModal from "./UnenteredMatchesModal";
+import { FaSyncAlt, FaCheckCircle, FaExclamationCircle, FaUsers, FaCalendarAlt, FaChartBar } from 'react-icons/fa';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 const apiKey = import.meta.env.VITE_STREAM_API_KEY;
@@ -95,21 +96,21 @@ function SyncUsersButton({ backendUrl }) {
   };
   return (
     <div style={{ margin: "12px 0" }}>
-      <button
-        onClick={handleSync}
-        disabled={loading}
-        style={{
-          background: "#007bff",
-          color: "#fff",
-          border: "none",
-          borderRadius: 5,
-          padding: "8px 16px",
-          cursor: loading ? "not-allowed" : "pointer",
-          fontWeight: "bold"
-        }}
-      >
-        {loading ? "Syncing..." : "Sync Users from Google Sheet"}
-      </button>
+              <button
+          onClick={handleSync}
+          disabled={loading}
+          style={{
+            background: "#007bff",
+            color: "#fff",
+            border: "none",
+            borderRadius: 5,
+            padding: "8px 16px",
+            cursor: loading ? "not-allowed" : "pointer",
+            fontWeight: "bold"
+          }}
+        >
+          {loading ? "Adding..." : "Add Players to Database"}
+        </button>
       {result && <div style={{ marginTop: 8 }}>{result}</div>}
     </div>
   );
@@ -268,48 +269,55 @@ function UpdateStandingsButton({ backendUrl }) {
 function CreateDivisionForm({ backendUrl, onDivisionCreated }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [scheduleUrl, setScheduleUrl] = useState("");
+  const [standingsUrl, setStandingsUrl] = useState("");
+  const [seasonStart, setSeasonStart] = useState("");
   const [result, setResult] = useState("");
+
   const handleCreate = async (e) => {
     e.preventDefault();
     setResult("");
     try {
-      const res = await fetch(`${backendUrl}/admin/divisions`, {
+      const res = await fetch(`${backendUrl}/api/seasons`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description }),
+        body: JSON.stringify({
+          name,
+          division: name,
+          description,
+          scheduleUrl,
+          standingsUrl,
+          seasonStart
+        }),
       });
       const data = await res.json();
       if (res.ok) {
-        setResult("✅ Division created!");
+        setResult("✅ Division/Season created!");
         setName("");
         setDescription("");
+        setScheduleUrl("");
+        setStandingsUrl("");
+        setSeasonStart("");
         if (onDivisionCreated) onDivisionCreated();
       } else {
-        setResult("❌ " + (data.error || "Failed to create division."));
+        setResult("❌ " + (data.error || "Failed to create division/season."));
       }
     } catch (err) {
-      setResult("❌ Failed to create division.");
+      setResult("❌ Failed to create division/season.");
     }
   };
   return (
     <form onSubmit={handleCreate} style={{ marginBottom: 16 }}>
-      <h3>Create New Division In Atlas Database</h3>
-      <div>
-       <input
-          type="text"
-          placeholder="Division Name"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          required
-          style={{ marginBottom: 10 }} 
-        />
-        <input
-          type="text"
-          placeholder="Description (optional)"
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-          style={{ marginRight: 8}}
-        /><br />
+      <h3>Create New Division/Season</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <input type="text" placeholder="Division Name" value={name} onChange={e => setName(e.target.value)} required />
+        <input type="text" placeholder="Description (optional)" value={description} onChange={e => setDescription(e.target.value)} />
+        <input type="url" placeholder="Schedule URL" value={scheduleUrl} onChange={e => setScheduleUrl(e.target.value)} required />
+        <input type="url" placeholder="Standings URL" value={standingsUrl} onChange={e => setStandingsUrl(e.target.value)} required />
+        <input type="date" placeholder="Season Start" value={seasonStart} onChange={e => setSeasonStart(e.target.value)} required />
+        <div style={{ fontSize: '0.95em', color: '#aaa', marginTop: 4 }}>
+          Phase 1: 6 weeks • Phase 2: 4 weeks • Season: 10 weeks total (auto-calculated)
+        </div>
         <button type="submit">Create</button>
       </div>
       {result && <div style={{ marginTop: 8 }}>{result}</div>}
@@ -598,6 +606,8 @@ export default function AdminDashboard() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showUnenteredModal, setShowUnenteredModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('chat'); // NEW: tab state
+  const [banner, setBanner] = useState(null); // For success/error feedback
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -671,115 +681,134 @@ export default function AdminDashboard() {
     }
   }
 
+  // Helper to show a banner for feedback
+  const showBanner = (type, message) => {
+    setBanner({ type, message });
+    setTimeout(() => setBanner(null), 5000);
+  };
+
   if (!chatClient) return <div>Loading admin chat client...</div>;
 
   return (
     <div className={styles.adminDashboardRoot}>
       <div className={styles.adminDashboardNav}>
-        <button onClick={() => { navigate("/"); window.location.reload(); }}>
+        <button onClick={() => { navigate('/'); window.location.reload(); }}>
           🏠 User Dashboard
         </button>
-        <button onClick={() => navigate("/chat")}>💬 Back to Chat</button>
-        <button onClick={() => { localStorage.clear(); navigate("/"); window.location.reload(); }}>
+        <button onClick={() => navigate('/chat')}>💬 Back to Chat</button>
+        <button onClick={() => { localStorage.clear(); navigate('/'); window.location.reload(); }}>
           🚪 Logout
         </button>
       </div>
       <div className={styles.adminDashboardMainColumn}>
-        {/* FLEX ROW: BUTTONS LEFT, ADMIN SECTIONS RIGHT */}
-        <div className={styles.adminRowWrapper}>
-          <div className={styles.adminButtonStack}>
+        {banner && (
+          <div style={{
+            background: banner.type === 'success' ? '#d4edda' : '#f8d7da',
+            color: banner.type === 'success' ? '#155724' : '#721c24',
+            border: `1px solid ${banner.type === 'success' ? '#c3e6cb' : '#f5c6cb'}`,
+            borderRadius: 6,
+            padding: '10px 18px',
+            marginBottom: 18,
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10
+          }}>
+            {banner.type === 'success' ? <FaCheckCircle /> : <FaExclamationCircle />} {banner.message}
+          </div>
+        )}
+        {/* --- Data Sync Card --- */}
+        <div className={styles.adminCard}>
+          <div className={styles.adminCardTitle}><FaSyncAlt /> Data Sync</div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             <DivisionScheduleUpdater backendUrl={BACKEND_URL} />
             <UpdateStandingsButton backendUrl={BACKEND_URL} />
             <SyncUsersButton backendUrl={BACKEND_URL} />
-            <ConvertDivisionsButton backendUrl={BACKEND_URL} />
-            <button
-              className={styles.adminActionButton}
-              onClick={() => setShowUnenteredModal(true)}
-              style={{
-                background: "#222",
-                color: "#fff",
-                border: "none",
-                borderRadius: 5,
-                padding: "8px 16px",
-                fontWeight: "bold",
-                margin: "8px 0",
-                cursor: "pointer"
-              }}
-            >
-              View Unentered LMS Matches
-            </button>
-            <UnenteredMatchesModal
-              open={showUnenteredModal}
-              onClose={() => setShowUnenteredModal(false)}
-            />
-          </div>
-          <div className={styles.adminSectionRow}>
-            <div className={styles.adminSection}><CreateDivisionForm backendUrl={BACKEND_URL} onDivisionCreated={() => {}} /></div>
-            <div className={styles.adminSection}><AdminUserSearch backendUrl={BACKEND_URL} /></div>
-            <div className={styles.adminSection}><DivisionManager backendUrl={BACKEND_URL} /></div>
           </div>
         </div>
-        {/* CHAT CONTROLS BELOW ADMIN CONTROLS */}
-        <div className={styles.adminChatWrapper}>
-          <div className={styles.adminChannelList}>
-            <h3>Channels</h3>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {channels.map((ch) => (
-                <li
-                  key={ch.id}
-                  className={
-                    styles.adminChannelListItem +
-                    (selectedChannel?.id === ch.id ? ` ${styles.selected}` : "")
-                  }
-                >
-                  <button
-                    className={styles.adminDeleteChannelBtn}
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      await handleDeleteChannel(ch);
-                    }}
-                    title="Delete Channel"
-                  >
-                    🗑
-                  </button>
-                  <span
-                    className={styles.adminChannelName}
-                    onClick={() => setSelectedChannel(ch)}
-                    tabIndex={0}
-                    style={{ outline: "none" }}
-                    onKeyDown={e => {
-                      if (e.key === "Enter") setSelectedChannel(ch);
-                    }}
-                  >
-                    {ch.data.name || ch.id}
-                  </span>
-                </li>
-              ))}
-            </ul>
+        {/* --- Division Management Card --- */}
+        <div className={styles.adminCard}>
+          <div className={styles.adminCardTitle}><FaUsers /> Division Management</div>
+          <div className={styles.scrollableCardContent} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+            <CreateDivisionForm backendUrl={BACKEND_URL} onDivisionCreated={() => showBanner('success', 'Division/Season created!')} />
+            <AdminUserSearch backendUrl={BACKEND_URL} />
+            <DivisionManager backendUrl={BACKEND_URL} />
           </div>
-          <div className={styles.adminChannelMessages}>
-            <h3>
-              {selectedChannel
-                ? `Messages in "${selectedChannel.data.name || selectedChannel.id}"`
-                : "Select a channel"}
-            </h3>
-            {loading && <div>Loading messages...</div>}
-            {!loading && selectedChannel && (
-              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                {messages.map((msg) => (
-                  <li key={msg.id} className={styles.adminMessageItem}>
-                    <b>{msg.user?.name || msg.user?.id}:</b> {msg.text}
+        </div>
+        {/* --- Reports Card --- */}
+        <div className={styles.adminCard}>
+          <div className={styles.adminCardTitle}><FaChartBar /> Reports & Monitoring</div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button className={styles.adminActionButton} onClick={() => setShowUnenteredModal(true)}>
+              View Unentered LMS Matches
+            </button>
+            <UnenteredMatchesModal open={showUnenteredModal} onClose={() => setShowUnenteredModal(false)} />
+          </div>
+        </div>
+        {/* --- Chat Admin Card --- */}
+        <div className={styles.adminCard}>
+          <div className={styles.adminCardTitle}><FaCalendarAlt /> Chat Admin</div>
+          <div className={styles.scrollableCardContent + ' ' + styles.adminChatWrapper}>
+            <div className={styles.adminChannelList}>
+              <h3>Channels</h3>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {channels.map((ch) => (
+                  <li
+                    key={ch.id}
+                    className={
+                      styles.adminChannelListItem +
+                      (selectedChannel?.id === ch.id ? ` ${styles.selected}` : '')
+                    }
+                  >
                     <button
-                      className={styles.adminDeleteMessageBtn}
-                      onClick={() => handleDeleteMessage(msg.id)}
-                      title="Delete Message"
+                      className={styles.adminDeleteChannelBtn}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        await handleDeleteChannel(ch);
+                      }}
+                      title="Delete Channel"
                     >
                       🗑
                     </button>
+                    <span
+                      className={styles.adminChannelName}
+                      onClick={() => setSelectedChannel(ch)}
+                      tabIndex={0}
+                      style={{ outline: 'none' }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') setSelectedChannel(ch);
+                      }}
+                    >
+                      {ch.data.name || ch.id}
+                    </span>
                   </li>
                 ))}
               </ul>
-            )}
+            </div>
+            <div className={styles.adminChannelMessages}>
+              <h3>
+                {selectedChannel
+                  ? `Messages in "${selectedChannel.data.name || selectedChannel.id}"`
+                  : 'Select a channel'}
+              </h3>
+              {loading && <div>Loading messages...</div>}
+              {!loading && selectedChannel && (
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                  {messages.map((msg) => (
+                    <li key={msg.id} className={styles.adminMessageItem}>
+                      <b>{msg.user?.name || msg.user?.id}:</b> {msg.text}
+                      <button
+                        className={styles.adminDeleteMessageBtn}
+                        onClick={() => handleDeleteMessage(msg.id)}
+                        title="Delete Message"
+                      >
+                        🗑
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </div>
       </div>

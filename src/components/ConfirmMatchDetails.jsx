@@ -124,7 +124,16 @@ export default function ConfirmMatchDetails({
           }}
         >
           {isProposer ? (
-            <span style={{color: '#888', fontWeight: 500, fontSize: '1.1em'}}>You proposed this match. You can edit or message, but only your opponent can confirm/counter/cancel.</span>
+            <>
+              <span style={{color: '#888', fontWeight: 500, fontSize: '1.1em'}}>You proposed this match. You can edit or message, but only your opponent can confirm/counter/cancel.</span>
+              <button
+                className={styles.confirmBtn}
+                style={{ background: "#aaa", minWidth: 120, marginLeft: 16 }}
+                onClick={onClose}
+              >
+                OK
+              </button>
+            </>
           ) : (
             <>
               <button

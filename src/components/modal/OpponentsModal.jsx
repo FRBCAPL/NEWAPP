@@ -24,8 +24,16 @@ export default function OpponentsModal({ open, onClose, opponents, onOpponentCli
         }}>
           {opponents.map((opponent, index) => (
             <button
-              key={opponent.name || `${opponent.firstName} ${opponent.lastName}` || index}
-              onClick={() => onOpponentClick(opponent.name || `${opponent.firstName} ${opponent.lastName}`)}
+              key={
+                (opponent.player && opponent.player.email) || opponent.opponentName || index
+              }
+              onClick={() =>
+                onOpponentClick(
+                  opponent.player
+                    ? `${opponent.player.firstName} ${opponent.player.lastName}`
+                    : opponent.opponentName
+                )
+              }
               style={{
                 background: "linear-gradient(135deg, #232323 0%, #2a0909 100%)",
                 color: "#fff",
@@ -52,7 +60,9 @@ export default function OpponentsModal({ open, onClose, opponents, onOpponentCli
                 e.target.style.boxShadow = "none";
               }}
             >
-              {opponent.name || `${opponent.firstName} ${opponent.lastName}`}
+              {opponent.player
+                ? `${opponent.player.firstName} ${opponent.player.lastName}`
+                : opponent.opponentName}
             </button>
           ))}
         </div>

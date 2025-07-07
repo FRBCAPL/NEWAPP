@@ -62,21 +62,37 @@ export default function ConfirmationModal({
 }) {
   if (!open) return null;
 
+  // Responsive modal width
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 500;
+  const modalWidth = isMobile ? '100%' : '240px';
+  const modalMaxWidth = isMobile ? '90vw' : '240px';
+  const summaryBoxMaxWidth = isMobile ? '100%' : '220px';
+
   return (
     <DraggableModal
       open={open}
       onClose={onClose}
-      title="Match Confirmed!"
-      maxWidth="450px"
+      title="Proposal Sent!"
+      maxWidth={modalMaxWidth}
+      width={modalWidth}
     >
       <div style={{ textAlign: "center" }}>
-        <p style={{ fontWeight: "bold", fontSize: "1.15rem", marginBottom: "1.2rem" }}>{message}</p>
+        <div style={{
+          background: "#222", color: "#fff", borderRadius: 6,
+          padding: "0.6rem 0.7rem 0.6rem 0.7rem", margin: "0 auto 0.7rem auto",
+          fontWeight: 600, fontSize: "0.97rem", textAlign: "center",
+          maxWidth: "220px", width: "100%", wordBreak: "break-word"
+        }}>
+          {message}
+        </div>
         
         {/* Match Summary */}
         <div style={{
           background: "#f8f8f8", color: "#222", borderRadius: 8,
-          padding: "1rem 1.2rem", margin: "1.2rem 0 1.2rem 0",
-          textAlign: "left", fontSize: "1.05rem", border: "1px solid #ff0000"
+          padding: isMobile ? "0.4rem 0.2rem" : "0.5rem 0.5rem",
+          margin: "0.7rem auto 0.7rem auto",
+          textAlign: "left", fontSize: isMobile ? "0.92rem" : "0.95rem", border: "1px solid #ff0000",
+          maxWidth: summaryBoxMaxWidth, width: "100%"
         }}>
           <div style={{ marginBottom: 6 }}>
             <strong>Phase:</strong> {phase === "scheduled" ? "Phase 1 (Scheduled)" : phase === "challenge" ? "Phase 2 (challenge)" : phase}

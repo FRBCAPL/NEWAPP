@@ -55,7 +55,7 @@ const SectionHeader = ({ children }) => (
   <div className={styles.sectionHeader}>{children}</div>
 );
 
-export default function MatchChat({ userName, userEmail, userPin, channelId }) {
+export default function MatchChat({ userName, userEmail, userPin, channelId, onClose }) {
   const navigate = useNavigate();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -131,13 +131,17 @@ export default function MatchChat({ userName, userEmail, userPin, channelId }) {
   function logoutAndRedirect() {
     if (chatClient) chatClient.disconnectUser();
     localStorage.clear();
-    navigate("/");
-    window.location.reload();
+    if (onClose) {
+      onClose();
+    } else {
+      navigate("/");
+      window.location.reload();
+    }
   }
 
   if (!chatClient || !generalChannel)
     return (
-      <div className={styles.loadingContainer}>
+      <div className={styles.loadingContainer} style={{height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
         <div className={styles.spinner}></div>
         <div>Loading chat...Please wait</div>
       </div>
@@ -153,8 +157,8 @@ export default function MatchChat({ userName, userEmail, userPin, channelId }) {
   };
 
   return (
-    <div className={styles.outerChatBg}>
-      <div className={styles.chatContainer}>
+    <div className={styles.outerChatBg} style={{height: '100%', width: '100%'}}>
+      <div className={styles.chatContainer} style={{height: '100%', width: '100%', maxWidth: 'none', maxHeight: 'none'}}>
         <button
           className={styles.hamburgerButton}
           onClick={() => setSidebarOpen(true)}
@@ -177,8 +181,12 @@ export default function MatchChat({ userName, userEmail, userPin, channelId }) {
               <button
                 className={styles.topChatButton}
                 onClick={() => {
-                  navigate("/");
-                  window.location.reload();
+                  if (onClose) {
+                    onClose();
+                  } else {
+                    navigate("/");
+                    window.location.reload();
+                  }
                 }}
               >
                 Dashboard
@@ -352,7 +360,11 @@ export default function MatchChat({ userName, userEmail, userPin, channelId }) {
             senderEmail={userEmail}
             onProposalComplete={() => {
               setShowPlayerSearch(false);
-              navigate("/");
+              if (onClose) {
+                onClose();
+              } else {
+                navigate("/");
+              }
             }}
           />
         )}

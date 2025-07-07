@@ -11,7 +11,7 @@ export default function StandingsModal({ open, onClose, standingsUrl }) {
       open={open}
       onClose={onClose}
       title="📊 League Standings"
-      maxWidth="1200px"
+      maxWidth="90vw"
       className="standings-modal"
     >
       <div style={{ height: "70vh", width: "100%", position: "relative" }}>

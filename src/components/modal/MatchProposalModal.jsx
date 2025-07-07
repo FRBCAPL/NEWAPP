@@ -34,22 +34,29 @@ function formatDateYYYYMMDD(date) {
 
 // Normalize time strings like "12pm", "12:00pm", "12:00 pm", "12PM", etc. to "12:00 PM"
 function normalizeTimeString(time) {
-  let t = time.trim().replace(/\s+/g, '').toLowerCase();
-  const match = t.match(/^(\d{1,2})(:\d{2})?(am|pm)$/);
+  let t = time.trim();
+  // If already in 'H:MM AM/PM' or 'H:MMAM/PM' format, just ensure space and uppercase
+  t = t.replace(/(\d{1,2}):(\d{2})\s*(am|pm)/i, (m, h, mnts, ap) => `${parseInt(h, 10)}:${mnts} ${ap.toUpperCase()}`);
+  // Convert '230pm' or '0730am' to '2:30 PM' or '7:30 AM'
+  t = t.replace(/^(\d{1,2})(\d{2})(am|pm)$/i, (m, h, mnts, ap) => `${parseInt(h, 10)}:${mnts} ${ap.toUpperCase()}`);
+  // Convert '2pm' to '2:00 PM'
+  t = t.replace(/^(\d{1,2})(am|pm)$/i, (m, h, ap) => `${parseInt(h, 10)}:00 ${ap.toUpperCase()}`);
+  // Insert a space before am/pm if missing
+  t = t.replace(/(am|pm)$/i, ' $1');
+  // Capitalize AM/PM
+  t = t.replace(/(am|pm)$/i, (ap) => ap.toUpperCase());
+  // Final match (case-insensitive)
+  const match = t.match(/^(\d{1,2}):(\d{2}) (AM|PM)$/i);
   if (match) {
     const h = match[1];
-    const m = match[2] ? match[2] : ":00";
+    const m = match[2];
     const ap = match[3].toUpperCase();
-    return `${h}${m} ${ap}`;
+    const result = `${h}:${m} ${ap}`;
+    console.log('normalizeTimeString final:', result);
+    return result;
   }
-  const spaced = time.trim().match(/^(\d{1,2})(:\d{2})?\s?(am|pm)$/i);
-  if (spaced) {
-    const h = spaced[1];
-    const m = spaced[2] ? spaced[2] : ":00";
-    const ap = spaced[3].toUpperCase();
-    return `${h}${m} ${ap}`;
-  }
-  return time.trim();
+  console.log('normalizeTimeString fallback:', t);
+  return t;
 }
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
@@ -153,11 +160,13 @@ export default function MatchProposalModal({
   const possibleStartTimes = useMemo(() => {
     if (!slot) return [];
     const normalized = normalizeSlot(slot);
-    if (!normalized.includes(" - ")) return [];
-    let [blockStart, blockEnd] = normalized.split(" - ").map(s => normalizeTimeString(s.trim()));
+    console.log('DEBUG: normalized slot:', normalized);
+    if (!normalized.includes(' - ')) return [];
+    let [blockStart, blockEnd] = normalized.split(' - ').map(s => normalizeTimeString(s.trim()));
+    console.log('DEBUG: blockStart:', blockStart, 'blockEnd:', blockEnd);
     if (!blockStart || !blockEnd) return [];
     const times = generateStartTimes(blockStart, blockEnd, 30);
-    console.log("MatchProposalModal possibleStartTimes:", times);
+    console.log('DEBUG: generated times:', times);
     return times;
   }, [slot]);
 
@@ -247,6 +256,7 @@ export default function MatchProposalModal({
         onClose={onClose}
         title={<span className={styles['match-proposal-title']}>{`Propose a Match - BETA`}</span>}
         maxWidth="500px"
+        className="proposal-modal"
       >
         <div className={styles['match-proposal-content']}>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 12 }}>
@@ -272,9 +282,13 @@ export default function MatchProposalModal({
           </div>
           <div className={styles['match-proposal-row']} style={{ marginBottom: 10 }}>
             <b>Date:</b>
-            <div className={styles['match-proposal-date-highlight']}>
-              {date ? date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
-            </div>
+            <DatePicker
+              selected={date}
+              onChange={d => setDate(d)}
+              dateFormat="MM-dd-yyyy"
+              className={styles['match-proposal-date-input']}
+              required
+            />
           </div>
           <div className={styles['match-proposal-row']} style={{ marginBottom: 10 }}>
             <b>Time Block:</b>
