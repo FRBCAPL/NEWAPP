@@ -45,7 +45,7 @@ function formatDateMMDDYYYY(dateStr) {
   return `${month}-${day}-${year}`;
 }
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 export default function UnenteredMatchesModal({ open, onClose }) {
   const [matches, setMatches] = useState([]);
@@ -54,7 +54,7 @@ export default function UnenteredMatchesModal({ open, onClose }) {
   useEffect(() => {
     if (!open) return;
     setLoading(true);
-    fetch(`${BACKEND_URL}/admin/unentered-matches`)
+    fetch(`${API_BASE}/admin/unentered-matches`)
       .then(res => res.json())
       .then(data => {
         setMatches(data);
@@ -63,7 +63,7 @@ export default function UnenteredMatchesModal({ open, onClose }) {
   }, [open]);
 
   const markAsEntered = (id) => {
-    fetch(`${BACKEND_URL}/admin/mark-lms-entered/${id}`, { method: "PATCH" })
+    fetch(`${API_BASE}/admin/mark-lms-entered/${id}`, { method: "PATCH" })
       .then(res => res.json())
       .then(() => setMatches(matches.filter(match => match._id !== id)));
   };

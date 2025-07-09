@@ -684,6 +684,7 @@ export default function Dashboard({
   }
 
   function handleScheduleMatch() {
+    console.log('Schedule Match button clicked');
     if (effectivePhase === "scheduled") {
       setShowOpponents(true);
     } else {
@@ -867,8 +868,9 @@ export default function Dashboard({
   const matchesToScheduleCount = Math.max(0, requiredMatches - matchesScheduledCount);
 
   return (
-    <div className={styles.dashboardBg}>
-      <div className={styles.dashboardFrame}>
+    <div className={styles.dashboardBg} style={{ position: 'relative' }}>
+      <div className={styles.dashboardFrame} style={{ position: 'relative', zIndex: 1 }}>
+        {/* Main dashboard content starts here */}
         <div className={styles.dashboardCard}>
           <h1 className={styles.dashboardTitle}>
             Welcome,
@@ -921,21 +923,15 @@ export default function Dashboard({
             phase={effectivePhase}
           />
 
-          {/* --- Completed Matches Count (above upcoming matches area) --- */}
-          <div style={{ marginBottom: 8, color: "#888", fontWeight: 500 }}>
-            {totalCompleted === 0
-              ? "No matches completed yet!"
-              : `${totalCompleted} matches completed.`}
-          </div>
-
           {/* --- Upcoming Matches Section --- */}
-          <section
-            className={`${styles.dashboardSection} ${styles.dashboardSectionBox} ${styles.matchesSection}`}
+          <section className={`${styles.dashboardSection} ${styles.dashboardSectionBox} ${styles.matchesSection}`}
             style={{
               position: "relative",
               overflow: "visible",
               backgroundColor: "#000",
-              minHeight: "320px"
+              minHeight: "370px",
+              marginBottom: '36px',
+              paddingBottom: '20px',
             }}
           >
             {/* Proposal Buttons - Above Pool Table */}
@@ -953,8 +949,6 @@ export default function Dashboard({
                   className={styles.proposalAlertButton}
                   onClick={() => setShowProposalListModal(true)}
                   aria-label="View pending match proposals"
-                  disabled={pendingCount === 0}
-                  style={pendingCount === 0 ? { opacity: 0.5, cursor: "not-allowed" } : {}}
                 >
                   📥  {pendingCount} proposals waiting for you
                 </button>
@@ -962,8 +956,6 @@ export default function Dashboard({
                   className={styles.proposalAlertButton}
                   onClick={() => setShowSentProposalListModal(true)}
                   aria-label="View matches you have proposed"
-                  disabled={sentCount === 0}
-                  style={sentCount === 0 ? { opacity: 0.5, cursor: "not-allowed" } : {}}
                 >
                   📤 {sentCount} proposals waiting for opponent
                 </button>
@@ -975,28 +967,29 @@ export default function Dashboard({
               <h2 className={styles.dashboardSectionTitle} style={{ margin: 0, fontWeight: 600 }}>Upcoming Confirmed Matches</h2>
               <div className={styles.dashboardHelperText} style={{ margin: 0, marginBottom: 6 }}>Click Match For Details</div>
             </div>
+
             {/* PoolSimulation as background and matches list overlayed on table */}
-            <div style={{ position: 'relative', width: '100%', maxWidth: 600, height: 300, margin: '0 auto 8px auto' }}>
+            <div style={{ position: 'relative', width: '100%', maxWidth: 600, height: 370, margin: '0 auto 8px auto' }}>
               <ResponsiveWrapper aspectWidth={600} aspectHeight={300}>
                 <PoolSimulation />
               </ResponsiveWrapper>
-              {/* Overlay matches list on table, aligned to bottom inside edge of playing surface */}
-              <div style={{ 
+              {/* Overlay matches list on table, visually on the playing surface */}
+              <div className={styles.mobileMatchesOverlay} style={{ 
                 position: 'absolute', 
                 left: '50%', 
-                width: '90%', 
-                bottom: '45px', 
+                width: '84%', // slightly narrower to fit inside rails
+                bottom: '120px', // moved up a little more on the playing surface
                 zIndex: 2, 
                 pointerEvents: 'none', 
                 transform: 'translateX(-50%)',
-                height: '150px', // height of the playing surface (adjust as needed)
+                height: '90px', // height to fit on the playing surface
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'flex-end',
               }}>
                 <ul className={styles.dashboardList} style={{ minHeight: 'auto', margin: 0, pointerEvents: 'auto', padding: 0 }}>
                   {(showAllMatches ? filteredUpcomingMatches : filteredUpcomingMatches.slice(0, 3)).length === 0 ? (
-                    <li style={{ position: 'absolute', bottom: '0', left: '50%', transform: 'translateX(-50%)' }}>No matches scheduled yet.</li>
+                    <li className={styles.noMatchesText} style={{ position: 'absolute', bottom: '0', left: '50%', transform: 'translateX(-50%)' }}>No matches scheduled yet.</li>
                   ) : (
                     <>
                       {(showAllMatches ? filteredUpcomingMatches : filteredUpcomingMatches.slice(0, 3)).map((match, idx) => {
@@ -1140,225 +1133,267 @@ export default function Dashboard({
                           setCompletingMatchId(null);
                         }
                       }}
-                                  type="button"
-                                >
-                                  Complete
-                                </LoadingButton>
-                              )}
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </>
-                  )}
-                </ul>
-              </div>
-            </div>
-            
-            {/* Show More button positioned outside the table overlay */}
-            {filteredUpcomingMatches.length > 3 && (
-              <div style={{ textAlign: 'center', margin: '8px 0 0 0' }}>
-                <button
-                  className={styles.smallShowMoreBtn}
-                  onClick={() => {
-                    setShowAllMatchesModal(true);
-                  }}
-                  type="button"
-                >
-                  {`Show ${filteredUpcomingMatches.length - 3} More`}
-                </button>
-              </div>
-            )}
-
-              {/* --- Scheduled/Confirmed Matches Count (under upcoming matches area) --- */}
-              <div style={{ textAlign: "center", margin: "24px 0 0 0" }}>
-                <div style={{ marginBottom: 8, color: "#888", fontWeight: 500, transform: "none" }}>
-                  {matchesToScheduleCount === 0
-                    ? "All required matches are scheduled!"
-                    : `${matchesToScheduleCount} of ${requiredMatches} matches remaining to schedule.`}
-                </div>
-                <button
-                  className={styles.dashboardBtn}
-                  type="button"
-                  style={{ marginTop: 8, marginBottom: 0 }}
-                  onClick={() => {
-                    handleScheduleMatch();
-                  }}
-                >
-                  Schedule a Match
-                </button>
-              </div>
-            </section>
-
-          {/* News & Updates Section with Chat/Standings Buttons */}
-          <section className={`${styles.dashboardSection} ${styles.dashboardSectionBox}`}>
-            <div className={styles.newsUpdatesHeader}>
-              <button
-                className={styles.dashboardBtn}
-                onClick={() => setShowChatModal(true)}
-                type="button"
-                style={{ position: 'relative' }}
-              >
-                💬 Open Chat
-                {unreadMessages > 0 && (
-                  <span style={{
-                    position: 'absolute',
-                    top: '-8px',
-                    right: '-8px',
-                    background: '#e53e3e',
-                    color: '#fff',
-                    borderRadius: '50%',
-                    width: '20px',
-                    height: '20px',
-                    fontSize: '0.75em',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 'bold'
-                  }}>
-                    {unreadMessages > 99 ? '99+' : unreadMessages}
-                  </span>
-                )}
-              </button>
-              <h2 className={styles.dashboardSectionTitle}>
-                News & Updates
-              </h2>
-              <button
-                className={styles.dashboardBtn}
-                type="button"
-                onClick={() => setShowStandings(true)}
-              >
-                📊 View Standings
-              </button>
-            </div>
-            {loadingNotes ? (
-              <SkeletonLoader lines={3} height="16px" />
-            ) : (
-              <ul className={styles.dashboardList}>
-                {notes.length === 0 ? (
-                  <li className={styles.dashboardNoteItem}>No news yet.</li>
-                ) : (
-                  notes.map((note, idx) => (
-                    <li
-                      key={note._id || idx}
-                      className={styles.dashboardNoteItem}
-                    >
-                      <span style={{ flex: 1 }}>{note.text}</span>
-                      {userPin === "777777" && (
-                        <button
-                          onClick={() => handleDeleteNote(note._id)}
-                          style={{
-                            background: "#e53935",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: 4,
-                            padding: "2px 8px",
-                            cursor: "pointer",
-                            fontSize: "0.95em"
-                          }}
-                          aria-label="Delete note"
-                          title="Delete note"
-                          type="button"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </li>
-                  ))
+                                type="button"
+                              >
+                                Complete
+                              </LoadingButton>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </>
                 )}
               </ul>
-            )}
-            {userPin === "777777" && notes.length > 0 && (
+            </div>
+            {/* --- Matches Counters and Schedule Match Button Row (button below counters) --- */}
+            <div className={styles.countersRow} style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              margin: '-85px 0 0 0',
+              width: '100%',
+              paddingBottom: '16px',
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: 10,
+                width: '100%',
+                marginBottom: '8px',
+              }}>
+                <div style={{
+                  background: '#23232a',
+                  color: '#28a745',
+                  borderRadius: 6,
+                  padding: '6px 0',
+                  fontWeight: 600,
+                  fontSize: '0.95em',
+                  flex: 1,
+                  textAlign: 'center',
+                  border: '2px solid #28a745',
+                  minWidth: 0,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} Completed: {totalCompleted}
+                </div>
+                <div style={{
+                  background: '#23232a',
+                  color: '#e53e3e',
+                  borderRadius: 6,
+                  padding: '6px 0',
+                  fontWeight: 600,
+                  fontSize: '0.95em',
+                  flex: 1,
+                  textAlign: 'center',
+                  border: '2px solid #e53e3e',
+                  minWidth: 0,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} To Schedule: {matchesToScheduleCount}
+                </div>
+              </div>
               <button
                 style={{
+                  fontWeight: 600,
+                  fontSize: '1em',
+                  borderRadius: 6,
                   marginTop: 10,
-                  background: "#444",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 5,
-                  padding: "4px 14px",
-                  cursor: "pointer",
-                  fontSize: "0.98em"
+                  width: '60%',
+                  background: '#e53e3e',
+                  color: '#fff',
+                  border: '2px solid #e53e3e',
+                  padding: '8px 0',
+                  pointerEvents: 'auto',
+                  zIndex: 999999,
+                  position: 'relative',
+                  display: 'block',
+                  alignSelf: 'center',
                 }}
-                onClick={handleClearNotes}
+                onClick={() => { console.log('Button clicked'); handleScheduleMatch(); }}
                 type="button"
               >
-                Clear All Notes
+                Schedule {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} Match
+              </button>
+            </div>
+            </div>
+          </section>
+          
+               {/* News & Updates Section with Chat/Standings Buttons */}
+        <section className={`${styles.dashboardSection} ${styles.dashboardSectionBox}`}>
+          
+          <div className={styles.newsUpdatesHeader}>
+            <button
+              className={styles.dashboardBtn}
+              onClick={() => setShowChatModal(true)}
+              type="button"
+              style={{ position: 'relative' }}
+            >
+              💬 Open Chat
+              {unreadMessages > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-8px',
+                  right: '-8px',
+                  background: '#e53e3e',
+                  color: '#fff',
+                  borderRadius: '50%',
+                  width: '20px',
+                  height: '20px',
+                  fontSize: '0.75em',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 'bold'
+                }}>
+                  {unreadMessages > 99 ? '99+' : unreadMessages}
+                </span>
+              )}
+            </button>
+            <h2 className={styles.dashboardSectionTitle}>
+              News & Updates
+            </h2>
+            <button
+              className={styles.dashboardBtn}
+              type="button"
+              onClick={() => setShowStandings(true)}
+            >
+              📊 View Standings
+            </button>
+          </div>
+          {loadingNotes ? (
+            <SkeletonLoader lines={3} height="16px" />
+          ) : (
+            <ul className={styles.dashboardList}>
+              {notes.length === 0 ? (
+                <li className={styles.dashboardNoteItem}>No news yet.</li>
+              ) : (
+                notes.map((note, idx) => (
+                  <li
+                    key={note._id || idx}
+                    className={styles.dashboardNoteItem}
+                  >
+                    <span style={{ flex: 1 }}>{note.text}</span>
+                    {userPin === "777777" && (
+                      <button
+                        onClick={() => handleDeleteNote(note._id)}
+                        style={{
+                          background: "#e53935",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: 4,
+                          padding: "2px 8px",
+                          cursor: "pointer",
+                          fontSize: "0.95em"
+                        }}
+                        aria-label="Delete note"
+                        title="Delete note"
+                        type="button"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </li>
+                ))
+              )}
+            </ul>
+          )}
+          {userPin === "777777" && notes.length > 0 && (
+            <button
+              style={{
+                marginTop: 10,
+                background: "#444",
+                color: "#fff",
+                border: "none",
+                borderRadius: 5,
+                padding: "4px 14px",
+                cursor: "pointer",
+                fontSize: "0.98em"
+              }}
+              onClick={handleClearNotes}
+              type="button"
+            >
+              Clear All Notes
+            </button>
+          )}
+        </section>
+
+        <button
+          className={styles.dashboardLogoutBtn}
+          onClick={onLogout}
+          type="button"
+        >
+          Logout
+        </button>
+
+        {userPin === "777777" && (
+          <>
+            <button
+              className={styles.dashboardAdminBtn}
+              onClick={() => setShowNoteModal(true)}
+              type="button"
+            >
+              Add Note
+            </button>
+            <button
+              className={styles.dashboardAdminBtn}
+              onClick={onGoToAdmin}
+              type="button"
+            >
+              Admin
+            </button>
+           
+            <button
+              className={styles.dashboardAdminBtn}
+              onClick={() => setPhaseOverride(phaseOverride === "challenge" ? "scheduled" : "challenge")}
+              type="button"
+            >
+              {phaseOverride === "challenge" ? "Switch to Phase 1 (Scheduled)" : "Switch to Phase 2 (Challenge)"}
+            </button>
+            {phaseOverride && (
+              <button
+                className={styles.dashboardAdminBtn}
+                onClick={() => setPhaseOverride(null)}
+                type="button"
+                style={{ background: "#888" }}
+              >
+                Clear Phase Override
               </button>
             )}
-          </section>
-
-          <button
-            className={styles.dashboardLogoutBtn}
-            onClick={onLogout}
-            type="button"
-          >
-            Logout
-          </button>
-
-          {userPin === "777777" && (
-            <>
-              <button
-                className={styles.dashboardAdminBtn}
-                onClick={() => setShowNoteModal(true)}
-                type="button"
-              >
-                Add Note
-              </button>
-              <button
-                className={styles.dashboardAdminBtn}
-                onClick={onGoToAdmin}
-                type="button"
-              >
-                Admin
-              </button>
-             
-              <button
-                className={styles.dashboardAdminBtn}
-                onClick={() => setPhaseOverride(phaseOverride === "challenge" ? "scheduled" : "challenge")}
-                type="button"
-              >
-                {phaseOverride === "challenge" ? "Switch to Phase 1 (Scheduled)" : "Switch to Phase 2 (Challenge)"}
-              </button>
-              {phaseOverride && (
-                <button
-                  className={styles.dashboardAdminBtn}
-                  onClick={() => setPhaseOverride(null)}
-                  type="button"
-                  style={{ background: "#888" }}
-                >
-                  Clear Phase Override
-                </button>
-              )}
-             
-            </>
-          )}
-        </div>
+           
+          </>
+        )}
       </div>
-      {/* Opponents Modal */}
-     <OpponentsModal
-      open={showOpponents}
-      onClose={() => setShowOpponents(false)}
-      opponents={opponentsToSchedule}
-      onOpponentClick={handleOpponentClick}
-      phase={effectivePhase}
-     />
+    </div>
+    {/* Opponents Modal */}
+   <OpponentsModal
+    open={showOpponents}
+    onClose={() => setShowOpponents(false)}
+    opponents={opponentsToSchedule}
+    onOpponentClick={handleOpponentClick}
+    phase={effectivePhase}
+   />
 
 
-      {/* Player Search Modal (Phase 2) */}
-    {showPlayerSearch && (
-      <>
-        <PlayerSearch
-          onClose={() => setShowPlayerSearch(false)}
-          excludeName={fullName}
-          senderName={fullName}
-          senderEmail={senderEmail}
-          selectedDivision={selectedDivision}
-          phase={effectivePhase}
-          onProposalComplete={() => setShowPlayerSearch(false)}
-        />
-      </>
-    )}
+    {/* Player Search Modal (Phase 2) */}
+  {showPlayerSearch && (
+    <>
+      <PlayerSearch
+        onClose={() => setShowPlayerSearch(false)}
+        excludeName={fullName}
+        senderName={fullName}
+        senderEmail={senderEmail}
+        selectedDivision={selectedDivision}
+        phase={effectivePhase}
+        onProposalComplete={() => setShowPlayerSearch(false)}
+      />
+    </>
+  )}
 
 {showAdminPlayerSearch && (
   <PlayerSearch
@@ -1372,32 +1407,32 @@ export default function Dashboard({
 )}
 
 
-      {/* Player Availability Modal */}
-      {showPlayerAvailability && selectedOpponent && (
-        <PlayerAvailabilityModal
-          onClose={() => {
-            setShowPlayerAvailability(false);
-            setSelectedOpponent(null);
-          }}
-          player={selectedOpponent}
-          onProposeMatch={(day, slot) => {
-            setProposalData({
-              player: selectedOpponent,
-              day,
-              slot,
-              selectedDivision, 
-              phase: effectivePhase
-            });
-            setShowProposalModal(true);
-            setShowPlayerAvailability(false);
-            setSelectedOpponent(null);
-          }}
-          selectedDivision={selectedDivision}
-          phase={effectivePhase}
-        />
-      )}
+    {/* Player Availability Modal */}
+    {showPlayerAvailability && selectedOpponent && (
+      <PlayerAvailabilityModal
+        onClose={() => {
+          setShowPlayerAvailability(false);
+          setSelectedOpponent(null);
+        }}
+        player={selectedOpponent}
+        onProposeMatch={(day, slot) => {
+          setProposalData({
+            player: selectedOpponent,
+            day,
+            slot,
+            selectedDivision, 
+            phase: effectivePhase
+          });
+          setShowProposalModal(true);
+          setShowPlayerAvailability(false);
+          setSelectedOpponent(null);
+        }}
+        selectedDivision={selectedDivision}
+        phase={effectivePhase}
+      />
+    )}
 
-      {/* Proposal Modal */}
+    {/* Proposal Modal */}
   {showProposalModal && proposalData && (
   <MatchProposalModal
     player={proposalData.player}
@@ -1417,95 +1452,95 @@ export default function Dashboard({
   />
 )}
 
-      {/* Standings Modal */}
-      <StandingsModal
-        open={showStandings}
-        onClose={() => setShowStandings(false)}
-        standingsUrl={STANDINGS_URLS[selectedDivision]}
-      />
+    {/* Standings Modal */}
+    <StandingsModal
+      open={showStandings}
+      onClose={() => setShowStandings(false)}
+      standingsUrl={STANDINGS_URLS[selectedDivision]}
+    />
 
-      {/* Match Details Modal */}
-      <MatchDetailsModal
-        open={modalOpen}
-        onClose={closeModal}
-        match={selectedMatch}
-        onCompleted={matchId => setUpcomingMatches(prev => prev.filter(m => m._id !== matchId))}
-      />
+    {/* Match Details Modal */}
+    <MatchDetailsModal
+      open={modalOpen}
+      onClose={closeModal}
+      match={selectedMatch}
+      onCompleted={matchId => setUpcomingMatches(prev => prev.filter(m => m._id !== matchId))}
+    />
 
-      {/* Note Modal */}
-      {showNoteModal && (
-        <div className={styles.modalOverlay} style={{zIndex: 99999}}>
-          <div className={styles.modalContent} style={{maxWidth: 400, margin: "auto"}}>
-            <h2>Add News/Note</h2>
-            <textarea
-              value={newNote}
-              onChange={e => setNewNote(e.target.value)}
-              rows={4}
-              style={{width: "100%", marginBottom: 12, borderRadius: 6, padding: 8}}
-              placeholder="Enter your note..."
-            />
-            {noteError && <div style={{color: "red", marginBottom: 8}}>{noteError}</div>}
-            <div style={{display: "flex", justifyContent: "flex-end", gap: 8}}>
-              <button
-                className={styles.dashboardBtn}
-                onClick={() => setShowNoteModal(false)}
-                type="button"
-              >
-                Cancel
-              </button>
-              <button
-                className={styles.dashboardBtn}
-                disabled={!newNote.trim()}
-                onClick={handleAddNote}
-                type="button"
-              >
-                Add Note
-              </button>
-            </div>
+    {/* Note Modal */}
+    {showNoteModal && (
+      <div className={styles.modalOverlay} style={{zIndex: 99999}}>
+        <div className={styles.modalContent} style={{maxWidth: 400, margin: "auto"}}>
+          <h2>Add News/Note</h2>
+          <textarea
+            value={newNote}
+            onChange={e => setNewNote(e.target.value)}
+            rows={4}
+            style={{width: "100%", marginBottom: 12, borderRadius: 6, padding: 8}}
+            placeholder="Enter your note..."
+          />
+          {noteError && <div style={{color: "red", marginBottom: 8}}>{noteError}</div>}
+          <div style={{display: "flex", justifyContent: "flex-end", gap: 8}}>
+            <button
+              className={styles.dashboardBtn}
+              onClick={() => setShowNoteModal(false)}
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              className={styles.dashboardBtn}
+              disabled={!newNote.trim()}
+              onClick={handleAddNote}
+              type="button"
+            >
+              Add Note
+            </button>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
-      {/* Proposal List Modals */}
-      {showProposalListModal && (
-        <ProposalListModal
-          proposals={pendingProposals}
-          onSelect={proposal => {
-            // Determine if current user is proposer
-            const isProposer = (
-              (senderEmail && proposal.senderEmail && senderEmail.toLowerCase() === proposal.senderEmail.toLowerCase()) ||
-              (`${playerName} ${playerLastName}`.toLowerCase() === (proposal.senderName || '').toLowerCase())
-            );
-            setSelectedProposal(proposal);
-            setProposalNote("");
-            setShowProposalListModal(false);
-            setShowProposalDetailsModal(isProposer);
-          }}
-          onClose={() => setShowProposalListModal(false)}
-          type="received"
-        />
-      )}
+    {/* Proposal List Modals */}
+    {showProposalListModal && (
+      <ProposalListModal
+        proposals={pendingProposals}
+        onSelect={proposal => {
+          // Determine if current user is proposer
+          const isProposer = (
+            (senderEmail && proposal.senderEmail && senderEmail.toLowerCase() === proposal.senderEmail.toLowerCase()) ||
+            (`${playerName} ${playerLastName}`.toLowerCase() === (proposal.senderName || '').toLowerCase())
+          );
+          setSelectedProposal(proposal);
+          setProposalNote("");
+          setShowProposalListModal(false);
+          setShowProposalDetailsModal(isProposer);
+        }}
+        onClose={() => setShowProposalListModal(false)}
+        type="received"
+      />
+    )}
 
-      {showSentProposalListModal && (
-        <ProposalListModal
-          proposals={sentProposals}
-          onSelect={proposal => {
-            // Determine if current user is proposer
-            const isProposer = (
-              (senderEmail && proposal.senderEmail && senderEmail.toLowerCase() === proposal.senderEmail.toLowerCase()) ||
-              (`${playerName} ${playerLastName}`.toLowerCase() === (proposal.senderName || '').toLowerCase())
-            );
-            setSelectedProposal(proposal);
-            setProposalNote("");
-            setShowSentProposalListModal(false);
-            setShowProposalDetailsModal(isProposer);
-          }}
-          onClose={() => setShowSentProposalListModal(false)}
-          type="sent"
-        />
-      )}
+    {showSentProposalListModal && (
+      <ProposalListModal
+        proposals={sentProposals}
+        onSelect={proposal => {
+          // Determine if current user is proposer
+          const isProposer = (
+            (senderEmail && proposal.senderEmail && senderEmail.toLowerCase() === proposal.senderEmail.toLowerCase()) ||
+            (`${playerName} ${playerLastName}`.toLowerCase() === (proposal.senderName || '').toLowerCase())
+          );
+          setSelectedProposal(proposal);
+          setProposalNote("");
+          setShowSentProposalListModal(false);
+          setShowProposalDetailsModal(isProposer);
+        }}
+        onClose={() => setShowSentProposalListModal(false)}
+        type="sent"
+      />
+    )}
 
-      {/* Confirm Match Details Modal */}
+    {/* Confirm Match Details Modal */}
    {selectedProposal && !showProposalDetailsModal && (
   <div className={styles.modalOverlay}>
     <div className={styles.modalContent} style={{maxWidth: 420, margin: "auto"}}>
@@ -1538,141 +1573,141 @@ export default function Dashboard({
 )}
 
 
-      {/* Counter Proposal Modal */}
-      <CounterProposalModal
-        proposal={counterProposal}
-        open={showCounterModal}
-        onClose={() => {
-          setShowCounterModal(false);
-          setCounterProposal(null);
-        }}
-        onSubmit={handleCounterProposal}
-        senderPlayer={players.find(
-          p => `${p.firstName} ${p.lastName}`.trim().toLowerCase() === (counterProposal?.senderName || '').trim().toLowerCase() ||
-               p.email?.toLowerCase() === counterProposal?.senderEmail?.toLowerCase()
-        )}
-        phase={effectivePhase}
-        selectedDivision={selectedDivision}
-      />
-
-      {/* Proposal Details Modal */}
-      {(() => {
-        return selectedProposal && showProposalDetailsModal && (
-          <ProposalDetailsModal
-            proposal={selectedProposal}
-            open={showProposalDetailsModal}
-            onClose={() => {
-              setShowProposalDetailsModal(false);
-              setSelectedProposal(null);
-            }}
-            onEdit={() => {
-              if (selectedProposal.isCounter) {
-                setShowProposalDetailsModal(false);
-                setTimeout(() => {
-                  setSelectedProposal(null);
-                  setCounterProposal(selectedProposal);
-                  setShowCounterModal(true);
-                }, 0);
-              } else {
-                setShowEditProposalModal(true);
-              }
-            }}
-            onMessage={() => {
-              // Optionally open a chat or message modal here
-              alert('Message opponent coming soon!');
-            }}
-          />
-        );
-      })()}
-
-      {/* Edit Proposal Modal */}
-      {selectedProposal && showEditProposalModal && (
-        <EditProposalModal
-          proposal={selectedProposal}
-          open={showEditProposalModal}
-          onClose={() => {
-            setShowEditProposalModal(false);
-          }}
-          onSave={(updatedProposal) => {
-            // Update the selected proposal with the new data
-            setSelectedProposal(updatedProposal);
-            // Refresh the proposals list
-            refetchProposals();
-            // Close the edit modal
-            setShowEditProposalModal(false);
-          }}
-          selectedDivision={selectedDivision}
-          phase={effectivePhase}
-          receiverPlayer={players.find(
-            p => `${p.firstName} ${p.lastName}`.trim().toLowerCase() === (selectedProposal.receiverName || '').trim().toLowerCase() ||
-                 p.email?.toLowerCase() === selectedProposal.receiverEmail?.toLowerCase()
-          )}
-        />
+    {/* Counter Proposal Modal */}
+    <CounterProposalModal
+      proposal={counterProposal}
+      open={showCounterModal}
+      onClose={() => {
+        setShowCounterModal(false);
+        setCounterProposal(null);
+      }}
+      onSubmit={handleCounterProposal}
+      senderPlayer={players.find(
+        p => `${p.firstName} ${p.lastName}`.trim().toLowerCase() === (counterProposal?.senderName || '').trim().toLowerCase() ||
+             p.email?.toLowerCase() === counterProposal?.senderEmail?.toLowerCase()
       )}
+      phase={effectivePhase}
+      selectedDivision={selectedDivision}
+    />
 
-      {allMatchesModal}
+    {/* Proposal Details Modal */}
+    {(() => {
+      return selectedProposal && showProposalDetailsModal && (
+        <ProposalDetailsModal
+          proposal={selectedProposal}
+          open={showProposalDetailsModal}
+          onClose={() => {
+            setShowProposalDetailsModal(false);
+            setSelectedProposal(null);
+          }}
+          onEdit={() => {
+            if (selectedProposal.isCounter) {
+              setShowProposalDetailsModal(false);
+              setTimeout(() => {
+                setSelectedProposal(null);
+                setCounterProposal(selectedProposal);
+                setShowCounterModal(true);
+              }, 0);
+            } else {
+              setShowEditProposalModal(true);
+            }
+          }}
+          onMessage={() => {
+            // Optionally open a chat or message modal here
+            alert('Message opponent coming soon!');
+          }}
+        />
+      );
+    })()}
 
-      {/* Chat Modal */}
-      {showChatModal && (
-        <div className={styles.modalOverlay} style={{zIndex: 99999}}>
+    {/* Edit Proposal Modal */}
+    {selectedProposal && showEditProposalModal && (
+      <EditProposalModal
+        proposal={selectedProposal}
+        open={showEditProposalModal}
+        onClose={() => {
+          setShowEditProposalModal(false);
+        }}
+        onSave={(updatedProposal) => {
+          // Update the selected proposal with the new data
+          setSelectedProposal(updatedProposal);
+          // Refresh the proposals list
+          refetchProposals();
+          // Close the edit modal
+          setShowEditProposalModal(false);
+        }}
+        selectedDivision={selectedDivision}
+        phase={effectivePhase}
+        receiverPlayer={players.find(
+          p => `${p.firstName} ${p.lastName}`.trim().toLowerCase() === (selectedProposal.receiverName || '').trim().toLowerCase() ||
+               p.email?.toLowerCase() === selectedProposal.receiverEmail?.toLowerCase()
+        )}
+      />
+    )}
+
+    {allMatchesModal}
+
+    {/* Chat Modal */}
+    {showChatModal && (
+      <div className={styles.modalOverlay} style={{zIndex: 99999}}>
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '95vw',
+          height: '95vh',
+          maxWidth: '1400px',
+          maxHeight: '900px',
+          background: '#181818',
+          borderRadius: '12px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}>
           <div style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '95vw',
-            height: '95vh',
-            maxWidth: '1400px',
-            maxHeight: '900px',
-            background: '#181818',
-            borderRadius: '12px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
             display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden'
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '12px 16px',
+            borderBottom: '1px solid #333',
+            background: '#222',
+            borderRadius: '12px 12px 0 0'
           }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '12px 16px',
-              borderBottom: '1px solid #333',
-              background: '#222',
-              borderRadius: '12px 12px 0 0'
-            }}>
-              <h2 style={{margin: 0, color: '#fff', fontSize: '1.2em'}}>League Chat</h2>
-              <button
-                onClick={() => setShowChatModal(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#fff',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseOver={(e) => e.target.style.background = '#444'}
-                onMouseOut={(e) => e.target.style.background = 'none'}
-                type="button"
-              >
-                ×
-              </button>
-            </div>
-            <div style={{flex: 1, overflow: 'hidden', position: 'relative'}}>
-              <DirectMessagingModal
-                userName={`${playerName} ${playerLastName}`}
-                userEmail={senderEmail}
-                userPin={userPin}
-                selectedDivision={selectedDivision}
-                opponentEmails={opponentEmails}
-                onClose={() => setShowChatModal(false)}
-              />
-            </div>
+            <h2 style={{margin: 0, color: '#fff', fontSize: '1.2em'}}>League Chat</h2>
+            <button
+              onClick={() => setShowChatModal(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#fff',
+                fontSize: '24px',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseOver={(e) => e.target.style.background = '#444'}
+              onMouseOut={(e) => e.target.style.background = 'none'}
+              type="button"
+            >
+              ×
+            </button>
+          </div>
+          <div style={{flex: 1, overflow: 'hidden', position: 'relative'}}>
+            <DirectMessagingModal
+              userName={`${playerName} ${playerLastName}`}
+              userEmail={senderEmail}
+              userPin={userPin}
+              selectedDivision={selectedDivision}
+              opponentEmails={opponentEmails}
+              onClose={() => setShowChatModal(false)}
+            />
           </div>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    )}
+  </div>
+);
 }

@@ -16,32 +16,45 @@
    LAYOUT CONTAINERS
    =============================== */
 .dashboardBg {
-  display: flex;
+  position: relative; /* Added for floating logo positioning */
+  display: block;
   align-items: flex-start;   /* <-- THIS IS CRUCIAL */
   justify-content: center;
   min-height: 100vh;
-  width: 100vw;
-  background: #000;
+  width: 100%;
+  background: transparent !important;
+}
+
+.floatingLogo {
+  position: absolute;
+  z-index: 0;
+  opacity: 0.18;
+  pointer-events: none;
+  /* Default placement, can be overridden inline */
 }
 
 .dashboardFrame {
+  position: relative;
   display: flex;
-  align-items: flex-start;   /* <-- THIS TOO */
+  align-items: flex-start;
   justify-content: center;
-  width: 100vw;
-  max-width: 100vw;
-  background: #000;
+  width: 100%;
+  max-width: 900px;
+  background: #18181b;
   padding: 18px;
   border-radius: 24px;
   box-sizing: border-box;
   overflow-x: auto;
+  z-index: 4;
+  margin: 0 auto;
 }
 
 .dashboardCard {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 600px;
-
-  background: #18181b;
+  background: #23232a;
   color: #fff;
   border-radius: 18px;
   box-shadow: 0 4px 32px #e53e3e22, 0 0 16px #e53e3e11;
@@ -83,7 +96,7 @@
   background: var(--secondary-black);
   border-radius: 12px;
   padding: 1rem 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.1em;
   box-shadow: 0 2px 8px rgba(229,62,62,0.06);
 }
 .dashboardSectionBox {
@@ -92,11 +105,10 @@
   border: 1.5px solid #cccaca;
   border-radius: 13px;
   padding: 1.2em 1.2em;
- padding-bottom: 1.0em;
-
-  margin-bottom: .4em;
+  padding-bottom: 0.3em;
+  margin-bottom: 0.1em;
   box-shadow: 0 2px 12px #e5393522;
-  z-index: 1;
+  z-index: 5;
 }
 
 .dashboardSectionTitle {
@@ -121,7 +133,7 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  padding-bottom: 1em;
+  padding-bottom: 0;
 }
 
 /* ===============================
@@ -343,7 +355,6 @@
   height: 100%;
   object-fit: fill;
   z-index: 1;
-  pointer-events: none;
   margin: 0;
 }
 
@@ -1013,7 +1024,8 @@
 
 .dashboardModalContent.standingsModalContent {
   max-width: 1200px !important;
-  min-width: 900px;
+  min-width: 0 !important;
+  max-width: 100vw !important;
   height: var(--standings-modal-height);
 }
 
@@ -1473,5 +1485,179 @@
   
   .challengeStatDetails {
     font-size: 0.8rem;
+  }
+}
+
+/* --- Responsive modal/container min-width and max-width fixes --- */
+.dashboardModalContent,
+.standingsModalContent,
+.proposalModalContent,
+.matchCard,
+.dashboardFrame,
+.dashboardCard {
+  min-width: 0 !important;
+  max-width: 100vw !important;
+}
+
+@media (max-width: 600px) {
+  .dashboardBg {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    padding: 0 !important;
+    background: #181818 !important;
+  }
+  .dashboardFrame {
+    width: 100% !important;
+    max-width: 100vw !important;
+    padding: 0.2rem !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+  .dashboardCard {
+    width: 100% !important;
+    max-width: 100vw !important;
+    padding: 0.3rem 0.1rem 0.5rem 0.1rem !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+  .dashboardTitle {
+    font-size: 1.1rem !important;
+    margin-bottom: 0.2rem !important;
+  }
+  .dashboardUserName {
+    font-size: 0.85rem !important;
+  }
+  .dashboardSection,
+  .dashboardSectionBox {
+    padding: 0.2rem 0.1rem !important;
+    margin-bottom: 0.4rem !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  .dashboardSectionTitle {
+    font-size: 0.95rem !important;
+    margin-bottom: 0.2rem !important;
+    padding-top: 0.1em !important;
+  }
+  .dashboardHelperText {
+    font-size: 0.7rem !important;
+    margin-bottom: 0.2em !important;
+  }
+  .proposalAlertButton {
+    font-size: 0.8rem !important;
+    padding: 0.4rem 0.5rem !important;
+    margin-bottom: 0.1rem !important;
+  }
+  .dashboardBtn,
+  .dashboardLogoutBtn,
+  .dashboardAdminBtn {
+    font-size: 0.85rem !important;
+    padding: 0.5rem 0.5rem !important;
+    min-height: 36px !important;
+    margin-bottom: 0.1rem !important;
+  }
+  .matchesSection {
+    min-height: 200px !important;
+    margin-bottom: 0.2rem !important;
+    padding-bottom: 0.2rem !important;
+    padding-top: 0.2rem !important;
+  }
+  .mobileMatchesOverlay {
+    bottom: 250px !important;
+  }
+  .countersRow {
+    margin-top: -120px !important;
+  }
+  .countersRow > div {
+    gap: 6px !important;
+  }
+  .counterBox {
+    font-size: 0.8rem !important;
+    padding: 4px 0 !important;
+  }
+  .scheduleMatchBtn {
+    font-size: 0.95rem !important;
+    padding: 0.6rem 0 !important;
+    min-height: 36px !important;
+    width: 100% !important;
+    margin-top: 8px !important;
+  }
+  .simulationContainer,
+  .dashboardSimulationBox {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100vw !important;
+    height: 120px !important;
+    min-height: 60px !important;
+    max-height: 30vw !important;
+    margin: 0 auto !important;
+  }
+  .matchCard {
+    font-size: 0.8rem !important;
+    padding: 0.2rem 0.1rem !important;
+    min-height: 28px !important;
+    margin-bottom: 0.1rem !important;
+  }
+  .matchCardButton {
+    font-size: 0.8rem !important;
+    gap: 0.1em !important;
+    width: 100% !important;
+  }
+  .matchCardDetail,
+  .matchCardOpponentName,
+  .matchCardOpponentLabel {
+    font-size: 0.8rem !important;
+    margin-right: 0.1em !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+  .dashboardModalContent {
+    border-radius: 0.2rem !important;
+    font-size: 0.85rem !important;
+    max-width: 100vw !important;
+    margin: 0.1rem !important;
+    padding: 0.2rem !important;
+  }
+  /* Counters and button: keep side by side, just reduce font and padding */
+  .countersRow {
+    flex-direction: column !important;
+    width: 100% !important;
+    padding-bottom: 12px !important;
+  }
+  .countersRow > div {
+    gap: 6px !important;
+  }
+  .counterBox {
+    font-size: 0.8rem !important;
+    padding: 4px 0 !important;
+  }
+  .scheduleMatchBtn {
+    font-size: 0.95rem !important;
+    padding: 0.6rem 0 !important;
+    min-height: 36px !important;
+    width: 100% !important;
+    margin-top: 8px !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .floatingLogo {
+    display: none !important;
+  }
+}
+
+.noMatchesText {
+  text-align: center;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .noMatchesText {
+    font-size: 0.8rem !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
   }
 }

@@ -565,6 +565,7 @@ export default function PoolSimulation() {
         position: "relative",
         background: "black",
         zIndex: 99999,
+        pointerEvents: 'none', // Allow clicks to pass through to buttons below
       }}
     >
       <img

@@ -37,19 +37,15 @@ function AppHeader() {
   );
 }
 
-function BackgroundLogo() {
-  // Get viewport size for responsive orbits
+function FloatingLogos() {
   const [vw, setVw] = useState(window.innerWidth);
   const [vh, setVh] = useState(window.innerHeight);
-  const logoW = 120, logoH = 120; // Use the largest logo size for safety
-  // Generate random configs for each logo on mount
+  const logoW = 120, logoH = 120;
   const [randomConfigs] = useState(() => [0,1,2,3,4].map(() => {
-    // Clamp radii so logos never go off screen
     const maxRx = (vw / 2) - (logoW / 2) - 10;
     const maxRy = (vh / 2) - (logoH / 2) - 10;
     const minRx = maxRx * 0.4;
     const minRy = maxRy * 0.4;
-    // Clamp speeds to a slow, smooth range
     const minSpeed = 0.08, maxSpeed = 0.12;
     return {
       cx: vw * 0.5,
@@ -65,7 +61,6 @@ function BackgroundLogo() {
       phase: Math.random() * Math.PI * 2
     };
   }));
-
   useEffect(() => {
     const onResize = () => {
       setVw(window.innerWidth);
@@ -74,8 +69,6 @@ function BackgroundLogo() {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
-
-  // Floating logic: always visible, always floating
   function useRandomFloatingLogoPath(config) {
     const [pos, setPos] = useState({ x: config.cx, y: config.cy });
     useEffect(() => {
@@ -97,40 +90,36 @@ function BackgroundLogo() {
     }, [config]);
     return pos;
   }
-
-  // Use the random configs for each logo
   const main = useRandomFloatingLogoPath(randomConfigs[0]);
   const bcapl = useRandomFloatingLogoPath(randomConfigs[1]);
   const csi = useRandomFloatingLogoPath(randomConfigs[2]);
   const usapl = useRandomFloatingLogoPath(randomConfigs[3]);
   const fargorate = useRandomFloatingLogoPath(randomConfigs[4]);
-
-  // Helper for style
-  const logoStyle = (logo, width, opacity, filter) => ({
-    position: "fixed",
-    left: logo.x,
-    top: logo.y,
-    transform: "translate(-50%, -50%)",
-    width,
-    height: "auto",
-    opacity,
-    zIndex: 0,
-    pointerEvents: "none",
-    filter
-  });
-
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const logoStyle = (logo, width, opacity, filter) => {
+    // Clamp logo positions to stay within viewport
+    const clampedX = clamp(logo.x, width / 2, vw - width / 2);
+    const clampedY = clamp(logo.y, width / 2, vh - width / 2);
+    return {
+      position: "fixed",
+      left: clampedX,
+      top: clampedY,
+      transform: "translate(-50%, -50%)",
+      width,
+      height: "auto",
+      opacity,
+      zIndex: 2,
+      pointerEvents: "none",
+      filter
+    };
+  };
   return (
     <>
-      {/* Main League Logo: adjust opacity (third argument) below */}
-      <img src={logo} alt="League Logo Background" style={logoStyle(main, 150, 0.40, "drop-shadow(0 0 24px #e53e3e88)")} />
-      {/* BCAPL Logo: adjust opacity (third argument) below */}
-      <img src={bcaplLogo} alt="BCAPL Logo Background" style={logoStyle(bcapl, 120, 0.40, "drop-shadow(0 0 18px #e53e3e66)")} />
-      {/* CSI Logo: adjust opacity (third argument) below */}
-      <img src={csiLogo} alt="CSI Logo Background" style={logoStyle(csi, 120, 0.40, "drop-shadow(0 0 12px #e53e3e44)")} />
-      {/* USAPL Logo: adjust opacity (third argument) below */}
-      <img src={usaplLogo} alt="USAPL Logo Background" style={logoStyle(usapl, 140, 0.50, "drop-shadow(0 0 10px #e53e3e33)")} />
-      {/* Fargorate Logo: adjust opacity (third argument) below */}
-      <img src={fargorateLogo} alt="Fargorate Logo Background" style={logoStyle(fargorate, 140, 0.50, "drop-shadow(0 0 10px #e53e3e33)")} />
+      <img src={logo} alt="League Logo Background" style={logoStyle(main, 150, 0.55, "drop-shadow(0 0 24px #e53e3e88)")} />
+      <img src={bcaplLogo} alt="BCAPL Logo Background" style={logoStyle(bcapl, 120, 0.55, "drop-shadow(0 0 18px #e53e3e66)")} />
+      <img src={csiLogo} alt="CSI Logo Background" style={logoStyle(csi, 120, 0.55, "drop-shadow(0 0 12px #e53e3e44)")} />
+      <img src={usaplLogo} alt="USAPL Logo Background" style={logoStyle(usapl, 140, 0.60, "drop-shadow(0 0 10px #e53e3e33)")} />
+      <img src={fargorateLogo} alt="Fargorate Logo Background" style={logoStyle(fargorate, 140, 0.60, "drop-shadow(0 0 10px #e53e3e33)")} />
     </>
   );
 }
@@ -224,79 +213,83 @@ function App() {
   // --- Main Router ---
   return (
     <HashRouter>
-      <BackgroundLogo />
-      <Routes>
-        <Route
-          path="/admin"
-          element={
-            isAuthenticated && userPin === "777777" ? (
-              <div className="admin-app-content"><AdminDashboard /></div>
-            ) : (
-              <Navigate to="/" />
-            )
-          }
-        />
-        <Route
-          path="*"
-          element={
-            <main className="main-app-content">
-              <AppHeader />
-              <Routes>
-                <Route path="/confirm-match" element={<ConfirmMatch />} />
-                <Route
-                  path="/chat"
-                  element={
-                    isAuthenticated ? (
-                      <MatchChat
-                        userName={`${userFirstName} ${userLastName}`}
-                        userEmail={userEmail}
-                        userPin={userPin}
-                      />
-                    ) : (
-                      <Navigate to="/" />
-                    )
-                  }
-                />
-                <Route
-                  path="/dashboard"
-                  element={
-                    isAuthenticated ? (
-                      <Dashboard
-                        playerName={userFirstName}
-                        playerLastName={userLastName}
-                        senderEmail={userEmail}
-                        onScheduleMatch={() => {}}
-                        onOpenChat={() => (window.location.hash = "#/chat")}
-                        onLogout={handleLogout}
-                        userPin={userPin}
-                        onGoToAdmin={() => {}}
-                      />
-                    ) : (
-                      <Navigate to="/" />
-                    )
-                  }
-                />
-                <Route
-                  path="/"
-                  element={
-                    <MainApp
-                      isAuthenticated={isAuthenticated}
-                      userFirstName={userFirstName}
-                      userLastName={userLastName}
-                      userEmail={userEmail}
-                      userPin={userPin}
-                      handleLoginSuccess={handleLoginSuccess}
-                      handleLogout={handleLogout}
+      <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
+        <FloatingLogos />
+        <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none" }}>
+          <AppHeader />
+          <Routes>
+            <Route
+              path="/admin"
+              element={
+                isAuthenticated && userPin === "777777" ? (
+                  <div className="admin-app-content"><AdminDashboard /></div>
+                ) : (
+                  <Navigate to="/" />
+                )
+              }
+            />
+            <Route
+              path="*"
+              element={
+                <main className="main-app-content">
+                  <Routes>
+                    <Route path="/confirm-match" element={<ConfirmMatch />} />
+                    <Route
+                      path="/chat"
+                      element={
+                        isAuthenticated ? (
+                          <MatchChat
+                            userName={`${userFirstName} ${userLastName}`}
+                            userEmail={userEmail}
+                            userPin={userPin}
+                          />
+                        ) : (
+                          <Navigate to="/" />
+                        )
+                      }
                     />
-                  }
-                />
-                {/* Catch-all route */}
-                <Route path="*" element={<Navigate to="/" />} />
-              </Routes>
-            </main>
-          }
-        />
-      </Routes>
+                    <Route
+                      path="/dashboard"
+                      element={
+                        isAuthenticated ? (
+                          <Dashboard
+                            playerName={userFirstName}
+                            playerLastName={userLastName}
+                            senderEmail={userEmail}
+                            onScheduleMatch={() => {}}
+                            onOpenChat={() => (window.location.hash = "#/chat")}
+                            onLogout={handleLogout}
+                            userPin={userPin}
+                            onGoToAdmin={() => {}}
+                          />
+                        ) : (
+                          <Navigate to="/" />
+                        )
+                      }
+                    />
+                    <Route
+                      path="/"
+                      element={
+                        <MainApp
+                          isAuthenticated={isAuthenticated}
+                          userFirstName={userFirstName}
+                          userLastName={userLastName}
+                          userEmail={userEmail}
+                          userPin={userPin}
+                          handleLoginSuccess={handleLoginSuccess}
+                          handleLogout={handleLogout}
+                        />
+                      }
+                    />
+                    {/* Catch-all route */}
+                    <Route path="*" element={<Navigate to="/" />} />
+                  </Routes>
+                </main>
+              }
+            />
+          </Routes>
+        </div>
+      </div>
     </HashRouter>
   );
 }
