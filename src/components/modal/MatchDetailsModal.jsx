@@ -4,6 +4,8 @@ import styles from './MatchDetailsModal.module.css';
 import EightBall from '../../assets/8ball.svg';
 import NineBall from '../../assets/nineball.svg';
 import TenBall from '../../assets/tenball.svg';
+import WinnerSelectModal from './WinnerSelectModal';
+import { proposalService } from '../../services/proposalService';
 
 // Utility function to format date as MM-DD-YYYY
 function formatDateMMDDYYYY(dateStr) {
@@ -51,7 +53,7 @@ function formatDateMMDDYYYY(dateStr) {
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 
-export default function MatchDetailsModal({ open, onClose, match, onCompleted }) {
+export default function MatchDetailsModal({ open, onClose, match, onCompleted, userPin, onMatchUpdated, senderName, senderEmail }) {
   // --- DRAGGABLE LOGIC ---
   const [drag, setDrag] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
@@ -95,39 +97,55 @@ export default function MatchDetailsModal({ open, onClose, match, onCompleted })
 
   // --- Mark as Completed Logic ---
   const [loading, setLoading] = useState(false);
+  // Add state at the top of the MatchDetailsModal component
+  const [winnerModalOpen, setWinnerModalOpen] = useState(false);
+  const [winnerModalPlayers, setWinnerModalPlayers] = useState({ player1: '', player2: '' });
+  const [localMatch, setLocalMatch] = useState(match);
+  useEffect(() => { setLocalMatch(match); }, [match]);
 
-  const handleMarkCompleted = async () => {
-    if (!match || !match._id) return;
+  // Replace handleMarkCompleted with modal logic
+  const handleOpenWinnerModal = () => {
+    let player1 = match.player || match.senderName;
+    let player2 = match.opponent || match.receiverName;
+    setWinnerModalPlayers({ player1, player2 });
+    setWinnerModalOpen(true);
+  };
+  const handleWinnerSelect = async (winner) => {
+    setWinnerModalOpen(false);
     setLoading(true);
+    // Defensive fallback for senderName and senderEmail
+    const nameToSend = senderName && senderName.trim() ? senderName : (localMatch.player || localMatch.senderName || 'Unknown');
+    const emailToSend = senderEmail && senderEmail.trim() ? senderEmail : (localMatch.senderEmail || 'unknown@example.com');
+    console.log('Marking winner with:', { winner, markedByName: nameToSend, markedByEmail: emailToSend });
     try {
-      const res = await fetch(
-        `${BACKEND_URL}/api/matches/completed/${match._id}`,
-        { method: "PATCH" }
-      );
-      if (res.ok) {
-        if (onCompleted) onCompleted(match._id);
-        onClose();
+      const res = await proposalService.markCompleted(localMatch._id, winner, nameToSend, emailToSend);
+      if (res && res.proposal) {
+        setLocalMatch(res.proposal);
+        if (onMatchUpdated) onMatchUpdated(res.proposal);
       } else {
-        alert("Failed to mark as completed.");
+        setLocalMatch({ ...localMatch, winner });
+        if (onMatchUpdated) onMatchUpdated({ ...localMatch, winner });
       }
+      if (onCompleted) onCompleted(localMatch._id);
+      // Do not close immediately, let user see the update
     } catch (err) {
-      alert("Network error.");
+      alert('Failed to mark as completed.');
     }
     setLoading(false);
   };
 
-  if (!open || !match) return null;
+  if (!open || !localMatch) return null;
 
   // --- Robust Date/Time Parsing for YYYY-MM-DD and "h:mm AM/PM" ---
   let dateObj = new Date();
   let formattedDate = '';
   let formattedTime = '';
-  if (match.date && match.time) {
+  if (localMatch.date && localMatch.time) {
     // Parse date as YYYY-MM-DD
-    const [year, month, day] = match.date.split("-");
+    const [year, month, day] = localMatch.date.split("-");
     const isoDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
     // Parse time as "h:mm AM/PM"
-    let timeStr = match.time.trim().toUpperCase();
+    let timeStr = localMatch.time.trim().toUpperCase();
     let [timePart, ampm] = timeStr.split(' ');
     let [hour, minute] = timePart.split(':').map(Number);
     if (ampm === "PM" && hour < 12) hour += 12;
@@ -136,7 +154,7 @@ export default function MatchDetailsModal({ open, onClose, match, onCompleted })
     const minuteStr = (minute || 0).toString().padStart(2, '0');
     const time24 = `${hourStr}:${minuteStr}`;
     dateObj = new Date(`${isoDate}T${time24}:00`);
-    formattedDate = formatDateMMDDYYYY(match.date);
+    formattedDate = formatDateMMDDYYYY(localMatch.date);
     formattedTime = dateObj.toLocaleTimeString(undefined, {
       hour: "numeric",
       minute: "2-digit",
@@ -172,9 +190,9 @@ export default function MatchDetailsModal({ open, onClose, match, onCompleted })
             <span className={styles.modalDetailIcon}>🤝</span>
             <span className={styles.modalDetailLabelSnazzy}>Players:</span>
             <span className={styles.modalDetailValueSnazzy}>
-              <span className={styles.modalOpponentName}>{match.player || match.senderName}</span>
+              <span className={styles.modalOpponentName}>{localMatch.player || localMatch.senderName}</span>
               <span className={styles.modalVs}>vs</span>
-              <span className={styles.modalOpponentName}>{match.opponent || match.receiverName}</span>
+              <span className={styles.modalOpponentName}>{localMatch.opponent || localMatch.receiverName}</span>
             </span>
           </div>
           <div className={styles.modalDetailRowSnazzy}>
@@ -188,35 +206,55 @@ export default function MatchDetailsModal({ open, onClose, match, onCompleted })
             <span className={styles.modalDetailValueSnazzy}>{formattedTime}</span>
           </div>
           <div className={styles.modalDetailRowSnazzy}>
-            <span className={styles.modalDetailIcon}>📍</span>
+            <span className={styles.modalDetailIcon}>��</span>
             <span className={styles.modalDetailLabelSnazzy}>Location:</span>
-            <span className={styles.modalDetailValueSnazzy}>{match.location}</span>
+            <span className={styles.modalDetailValueSnazzy}>{localMatch.location}</span>
           </div>
-          {match.gameType && (
+          {localMatch.gameType && (
             <div className={styles.modalDetailRowSnazzy}>
-              {renderGameTypeIcon(match.gameType)}
+              {renderGameTypeIcon(localMatch.gameType)}
               <span className={styles.modalDetailLabelSnazzy}>Game Type:</span>
-              <span className={styles.modalDetailValueSnazzy}>{match.gameType}</span>
+              <span className={styles.modalDetailValueSnazzy}>{localMatch.gameType}</span>
             </div>
           )}
-          {match.raceLength && (
+          {localMatch.raceLength && (
             <div className={styles.modalDetailRowSnazzy}>
               <span className={styles.modalDetailIcon}>🏁</span>
               <span className={styles.modalDetailLabelSnazzy}>Race to:</span>
-              <span className={styles.modalDetailValueSnazzy}>{match.raceLength}</span>
+              <span className={styles.modalDetailValueSnazzy}>{localMatch.raceLength}</span>
+            </div>
+          )}
+          {localMatch.winner && (
+            <div style={{ color: '#ffd700', fontWeight: 700, marginTop: 6, fontSize: '1em' }}>
+              🏆 Winner: {localMatch.winner}
+              {userPin === '777777' && localMatch.winnerChangedByName && (
+                <span style={{ color: '#aaa', fontWeight: 400, fontSize: '0.95em', marginLeft: 8 }}>
+                  (marked by {localMatch.winnerChangedByName}
+                  {localMatch.winnerChangedAt ? ` on ${new Date(localMatch.winnerChangedAt).toLocaleString()}` : ''})
+                </span>
+              )}
             </div>
           )}
         </div>
-        {!(match.completed) && (
-          <button
-            className={styles.modalActionBtn}
-            onClick={handleMarkCompleted}
-            disabled={loading}
-            style={{ marginTop: 16, minWidth: 180 }}
-            type="button"
-          >
-            {loading ? "Marking..." : "Mark as Completed"}
-          </button>
+        {!(localMatch.completed) && (
+          <>
+            <button
+              className={styles.modalActionBtn}
+              onClick={handleOpenWinnerModal}
+              disabled={loading}
+              style={{ marginTop: 16, minWidth: 180 }}
+              type="button"
+            >
+              {loading ? "Marking..." : "Mark as Completed"}
+            </button>
+            <WinnerSelectModal
+              open={winnerModalOpen}
+              onClose={() => setWinnerModalOpen(false)}
+              player1={winnerModalPlayers.player1}
+              player2={winnerModalPlayers.player2}
+              onSelect={handleWinnerSelect}
+            />
+          </>
         )}
       </div>
     </div>

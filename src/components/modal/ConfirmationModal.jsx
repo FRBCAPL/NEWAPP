@@ -81,7 +81,8 @@ export default function ConfirmationModal({
           background: "#222", color: "#fff", borderRadius: 6,
           padding: "0.6rem 0.7rem 0.6rem 0.7rem", margin: "0 auto 0.7rem auto",
           fontWeight: 600, fontSize: "0.97rem", textAlign: "center",
-          maxWidth: "220px", width: "100%", wordBreak: "break-word"
+          maxWidth: "220px", width: "100%", wordBreak: "break-word",
+          whiteSpace: "pre-line"
         }}>
           {message}
         </div>
@@ -91,7 +92,7 @@ export default function ConfirmationModal({
           background: "#f8f8f8", color: "#222", borderRadius: 8,
           padding: isMobile ? "0.4rem 0.2rem" : "0.5rem 0.5rem",
           margin: "0.7rem auto 0.7rem auto",
-          textAlign: "left", fontSize: isMobile ? "0.92rem" : "0.95rem", border: "1px solid #ff0000",
+          textAlign: "center", fontSize: isMobile ? "0.92rem" : "0.95rem", border: "1px solid #ff0000",
           maxWidth: summaryBoxMaxWidth, width: "100%"
         }}>
           <div style={{ marginBottom: 6 }}>

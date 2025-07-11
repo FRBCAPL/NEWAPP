@@ -21,8 +21,8 @@ export const proposalService = {
     return ApiService.patch(`/api/proposals/${proposalId}/counter`, counterData);
   },
 
-  async markCompleted(proposalId) {
-    return ApiService.patch(`/api/matches/completed/${proposalId}`);
+  async markCompleted(proposalId, winner, markedByName, markedByEmail) {
+    return ApiService.patch(`/api/matches/completed/${proposalId}`, { winner, markedByName, markedByEmail });
   },
 
   async cancelProposal(proposalId) {

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import DraggableModal from "../modal/DraggableModal";
 import styles from './ProposalListModal.module.css';
 import { proposalService } from '../../services/proposalService';
+import WinnerSelectModal from '../modal/WinnerSelectModal';
 
 
 function formatDateMMDDYYYY(dateStr) {
@@ -63,7 +64,7 @@ function formatTimeHHMM(timeStr) {
 }
 
 // Add type prop: "received" (default) or "sent"
-function ProposalListModal({ proposals, onSelect, onClose, type = "received" }) {
+function ProposalListModal({ proposals, onSelect, onClose, type = "received", isAdmin = false, senderEmail, senderName }) {
   console.log('Proposals:', proposals);
   const [confirmCancelId, setConfirmCancelId] = useState(null);
   const [loadingCancel, setLoadingCancel] = useState(false);
@@ -73,6 +74,10 @@ function ProposalListModal({ proposals, onSelect, onClose, type = "received" }) 
   const counterProposals = proposals.filter(p => p.isCounter);
   const regularProposals = proposals.filter(p => !p.isCounter);
   const showProposals = activeTab === 'counter' ? counterProposals : regularProposals;
+  const [editWinnerModalOpen, setEditWinnerModalOpen] = useState(false);
+  const [editWinnerMatch, setEditWinnerMatch] = useState(null);
+  const [editWinnerPlayers, setEditWinnerPlayers] = useState({ player1: '', player2: '' });
+  const [loadingEditWinner, setLoadingEditWinner] = useState(false);
 
   const handleCancel = async (proposalId) => {
     setLoadingCancel(true);
@@ -88,155 +93,220 @@ function ProposalListModal({ proposals, onSelect, onClose, type = "received" }) 
     }
   };
 
+  // Use localProposals for rendering completed matches
+  const completedProposals = type === 'completed' ? localProposals : proposals;
+
   return (
     <DraggableModal
       open={true}
       onClose={onClose}
-      title={type === "sent" ? "Matches You Proposed" : "Pending Match Proposals"}
+      title={type === "completed" ? "Completed Matches" : type === "sent" ? "Matches You Proposed" : "Pending Match Proposals"}
       maxWidth="600px"
     >
       <div className={styles.modalContent} style={{ position: 'relative', maxHeight: 'none', overflowY: 'visible' }}>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          <button
-            onClick={() => setActiveTab('all')}
-            style={{
-              background: activeTab === 'all' ? '#e53e3e' : '#333',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '0.5rem 1.2rem',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: activeTab === 'all' ? '0 2px 8px #e53e3e44' : 'none',
-              position: 'relative'
-            }}
-          >
-            All Proposals ({regularProposals.length})
-            {regularProposals.length > 0 && (
-              <span style={{
-                background: '#fff',
-                color: '#e53e3e',
-                borderRadius: '50%',
-                padding: '2px 8px',
-                fontSize: '0.85em',
+        {type !== 'completed' && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <button
+              onClick={() => setActiveTab('all')}
+              style={{
+                background: activeTab === 'all' ? '#e53e3e' : '#333',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '0.5rem 1.2rem',
                 fontWeight: 'bold',
-                marginLeft: 8,
-                position: 'absolute',
-                top: '-8px',
-                right: '-12px',
-                minWidth: 24,
-                textAlign: 'center',
-                boxShadow: '0 1px 4px #0002'
-              }}>{regularProposals.length}</span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('counter')}
-            style={{
-              background: activeTab === 'counter' ? '#ff9800' : '#333',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '0.5rem 1.2rem',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: activeTab === 'counter' ? '0 2px 8px #ff980044' : 'none',
-              position: 'relative'
-            }}
-          >
-            Counter Proposals ({counterProposals.length})
-            {counterProposals.length > 0 && (
-              <span style={{
-                background: '#fff',
-                color: '#ff9800',
-                borderRadius: '50%',
-                padding: '2px 8px',
-                fontSize: '0.85em',
+                cursor: 'pointer',
+                boxShadow: activeTab === 'all' ? '0 2px 8px #e53e3e44' : 'none',
+                position: 'relative'
+              }}
+            >
+              All Proposals ({regularProposals.length})
+              {regularProposals.length > 0 && (
+                <span style={{
+                  background: '#fff',
+                  color: '#e53e3e',
+                  borderRadius: '50%',
+                  padding: '2px 8px',
+                  fontSize: '0.85em',
+                  fontWeight: 'bold',
+                  marginLeft: 8,
+                  position: 'absolute',
+                  top: '-8px',
+                  right: '-12px',
+                  minWidth: 24,
+                  textAlign: 'center',
+                  boxShadow: '0 1px 4px #0002'
+                }}>{regularProposals.length}</span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('counter')}
+              style={{
+                background: activeTab === 'counter' ? '#ff9800' : '#333',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '0.5rem 1.2rem',
                 fontWeight: 'bold',
-                marginLeft: 8,
-                position: 'absolute',
-                top: '-8px',
-                right: '-12px',
-                minWidth: 24,
-                textAlign: 'center',
-                boxShadow: '0 1px 4px #0002'
-              }}>{counterProposals.length}</span>
-            )}
-          </button>
-        </div>
+                cursor: 'pointer',
+                boxShadow: activeTab === 'counter' ? '0 2px 8px #ff980044' : 'none',
+                position: 'relative'
+              }}
+            >
+              Counter Proposals ({counterProposals.length})
+              {counterProposals.length > 0 && (
+                <span style={{
+                  background: '#fff',
+                  color: '#ff9800',
+                  borderRadius: '50%',
+                  padding: '2px 8px',
+                  fontSize: '0.85em',
+                  fontWeight: 'bold',
+                  marginLeft: 8,
+                  position: 'absolute',
+                  top: '-8px',
+                  right: '-12px',
+                  minWidth: 24,
+                  textAlign: 'center',
+                  boxShadow: '0 1px 4px #0002'
+                }}>{counterProposals.length}</span>
+              )}
+            </button>
+          </div>
+        )}
         <ul
           className={styles.proposalList}
           style={{ listStyle: "none", padding: 0, margin: 0 }}
         >
-          {showProposals.map(proposal => (
-            <li key={proposal._id} style={{ position: 'relative' }}>
-              <button
-                onClick={() => onSelect(proposal)}
-                className={styles.proposalCardButton}
-              >
-                <div>
-                  <span className={styles.proposalCardLabel}>
-                    {type === "sent" ? "To:" : "From:"}
-                  </span>
-                  {type === "sent" ? proposal.receiverName : proposal.senderName}
-                  {proposal.isCounter && (
-                    <span style={{
-                      background: '#ff9800',
-                      color: '#fff',
-                      borderRadius: '6px',
-                      padding: '2px 8px',
-                      fontSize: '0.85em',
-                      marginLeft: '8px',
-                      fontWeight: 'bold',
-                      display: 'inline-block'
-                    }}>Counter Proposal</span>
+          {type === 'completed'
+            ? completedProposals.map(match => (
+                <li key={match._id} style={{ position: 'relative', marginBottom: 12 }}>
+                  <div className={styles.proposalCardButton} style={{ cursor: 'default', background: '#23232a', color: '#28a745', border: '2px solid #28a745', borderRadius: 8, padding: '1rem', fontWeight: 600 }}>
+                    <div>
+                      <span className={styles.proposalCardLabel}>Opponent:</span> {match.opponent || match.receiverName || match.senderName}
+                    </div>
+                    <div>
+                      <span className={styles.proposalCardLabel}>Date:</span> {formatDateMMDDYYYY(match.date)}
+                      {"  "}
+                      <span className={styles.proposalCardLabel}>Time:</span> {match.time}
+                    </div>
+                    <div>
+                      <span className={styles.proposalCardLabel}>Location:</span> {match.location}
+                    </div>
+                    <div>
+                      <span className={styles.proposalCardLabel}>Game Type:</span> {match.gameType}
+                    </div>
+                    {match.winner && (
+                      <div style={{ color: '#ffd700', fontWeight: 700, marginTop: 6, fontSize: '1em' }}>
+                        🏆 Winner: {match.winner}
+                        {isAdmin && match.winnerChangedByName && (
+                          <span style={{ color: '#aaa', fontWeight: 400, fontSize: '0.95em', marginLeft: 8 }}>
+                            (marked by {match.winnerChangedByName}
+                            {match.winnerChangedAt ? ` on ${new Date(match.winnerChangedAt).toLocaleString()}` : ''})
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {/* Admin Edit Winner Button */}
+                    {isAdmin && (
+                      <button
+                        style={{
+                          marginTop: 10,
+                          background: '#444',
+                          color: '#fff',
+                          border: '1px solid #ffd700',
+                          borderRadius: 6,
+                          padding: '4px 12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          fontSize: '0.95em',
+                          display: 'inline-block',
+                        }}
+                        disabled={loadingEditWinner}
+                        onClick={() => {
+                          const player1 = match.player || match.senderName;
+                          const player2 = match.opponent || match.receiverName;
+                          setEditWinnerMatch(match);
+                          setEditWinnerPlayers({ player1, player2 });
+                          setEditWinnerModalOpen(true);
+                        }}
+                        type="button"
+                      >
+                        {loadingEditWinner ? 'Saving...' : (match.winner ? 'Edit Winner' : 'Set Winner')}
+                      </button>
+                    )}
+                  </div>
+                </li>
+              ))
+            : showProposals.map(proposal => (
+                <li key={proposal._id} style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => onSelect(proposal)}
+                    className={styles.proposalCardButton}
+                  >
+                    <div>
+                      <span className={styles.proposalCardLabel}>
+                        {type === "sent" ? "To:" : "From:"}
+                      </span>
+                      {type === "sent" ? proposal.receiverName : proposal.senderName}
+                      {proposal.isCounter && (
+                        <span style={{
+                          background: '#ff9800',
+                          color: '#fff',
+                          borderRadius: '6px',
+                          padding: '2px 8px',
+                          fontSize: '0.85em',
+                          marginLeft: '8px',
+                          fontWeight: 'bold',
+                          display: 'inline-block'
+                        }}>Counter Proposal</span>
+                      )}
+                    </div>
+                    <div>
+                      <span className={styles.proposalCardLabel}>Date:</span> {formatDateMMDDYYYY(proposal.date)}
+                      {"  "}
+                      <span className={styles.proposalCardLabel}>Time:</span> {formatTimeHHMM(proposal.time)}
+                    </div>
+                    <div>
+                      <span className={styles.proposalCardLabel}>Location:</span> {proposal.location}
+                    </div>
+                    <div className={styles.proposalCardMessage}>
+                      {proposal.message}
+                    </div>
+                    <div>
+                      <span className={styles.proposalCardLabel}>Status:</span>
+                      <span style={{
+                        color:
+                          proposal.status === "pending"
+                            ? "#d32f2f"
+                            : proposal.status === "countered"
+                            ? "#fbc02d"
+                            : "#388e3c"
+                      }}>
+                        {proposal.status}
+                      </span>
+                    </div>
+                  </button>
+                  {/* Cancel button for sent, pending proposals */}
+                  {type === "sent" && proposal.status === "pending" && (
+                    <button
+                      className={styles.cancelProposalBtn}
+                      style={{ position: 'absolute', top: 10, right: 10 }}
+                      onClick={e => { e.stopPropagation(); setConfirmCancelId(proposal._id); }}
+                      disabled={loadingCancel}
+                    >
+                      Cancel
+                    </button>
                   )}
-                </div>
-                <div>
-                  <span className={styles.proposalCardLabel}>Date:</span> {formatDateMMDDYYYY(proposal.date)}
-                  {"  "}
-                  <span className={styles.proposalCardLabel}>Time:</span> {formatTimeHHMM(proposal.time)}
-                </div>
-                <div>
-                  <span className={styles.proposalCardLabel}>Location:</span> {proposal.location}
-                </div>
-                <div className={styles.proposalCardMessage}>
-                  {proposal.message}
-                </div>
-                <div>
-                  <span className={styles.proposalCardLabel}>Status:</span>
-                  <span style={{
-                    color:
-                      proposal.status === "pending"
-                        ? "#d32f2f"
-                        : proposal.status === "countered"
-                        ? "#fbc02d"
-                        : "#388e3c"
-                  }}>
-                    {proposal.status}
-                  </span>
-                </div>
-              </button>
-              {/* Cancel button for sent, pending proposals */}
-              {type === "sent" && proposal.status === "pending" && (
-                <button
-                  className={styles.cancelProposalBtn}
-                  style={{ position: 'absolute', top: 10, right: 10 }}
-                  onClick={e => { e.stopPropagation(); setConfirmCancelId(proposal._id); }}
-                  disabled={loadingCancel}
-                >
-                  Cancel
-                </button>
-              )}
-            </li>
-          ))}
+                </li>
+              ))}
         </ul>
 
         {showProposals.length === 0 && (
           <div style={{ color: "#ffecb3", textAlign: "center", marginTop: 16 }}>
             {type === "sent"
-              ? "You haven't proposed any matches yet."
-              : "No pending proposals."}
+              ? "Nothing to see here."
+              : "Nothing to see here."}
           </div>
         )}
 
@@ -273,6 +343,26 @@ function ProposalListModal({ proposals, onSelect, onClose, type = "received" }) 
           </div>
         )}
       </div>
+      {/* WinnerSelectModal for admin edit */}
+      <WinnerSelectModal
+        open={editWinnerModalOpen}
+        onClose={() => setEditWinnerModalOpen(false)}
+        player1={editWinnerPlayers.player1}
+        player2={editWinnerPlayers.player2}
+        onSelect={async (winner) => {
+          if (!editWinnerMatch) return;
+          setLoadingEditWinner(true);
+          try {
+            const res = await proposalService.markCompleted(editWinnerMatch._id, winner, senderName, senderEmail);
+            const updated = res && res.proposal ? res.proposal : { ...editWinnerMatch, winner, winnerChangedByName: senderName, winnerChangedByEmail: senderEmail, winnerChangedAt: new Date().toISOString() };
+            setLocalProposals(prev => prev.map(p => p._id === editWinnerMatch._id ? updated : p));
+            setEditWinnerModalOpen(false);
+          } catch (err) {
+            alert('Failed to update winner.');
+          }
+          setLoadingEditWinner(false);
+        }}
+      />
     </DraggableModal>
   );
 }

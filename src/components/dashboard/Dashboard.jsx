@@ -19,6 +19,8 @@ import LoadingSpinner, { LoadingButton, SkeletonLoader } from "../LoadingSpinner
 import Modal from '../modal/DraggableModal.jsx';
 import ChallengeStatsDisplay from './ChallengeStatsDisplay';
 import DirectMessagingModal from '../DirectMessagingModal';
+import WinnerSelectModal from '../modal/WinnerSelectModal';
+import FloatingLogos from '../FloatingLogos';
 
 // Import new services and hooks
 import { useProposals } from '../../hooks/useProposals';
@@ -275,6 +277,11 @@ export default function Dashboard({
   // Chat modal state
   const [showChatModal, setShowChatModal] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
+
+  // Add state at the top of the Dashboard component
+  const [winnerModalOpen, setWinnerModalOpen] = useState(false);
+  const [winnerModalMatch, setWinnerModalMatch] = useState(null);
+  const [winnerModalPlayers, setWinnerModalPlayers] = useState({ player1: '', player2: '' });
 
   useEffect(() => {
     setPendingCount(pendingProposals.length);
@@ -807,22 +814,19 @@ export default function Dashboard({
                           e.target.style.filter = 'blur(0.5px) grayscale(0.2)';
                         }
                       }}
-                      onClick={async () => {
-                        try {
-                          setCompletingMatchId(match._id);
-                          await proposalService.markCompleted(match._id);
-                          
-                          // Immediately update local state for instant UI feedback
-                          markMatchCompleted(match);
-                          
-                          // Also refetch data from backend to ensure consistency
-                          refetchMatches();
-                          refetchProposals();
-                        } catch (err) {
-                          alert("Failed to mark as completed. Please try again.");
-                        } finally {
-                          setCompletingMatchId(null);
+                      onClick={() => {
+                        let player1 = '';
+                        let player2 = '';
+                        if (match.type === 'scheduled') {
+                          player1 = match.player1;
+                          player2 = match.player2;
+                        } else {
+                          player1 = match.senderName;
+                          player2 = match.receiverName;
                         }
+                        setWinnerModalMatch(match);
+                        setWinnerModalPlayers({ player1, player2 });
+                        setWinnerModalOpen(true);
                       }}
                       type="button"
                     >
@@ -867,11 +871,24 @@ export default function Dashboard({
   const matchesScheduledCount = uniqueScheduledOrCompleted.length;
   const matchesToScheduleCount = Math.max(0, requiredMatches - matchesScheduledCount);
 
+  const [showCompletedModal, setShowCompletedModal] = useState(false);
+
+  // Logical proposal counters based on who needs to act
+  const proposalsWaitingForYou = [
+    ...pendingProposals.filter(p => p.status === 'pending' && p.receiverName === fullName),
+    ...sentProposals.filter(p => p.status === 'countered' && p.senderName === fullName)
+  ];
+  const proposalsWaitingForOpponent = [
+    ...sentProposals.filter(p => p.status === 'pending' && p.senderName === fullName),
+    ...pendingProposals.filter(p => p.status === 'countered' && p.receiverName === fullName)
+  ];
+
   return (
     <div className={styles.dashboardBg} style={{ position: 'relative' }}>
-      <div className={styles.dashboardFrame} style={{ position: 'relative', zIndex: 1 }}>
+      <div className={styles.dashboardFrame} style={{ position: 'relative', zIndex: 1, overflow: 'hidden' }}>
+        {/* <FloatingLogos /> */}
         {/* Main dashboard content starts here */}
-        <div className={styles.dashboardCard}>
+        <div className={styles.dashboardCard} style={{ position: 'relative', zIndex: 1 }}>
           <h1 className={styles.dashboardTitle}>
             Welcome,
             <span className={styles.dashboardUserName}>
@@ -969,260 +986,256 @@ export default function Dashboard({
             </div>
 
             {/* PoolSimulation as background and matches list overlayed on table */}
-            <div style={{ position: 'relative', width: '100%', maxWidth: 600, height: 370, margin: '0 auto 8px auto' }}>
-              <ResponsiveWrapper aspectWidth={600} aspectHeight={300}>
-                <PoolSimulation />
-              </ResponsiveWrapper>
-              {/* Overlay matches list on table, visually on the playing surface */}
-              <div className={styles.mobileMatchesOverlay} style={{ 
-                position: 'absolute', 
-                left: '50%', 
-                width: '84%', // slightly narrower to fit inside rails
-                bottom: '120px', // moved up a little more on the playing surface
-                zIndex: 2, 
-                pointerEvents: 'none', 
-                transform: 'translateX(-50%)',
-                height: '90px', // height to fit on the playing surface
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'flex-end',
-              }}>
-                <ul className={styles.dashboardList} style={{ minHeight: 'auto', margin: 0, pointerEvents: 'auto', padding: 0 }}>
-                  {(showAllMatches ? filteredUpcomingMatches : filteredUpcomingMatches.slice(0, 3)).length === 0 ? (
-                    <li className={styles.noMatchesText} style={{ position: 'absolute', bottom: '0', left: '50%', transform: 'translateX(-50%)' }}>No matches scheduled yet.</li>
-                  ) : (
-                    <>
-                      {(showAllMatches ? filteredUpcomingMatches : filteredUpcomingMatches.slice(0, 3)).map((match, idx) => {
-                        // Determine opponent and date based on match type
-                        let opponent = '';
-                        let formattedDate = '';
-                        if (match.type === 'scheduled') {
-                          // Use player1/player2 and parse M/D/YYYY
-                          if (match.player1 && match.player2) {
-                            if (match.player1.trim().toLowerCase() === fullName.trim().toLowerCase()) {
-                              opponent = match.player2;
-                            } else {
-                              opponent = match.player1;
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+              <div className={styles.poolTableContainer} style={{ marginBottom: '24px' }}>
+                <ResponsiveWrapper aspectWidth={600} aspectHeight={300}>
+                  <PoolSimulation />
+                </ResponsiveWrapper>
+                <div className={styles.mobileMatchesOverlay} style={{
+                  position: 'absolute',
+                  left: '3.04%', // 18.25/600
+                  width: '92.1%', // (570.77-18.25)/600
+                  bottom: '9.94%', // (300-270.18)/300
+                  height: '60px',
+                  zIndex: 2,
+                  pointerEvents: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-end',
+                  alignItems: 'center'
+                }}>
+                  <ul className={styles.dashboardList} style={{ minHeight: 'auto', margin: 0, pointerEvents: 'auto', padding: 0 }}>
+                    {(showAllMatches ? filteredUpcomingMatches : filteredUpcomingMatches.slice(0, 3)).length === 0 ? (
+                      <li className={styles.noMatchesText} style={{ position: 'absolute', bottom: '0', left: '50%', transform: 'translateX(-50%)' }}>No matches scheduled yet.</li>
+                    ) : (
+                      <>
+                        {(showAllMatches ? filteredUpcomingMatches : filteredUpcomingMatches.slice(0, 3)).map((match, idx) => {
+                          // Determine opponent and date based on match type
+                          let opponent = '';
+                          let formattedDate = '';
+                          if (match.type === 'scheduled') {
+                            // Use player1/player2 and parse M/D/YYYY
+                            if (match.player1 && match.player2) {
+                              if (match.player1.trim().toLowerCase() === fullName.trim().toLowerCase()) {
+                                opponent = match.player2;
+                              } else {
+                                opponent = match.player1;
+                              }
                             }
-                          }
-                          if (match.date) {
-                            // Parse M/D/YYYY
-                            const parts = match.date.split('/');
-                            if (parts.length === 3) {
-                              const [month, day, year] = parts;
-                              const dateObj = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
-                              if (!isNaN(dateObj.getTime())) {
-                                formattedDate = formatDateMMDDYYYY(match.date);
+                            if (match.date) {
+                              // Parse M/D/YYYY
+                              const parts = match.date.split('/');
+                              if (parts.length === 3) {
+                                const [month, day, year] = parts;
+                                const dateObj = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
+                                if (!isNaN(dateObj.getTime())) {
+                                  formattedDate = formatDateMMDDYYYY(match.date);
+                                } else {
+                                  formattedDate = '[Invalid Date]';
+                                }
                               } else {
                                 formattedDate = '[Invalid Date]';
                               }
                             } else {
-                              formattedDate = '[Invalid Date]';
+                              formattedDate = '[No Date]';
                             }
                           } else {
-                            formattedDate = '[No Date]';
-                          }
-                        } else {
-                          // Assume proposal type: use senderName/receiverName and parse YYYY-MM-DD
-                          if (match.senderName && match.receiverName) {
-                            if (match.senderName.trim().toLowerCase() === fullName.trim().toLowerCase()) {
-                              opponent = match.receiverName;
-                            } else {
-                              opponent = match.senderName;
+                            // Assume proposal type: use senderName/receiverName and parse YYYY-MM-DD
+                            if (match.senderName && match.receiverName) {
+                              if (match.senderName.trim().toLowerCase() === fullName.trim().toLowerCase()) {
+                                opponent = match.receiverName;
+                              } else {
+                                opponent = match.senderName;
+                              }
                             }
-                          }
-                          if (match.date) {
-                            const parts = match.date.split('-');
-                            if (parts.length === 3) {
-                              const [year, month, day] = parts;
-                              const dateObj = new Date(`${year}-${month}-${day}`);
-                              if (!isNaN(dateObj.getTime())) {
-                                formattedDate = formatDateMMDDYYYY(match.date);
+                            if (match.date) {
+                              const parts = match.date.split('-');
+                              if (parts.length === 3) {
+                                const [year, month, day] = parts;
+                                const dateObj = new Date(`${year}-${month}-${day}`);
+                                if (!isNaN(dateObj.getTime())) {
+                                  formattedDate = formatDateMMDDYYYY(match.date);
+                                } else {
+                                  formattedDate = '[Invalid Date]';
+                                }
                               } else {
                                 formattedDate = '[Invalid Date]';
                               }
                             } else {
-                              formattedDate = '[Invalid Date]';
+                              formattedDate = '[No Date]';
                             }
-                          } else {
-                            formattedDate = '[No Date]';
                           }
-                        }
-                        // Debug: log each match object
-                        const isCompleted = match.completed === true;
-                        const actuallyCompleted = !!match.completed;
-                        return (
-                          <li key={match._id || idx} className={styles.matchCard} style={{padding: '0.2rem 0.3rem', fontSize: '0.85em', marginBottom: 4}}>
-                            <div className={styles.matchCardContentWrapper}>
-                              <button
-                                className={styles.matchCardButton}
-                                onClick={() => handleProposalClick(match)}
-                                type="button"
-                                style={{
-                                  padding: 0,
-                                  margin: 0,
-                                  minHeight: 0,
-                                  fontSize: '0.85em',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 8,
+                          // Debug: log each match object
+                          const isCompleted = match.completed === true;
+                          const actuallyCompleted = !!match.completed;
+                          return (
+                            <li key={match._id || idx} className={styles.matchCard} style={{padding: '0.2rem 0.3rem', fontSize: '0.85em', marginBottom: 4}}>
+                              <div className={styles.matchCardContentWrapper}>
+                                <button
+                                  className={styles.matchCardButton}
+                                  onClick={() => handleProposalClick(match)}
+                                  type="button"
+                                  style={{
+                                    padding: 0,
+                                    margin: 0,
+                                    minHeight: 0,
+                                    fontSize: '0.85em',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                    width: '100%',
+                                    background: 'none',
+                                    border: 'none',
+                                    justifyContent: 'flex-start',
+                                    textAlign: 'left',
+                                  }}
+                                >
+                                  <span className={styles.matchCardOpponentLabel} style={{fontSize: '0.95em', marginRight: 2}}>VS</span>
+                                  <span className={styles.matchCardOpponentName} style={{fontSize: '1.25em', marginRight: 8, fontWeight: 700}}>{opponent || '[Unknown]'}</span>
+                                </button>
+                                <div style={{
                                   width: '100%',
-                                  background: 'none',
-                                  border: 'none',
-                                  justifyContent: 'flex-start',
-                                  textAlign: 'left',
-                                }}
-                              >
-                                <span className={styles.matchCardOpponentLabel} style={{fontSize: '0.95em', marginRight: 2}}>VS</span>
-                                <span className={styles.matchCardOpponentName} style={{fontSize: '1.25em', marginRight: 8, fontWeight: 700}}>{opponent || '[Unknown]'}</span>
-                              </button>
-                              <div style={{
-                                width: '100%',
-                                textAlign: 'center',
-                                margin: '4px 0 0 0',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}>
-                                <span className={styles.matchCardDetail} style={{fontSize: '1.08em', marginRight: 10}}>{formattedDate}</span>
-                                <span className={styles.matchCardDetail} style={{fontSize: '1.08em'}}>{match.location || ''}</span>
+                                  textAlign: 'center',
+                                  margin: '4px 0 0 0',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis'
+                                }}>
+                                  <span className={styles.matchCardDetail} style={{fontSize: '1.08em', marginRight: 10}}>{formattedDate}</span>
+                                  <span className={styles.matchCardDetail} style={{fontSize: '1.08em'}}>{match.location || ''}</span>
+                                </div>
+                                {!actuallyCompleted && (
+                                  <LoadingButton
+                                    className={styles.dashboardBtn + ' ' + styles.matchCardDoneBtn}
+                                    loading={completingMatchId === match._id}
+                                    loadingText="Completing..."
+                                    style={{ 
+                                      marginLeft: 0, 
+                                      minWidth: 70, 
+                                      padding: '4px 8px', 
+                                      fontSize: '0.75em', 
+                                      height: 28, 
+                                      lineHeight: '20px', 
+                                      marginTop: 6,
+                                      opacity: 0.18,
+                                      filter: 'blur(0.5px) grayscale(0.2)',
+                                      transition: 'opacity 0.22s, filter 0.22s, background 0.22s'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      if (completingMatchId !== match._id) {
+                                        e.target.style.opacity = '1';
+                                        e.target.style.filter = 'none';
+                                      }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      if (completingMatchId !== match._id) {
+                                        e.target.style.opacity = '0.18';
+                                        e.target.style.filter = 'blur(0.5px) grayscale(0.2)';
+                                      }
+                                    }}
+                                    onClick={() => {
+                                      let player1 = '';
+                                      let player2 = '';
+                                      if (match.type === 'scheduled') {
+                                        player1 = match.player1;
+                                        player2 = match.player2;
+                                      } else {
+                                        player1 = match.senderName;
+                                        player2 = match.receiverName;
+                                      }
+                                      setWinnerModalMatch(match);
+                                      setWinnerModalPlayers({ player1, player2 });
+                                      setWinnerModalOpen(true);
+                                    }}
+                                    type="button"
+                                  >
+                                    Complete
+                                  </LoadingButton>
+                                )}
                               </div>
-                              {!actuallyCompleted && (
-                                <LoadingButton
-                                  className={styles.dashboardBtn + ' ' + styles.matchCardDoneBtn}
-                                  loading={completingMatchId === match._id}
-                                  loadingText="Completing..."
-                                  style={{ 
-                                    marginLeft: 0, 
-                                    minWidth: 70, 
-                                    padding: '4px 8px', 
-                                    fontSize: '0.75em', 
-                                    height: 28, 
-                                    lineHeight: '20px', 
-                                    marginTop: 6,
-                                    opacity: 0.18,
-                                    filter: 'blur(0.5px) grayscale(0.2)',
-                                    transition: 'opacity 0.22s, filter 0.22s, background 0.22s'
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    if (completingMatchId !== match._id) {
-                                      e.target.style.opacity = '1';
-                                      e.target.style.filter = 'none';
-                                    }
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    if (completingMatchId !== match._id) {
-                                      e.target.style.opacity = '0.18';
-                                      e.target.style.filter = 'blur(0.5px) grayscale(0.2)';
-                                    }
-                                  }}
-                                                        onClick={async () => {
-                        try {
-                          setCompletingMatchId(match._id);
-                          await proposalService.markCompleted(match._id);
-                          
-                          // Immediately update local state for instant UI feedback
-                          markMatchCompleted(match);
-                          
-                          // Also refetch data from backend to ensure consistency
-                          refetchMatches();
-                          refetchProposals();
-                        } catch (err) {
-                          alert("Failed to mark as completed. Please try again.");
-                        } finally {
-                          setCompletingMatchId(null);
-                        }
-                      }}
-                                type="button"
-                              >
-                                Complete
-                              </LoadingButton>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </>
-                )}
-              </ul>
+                            </li>
+                          );
+                        })}
+                      </>
+                    )}
+                  </ul>
+                </div>
+              </div>
             </div>
-            {/* --- Matches Counters and Schedule Match Button Row (button below counters) --- */}
+            {/* Tooltip/helper text above counters */}
+            <div style={{ textAlign: 'center', marginBottom: 8, color: '#aaa', fontSize: '0.98em' }}>
+             <br /> Click to view or schedule matches.
+            </div>
             <div className={styles.countersRow} style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              margin: '-85px 0 0 0',
+              margin: '5px 0 0 0',
               width: '100%',
-              paddingBottom: '16px',
+              paddingBottom: '12px',
             }}>
               <div style={{
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                gap: 10,
+                gap: 16,
                 width: '100%',
-                marginBottom: '8px',
+                marginBottom: '12px',
               }}>
-                <div style={{
-                  background: '#23232a',
-                  color: '#28a745',
-                  borderRadius: 6,
-                  padding: '6px 0',
-                  fontWeight: 600,
-                  fontSize: '0.95em',
-                  flex: 1,
-                  textAlign: 'center',
-                  border: '2px solid #28a745',
-                  minWidth: 0,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}>
-                  {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} Completed: {totalCompleted}
-                </div>
-                <div style={{
-                  background: '#23232a',
-                  color: '#e53e3e',
-                  borderRadius: 6,
-                  padding: '6px 0',
-                  fontWeight: 600,
-                  fontSize: '0.95em',
-                  flex: 1,
-                  textAlign: 'center',
-                  border: '2px solid #e53e3e',
-                  minWidth: 0,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}>
-                  {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} To Schedule: {matchesToScheduleCount}
-                </div>
+                <button
+                  style={{
+                    background: '#23232a',
+                    color: '#28a745',
+                    borderRadius: 6,
+                    padding: '4px 10px',
+                    fontWeight: 600,
+                    fontSize: '0.92em',
+                    zIndex: 9999,
+                    position: 'relative',
+                    textAlign: 'center',
+                    border: '2px solid #28a745',
+                    minWidth: 0,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    cursor: 'pointer',
+                    margin: '0 4px'
+                  }}
+                  onClick={() => setShowCompletedModal(true)}
+                  title="Click to view completed matches"
+                  type="button"
+                >
+                  {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} Matches Completed: {totalCompleted}
+                </button>
+                <button
+                  style={{
+                    background: '#23232a',
+                    color: '#e53e3e',
+                    borderRadius: 6,
+                    padding: '4px 10px',
+                    fontWeight: 600,
+                    fontSize: '0.92em',
+                    zIndex: 9999,
+                    position: 'relative',
+                    textAlign: 'center',
+                    border: '2px solid #e53e3e',
+                    minWidth: 0,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    cursor: 'pointer',
+                    margin: '0 4px'
+                  }}
+                  title="Schedule a match"
+                  type="button"
+                  onClick={() => handleScheduleMatch()}
+                >
+                  {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} Matches To Schedule: {matchesToScheduleCount}
+                </button>
               </div>
-              <button
-                style={{
-                  fontWeight: 600,
-                  fontSize: '1em',
-                  borderRadius: 6,
-                  marginTop: 10,
-                  width: '60%',
-                  background: '#e53e3e',
-                  color: '#fff',
-                  border: '2px solid #e53e3e',
-                  padding: '8px 0',
-                  pointerEvents: 'auto',
-                  zIndex: 999999,
-                  position: 'relative',
-                  display: 'block',
-                  alignSelf: 'center',
-                }}
-                onClick={() => { console.log('Button clicked'); handleScheduleMatch(); }}
-                type="button"
-              >
-                Schedule {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} Match
-              </button>
-            </div>
             </div>
           </section>
+
           
                {/* News & Updates Section with Chat/Standings Buttons */}
         <section className={`${styles.dashboardSection} ${styles.dashboardSectionBox}`}>
@@ -1465,6 +1478,10 @@ export default function Dashboard({
       onClose={closeModal}
       match={selectedMatch}
       onCompleted={matchId => setUpcomingMatches(prev => prev.filter(m => m._id !== matchId))}
+      userPin={userPin}
+      onMatchUpdated={updatedMatch => setSelectedMatch(updatedMatch)}
+      senderName={`${playerName} ${playerLastName}`}
+      senderEmail={senderEmail}
     />
 
     {/* Note Modal */}
@@ -1708,6 +1725,40 @@ export default function Dashboard({
         </div>
       </div>
     )}
+
+    {showCompletedModal && (
+      <ProposalListModal
+        proposals={completedMatches}
+        onSelect={() => {}}
+        onClose={() => setShowCompletedModal(false)}
+        type="completed"
+        isAdmin={userPin === "777777"}
+        senderEmail={senderEmail}
+        senderName={`${playerName} ${playerLastName}`}
+      />
+    )}
+
+    {/* Winner Select Modal */}
+    <WinnerSelectModal
+      open={winnerModalOpen}
+      onClose={() => setWinnerModalOpen(false)}
+      player1={winnerModalPlayers.player1}
+      player2={winnerModalPlayers.player2}
+      onSelect={async (winner) => {
+        if (!winnerModalMatch) return;
+        setWinnerModalOpen(false);
+        setCompletingMatchId(winnerModalMatch._id);
+        try {
+          await proposalService.markCompleted(winnerModalMatch._id, winner);
+          markMatchCompleted({ ...winnerModalMatch, winner });
+          refetchMatches();
+          refetchProposals();
+        } catch (err) {
+          alert('Failed to mark as completed.');
+        }
+        setCompletingMatchId(null);
+      }}
+    />
   </div>
 );
 }

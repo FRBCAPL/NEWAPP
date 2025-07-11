@@ -352,7 +352,7 @@ body * {
 
 /* Classic, clean, single source of truth for main-app-content layout */
 .main-app-content {
-  max-width: 600px;
+  max-width: 1200px;
   width: 100%;
   margin: 2rem auto;
   padding: 1.5rem 1rem 2.5rem 1rem;
@@ -470,7 +470,7 @@ button:hover {
 
 /* --- NUCLEAR OVERRIDE: Force .main-app-content width and centering --- */
 body .main-app-content {
-  max-width: 700px !important;
+  max-width: 1200px !important;
   width: 100% !important;
   margin: 2rem auto !important;
   padding: 1.5rem 1rem 2.5rem 1rem !important;

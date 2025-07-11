@@ -16,7 +16,7 @@ export const useProposals = (playerName, division) => {
         proposalService.getSentProposals(playerName, division)
       ]);
       
-      setPendingProposals(pending.filter(p => ["pending", "countered"].includes(p.status)));
+      setPendingProposals(pending.filter(p => p.status === "pending"));
       setSentProposals(sent.filter(p => ["pending", "countered"].includes(p.status)));
       setError(null);
     } catch (err) {

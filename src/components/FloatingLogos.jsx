@@ -76,12 +76,21 @@ export default function FloatingLogos() {
     filter
   });
   return (
-    <>
+    <div style={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      zIndex: 0,
+      pointerEvents: 'none',
+      overflow: 'hidden',
+    }}>
       <img src={logo} alt="League Logo Background" style={logoStyle(main, 150, 0.55, "drop-shadow(0 0 24px #e53e3e88)")} />
       <img src={bcaplLogo} alt="BCAPL Logo Background" style={logoStyle(bcapl, 120, 0.55, "drop-shadow(0 0 18px #e53e3e66)")} />
       <img src={csiLogo} alt="CSI Logo Background" style={logoStyle(csi, 120, 0.55, "drop-shadow(0 0 12px #e53e3e44)")} />
       <img src={usaplLogo} alt="USAPL Logo Background" style={logoStyle(usapl, 140, 0.60, "drop-shadow(0 0 10px #e53e3e33)")} />
       <img src={fargorateLogo} alt="Fargorate Logo Background" style={logoStyle(fargorate, 140, 0.60, "drop-shadow(0 0 10px #e53e3e33)")} />
-    </>
+    </div>
   );
 } 

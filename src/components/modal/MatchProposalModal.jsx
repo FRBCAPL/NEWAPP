@@ -120,6 +120,8 @@ const BETA_MESSAGE = "This is a BETA test match. Matches that are created, sched
 const normalizeSlot = (slot) =>
   slot.replace(/[–—−]/g, "-").replace(/\s*-\s*/g, " - ").trim();
 
+import { useProposals } from '../../hooks/useProposals';
+
 export default function MatchProposalModal({
   player,
   day,
@@ -173,6 +175,25 @@ export default function MatchProposalModal({
   useEffect(() => {
     setStartTime("");
   }, [slot]);
+
+  const { sentProposals } = useProposals(senderName, selectedDivision);
+
+  // Helper to check if an opponent has a pending proposal for this match
+  function isOpponentPending(opponent) {
+    return sentProposals.some(p =>
+      p.receiverName === (opponent.player
+        ? `${opponent.player.firstName} ${opponent.player.lastName}`
+        : opponent.opponentName) &&
+      p.date === formatDateYYYYMMDD(date) &&
+      p.time === startTime &&
+      p.location === location &&
+      p.phase === phase &&
+      p.divisions && p.divisions.includes(selectedDivision) &&
+      ["pending", "countered"].includes(p.status)
+    );
+  }
+  // Filter the opponents list
+  const filteredOpponents = player.opponents ? player.opponents.filter(opponent => !isOpponentPending(opponent)) : [];
 
   // --- Handlers ---
   const handleSend = () => {
@@ -395,7 +416,8 @@ export default function MatchProposalModal({
         <ConfirmationModal
           open={showConfirmation}
           onClose={handleConfirmationClose}
-          message={`Your match proposal has been sent to ${player.firstName ? `${player.firstName} ${player.lastName}` : player.name}. They will receive an email notification and can respond through the app.`}
+          message={`Your match proposal has been sent to ${player.firstName ? `${player.firstName} ${player.lastName}` : player.name}.
+          They will receive an email notification and can respond through the app.`}
           phase={phase}
           gameType={gameType}
           raceLength={raceLength}
