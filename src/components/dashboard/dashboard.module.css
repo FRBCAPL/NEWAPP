@@ -90,9 +90,11 @@
 .dashboardUserName {
   color: #fff;
   font-weight: bold;
-  font-size: 1.2em;
+  font-size: 1.7em;
   display: block;
-  margin-top: 0em;
+  margin-top: 0.1em;
+  letter-spacing: 0.01em;
+  text-shadow: 0 0 10px var(--accent-red), 0 2px 8px #000;
 }
 
 .dashboardSection {
@@ -108,7 +110,7 @@
 }
 .dashboardSectionBox {
   position: relative;
-  background: rgba(0, 0, 0, 0.88);
+  background: rgba(0, 0, 0, 0.48);
   border: 1.5px solid #cccaca;
   border-radius: 13px;
   padding: 1.2em 1.2em;

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import table2 from "./PoolTableSVG/table2.svg";
 import nineBall from "../assets/nineball.svg";
 import tenBall from "../assets/tenball.svg";
@@ -108,9 +108,6 @@ function getPocketOpening(pocket, target) {
 }
 
 export default function PoolSimulation() {
-  const containerRef = useRef(null);
-  const [containerSize, setContainerSize] = useState({ width: 600, height: 300 });
-  const [ready, setReady] = useState(false); // NEW: track if real size is known
   const tableImgRef = useRef(null);
   const ballRefs = useRef({
     cue: React.createRef(),
@@ -123,25 +120,6 @@ export default function PoolSimulation() {
   const animationFrame = useRef(null);
   const cueTimeout = useRef(null);
   const shotCount = useRef(0);
-
-  useEffect(() => {
-    function updateSize() {
-      if (containerRef.current) {
-        setContainerSize({
-          width: containerRef.current.offsetWidth,
-          height: containerRef.current.offsetHeight
-        });
-        setReady(true); // NEW: set ready after first real measurement
-      }
-    }
-    updateSize();
-    window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
-  }, []);
-
-  // Calculate scale factor based on default TABLE_WIDTH and TABLE_HEIGHT
-  const scaleX = containerSize.width / 600;
-  const scaleY = containerSize.height / 300;
 
   // Save initial positions for cue ball reset
   function saveInitialPositions() {
@@ -214,17 +192,16 @@ export default function PoolSimulation() {
 
   // On mount: rack and break
   useEffect(() => {
-    if (!ready) return;
     rackBalls();
-    const timeout = setTimeout(() => {
+    setTimeout(() => {
       breakCueBall();
     }, 1000);
     return () => {
       cancelAnimationFrame(animationFrame.current);
       clearTimeout(cueTimeout.current);
-      clearTimeout(timeout);
     };
-  }, [ready]);
+    // eslint-disable-next-line
+  }, []);
 
   // Break shot: first shot is a blast, then AI takes over
   function breakCueBall() {
@@ -512,13 +489,13 @@ export default function PoolSimulation() {
         }
       }
 
-      // Directly update DOM for all balls (now using scaling)
+      // Directly update DOM for all balls (no scaling math needed)
       Object.entries(balls.current).forEach(([key, ball]) => {
         if (ball.ref.current && ball.visible) {
-          ball.ref.current.style.left = ((ball.x - BALL_RADIUS) * scaleX) + "px";
-          ball.ref.current.style.top = ((ball.y - BALL_RADIUS) * scaleY) + "px";
-          ball.ref.current.style.width = (BALL_SIZE * scaleX) + "px";
-          ball.ref.current.style.height = (BALL_SIZE * scaleY) + "px";
+          ball.ref.current.style.left = (ball.x - BALL_RADIUS) + "px";
+          ball.ref.current.style.top = (ball.y - BALL_RADIUS) + "px";
+          ball.ref.current.style.width = BALL_SIZE + "px";
+          ball.ref.current.style.height = BALL_SIZE + "px";
           ball.ref.current.style.opacity = 1;
         }
       });
@@ -568,33 +545,14 @@ export default function PoolSimulation() {
   }
 
   // --- Render ---
-  // Felt bounds for logo overlay
-  const FELT_LEFT = 18.25;
-  const FELT_RIGHT = 570.77;
-  const FELT_TOP = 20.20;
-  const FELT_BOTTOM = 270.18;
-  // Add a margin inside the felt for the logo
-  const LOGO_MARGIN = 28; // px, adjust for realism
-  const logoLeft = FELT_LEFT + LOGO_MARGIN;
-  const logoTop = FELT_TOP + LOGO_MARGIN;
-  const logoWidth = (FELT_RIGHT - FELT_LEFT) - LOGO_MARGIN * 2;
-  const logoHeight = (FELT_BOTTOM - FELT_TOP) - LOGO_MARGIN * 2;
-
-  // Only render table/balls when ready (prevents size jump)
-  if (!ready) {
-    return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
-  }
-
   return (
     <div
-      ref={containerRef}
       style={{
-        width: '100%',
-        height: '100%',
-        position: 'relative',
-        background: 'black',
+        width: 600,
+        height: 300,
+        position: "relative",
+        background: "black",
         zIndex: 99999,
-        pointerEvents: 'none',
       }}
     >
       <img
@@ -615,24 +573,41 @@ export default function PoolSimulation() {
           filter: 'opacity(1) contrast(1.25) brightness(1.18)'
         }}
       />
-      {/* Logo overlay, fits felt area with margin, scaled */}
-      <img
-        src={logoImg}
-        alt="League Logo"
+      {/* Centered Words, scaled */}
+      <div
         style={{
           position: "absolute",
-          left: logoLeft * scaleX,
-          top: logoTop * scaleY,
-          width: logoWidth * scaleX,
-          height: logoHeight * scaleY,
-          objectFit: "contain",
-          zIndex: 2,
-          opacity: 0.55,
-          filter: 'drop-shadow(0 2px 8px #000)',
+          left: 0,
+          top: 0,
+          width: "100%",
+          height: "100%",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           pointerEvents: "none",
-          userSelect: "none"
+          userSelect: "none",
+          zIndex: 2,
         }}
-      />
+      >
+        <img
+          src={logoImg}
+          alt="League Logo"
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            width: "50%",
+            height: "auto",
+            transform: "translate(-50%, -50%)",
+            objectFit: "contain",
+            zIndex: 2,
+            opacity: 0.55,
+            filter: 'drop-shadow(0 2px 8px #000)',
+            pointerEvents: "none",
+            userSelect: "none"
+          }}
+        />
+      </div>
       {BALLS.map(ball =>
         <img
           key={ball.key}
@@ -642,10 +617,10 @@ export default function PoolSimulation() {
           className={styles.pinBallImg}
           style={{
             position: "absolute",
-            left: (balls.current[ball.key]?.x !== undefined ? (balls.current[ball.key].x - BALL_RADIUS) * scaleX : 0),
-            top: (balls.current[ball.key]?.y !== undefined ? (balls.current[ball.key].y - BALL_RADIUS) * scaleY : 0),
-            width: BALL_SIZE * scaleX,
-            height: BALL_SIZE * scaleY,
+            left: (balls.current[ball.key]?.x !== undefined ? balls.current[ball.key].x - BALL_RADIUS : 0),
+            top: (balls.current[ball.key]?.y !== undefined ? balls.current[ball.key].y - BALL_RADIUS : 0),
+            width: BALL_SIZE,
+            height: BALL_SIZE,
             zIndex: 10,
             opacity: balls.current[ball.key]?.visible === false ? 0 : 1,
             transition: "none",

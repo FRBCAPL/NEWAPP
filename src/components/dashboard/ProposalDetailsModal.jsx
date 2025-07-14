@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom';
 import styles from './dashboard.module.css';
 import BilliardBall from '../BilliardBall';
 import DraggableModal from '../modal/DraggableModal';
+import { BACKEND_URL } from '../../config.js';
+import { LoadingButton } from '../LoadingSpinner';
 
 // Utility function to format date as MM-DD-YYYY
 function formatDateMMDDYYYY(dateStr) {
@@ -74,8 +76,8 @@ export default function ProposalDetailsModal({ proposal, open, onClose, onEdit, 
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`/api/proposals/${proposal._id}/status`, {
-        method: 'PUT',
+      const response = await fetch(`${BACKEND_URL}/api/proposals/${proposal._id}/status`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'confirmed' })
       });
@@ -206,9 +208,11 @@ export default function ProposalDetailsModal({ proposal, open, onClose, onEdit, 
           </button>
         )}
         {proposal.isCounter && proposal.status === 'countered' && (
-          <button
+          <LoadingButton
             className={styles.dashboardBtn}
             onClick={handleConfirm}
+            loading={loading}
+            loadingText="Confirming..."
             disabled={loading}
             style={{
               background: '#43a047',
@@ -218,8 +222,8 @@ export default function ProposalDetailsModal({ proposal, open, onClose, onEdit, 
               padding: isMobile ? '0.5em 0.7em' : undefined
             }}
           >
-            {loading ? 'Confirming...' : 'Confirm'}
-          </button>
+            Confirm
+          </LoadingButton>
         )}
         <button 
           className={styles.dashboardBtn} 

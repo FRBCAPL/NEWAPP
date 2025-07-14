@@ -77,19 +77,36 @@ export default function PlayerAvailabilityModal({
           }}>
             Preferred Locations:
           </h3>
-          <div style={{ color: "#fff" }}>
+          <div style={{ color: "#fff", textAlign: 'center' }}>
             {player.locations
-              ? player.locations
-                  .split(/\r?\n/)
-                  .filter(Boolean)
-                  .map((loc, idx, arr) => (
-                    <span key={loc + idx}>
-                      {loc}
-                      {idx < arr.length - 1 && (
-                        <span style={{ color: "#e53e3e", margin: "0 0.5rem" }}> • </span>
-                      )}
-                    </span>
-                  ))
+              ? (() => {
+                  const locArr = player.locations.split(/\r?\n/).filter(Boolean);
+                  const rows = [];
+                  for (let i = 0; i < locArr.length; i += 5) {
+                    rows.push(locArr.slice(i, i + 5));
+                  }
+                  return rows.map((row, rowIdx) => (
+                    <div
+                      key={rowIdx}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        marginBottom: '0.5em',
+                        flexWrap: 'wrap',
+                        gap: '0.2em', // Add gap for spacing
+                      }}
+                    >
+                      {row.map((loc, idx) => (
+                        <span key={loc + idx} style={{ textAlign: 'center' }}>
+                          {loc}
+                          {idx < row.length - 1 && (
+                            <span style={{ color: "#e53e3e", margin: "0 0.3em" }}> • </span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  ));
+                })()
               : "No locations specified"}
           </div>
         </div>

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import ReactDOM from "react-dom";
 import styles from './dashboard.module.css';
 import PoolSimulation from "../PoolSimulation.jsx";
 import ResponsiveWrapper from "../ResponsiveWrapper";
@@ -28,6 +29,7 @@ import { useMatches } from '../../hooks/useMatches';
 import { proposalService } from '../../services/proposalService';
 import { userService } from '../../services/userService';
 import { noteService } from '../../services/noteService';
+import { BACKEND_URL } from '../../config.js';
 
 const sheetID = "1tvMgMHsRwQxsR6lMNlSnztmwpK7fhZeNEyqjTqmRFRc";
 const pinSheetName = "BCAPL SIGNUP";
@@ -37,7 +39,6 @@ const STANDINGS_URLS = {
   // Add more divisions as needed
 };
 
-const BACKEND_URL = "https://atlasbackend-bnng.onrender.com";
 
 // --- Robust date normalization ---
 function normalizeDate(dateStr) {
@@ -120,7 +121,7 @@ function AdminUpdateStandingsButton({ backendUrl }) {
     setLoading(true);
     setResult("");
     try {
-      const res = await fetch(`${backendUrl}/admin/update-standings`, {
+      const res = await fetch(`${BACKEND_URL}/admin/update-standings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
@@ -282,6 +283,8 @@ export default function Dashboard({
   const [winnerModalOpen, setWinnerModalOpen] = useState(false);
   const [winnerModalMatch, setWinnerModalMatch] = useState(null);
   const [winnerModalPlayers, setWinnerModalPlayers] = useState({ player1: '', player2: '' });
+
+  const simulationRef = useRef(null);
 
   useEffect(() => {
     setPendingCount(pendingProposals.length);
@@ -681,6 +684,7 @@ export default function Dashboard({
     }
     setSelectedOpponent(playerObj);
     setShowPlayerAvailability(true);
+    setShowOpponents(false); // Close the Opponents modal
   }
 
   function refreshSchedule() {
@@ -883,6 +887,36 @@ export default function Dashboard({
     ...pendingProposals.filter(p => p.status === 'countered' && p.receiverName === fullName)
   ];
 
+  // Portal overlay for OpponentsModal
+  const opponentsModalPortal = showOpponents && simulationRef.current
+    ? ReactDOM.createPortal(
+        <div
+          style={{
+            position: "absolute",
+            top: simulationRef.current.getBoundingClientRect().top + window.scrollY,
+            left: simulationRef.current.getBoundingClientRect().left + window.scrollX,
+            width: simulationRef.current.offsetWidth,
+            height: simulationRef.current.offsetHeight,
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.6)",
+            pointerEvents: "auto"
+          }}
+        >
+          <OpponentsModal
+            open={showOpponents}
+            onClose={() => setShowOpponents(false)}
+            opponents={opponentsToSchedule}
+            onOpponentClick={handleOpponentClick}
+            phase={effectivePhase}
+          />
+        </div>,
+        document.body
+      )
+    : null;
+
   return (
     <div className={styles.dashboardBg} style={{ position: 'relative' }}>
       <div className={styles.dashboardFrame} style={{ position: 'relative', zIndex: 1, overflow: 'hidden' }}>
@@ -987,10 +1021,17 @@ export default function Dashboard({
 
             {/* PoolSimulation as background and matches list overlayed on table */}
             <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-              <div className={styles.poolTableContainer} style={{ marginBottom: '24px' }}>
+              <div className={styles.poolTableContainer} style={{ marginBottom: '24px', position: 'relative' }}>
                 <ResponsiveWrapper aspectWidth={600} aspectHeight={300}>
-                  <PoolSimulation />
+                  <div
+                    className={styles.simulationContainer}
+                    ref={simulationRef}
+                  >
+                    <PoolSimulation />
+                  </div>
                 </ResponsiveWrapper>
+                {/* OpponentsModal portal overlay (not inside simulationContainer) */}
+                {opponentsModalPortal}
                 <div className={styles.mobileMatchesOverlay} style={{
                   position: 'absolute',
                   left: '3.04%', // 18.25/600
@@ -1383,16 +1424,6 @@ export default function Dashboard({
         )}
       </div>
     </div>
-    {/* Opponents Modal */}
-   <OpponentsModal
-    open={showOpponents}
-    onClose={() => setShowOpponents(false)}
-    opponents={opponentsToSchedule}
-    onOpponentClick={handleOpponentClick}
-    phase={effectivePhase}
-   />
-
-
     {/* Player Search Modal (Phase 2) */}
   {showPlayerSearch && (
     <>
