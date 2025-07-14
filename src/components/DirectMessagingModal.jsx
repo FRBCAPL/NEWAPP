@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styles from './DirectMessagingModal.module.css';
 import DraggableModal from './modal/DraggableModal';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+const BACKEND_URL = "https://atlasbackend-bnng.onrender.com";
 console.log('BACKEND_URL in use:', BACKEND_URL);
 
 export default function DirectMessagingModal({ userName, userEmail, userPin, selectedDivision, opponentEmails = [], onClose }) {

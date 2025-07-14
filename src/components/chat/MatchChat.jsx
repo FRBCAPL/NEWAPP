@@ -21,7 +21,7 @@ import AdminAnnouncementInput from "../AdminAnnouncementInput"; // <-- ADD THIS 
 import styles from "./MatchChat.module.css";
 
 const apiKey = import.meta.env.VITE_STREAM_API_KEY;
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://newapp-xyen.onrender.com";
+const API_BASE = "https://atlasbackend-bnng.onrender.com";
 const GENERAL_CHANNEL_ID = "general";
 
 function cleanId(id) {

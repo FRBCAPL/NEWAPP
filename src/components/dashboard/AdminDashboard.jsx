@@ -6,7 +6,7 @@ import userSearchStyles from './AdminUserSearch.module.css';
 import UnenteredMatchesModal from "./UnenteredMatchesModal";
 import { FaSyncAlt, FaCheckCircle, FaExclamationCircle, FaUsers, FaCalendarAlt, FaChartBar } from 'react-icons/fa';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+const BACKEND_URL = "https://atlasbackend-bnng.onrender.com";
 const apiKey = import.meta.env.VITE_STREAM_API_KEY;
 const adminUserId = "frbcaplgmailcom";
 
