@@ -920,7 +920,6 @@ export default function Dashboard({
   return (
     <div className={styles.dashboardBg} style={{ position: 'relative' }}>
       <div className={styles.dashboardFrame} style={{ position: 'relative', zIndex: 1, overflow: 'hidden' }}>
-        {/* <FloatingLogos /> */}
         {/* Main dashboard content starts here */}
         <div className={styles.dashboardCard} style={{ position: 'relative', zIndex: 1 }}>
           <h1 className={styles.dashboardTitle}>
@@ -1207,74 +1206,60 @@ export default function Dashboard({
             <div style={{ textAlign: 'center', marginBottom: 8, color: '#aaa', fontSize: '0.98em' }}>
              <br /> Click to view or schedule matches.
             </div>
-            <div className={styles.countersRow} style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              margin: '5px 0 0 0',
-              width: '100%',
-              paddingBottom: '12px',
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: 16,
-                width: '100%',
-                marginBottom: '12px',
-              }}>
-                <button
-                  style={{
-                    background: '#23232a',
-                    color: '#28a745',
-                    borderRadius: 6,
-                    padding: '4px 10px',
-                    fontWeight: 600,
-                    fontSize: '0.92em',
-                    zIndex: 9999,
-                    position: 'relative',
-                    textAlign: 'center',
-                    border: '2px solid #28a745',
-                    minWidth: 0,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    cursor: 'pointer',
-                    margin: '0 4px'
-                  }}
-                  onClick={() => setShowCompletedModal(true)}
-                  title="Click to view completed matches"
-                  type="button"
-                >
-                  {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} Matches Completed: {totalCompleted}
-                </button>
-                <button
-                  style={{
-                    background: '#23232a',
-                    color: '#e53e3e',
-                    borderRadius: 6,
-                    padding: '4px 10px',
-                    fontWeight: 600,
-                    fontSize: '0.92em',
-                    zIndex: 9999,
-                    position: 'relative',
-                    textAlign: 'center',
-                    border: '2px solid #e53e3e',
-                    minWidth: 0,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    cursor: 'pointer',
-                    margin: '0 4px'
-                  }}
-                  title="Schedule a match"
-                  type="button"
-                  onClick={() => handleScheduleMatch()}
-                >
-                  {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} Matches To Schedule: {matchesToScheduleCount}
-                </button>
-              </div>
+            {/* --- MATCH COUNTERS BELOW SIMULATION --- */}
+            <div className="matchCountersWrapper">
+              <button
+                style={{
+                  background: '#23232a',
+                  color: '#28a745',
+                  borderRadius: 6,
+                  padding: '4px 10px',
+                  fontWeight: 600,
+                  fontSize: '0.92em',
+                  zIndex: 9999,
+                  position: 'relative',
+                  textAlign: 'center',
+                  border: '2px solid #28a745',
+                  minWidth: 0,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  cursor: 'pointer',
+                  margin: '0 4px'
+                }}
+                onClick={() => setShowCompletedModal(true)}
+                title="Click to view completed matches"
+                type="button"
+              >
+                {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} Matches Completed: {totalCompleted}
+              </button>
+              <button
+                style={{
+                  background: '#23232a',
+                  color: '#e53e3e',
+                  borderRadius: 6,
+                  padding: '4px 10px',
+                  fontWeight: 600,
+                  fontSize: '0.92em',
+                  zIndex: 9999,
+                  position: 'relative',
+                  textAlign: 'center',
+                  border: '2px solid #e53e3e',
+                  minWidth: 0,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  cursor: 'pointer',
+                  margin: '0 4px'
+                }}
+                title="Schedule a match"
+                type="button"
+                onClick={() => handleScheduleMatch()}
+              >
+                {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} Matches To Schedule: {matchesToScheduleCount}
+              </button>
             </div>
+            {/* --- END MATCH COUNTERS --- */}
           </section>
 
           

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import table2 from "./PoolTableSVG/table2.svg";
 import nineBall from "../assets/nineball.svg";
 import tenBall from "../assets/tenball.svg";
@@ -108,6 +108,25 @@ function getPocketOpening(pocket, target) {
 }
 
 export default function PoolSimulation() {
+  // Responsive container size state
+  const containerRef = useRef(null);
+  const [containerSize, setContainerSize] = useState({ width: 600, height: 300 });
+  // Add tick state for forced re-render
+  const [tick, setTick] = useState(0);
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
+
+  useEffect(() => {
+    function updateSize() {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setContainerSize({ width: rect.width, height: rect.height });
+      }
+    }
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
+
   const tableImgRef = useRef(null);
   const ballRefs = useRef({
     cue: React.createRef(),
@@ -121,6 +140,53 @@ export default function PoolSimulation() {
   const cueTimeout = useRef(null);
   const shotCount = useRef(0);
 
+  // Add canvas ref for drawing
+  const canvasRef = useRef(null);
+
+  // Preload SVG images for balls, logo, and table, and track loading
+  const ballImages = useRef({});
+  // Add logo image ref
+  const logoImage = useRef(null);
+  useEffect(() => {
+    let loaded = 0;
+    const total = 6; // 4 balls + 1 logo + 1 table
+    function checkLoaded() {
+      loaded++;
+      if (loaded === total) setAssetsLoaded(true);
+    }
+    const imgs = {
+      cue: new window.Image(),
+      8: new window.Image(),
+      9: new window.Image(),
+      10: new window.Image(),
+    };
+    imgs.cue.onload = checkLoaded;
+    imgs[8].onload = checkLoaded;
+    imgs[9].onload = checkLoaded;
+    imgs[10].onload = checkLoaded;
+    imgs.cue.onerror = checkLoaded;
+    imgs[8].onerror = checkLoaded;
+    imgs[9].onerror = checkLoaded;
+    imgs[10].onerror = checkLoaded;
+    imgs.cue.src = cueBall;
+    imgs[8].src = eightBall;
+    imgs[9].src = nineBall;
+    imgs[10].src = tenBall;
+    ballImages.current = imgs;
+    // Preload logo
+    const logo = new window.Image();
+    logo.onload = checkLoaded;
+    logo.onerror = checkLoaded;
+    logo.src = logoImg;
+    logoImage.current = logo;
+    // Preload table SVG
+    const tableImg = new window.Image();
+    tableImg.onload = checkLoaded;
+    tableImg.onerror = checkLoaded;
+    tableImg.src = table2;
+    tableImgRef.current = tableImg;
+  }, []);
+
   // Save initial positions for cue ball reset
   function saveInitialPositions() {
     Object.keys(balls.current).forEach(key => {
@@ -129,6 +195,7 @@ export default function PoolSimulation() {
         y: balls.current[key].y
       };
     });
+    setTick(t => t + 1); // force re-render after initial positions
   }
 
   // Rack balls at start or rerack
@@ -180,6 +247,7 @@ export default function PoolSimulation() {
     });
 
     saveInitialPositions();
+    setTick(t => t + 1); // force re-render after racking
   }
 
   function rerackBalls() {
@@ -187,6 +255,7 @@ export default function PoolSimulation() {
     shotCount.current = 0;
     setTimeout(() => {
       breakCueBall();
+      setTick(t => t + 1); // force re-render after rerack
     }, 1000);
   }
 
@@ -224,6 +293,7 @@ export default function PoolSimulation() {
       cue.vx = Math.cos(angle) * breakSpeed;
       cue.vy = Math.sin(angle) * breakSpeed;
       cue.isMoving = true;
+      console.log('Break: cue.vx =', cue.vx, 'cue.vy =', cue.vy);
       animateBalls();
       return;
     }
@@ -413,6 +483,7 @@ export default function PoolSimulation() {
 
   // Main animation loop (no scaling math needed!)
   function animateBalls() {
+    console.log('animateBalls called');
     const friction = 0.99;
     const ballSize = BALL_SIZE;
     const radius = ballSize / 2;
@@ -425,6 +496,7 @@ export default function PoolSimulation() {
     const FELT_BOTTOM = 270.18;
 
     function step() {
+      console.log('animation frame');
       let pocketedThisFrame = [];
 
       for (let s = 0; s < subSteps; s++) {
@@ -534,100 +606,190 @@ export default function PoolSimulation() {
       if (Object.values(balls.current).some(ball => ball.isMoving)) {
         animationFrame.current = requestAnimationFrame(step);
       } else if (!cueTimeout.current) {
+        animationFrame.current = null; // Mark loop as stopped
         cueTimeout.current = setTimeout(() => {
           cueTimeout.current = null;
           smartCueShot();
         }, 1200);
+      } else {
+        animationFrame.current = null; // Mark loop as stopped
       }
+      setTick(t => t + 1); // force re-render after each animation frame
     }
 
     animationFrame.current = requestAnimationFrame(step);
   }
 
-  // --- Render ---
+  // Helper to scale simulation coordinates to container
+  function scaleX(x) {
+    return (x / TABLE_WIDTH) * containerSize.width;
+  }
+  function scaleY(y) {
+    return (y / TABLE_HEIGHT) * containerSize.height;
+  }
+  function scaleBallSize(size) {
+    // Use average of width/height scaling for ball size
+    const scale = (containerSize.width / TABLE_WIDTH + containerSize.height / TABLE_HEIGHT) / 2;
+    return size * scale;
+  }
+
+  // Draw table, logo, and balls on canvas
+  useEffect(() => {
+    if (!assetsLoaded) return; // Wait for SVGs, logo, and table
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // reset
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    // Draw preloaded SVG table image as background
+    const tableImg = tableImgRef.current;
+    if (tableImg && tableImg.complete && tableImg.naturalWidth > 0) {
+      ctx.drawImage(tableImg, 0, 0, containerSize.width, containerSize.height);
+    }
+    // Draw logo centered on felt
+    const logo = logoImage.current;
+    if (logo && logo.complete && logo.naturalWidth > 0) {
+      const logoW = containerSize.width * 0.35;
+      const logoH = (logo.height / logo.width) * logoW;
+      const logoX = (containerSize.width - logoW) / 2;
+      const logoY = (containerSize.height - logoH) / 2;
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.drawImage(logo, logoX, logoY, logoW, logoH);
+      ctx.restore();
+    }
+    // Draw balls on top (SVGs only)
+    for (const [key, ball] of Object.entries(balls.current)) {
+      if (ball.visible === false) continue;
+      const bx = scaleX(ball.x);
+      const by = scaleY(ball.y);
+      const br = scaleBallSize(BALL_SIZE) / 2;
+      // Ball shadow
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.beginPath();
+      ctx.ellipse(bx, by + br * 0.38, br * 0.85, br * 0.28, 0, 0, 2 * Math.PI);
+      ctx.fillStyle = '#222';
+      ctx.filter = 'blur(0.7px)';
+      ctx.fill();
+      ctx.filter = 'none';
+      ctx.restore();
+      // Draw SVG image for the ball (cue, 8, 9, 10) ONLY
+      const img = ballImages.current[key];
+      if (img && img.complete && img.naturalWidth > 0) {
+        ctx.save();
+        ctx.globalAlpha = 1;
+        ctx.drawImage(
+          img,
+          bx - br,
+          by - br,
+          br * 2,
+          br * 2
+        );
+        ctx.restore();
+      } else {
+        // fallback: draw a red X if SVG fails
+        ctx.save();
+        ctx.strokeStyle = 'red';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(bx - br, by - br);
+        ctx.lineTo(bx + br, by + br);
+        ctx.moveTo(bx + br, by - br);
+        ctx.lineTo(bx - br, by + br);
+        ctx.stroke();
+        ctx.restore();
+      }
+      // Ball highlight
+      ctx.save();
+      ctx.globalAlpha = 0.32;
+      ctx.beginPath();
+      ctx.ellipse(bx - br * 0.32, by - br * 0.32, br * 0.38, br * 0.16, -0.5, 0, 2 * Math.PI);
+      ctx.fillStyle = '#fff';
+      ctx.filter = 'blur(0.2px)';
+      ctx.fill();
+      ctx.filter = 'none';
+      ctx.restore();
+      // Draw crisp white circle for number background (8/9/10)
+      if (['8', '9', '10'].includes(key)) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(bx, by, br * 0.48, 0, 2 * Math.PI);
+        ctx.fillStyle = '#fff';
+        ctx.shadowColor = 'rgba(0,0,0,0.10)';
+        ctx.shadowBlur = br * 0.08;
+        ctx.fill();
+        ctx.restore();
+      }
+      // Draw number for 8/9/10 (bold, centered)
+      if (['8', '9', '10'].includes(key)) {
+        ctx.save();
+        ctx.font = `bold ${Math.round(br * 1.18)}px Arial Black,Arial,sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.lineWidth = scaleBallSize(0.7);
+        ctx.strokeStyle = '#222';
+        ctx.fillStyle = '#000';
+        ctx.shadowColor = 'rgba(0,0,0,0.18)';
+        ctx.shadowBlur = br * 0.08;
+        ctx.strokeText(key, bx, by + 0.5);
+        ctx.shadowBlur = 0;
+        ctx.fillText(key, bx, by);
+        ctx.restore();
+      }
+    }
+  }, [containerSize, tick, assetsLoaded]);
+
   return (
     <div
+      ref={containerRef}
       style={{
-        width: 600,
-        height: 300,
-        position: "relative",
-        background: "black",
-        zIndex: 99999,
+        width: '100%',
+        aspectRatio: '2 / 1',
+        maxWidth: '100vw',
+        height: 'auto',
+        position: 'relative',
+        background: '#181818',
+        borderRadius: 20,
+        overflow: 'hidden',
+        margin: '0 auto',
+        boxShadow: '0 2px 12px #0008',
       }}
     >
-      <img
-        ref={tableImgRef}
-        src={table2}
-        alt="Pool Table"
+      {/* Responsive Canvas for Pool Simulation (no DOM logo overlays) */}
+      <canvas
+        ref={canvasRef}
+        width={containerSize.width * window.devicePixelRatio}
+        height={containerSize.height * window.devicePixelRatio}
         style={{
-          width: "100%",
-          height: "100%",
-          display: "block",
-          objectFit: "fill",
-          position: "absolute",
-          top: 1,
+          width: '100%',
+          height: '100%',
+          display: 'block',
+          position: 'absolute',
+          top: 0,
           left: 0,
           zIndex: 1,
-          pointerEvents: "none",
-          opacity: 1,
-          filter: 'opacity(1) contrast(1.25) brightness(1.18)'
+          borderRadius: 20,
+          background: '#181818',
         }}
       />
-      {/* Centered Words, scaled */}
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
+      {!assetsLoaded && (
+        <div style={{
+          position: 'absolute',
           top: 0,
-          width: "100%",
-          height: "100%",
+          left: 0,
+          width: '100%',
+          height: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          pointerEvents: "none",
-          userSelect: "none",
+          background: 'rgba(24,24,24,0.85)',
+          color: '#fff',
+          fontSize: 24,
           zIndex: 2,
-        }}
-      >
-        <img
-          src={logoImg}
-          alt="League Logo"
-          style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            width: "50%",
-            height: "auto",
-            transform: "translate(-50%, -50%)",
-            objectFit: "contain",
-            zIndex: 2,
-            opacity: 0.55,
-            filter: 'drop-shadow(0 2px 8px #000)',
-            pointerEvents: "none",
-            userSelect: "none"
-          }}
-        />
-      </div>
-      {BALLS.map(ball =>
-        <img
-          key={ball.key}
-          src={ball.src}
-          alt={ball.alt}
-          ref={ballRefs.current[ball.key]}
-          className={styles.pinBallImg}
-          style={{
-            position: "absolute",
-            left: (balls.current[ball.key]?.x !== undefined ? balls.current[ball.key].x - BALL_RADIUS : 0),
-            top: (balls.current[ball.key]?.y !== undefined ? balls.current[ball.key].y - BALL_RADIUS : 0),
-            width: BALL_SIZE,
-            height: BALL_SIZE,
-            zIndex: 10,
-            opacity: balls.current[ball.key]?.visible === false ? 0 : 1,
-            transition: "none",
-            pointerEvents: "none",
-            filter: 'opacity(1) contrast(1.25) brightness(1.18)'
-          }}
-        />
+        }}>
+          Loading pool table assets...
+        </div>
       )}
     </div>
   );

@@ -1,44 +1,17 @@
 import React, { useRef, useLayoutEffect, useState } from "react";
 
-export default function ResponsiveWrapper({ aspectWidth, aspectHeight, children }) {
-  const ref = useRef(null);
-  const [scale, setScale] = useState(1);
-
-  useLayoutEffect(() => {
-    function updateScale() {
-      if (!ref.current) return;
-      const { width, height } = ref.current.getBoundingClientRect();
-      setScale(Math.min(width / aspectWidth, height / aspectHeight));
-    }
-    updateScale();
-    const ro = new window.ResizeObserver(updateScale);
-    ro.observe(ref.current);
-    return () => ro.disconnect();
-  }, [aspectWidth, aspectHeight]);
-
+export default function ResponsiveWrapper({ aspectWidth = 2, aspectHeight = 1, children, style = {} }) {
+  const aspect = aspectWidth / aspectHeight;
   return (
     <div
-      ref={ref}
       style={{
         width: "100%",
-        height: "100%",
+        aspectRatio: aspect,
         position: "relative",
-        overflow: "hidden"
+        ...style,
       }}
     >
-      <div
-        style={{
-          width: aspectWidth,
-          height: aspectHeight,
-          transform: `scale(${scale})`,
-          transformOrigin: "top left",
-          position: "absolute",
-          top: 0,
-          left: 0
-        }}
-      >
-        {children}
-      </div>
+      {children}
     </div>
   );
 }
