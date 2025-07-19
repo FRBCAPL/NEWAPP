@@ -48,7 +48,7 @@ function formatDateMMDDYYYY(dateStr) {
   return `${month}-${day}-${year}`;
 }
 
-export default function ProposalDetailsModal({ proposal, open, onClose, onEdit, onMessage }) {
+export default function ProposalDetailsModal({ proposal, open, onClose, onEdit, onMessage, onConfirm, currentUserName, currentUserEmail }) {
   useEffect(() => {
     if (open) {
       setTimeout(() => {
@@ -88,6 +88,28 @@ export default function ProposalDetailsModal({ proposal, open, onClose, onEdit, 
     }
   }
 
+  // Determine if the current user should see the Confirm button
+  const isReceiver = proposal.receiverName && proposal.receiverName.trim().toLowerCase() === (currentUserName || '').trim().toLowerCase();
+  const isSender = proposal.senderName && proposal.senderName.trim().toLowerCase() === (currentUserName || '').trim().toLowerCase();
+  const showConfirm = (
+    (isReceiver && proposal.status === 'pending') ||
+    (isSender && proposal.isCounter && proposal.status === 'countered')
+  );
+  // Correctly label 'You' and 'Opponent'
+  const youName = isSender ? proposal.senderName : proposal.receiverName;
+  const opponentName = isSender ? proposal.receiverName : proposal.senderName;
+  // Debug log
+  console.log('DEBUG ProposalDetailsModal:', {
+    currentUserName,
+    senderName: proposal.senderName,
+    receiverName: proposal.receiverName,
+    status: proposal.status,
+    isCounter: proposal.isCounter,
+    isReceiver,
+    isSender,
+    showConfirm
+  });
+
   const modalContent = (
     <DraggableModal
       open={open}
@@ -114,11 +136,11 @@ export default function ProposalDetailsModal({ proposal, open, onClose, onEdit, 
       }}>
         <div className={styles.modalDetailRowSnazzy} style={{padding: isMobile ? '0.2em 0.3em' : undefined}}>
           <strong style={{color: '#e53e3e', minWidth: isMobile ? '80px' : '120px', fontSize: isMobile ? '0.95em' : undefined}}>You:</strong> 
-          <span style={{color: '#fff', marginLeft: isMobile ? '4px' : '8px'}}>{senderName || 'N/A'}</span>
+          <span style={{color: '#fff', marginLeft: isMobile ? '4px' : '8px'}}>{youName || 'N/A'}</span>
         </div>
         <div className={styles.modalDetailRowSnazzy} style={{padding: isMobile ? '0.2em 0.3em' : undefined}}>
           <strong style={{color: '#e53e3e', minWidth: isMobile ? '80px' : '120px', fontSize: isMobile ? '0.95em' : undefined}}>Opponent:</strong> 
-          <span style={{color: '#fff', marginLeft: isMobile ? '4px' : '8px'}}>{receiverName || 'N/A'}</span>
+          <span style={{color: '#fff', marginLeft: isMobile ? '4px' : '8px'}}>{opponentName || 'N/A'}</span>
         </div>
         {day && (
           <div className={styles.modalDetailRowSnazzy} style={{padding: isMobile ? '0.2em 0.3em' : undefined}}>
@@ -205,10 +227,10 @@ export default function ProposalDetailsModal({ proposal, open, onClose, onEdit, 
             Msg
           </button>
         )}
-        {proposal.isCounter && proposal.status === 'countered' && (
+        {showConfirm && onConfirm && (
           <button
             className={styles.dashboardBtn}
-            onClick={handleConfirm}
+            onClick={onConfirm}
             disabled={loading}
             style={{
               background: '#43a047',

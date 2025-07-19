@@ -168,13 +168,17 @@
   border-radius: 10px;
   border: 1.5px solid var(--accent-red);
   color: #fff;
-  padding: 0.8rem .8rem;
-  margin-bottom: 1rem;
-  min-height: 48px;
+  padding: 0.2rem 0.5rem; /* reduced padding */
+  margin-bottom: 0.4rem;
+  min-height: 0; /* allow to shrink */
+  height: auto; /* grow with content */
   box-shadow: 0 2px 8px #b91c1c22;
   transition: box-shadow 0.2s, border-color 0.2s;
   overflow: visible;
   box-sizing: border-box;
+  border: 2px solid red; /* keep the red border as in your screenshot */
+  min-width: 340px;
+  max-width: 340px;
 }
 .matchCard:hover {
   box-shadow: 0 4px 24px var(--accent-red);
@@ -1573,7 +1577,10 @@
     padding-top: 0.2rem !important;
   }
   .mobileMatchesOverlay {
-    bottom: 250px !important;
+    height: auto !important;
+    min-height: 40px !important;
+    max-height: 600px !important;
+    overflow-y: auto !important;
   }
   .countersRow {
     margin-top: -120px !important;
@@ -1678,4 +1685,73 @@
   margin: 0 auto 8px auto;
   position: relative;
   display: block;
+}
+
+.matchesOverlayBox {
+  position: absolute;
+  left: 3.04%;
+  width: 92.1%;
+  bottom: 9.94%;
+  min-height: 60px;
+  max-height: 140px;
+  overflow-y: auto;
+  z-index: 2;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .matchesOverlayBox {
+    max-height: 110px;
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 500px) {
+  .matchesOverlayBox {
+    max-height: 80px;
+    min-height: 30px;
+  }
+}
+
+/* Ensure .matchCard is always compact, even in media queries */
+.matchCard {
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 0.2rem 0.5rem !important;
+  border: 2px solid red;
+  max-width: 200px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 85%;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+@media (max-width: 700px) {
+  .matchCard {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 0.2rem 0.5rem !important;
+  }
+}
+
+@media (max-width: 500px) {
+  .matchCard {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 0.2rem 0.5rem !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .matchCard {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 0.2rem 0.5rem !important;
+  }
 }

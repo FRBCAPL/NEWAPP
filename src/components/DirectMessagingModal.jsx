@@ -243,7 +243,13 @@ export default function DirectMessagingModal({ userName, userEmail, userPin, sel
                 >
                   <div className={styles.conversationInfo}>
                     <div className={styles.conversationName}>
-                      {conversation.name || conversation.email}
+                      {conversation.name ||
+                        (() => {
+                          const p = players.find(p => p.email === conversation.email);
+                          if (!p) return null;
+                          return p.name || (p.firstName && p.lastName ? `${p.firstName} ${p.lastName}` : null);
+                        })() ||
+                        conversation.email}
                     </div>
                     <div className={styles.lastMessage}>
                       {conversation.lastMessage || 'No messages yet'}

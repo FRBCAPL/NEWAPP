@@ -77,19 +77,27 @@ export default function PlayerAvailabilityModal({
           }}>
             Preferred Locations:
           </h3>
-          <div style={{ color: "#fff" }}>
+          <div style={{ color: "#fff", display: 'flex', flexDirection: 'column', gap: 4 }}>
             {player.locations
-              ? player.locations
-                  .split(/\r?\n/)
-                  .filter(Boolean)
-                  .map((loc, idx, arr) => (
-                    <span key={loc + idx}>
-                      {loc}
-                      {idx < arr.length - 1 && (
-                        <span style={{ color: "#e53e3e", margin: "0 0.5rem" }}> • </span>
-                      )}
-                    </span>
-                  ))
+              ? (() => {
+                  const locs = player.locations.split(/\r?\n/).filter(Boolean);
+                  const rows = [];
+                  for (let i = 0; i < locs.length; i += 5) {
+                    rows.push(locs.slice(i, i + 5));
+                  }
+                  return rows.map((row, rowIdx) => (
+                    <div key={rowIdx} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', marginBottom: 2 }}>
+                      {row.map((loc, idx) => (
+                        <span key={loc + idx} style={{ margin: '0 0.18rem', whiteSpace: 'nowrap' }}>
+                          {loc}
+                          {idx < row.length - 1 && (
+                            <span style={{ color: "#e53e3e", margin: "0 0.18rem" }}> • </span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  ));
+                })()
               : "No locations specified"}
           </div>
         </div>
@@ -115,7 +123,7 @@ export default function PlayerAvailabilityModal({
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
-              {["Mon", "Tue", "Wed"].map((day) => (
+              {['Mon', 'Tue', 'Wed'].map((day) => (
                 <div key={day} style={{ textAlign: "center" }}>
                   <div style={{
                     color: "#e53e3e",
@@ -146,12 +154,13 @@ export default function PlayerAvailabilityModal({
                           background: "linear-gradient(135deg, #232323 0%, #2a0909 100%)",
                           color: "#fff",
                           border: "1px solid #e53e3e",
-                          borderRadius: "6px",
-                          padding: "0.5rem",
-                          fontSize: "0.8rem",
+                          borderRadius: "2px",
+                          display: "block",
+                          padding: "2px 4px",
+                          fontSize: "0.9rem",
+                          margin: "2px 0",
                           cursor: "pointer",
-                          transition: "all 0.2s ease",
-                          marginBottom: "0.5rem"
+                          transition: "all 0.2s ease"
                         }}
                         onMouseEnter={(e) => {
                           e.target.style.background = "linear-gradient(135deg, #e53e3e 0%, #c00 100%)";
@@ -180,7 +189,7 @@ export default function PlayerAvailabilityModal({
               ))}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
-              {["Thu", "Fri", "Sat"].map((day) => (
+              {['Thu', 'Fri', 'Sat'].map((day) => (
                 <div key={day} style={{ textAlign: "center" }}>
                   <div style={{
                     color: "#e53e3e",
@@ -211,12 +220,13 @@ export default function PlayerAvailabilityModal({
                           background: "linear-gradient(135deg, #232323 0%, #2a0909 100%)",
                           color: "#fff",
                           border: "1px solid #e53e3e",
-                          borderRadius: "6px",
-                          padding: "0.5rem",
-                          fontSize: "0.8rem",
+                          borderRadius: "4px",
+                          display: "block",
+                          padding: "2px 8px",
+                          fontSize: "0.9rem",
+                          margin: "2px 0",
                           cursor: "pointer",
-                          transition: "all 0.2s ease",
-                          marginBottom: "0.5rem"
+                          transition: "all 0.2s ease"
                         }}
                         onMouseEnter={(e) => {
                           e.target.style.background = "linear-gradient(135deg, #e53e3e 0%, #c00 100%)";

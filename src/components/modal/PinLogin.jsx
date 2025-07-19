@@ -16,6 +16,7 @@ export default function Login({ onSuccess }) {
   const [input, setInput] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showInput, setShowInput] = useState(false); // <-- new state
 
   // --- Verify Email or PIN against Google Sheet ---
   const verifyInput = async () => {
@@ -54,6 +55,7 @@ export default function Login({ onSuccess }) {
   };
 
   return (
+    <>
     <div className={styles.pinLoginBg}>
       <div className={styles.pinLoginFrame}>
         <a
@@ -75,8 +77,12 @@ export default function Login({ onSuccess }) {
             <span className={styles.pinLoginLock} aria-hidden="true">🔒</span>
             <span className={styles.pinOutlineText}> Enter Email</span>
           </h3>
+            <label htmlFor="pin-input" style={{ fontWeight: 500, fontSize: '1.1em', marginBottom: 8, color: '#fff' }}>
+              Enter Email To Log In
+            </label>
+            <div style={{ position: 'relative', width: '100%', maxWidth: 220 }}>
           <input
-            type="text"
+                type={input.includes('@') ? 'text' : (showInput ? 'text' : 'password')}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -85,7 +91,35 @@ export default function Login({ onSuccess }) {
             className={styles.pinInput}
             aria-label="Email"
             disabled={loading}
+                style={{ paddingRight: 38 }}
           />
+              {/* Show/hide button only for PIN (not email) */}
+              {!input.includes('@') && (
+                <button
+                  type="button"
+                  onClick={() => setShowInput(v => !v)}
+                  style={{
+                    position: 'absolute',
+                    right: 6,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#fff',
+                    fontSize: '0.95em',
+                    cursor: 'pointer',
+                    padding: 0,
+                    zIndex: 2,
+                    textDecoration: 'underline',
+                    fontWeight: 500
+                  }}
+                  tabIndex={-1}
+                  aria-label={showInput ? 'Hide PIN' : 'View PIN'}
+                >
+                  {showInput ? 'Hide' : 'View'}
+                </button>
+              )}
+            </div>
           <button
             onClick={verifyInput}
             disabled={loading}
@@ -102,5 +136,6 @@ export default function Login({ onSuccess }) {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -230,12 +230,34 @@ export default function MatchProposalModal({
           throw new Error(data.error);
         }
         // Create chat channel
-        createMatchChannel({
-          senderEmail,
-          senderName,
-          receiverEmail: player.email,
-          receiverName: player.firstName ? `${player.firstName} ${player.lastName}` : player.name,
-          matchName: `${senderName} vs ${player.firstName ? `${player.firstName} ${player.lastName}` : player.name} - ${formatDateMMDDYYYY(date)}`
+        // createMatchChannel({
+        //   senderEmail,
+        //   senderName,
+        //   receiverEmail: player.email,
+        //   receiverName: player.firstName ? `${player.firstName} ${player.lastName}` : player.name,
+        //   matchName: `${senderName} vs ${player.firstName ? `${player.firstName} ${player.lastName}` : player.name} - ${formatDateMMDDYYYY(date)}`
+        // });
+
+        // Send match details as a message in the new chat system
+        fetch(`${BACKEND_URL}/api/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            senderEmail,
+            receiverEmail: player.email,
+            proposalId: data.proposalId, // from proposal creation response
+            content:
+              `New match proposal!\n` +
+              `Division: ${selectedDivision}\n` +
+              `Phase: ${phase}\n` +
+              `Status: pending\n` +
+              `Date: ${formatDateMMDDYYYY(date)}\n` +
+              `Time: ${startTime}\n` +
+              `Location: ${location}\n` +
+              `Game Type: ${gameType}\n` +
+              `Race Length: ${raceLength}\n` +
+              (message ? `Note: ${message}` : "")
+          }),
         });
 
         // Send email notification

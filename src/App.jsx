@@ -8,6 +8,7 @@ import MatchChat from "./components/chat/MatchChat";
 import AdminDashboard from "./components/dashboard/AdminDashboard";
 import PinLogin from "./components/modal/PinLogin";
 import FloatingLogos from './components/FloatingLogos';
+import AppHeader from './components/AppHeader';
 import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
 import csiLogo from "./assets/csi_logo.png";
@@ -15,28 +16,6 @@ import usaplLogo from "./assets/usapl_logo.png";
 import fargorateLogo from "./assets/fargorate-logo.png";
 import "./styles/variables.css";
 import "./styles/global.css";
-
-function AppHeader() {
-  return (
-    <div style={{
-      width: "100%",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: "1.5rem",
-      position: "sticky",
-      top: 0,
-      zIndex: 2,
-      background: "rgba(20,20,20,0.92)",
-      backdropFilter: "blur(2px)",
-      borderBottom: "1.5px solid #333"
-    }}>
-      <span className="app-header-title">
-        Front Range Pool League
-      </span>
-    </div>
-  );
-}
 
 function MainApp({
   isAuthenticated,

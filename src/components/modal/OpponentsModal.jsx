@@ -27,13 +27,14 @@ export default function OpponentsModal({ open, onClose, opponents, onOpponentCli
               key={
                 (opponent.player && opponent.player.email) || opponent.opponentName || index
               }
-              onClick={() =>
+              onClick={() => {
                 onOpponentClick(
                   opponent.player
                     ? `${opponent.player.firstName} ${opponent.player.lastName}`
                     : opponent.opponentName
-                )
-              }
+                );
+                onClose();
+              }}
               style={{
                 background: "linear-gradient(135deg, #232323 0%, #2a0909 100%)",
                 color: "#fff",

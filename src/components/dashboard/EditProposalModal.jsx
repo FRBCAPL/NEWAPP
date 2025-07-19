@@ -284,10 +284,9 @@ export default function EditProposalModal({ proposal, open, onClose, onSave, sel
             className={styles.inputField}
           >
             <option value="">Select race length</option>
-            <option value="3">3</option>
+            
             <option value="5">5</option>
-            <option value="7">7</option>
-            <option value="9">9</option>
+            
           </select>
         </div>
         {/* Location */}

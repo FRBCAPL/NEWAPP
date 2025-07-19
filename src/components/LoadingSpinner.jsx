@@ -94,15 +94,17 @@ export function LoadingButton({
           {loadingText}
         </div>
       ) : (
+        // Only render children, no extra divs
         children
       )}
-      
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
+      {loading && (
+        <style jsx>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      )}
     </button>
   );
 }
