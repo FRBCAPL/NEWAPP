@@ -190,6 +190,81 @@ function dashboardReducer(state, action) {
       };
     }
     
+    case DASHBOARD_ACTIONS.SET_DIVISIONS:
+      return {
+        ...state,
+        data: { ...state.data, divisions: action.payload },
+        loading: { ...state.loading, divisions: false }
+      };
+      
+    case DASHBOARD_ACTIONS.SET_SELECTED_DIVISION:
+      return {
+        ...state,
+        data: { ...state.data, selectedDivision: action.payload }
+      };
+      
+    case DASHBOARD_ACTIONS.SET_PLAYERS:
+      return {
+        ...state,
+        data: { ...state.data, players: action.payload },
+        loading: { ...state.loading, players: false }
+      };
+      
+    case DASHBOARD_ACTIONS.SET_MATCHES:
+      return {
+        ...state,
+        data: { ...state.data, scheduledMatches: action.payload },
+        loading: { ...state.loading, matches: false }
+      };
+      
+    case DASHBOARD_ACTIONS.SET_SELECTED_PROPOSAL:
+      return {
+        ...state,
+        selection: { ...state.selection, proposal: action.payload }
+      };
+      
+    case DASHBOARD_ACTIONS.SET_SELECTED_MATCH:
+      return {
+        ...state,
+        selection: { ...state.selection, match: action.payload }
+      };
+      
+    case DASHBOARD_ACTIONS.SET_SELECTED_OPPONENT:
+      return {
+        ...state,
+        selection: { ...state.selection, opponent: action.payload }
+      };
+      
+    case DASHBOARD_ACTIONS.SET_COUNTER_PROPOSAL:
+      return {
+        ...state,
+        selection: { ...state.selection, counterProposal: action.payload }
+      };
+      
+    case DASHBOARD_ACTIONS.SET_PROPOSAL_NOTE:
+      return {
+        ...state,
+        forms: { ...state.forms, proposalNote: action.payload }
+      };
+      
+    case DASHBOARD_ACTIONS.SET_COUNTERS:
+      return {
+        ...state,
+        data: { ...state.data, ...action.payload }
+      };
+      
+    case DASHBOARD_ACTIONS.SET_PHASE:
+      return {
+        ...state,
+        phase: { ...state.phase, currentPhase: action.payload }
+      };
+      
+    case DASHBOARD_ACTIONS.SET_PHASE_OVERRIDE:
+      return {
+        ...state,
+        phase: { ...state.phase, phaseOverride: action.payload }
+      };
+
     case DASHBOARD_ACTIONS.SET_LOADING: {
       const loadingUpdates = action.payload;
       return {
@@ -231,11 +306,51 @@ export function useDashboardReducer() {
       }),
       
     // Data Actions
+    setDivisions: (divisions) => 
+      dispatch({ type: DASHBOARD_ACTIONS.SET_DIVISIONS, payload: divisions }),
+      
+    setSelectedDivision: (division) => 
+      dispatch({ type: DASHBOARD_ACTIONS.SET_SELECTED_DIVISION, payload: division }),
+      
     setNotes: (notes) => 
       dispatch({ type: DASHBOARD_ACTIONS.SET_NOTES, payload: notes }),
       
     addNote: (note) => 
       dispatch({ type: DASHBOARD_ACTIONS.ADD_NOTE, payload: note }),
+      
+    setPlayers: (players) => 
+      dispatch({ type: DASHBOARD_ACTIONS.SET_PLAYERS, payload: players }),
+      
+    setMatches: (matches) => 
+      dispatch({ type: DASHBOARD_ACTIONS.SET_MATCHES, payload: matches }),
+      
+    // Selection Actions
+    setSelectedProposal: (proposal) => 
+      dispatch({ type: DASHBOARD_ACTIONS.SET_SELECTED_PROPOSAL, payload: proposal }),
+      
+    setSelectedMatch: (match) => 
+      dispatch({ type: DASHBOARD_ACTIONS.SET_SELECTED_MATCH, payload: match }),
+      
+    setSelectedOpponent: (opponent) => 
+      dispatch({ type: DASHBOARD_ACTIONS.SET_SELECTED_OPPONENT, payload: opponent }),
+      
+    setCounterProposal: (proposal) => 
+      dispatch({ type: DASHBOARD_ACTIONS.SET_COUNTER_PROPOSAL, payload: proposal }),
+      
+    // Form Actions
+    setProposalNote: (note) => 
+      dispatch({ type: DASHBOARD_ACTIONS.SET_PROPOSAL_NOTE, payload: note }),
+      
+    // Counter Actions
+    setCounters: (counters) => 
+      dispatch({ type: DASHBOARD_ACTIONS.SET_COUNTERS, payload: counters }),
+      
+    // Phase Actions
+    setPhase: (phase) => 
+      dispatch({ type: DASHBOARD_ACTIONS.SET_PHASE, payload: phase }),
+      
+    setPhaseOverride: (phase) => 
+      dispatch({ type: DASHBOARD_ACTIONS.SET_PHASE_OVERRIDE, payload: phase }),
       
     // Loading Actions
     setLoading: (loadingState) => 
