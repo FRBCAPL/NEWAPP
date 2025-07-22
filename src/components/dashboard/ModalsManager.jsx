@@ -15,7 +15,6 @@ import DirectMessagingModal from '../DirectMessagingModal';
 import DraggableModal from '../modal/DraggableModal';
 
 export default function ModalsManager(props) {
-  console.log('DEBUG: showPlayerAvailability:', props.showPlayerAvailability, 'selectedOpponent:', props.selectedOpponent);
   return <>
     {/* Opponents Modal */}
     <OpponentsModal

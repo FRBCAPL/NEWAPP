@@ -137,7 +137,13 @@ export default function useDashboardState({
           setUnreadMessages(data.length);
         }
       } catch (err) {
-        console.error('Failed to fetch unread messages:', err);
+        // Silently handle backend connection errors in development
+        if (BACKEND_URL.includes('localhost')) {
+          console.log('Backend not running locally - this is normal for frontend-only development');
+        } else {
+          console.error('Failed to fetch unread messages:', err);
+        }
+        setUnreadMessages(0);
       }
     }
     if (senderEmail) {
