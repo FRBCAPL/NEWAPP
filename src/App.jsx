@@ -25,6 +25,8 @@ import AdminDashboard from "./components/dashboard/AdminDashboard";
 import PinLogin from "./components/modal/PinLogin";
 import FloatingLogos from './components/FloatingLogos';
 import AppHeader from './components/AppHeader';
+// 📱 MOBILE DEBUG: Import mobile debugger (development only)
+import MobileDebugger from './components/MobileDebugger';
 import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
 import csiLogo from "./assets/csi_logo.png";
@@ -32,6 +34,8 @@ import usaplLogo from "./assets/usapl_logo.png";
 import fargorateLogo from "./assets/fargorate-logo.png";
 import "./styles/variables.css";
 import "./styles/global.css";
+// 📱 MOBILE FIX: Import mobile-first responsive fixes
+import "./styles/mobile-fixes.css";
 
 function MainApp({
   isAuthenticated,
@@ -228,6 +232,9 @@ function App() {
           </Routes>
         </div>
       </div>
+      
+      {/* 📱 MOBILE DEBUG: Development-only mobile debugger */}
+      <MobileDebugger />
     </HashRouter>
   );
 }
