@@ -68,7 +68,7 @@ export default function Dashboard(props) {
             id="news-updates-section"
             notes={dashboard.notes}
             loadingNotes={dashboard.loadingNotes}
-            userPin={props.userPin}
+            userEmail={props.senderEmail}
             onShowChat={() => dashboard.setShowChatModal(true)}
             onShowStandings={() => dashboard.setShowStandings(true)}
             onDeleteNote={dashboard.handleDeleteNote}

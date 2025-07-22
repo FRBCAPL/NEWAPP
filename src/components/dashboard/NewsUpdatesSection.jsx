@@ -5,7 +5,7 @@ import { SkeletonLoader } from "../LoadingSpinner";
 export default function NewsUpdatesSection({
   notes,
   loadingNotes,
-  userPin,
+  userEmail,
   onShowChat,
   onShowStandings,
   onDeleteNote,
