@@ -118,7 +118,7 @@ Good luck and have fun!`;
     sendConfirmationEmail(params);
 
     // --- Use to24Hour(time) here! ---
-    fetch('https://atlasbackend-bnng.onrender.com/api/matches', {
+            fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'}/api/matches`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

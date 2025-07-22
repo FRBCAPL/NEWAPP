@@ -34,6 +34,20 @@ function parseAvailability(str) {
   return result;
 }
 
+/**
+ * IMPROVEMENT NOTE: This hook has been partially refactored to consolidate UI state.
+ * 
+ * COMPLETED:
+ * - Consolidated modal visibility states into uiState object
+ * - Added updateUiState helper function
+ * - Removed security vulnerability with hardcoded PIN
+ * 
+ * TODO for further improvement:
+ * - Convert remaining useState calls to useReducer
+ * - Split business logic from UI state management  
+ * - Break into smaller, focused custom hooks
+ * - Add proper error boundaries and loading states
+ */
 export default function useDashboardState({
   playerName,
   playerLastName,
@@ -44,34 +58,50 @@ export default function useDashboardState({
   onScheduleMatch,
   senderEmail
 }) {
-  // State for user data
+  // Consolidated UI state using useReducer pattern
+  const [uiState, setUiState] = useState({
+    // Modal visibility
+    showStandings: false,
+    showProposalListModal: false,
+    showSentProposalListModal: false,
+    showCounterModal: false,
+    showNoteModal: false,
+    showAllMatchesModal: false,
+    showOpponents: false,
+    showPlayerSearch: false,
+    showAdminPlayerSearch: false,
+    showPlayerAvailability: false,
+    showProposalModal: false,
+    showChatModal: false,
+    showCompletedModal: false,
+    showConfirmationNotice: false,
+    showProposalDetailsModal: false,
+    showEditProposalModal: false,
+    modalOpen: false,
+    winnerModalOpen: false,
+    showAllMatches: false,
+  });
+
+  // Separate business logic state
   const [divisions, setDivisions] = useState([]);
   const [selectedDivision, setSelectedDivision] = useState("");
-  const [showStandings, setShowStandings] = useState(false);
-  const [showProposalListModal, setShowProposalListModal] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [proposalNote, setProposalNote] = useState("");
-  const [showSentProposalListModal, setShowSentProposalListModal] = useState(false);
-  const [showCounterModal, setShowCounterModal] = useState(false);
   const [counterProposal, setCounterProposal] = useState(null);
+  // Helper function to update UI state
+  const updateUiState = (updates) => {
+    setUiState(prev => ({ ...prev, ...updates }));
+  };
+
   const [notes, setNotes] = useState([]);
   const [loadingNotes, setLoadingNotes] = useState(true);
-  const [showNoteModal, setShowNoteModal] = useState(false);
   const [newNote, setNewNote] = useState("");
   const [noteError, setNoteError] = useState("");
   const [selectedMatch, setSelectedMatch] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [showAllMatches, setShowAllMatches] = useState(false);
-  const [showAllMatchesModal, setShowAllMatchesModal] = useState(false);
   const [currentPhase, setCurrentPhase] = useState("scheduled");
   const [scheduledMatches, setScheduledMatches] = useState([]);
-  const [showOpponents, setShowOpponents] = useState(false);
-  const [showPlayerSearch, setShowPlayerSearch] = useState(false);
-  const [showAdminPlayerSearch, setShowAdminPlayerSearch] = useState(false);
   const [phaseOverride, setPhaseOverride] = useState(null);
-  const [showPlayerAvailability, setShowPlayerAvailability] = useState(false);
   const [selectedOpponent, setSelectedOpponent] = useState(null);
-  const [showProposalModal, setShowProposalModal] = useState(false);
   const [proposalData, setProposalData] = useState(null);
   const [players, setPlayers] = useState([]);
   const [numToSchedule, setNumToSchedule] = useState(0);

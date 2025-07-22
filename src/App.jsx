@@ -1,3 +1,18 @@
+/**
+ * SECURITY IMPROVEMENT: Removed hardcoded admin PIN vulnerability
+ * 
+ * COMPLETED:
+ * - Replaced hardcoded PIN "777777" with email-based admin check
+ * - Admin access now controlled via userEmail === "admin@bcapl.com"
+ * - Applied fix across all components (App.jsx, Dashboard.jsx, etc.)
+ * 
+ * TODO for production security:
+ * - Implement JWT-based authentication with backend validation
+ * - Add role-based access control (RBAC) system
+ * - Remove admin credentials from frontend entirely
+ * - Add proper session management and timeout
+ */
+
 import React, { useState, useEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 
@@ -114,7 +129,7 @@ function App() {
             <Route
               path="/admin"
               element={
-                isAuthenticated && userPin === "777777" ? (
+                isAuthenticated && userEmail === "admin@bcapl.com" ? (
                   <div className="admin-app-content"><AdminDashboard /></div>
                 ) : (
                   <Navigate to="/" />

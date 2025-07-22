@@ -230,7 +230,7 @@ export default function ModalsManager(props) {
         onSelect={() => {}}
         onClose={props.onCloseCompletedModal}
         type="completed"
-        isAdmin={props.userPin === "777777"}
+        isAdmin={props.userEmail === "admin@bcapl.com"}
         senderEmail={props.senderEmail}
         senderName={props.fullName}
       />

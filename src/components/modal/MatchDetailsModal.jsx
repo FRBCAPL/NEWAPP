@@ -227,7 +227,7 @@ export default function MatchDetailsModal({ open, onClose, match, onCompleted, u
           {localMatch.winner && (
             <div style={{ color: '#ffd700', fontWeight: 700, marginTop: 6, fontSize: '1em' }}>
               🏆 Winner: {localMatch.winner}
-              {userPin === '777777' && localMatch.winnerChangedByName && (
+              {userEmail === 'admin@bcapl.com' && localMatch.winnerChangedByName && (
                 <span style={{ color: '#aaa', fontWeight: 400, fontSize: '0.95em', marginLeft: 8 }}>
                   (marked by {localMatch.winnerChangedByName}
                   {localMatch.winnerChangedAt ? ` on ${new Date(localMatch.winnerChangedAt).toLocaleString()}` : ''})

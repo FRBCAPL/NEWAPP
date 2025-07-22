@@ -81,7 +81,7 @@ export default function Dashboard(props) {
         >
           Logout
         </button>
-          {props.userPin === "777777" && (
+          {props.senderEmail === "admin@bcapl.com" && (
           <>
             <button
               className={styles.dashboardAdminBtn}

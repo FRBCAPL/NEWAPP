@@ -46,7 +46,7 @@ export default function NewsUpdatesSection({
                 className={styles.dashboardNoteItem}
               >
                 <span style={{ flex: 1 }}>{note.text}</span>
-                {userPin === "777777" && (
+                {userEmail === "admin@bcapl.com" && (
                   <button
                     onClick={() => onDeleteNote(note._id)}
                     style={{
@@ -70,7 +70,7 @@ export default function NewsUpdatesSection({
           )}
         </ul>
       )}
-      {userPin === "777777" && notes.length > 0 && (
+              {userEmail === "admin@bcapl.com" && notes.length > 0 && (
         <button
           style={{
             marginTop: 10,
