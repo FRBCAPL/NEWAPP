@@ -2,7 +2,8 @@ import React from "react";
 import styles from "./dashboard.module.css";
 import { SkeletonLoader } from "../LoadingSpinner";
 
-export default function NewsUpdatesSection({
+// PERFORMANCE: React.memo prevents unnecessary re-renders when props haven't changed
+function NewsUpdatesSection({
   notes,
   loadingNotes,
   userEmail,
@@ -90,4 +91,7 @@ export default function NewsUpdatesSection({
       )}
     </section>
   );
-} 
+}
+
+// PERFORMANCE: Export with React.memo for optimization
+export default React.memo(NewsUpdatesSection); 
