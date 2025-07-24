@@ -27,6 +27,8 @@ import FloatingLogos from './components/FloatingLogos';
 import AppHeader from './components/AppHeader';
 // 📱 MOBILE DEBUG: Import mobile debugger (development only)
 import MobileDebugger from './components/MobileDebugger';
+// 🎱 PRO POOL SIMULATION: Professional tournament-grade pool simulation
+import ProPoolDemo from './components/ProPoolDemo';
 import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
 import csiLogo from "./assets/csi_logo.png";
@@ -65,9 +67,10 @@ function MainApp({
             senderEmail={userEmail}
             onScheduleMatch={() => {}}
             onOpenChat={() => (window.location.hash = "#/chat")}
-            onLogout={handleLogout}
-            userPin={userPin}
-            onGoToAdmin={() => navigate("/admin")}
+                                          onLogout={handleLogout}
+                              userPin={userPin}
+                              onGoToAdmin={() => navigate("/admin")}
+                              onGoToProPool={() => navigate("/pro-pool")}
           />
         </ErrorBoundary>
       )}
@@ -154,6 +157,19 @@ function App() {
                 ) : (
                   <Navigate to="/" />
                 )
+              }
+            />
+            <Route
+              path="/pro-pool"
+              element={
+                <ErrorBoundary 
+                  message="Pro Pool Simulation temporarily unavailable. Please try refreshing."
+                  onError={(error, errorInfo) => {
+                    console.error('🚨 Pro Pool Simulation Error:', error);
+                  }}
+                >
+                  <ProPoolDemo />
+                </ErrorBoundary>
               }
             />
             <Route

@@ -98,6 +98,19 @@ export default function Dashboard(props) {
             >
               Admin
             </button>
+            <button
+              className={styles.dashboardAdminBtn}
+              onClick={props.onGoToProPool}
+              type="button"
+              style={{
+                background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+                color: '#000',
+                fontWeight: 'bold',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+              }}
+            >
+              🎱 Pro Pool
+            </button>
               <button
                 className={styles.dashboardAdminBtn}
                 onClick={() => dashboard.setPhaseOverride(dashboard.phaseOverride === "challenge" ? "scheduled" : "challenge")}
