@@ -9,6 +9,7 @@ import NewsUpdatesSection from "./NewsUpdatesSection";
 import CountersRow from "./CountersRow";
 import ModalsManager from "./ModalsManager";
 import useDashboardState from "./useDashboardState";
+import ErrorBoundary from "../ErrorBoundary";
 
 const STANDINGS_URLS = {
   "FRBCAPL TEST": "https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=b345a437-3415-4765-b19a-b2f7014f2cfa",
@@ -68,7 +69,7 @@ export default function Dashboard(props) {
             id="news-updates-section"
             notes={dashboard.notes}
             loadingNotes={dashboard.loadingNotes}
-            userPin={props.userPin}
+            userEmail={props.senderEmail}
             onShowChat={() => dashboard.setShowChatModal(true)}
             onShowStandings={() => dashboard.setShowStandings(true)}
             onDeleteNote={dashboard.handleDeleteNote}
@@ -81,7 +82,7 @@ export default function Dashboard(props) {
         >
           Logout
         </button>
-          {props.userPin === "777777" && (
+          {props.senderEmail === "admin@bcapl.com" && (
           <>
             <button
               className={styles.dashboardAdminBtn}
@@ -96,6 +97,19 @@ export default function Dashboard(props) {
               type="button"
             >
               Admin
+            </button>
+            <button
+              className={styles.dashboardAdminBtn}
+              onClick={props.onGoToProPool}
+              type="button"
+              style={{
+                background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+                color: '#000',
+                fontWeight: 'bold',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+              }}
+            >
+              🎱 Pro Pool
             </button>
               <button
                 className={styles.dashboardAdminBtn}
@@ -118,31 +132,39 @@ export default function Dashboard(props) {
   )}
         </div>
       </div>
-      <ModalsManager
-        {...dashboard}
-        standingsUrl={STANDINGS_URLS[dashboard.selectedDivision]}
-        styles={styles}
-        userPin={props.userPin}
-        senderEmail={props.senderEmail}
-        fullName={dashboard.fullName}
-        onCloseProposalListModal={dashboard.onCloseProposalListModal}
-        onCloseSentProposalListModal={dashboard.onCloseSentProposalListModal}
-        onSelectPendingProposal={dashboard.onSelectPendingProposal}
-        onSelectSentProposal={dashboard.onSelectSentProposal}
-        onCloseOpponents={dashboard.onCloseOpponents}
-        onClosePlayerSearch={dashboard.onClosePlayerSearch}
-        onCloseAdminPlayerSearch={dashboard.onCloseAdminPlayerSearch}
-        onClosePlayerAvailability={dashboard.onClosePlayerAvailability}
-        onCloseProposalModal={dashboard.onCloseProposalModal}
-        onCloseStandings={dashboard.onCloseStandings}
-        onCloseMatchDetails={dashboard.onCloseMatchDetails}
-        onCloseCounterProposal={dashboard.onCloseCounterProposal}
-        onCloseProposalDetails={dashboard.onCloseProposalDetails}
-        onCloseEditProposal={dashboard.onCloseEditProposal}
-        onCloseWinnerModal={dashboard.onCloseWinnerModal}
-        onCloseChatModal={dashboard.onCloseChatModal}
-        onCloseCompletedModal={dashboard.onCloseCompletedModal}
-    />
+      <ErrorBoundary 
+        message="Some features temporarily unavailable. Core app still works."
+        onError={(error, errorInfo) => {
+          console.error('🚨 ModalsManager Error:', error);
+          // Modals failing shouldn't break the whole app
+        }}
+      >
+        <ModalsManager
+          {...dashboard}
+          standingsUrl={STANDINGS_URLS[dashboard.selectedDivision]}
+          styles={styles}
+          userPin={props.userPin}
+          senderEmail={props.senderEmail}
+          fullName={dashboard.fullName}
+          onCloseProposalListModal={dashboard.onCloseProposalListModal}
+          onCloseSentProposalListModal={dashboard.onCloseSentProposalListModal}
+          onSelectPendingProposal={dashboard.onSelectPendingProposal}
+          onSelectSentProposal={dashboard.onSelectSentProposal}
+          onCloseOpponents={dashboard.onCloseOpponents}
+          onClosePlayerSearch={dashboard.onClosePlayerSearch}
+          onCloseAdminPlayerSearch={dashboard.onCloseAdminPlayerSearch}
+          onClosePlayerAvailability={dashboard.onClosePlayerAvailability}
+          onCloseProposalModal={dashboard.onCloseProposalModal}
+          onCloseStandings={dashboard.onCloseStandings}
+          onCloseMatchDetails={dashboard.onCloseMatchDetails}
+          onCloseCounterProposal={dashboard.onCloseCounterProposal}
+          onCloseProposalDetails={dashboard.onCloseProposalDetails}
+          onCloseEditProposal={dashboard.onCloseEditProposal}
+          onCloseWinnerModal={dashboard.onCloseWinnerModal}
+          onCloseChatModal={dashboard.onCloseChatModal}
+          onCloseCompletedModal={dashboard.onCloseCompletedModal}
+        />
+      </ErrorBoundary>
   </div>
 );
 }

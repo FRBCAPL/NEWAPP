@@ -3,7 +3,9 @@ import styles from './DirectMessagingModal.module.css';
 import DraggableModal from './modal/DraggableModal';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
-console.log('BACKEND_URL in use:', BACKEND_URL);
+if (import.meta.env.DEV && BACKEND_URL.includes('localhost')) {
+  console.log('🔧 Development Mode: Backend expected at', BACKEND_URL);
+}
 
 export default function DirectMessagingModal({ userName, userEmail, userPin, selectedDivision, opponentEmails = [], onClose }) {
   console.log('Opponent Emails:', opponentEmails);

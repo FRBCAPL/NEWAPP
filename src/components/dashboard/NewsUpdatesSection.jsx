@@ -2,10 +2,11 @@ import React from "react";
 import styles from "./dashboard.module.css";
 import { SkeletonLoader } from "../LoadingSpinner";
 
-export default function NewsUpdatesSection({
+// PERFORMANCE: React.memo prevents unnecessary re-renders when props haven't changed
+function NewsUpdatesSection({
   notes,
   loadingNotes,
-  userPin,
+  userEmail,
   onShowChat,
   onShowStandings,
   onDeleteNote,
@@ -46,7 +47,7 @@ export default function NewsUpdatesSection({
                 className={styles.dashboardNoteItem}
               >
                 <span style={{ flex: 1 }}>{note.text}</span>
-                {userPin === "777777" && (
+                {userEmail === "admin@bcapl.com" && (
                   <button
                     onClick={() => onDeleteNote(note._id)}
                     style={{
@@ -70,7 +71,7 @@ export default function NewsUpdatesSection({
           )}
         </ul>
       )}
-      {userPin === "777777" && notes.length > 0 && (
+              {userEmail === "admin@bcapl.com" && notes.length > 0 && (
         <button
           style={{
             marginTop: 10,
@@ -90,4 +91,7 @@ export default function NewsUpdatesSection({
       )}
     </section>
   );
-} 
+}
+
+// PERFORMANCE: Export with React.memo for optimization
+export default React.memo(NewsUpdatesSection); 

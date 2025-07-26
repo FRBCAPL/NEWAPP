@@ -15,7 +15,6 @@ import DirectMessagingModal from '../DirectMessagingModal';
 import DraggableModal from '../modal/DraggableModal';
 
 export default function ModalsManager(props) {
-  console.log('DEBUG: showPlayerAvailability:', props.showPlayerAvailability, 'selectedOpponent:', props.selectedOpponent);
   return <>
     {/* Opponents Modal */}
     <OpponentsModal
@@ -230,7 +229,7 @@ export default function ModalsManager(props) {
         onSelect={() => {}}
         onClose={props.onCloseCompletedModal}
         type="completed"
-        isAdmin={props.userPin === "777777"}
+        isAdmin={props.userEmail === "admin@bcapl.com"}
         senderEmail={props.senderEmail}
         senderName={props.fullName}
       />

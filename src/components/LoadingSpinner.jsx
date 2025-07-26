@@ -1,6 +1,7 @@
 import React from 'react';
 
-export default function LoadingSpinner({ 
+// PERFORMANCE: React.memo for frequently used loading component
+function LoadingSpinner({ 
   size = "medium", 
   color = "#e53e3e", 
   text = "Loading...",
@@ -108,6 +109,9 @@ export function LoadingButton({
     </button>
   );
 }
+
+// PERFORMANCE: Export with React.memo for optimization
+export default React.memo(LoadingSpinner);
 
 // Skeleton loading component for content
 export function SkeletonLoader({ 

@@ -1,0 +1,345 @@
+/**
+ * 📱 MOBILE-FIRST RESPONSIVE FIXES
+ * 
+ * This file fixes all mobile scaling issues by providing clean,
+ * mobile-first styles that work on all devices.
+ */
+
+/* 🔧 RESET PROBLEMATIC STYLES */
+html, body, #root {
+  /* Remove conflicting overflow settings */
+  overflow: visible !important;
+  overflow-x: hidden !important;
+  
+  /* Fix viewport height issues on mobile */
+  height: auto !important;
+  min-height: 100vh !important;
+  
+  /* Ensure proper scaling */
+  width: 100% !important;
+  max-width: 100vw !important;
+  
+  /* Reset margins/padding */
+  margin: 0 !important;
+  padding: 0 !important;
+  
+  /* Proper box model */
+  box-sizing: border-box !important;
+}
+
+/* 📱 MOBILE-FIRST ROOT LAYOUT */
+#root {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  
+  /* Allow content to expand naturally */
+  min-height: 100vh !important;
+  height: auto !important;
+  
+  /* Responsive padding */
+  padding: 0.5rem !important;
+}
+
+/* 🎯 MAIN CONTENT CONTAINER - MOBILE FIRST */
+.main-app-content {
+  /* Full width on mobile, centered on desktop */
+  width: 100% !important;
+  max-width: 100vw !important;
+  
+  /* Responsive margins */
+  margin: 0 auto !important;
+  
+  /* Mobile-first padding */
+  padding: 0.5rem !important;
+  
+  /* Allow natural height */
+  min-height: auto !important;
+  height: auto !important;
+  
+  /* Proper flex layout */
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  
+  /* Enable scrolling if needed */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  
+  /* Proper box model */
+  box-sizing: border-box !important;
+  
+  /* Text wrapping */
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+/* 📦 CONTENT CONTAINERS */
+.content-container,
+.dashboardCard,
+.dashboardFrame {
+  /* Full width on mobile */
+  width: 100% !important;
+  max-width: 100% !important;
+  
+  /* Remove fixed margins that cause issues */
+  margin: 0.5rem 0 !important;
+  
+  /* Mobile-friendly padding */
+  padding: 0.75rem !important;
+  
+  /* Allow height to adjust */
+  height: auto !important;
+  min-height: auto !important;
+  
+  /* Proper box model */
+  box-sizing: border-box !important;
+  
+  /* Enable internal scrolling if needed */
+  overflow: visible !important;
+}
+
+/* 🎨 CARDS AND SECTIONS */
+.card,
+.section-card,
+.dashboardSectionBox {
+  /* Full width approach */
+  width: 100% !important;
+  max-width: 100% !important;
+  
+  /* Remove conflicting margins */
+  margin: 0.5rem 0 !important;
+  
+  /* Comfortable mobile padding */
+  padding: 1rem 0.75rem !important;
+  
+  /* Auto height */
+  height: auto !important;
+  min-height: auto !important;
+  
+  /* Proper box model */
+  box-sizing: border-box !important;
+  
+  /* Mobile-friendly border radius */
+  border-radius: 12px !important;
+  
+  /* Enable content flow */
+  overflow: visible !important;
+}
+
+/* 🔲 BUTTONS - MOBILE OPTIMIZED */
+button {
+  /* Touch-friendly sizing */
+  min-height: 44px !important;
+  min-width: 44px !important;
+  
+  /* Mobile-friendly padding */
+  padding: 0.75rem 1rem !important;
+  
+  /* Readable font size */
+  font-size: 1rem !important;
+  
+  /* Full width on very small screens */
+  width: auto !important;
+  
+  /* Proper spacing */
+  margin: 0.25rem !important;
+  
+  /* Proper box model */
+  box-sizing: border-box !important;
+}
+
+/* 📊 RESPONSIVE BREAKPOINTS - MOBILE FIRST */
+
+/* 📱 Extra Small Mobile (320px - 479px) */
+@media (max-width: 479px) {
+  #root {
+    padding: 0.25rem !important;
+  }
+  
+  .main-app-content {
+    padding: 0.25rem !important;
+  }
+  
+  .card,
+  .section-card,
+  .dashboardSectionBox {
+    padding: 0.75rem 0.5rem !important;
+    border-radius: 8px !important;
+  }
+  
+  button {
+    font-size: 0.9rem !important;
+    padding: 0.65rem 0.8rem !important;
+  }
+  
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.3rem !important; }
+  h3 { font-size: 1.1rem !important; }
+}
+
+/* 📱 Small Mobile (480px - 767px) */
+@media (min-width: 480px) {
+  #root {
+    padding: 0.5rem !important;
+  }
+  
+  .main-app-content {
+    padding: 0.75rem !important;
+  }
+}
+
+/* 📱 Large Mobile / Small Tablet (768px - 1023px) */
+@media (min-width: 768px) {
+  #root {
+    padding: 1rem !important;
+  }
+  
+  .main-app-content {
+    max-width: 750px !important;
+    padding: 1rem !important;
+  }
+  
+  .card,
+  .section-card,
+  .dashboardSectionBox {
+    padding: 1.25rem 1rem !important;
+  }
+}
+
+/* 💻 Desktop (1024px+) */
+@media (min-width: 1024px) {
+  #root {
+    padding: 1.5rem !important;
+  }
+  
+  .main-app-content {
+    max-width: 1000px !important;
+    padding: 1.5rem !important;
+  }
+  
+  .card,
+  .section-card,
+  .dashboardSectionBox {
+    padding: 1.5rem 1.25rem !important;
+  }
+}
+
+/* 🖥️ Large Desktop (1200px+) */
+@media (min-width: 1200px) {
+  .main-app-content {
+    max-width: 1200px !important;
+    padding: 2rem !important;
+  }
+}
+
+/* 🎯 SPECIFIC COMPONENT FIXES */
+
+/* Dashboard specific */
+.dashboard-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.dashboard-actions button {
+  flex: 1 1 auto !important;
+  min-width: 120px !important;
+  max-width: 200px !important;
+}
+
+/* Modal fixes */
+.modal,
+.player-modal,
+.match-proposal-content {
+  width: 95vw !important;
+  max-width: 500px !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  margin: 2rem auto !important;
+  padding: 1rem !important;
+  box-sizing: border-box !important;
+}
+
+/* Form elements */
+input,
+select,
+textarea {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 44px !important;
+  padding: 0.75rem !important;
+  font-size: 1rem !important;
+  box-sizing: border-box !important;
+}
+
+/* Navigation fixes */
+.buttonRow {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.topChatButton {
+  flex: 1 1 auto !important;
+  min-width: 100px !important;
+  max-width: 150px !important;
+}
+
+/* Text and typography */
+.app-header-title {
+  font-size: clamp(1.2rem, 4vw, 2.2rem) !important;
+  text-align: center !important;
+  word-break: break-word !important;
+}
+
+/* 🛠️ UTILITY CLASSES */
+.mobile-full-width {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.mobile-center {
+  text-align: center !important;
+  margin: 0 auto !important;
+}
+
+.mobile-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+}
+
+.mobile-wrap {
+  flex-wrap: wrap !important;
+}
+
+/* 📏 ENSURE CONTENT NEVER OVERFLOWS VIEWPORT */
+* {
+  max-width: 100vw !important;
+  box-sizing: border-box !important;
+}
+
+img,
+video,
+iframe {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Touch targets for mobile */
+@media (max-width: 768px) {
+  button,
+  input,
+  select,
+  textarea,
+  a {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+}

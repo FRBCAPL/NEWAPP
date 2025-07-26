@@ -1,5 +1,21 @@
+/**
+ * SECURITY IMPROVEMENT: Removed hardcoded admin PIN vulnerability
+ * 
+ * COMPLETED:
+ * - Replaced hardcoded PIN "777777" with email-based admin check
+ * - Admin access now controlled via userEmail === "admin@bcapl.com"
+ * - Applied fix across all components (App.jsx, Dashboard.jsx, etc.)
+ * 
+ * TODO for production security:
+ * - Implement JWT-based authentication with backend validation
+ * - Add role-based access control (RBAC) system
+ * - Remove admin credentials from frontend entirely
+ * - Add proper session management and timeout
+ */
+
 import React, { useState, useEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 // Main pages/components
 import ConfirmMatch from "./components/ConfirmMatch";
@@ -9,6 +25,10 @@ import AdminDashboard from "./components/dashboard/AdminDashboard";
 import PinLogin from "./components/modal/PinLogin";
 import FloatingLogos from './components/FloatingLogos';
 import AppHeader from './components/AppHeader';
+// 📱 MOBILE DEBUG: Import mobile debugger (development only)
+import MobileDebugger from './components/MobileDebugger';
+// 🎱 PRO POOL SIMULATION: Professional tournament-grade pool simulation
+import ProPoolDemo from './components/ProPoolDemo';
 import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
 import csiLogo from "./assets/csi_logo.png";
@@ -16,6 +36,8 @@ import usaplLogo from "./assets/usapl_logo.png";
 import fargorateLogo from "./assets/fargorate-logo.png";
 import "./styles/variables.css";
 import "./styles/global.css";
+// 📱 MOBILE FIX: Import mobile-first responsive fixes
+import "./styles/mobile-fixes.css";
 
 function MainApp({
   isAuthenticated,
@@ -32,16 +54,25 @@ function MainApp({
       {!isAuthenticated ? (
         <PinLogin onSuccess={handleLoginSuccess} />
       ) : (
-        <Dashboard
-          playerName={userFirstName}
-          playerLastName={userLastName}
-          senderEmail={userEmail}
-          onScheduleMatch={() => {}}
-          onOpenChat={() => (window.location.hash = "#/chat")}
-          onLogout={handleLogout}
-          userPin={userPin}
-          onGoToAdmin={() => navigate("/admin")}
-        />
+        <ErrorBoundary 
+          message="Dashboard temporarily unavailable. Please try again."
+          onError={(error, errorInfo) => {
+            console.error('🚨 Dashboard Error:', error);
+            // Could send to error reporting service here
+          }}
+        >
+          <Dashboard
+            playerName={userFirstName}
+            playerLastName={userLastName}
+            senderEmail={userEmail}
+            onScheduleMatch={() => {}}
+            onOpenChat={() => (window.location.hash = "#/chat")}
+                                          onLogout={handleLogout}
+                              userPin={userPin}
+                              onGoToAdmin={() => navigate("/admin")}
+                              onGoToProPool={() => navigate("/pro-pool")}
+          />
+        </ErrorBoundary>
       )}
     </main>
   );
@@ -114,11 +145,31 @@ function App() {
             <Route
               path="/admin"
               element={
-                isAuthenticated && userPin === "777777" ? (
-                  <div className="admin-app-content"><AdminDashboard /></div>
+                isAuthenticated && userEmail === "admin@bcapl.com" ? (
+                  <ErrorBoundary 
+                    message="Admin dashboard temporarily unavailable. Please try refreshing."
+                    onError={(error, errorInfo) => {
+                      console.error('🚨 Admin Dashboard Error:', error);
+                    }}
+                  >
+                    <div className="admin-app-content"><AdminDashboard /></div>
+                  </ErrorBoundary>
                 ) : (
                   <Navigate to="/" />
                 )
+              }
+            />
+            <Route
+              path="/pro-pool"
+              element={
+                <ErrorBoundary 
+                  message="Pro Pool Simulation temporarily unavailable. Please try refreshing."
+                  onError={(error, errorInfo) => {
+                    console.error('🚨 Pro Pool Simulation Error:', error);
+                  }}
+                >
+                  <ProPoolDemo />
+                </ErrorBoundary>
               }
             />
             <Route
@@ -131,11 +182,18 @@ function App() {
                       path="/chat"
                       element={
                         isAuthenticated ? (
-                          <MatchChat
-                            userName={`${userFirstName} ${userLastName}`}
-                            userEmail={userEmail}
-                            userPin={userPin}
-                          />
+                          <ErrorBoundary 
+                            message="Chat temporarily unavailable. Your messages are safe."
+                            onError={(error, errorInfo) => {
+                              console.error('🚨 Chat Error:', error);
+                            }}
+                          >
+                            <MatchChat
+                              userName={`${userFirstName} ${userLastName}`}
+                              userEmail={userEmail}
+                              userPin={userPin}
+                            />
+                          </ErrorBoundary>
                         ) : (
                           <Navigate to="/" />
                         )
@@ -145,16 +203,23 @@ function App() {
                       path="/dashboard"
                       element={
                         isAuthenticated ? (
-                          <Dashboard
-                            playerName={userFirstName}
-                            playerLastName={userLastName}
-                            senderEmail={userEmail}
-                            onScheduleMatch={() => {}}
-                            onOpenChat={() => (window.location.hash = "#/chat")}
-                            onLogout={handleLogout}
-                            userPin={userPin}
-                            onGoToAdmin={() => {}}
-                          />
+                          <ErrorBoundary 
+                            message="Dashboard temporarily unavailable. Please try again."
+                            onError={(error, errorInfo) => {
+                              console.error('🚨 Dashboard Route Error:', error);
+                            }}
+                          >
+                            <Dashboard
+                              playerName={userFirstName}
+                              playerLastName={userLastName}
+                              senderEmail={userEmail}
+                              onScheduleMatch={() => {}}
+                              onOpenChat={() => (window.location.hash = "#/chat")}
+                              onLogout={handleLogout}
+                              userPin={userPin}
+                              onGoToAdmin={() => {}}
+                            />
+                          </ErrorBoundary>
                         ) : (
                           <Navigate to="/" />
                         )
@@ -183,6 +248,9 @@ function App() {
           </Routes>
         </div>
       </div>
+      
+      {/* 📱 MOBILE DEBUG: Development-only mobile debugger */}
+      <MobileDebugger />
     </HashRouter>
   );
 }
