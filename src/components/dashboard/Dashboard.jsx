@@ -29,6 +29,9 @@ export default function Dashboard(props) {
               {props.playerName} {props.playerLastName}
             </span>
           </h1>
+          <div style={{ background: '#40b4ff', color: 'white', padding: '10px', margin: '10px 0', borderRadius: '8px', textAlign: 'center' }}>
+            🎱 NEW: Tutorial Game Available! Look for the blue Tutorial button below! 🎱
+          </div>
           <div className={styles.announcement}>
             <p>This is the BETA version. </p>Matches that are created, scheduled, and confirmed will NOT be played.<br />
             This is for testing purposes only.
