@@ -17,6 +17,8 @@ const STANDINGS_URLS = {
 
 export default function Dashboard(props) {
   const dashboard = useDashboardState(props);
+  console.log('Dashboard state:', dashboard);
+  console.log('Tutorial modal state:', dashboard.showTutorialModal, dashboard.setShowTutorialModal);
   return (
     <div className={styles.dashboardBg} style={{ position: 'relative' }}>
       <div className={styles.dashboardFrame} style={{ position: 'relative', zIndex: 1, overflow: 'hidden' }}>
@@ -74,6 +76,17 @@ export default function Dashboard(props) {
             onDeleteNote={dashboard.handleDeleteNote}
             onClearNotes={dashboard.handleClearNotes}
           />
+        <button
+          className={styles.dashboardTutorialBtn}
+          onClick={() => {
+            console.log('Tutorial button clicked!');
+            dashboard.setShowTutorialModal(true);
+          }}
+          type="button"
+          style={{ backgroundColor: '#40b4ff', color: 'white', padding: '10px 20px', marginRight: '10px' }}
+        >
+          🎱 Tutorial Game
+        </button>
         <button
           className={styles.dashboardLogoutBtn}
             onClick={props.onLogout}

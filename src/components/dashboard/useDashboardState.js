@@ -94,6 +94,7 @@ export default function useDashboardState({
   const [winnerModalMatch, setWinnerModalMatch] = useState(null);
   const [winnerModalPlayers, setWinnerModalPlayers] = useState({ player1: '', player2: '' });
   const [showCompletedModal, setShowCompletedModal] = useState(false);
+  const [showTutorialModal, setShowTutorialModal] = useState(false);
   const [showConfirmationNotice, setShowConfirmationNotice] = useState(false);
 
   useEffect(() => {
@@ -466,6 +467,7 @@ export default function useDashboardState({
   const onCloseWinnerModal = () => setWinnerModalOpen(false);
   const onCloseChatModal = () => setShowChatModal(false);
   const onCloseCompletedModal = () => setShowCompletedModal(false);
+  const onCloseTutorialModal = () => setShowTutorialModal(false);
   function onProposeMatch(day, slot, phase, division) {
     setProposalData({
       player: selectedOpponent,
@@ -657,6 +659,9 @@ export default function useDashboardState({
     onProposeMatch,
     onProposalCompleteProposalModal,
     onConfirmProposal,
-    onSelectWinner
+    onSelectWinner,
+    showTutorialModal,
+    setShowTutorialModal,
+    onCloseTutorialModal
   };
 } 
