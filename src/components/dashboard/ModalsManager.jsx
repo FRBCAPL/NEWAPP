@@ -13,6 +13,7 @@ import OpponentsModal from "../modal/OpponentsModal";
 import WinnerSelectModal from '../modal/WinnerSelectModal';
 import DirectMessagingModal from '../DirectMessagingModal';
 import DraggableModal from '../modal/DraggableModal';
+import TutorialGameModal from '../modal/TutorialGameModal';
 
 export default function ModalsManager(props) {
   console.log('DEBUG: showPlayerAvailability:', props.showPlayerAvailability, 'selectedOpponent:', props.selectedOpponent);
@@ -274,6 +275,14 @@ export default function ModalsManager(props) {
           OK
         </button>
       </DraggableModal>
+    )}
+
+    {/* Tutorial Game Modal */}
+    {props.showTutorialModal && (
+      <TutorialGameModal
+        open={props.showTutorialModal}
+        onClose={props.onCloseTutorialModal}
+      />
     )}
   </>;
 } 

@@ -333,6 +333,26 @@
   border-color: var(--accent-red-dark);
   transform: scale(1.04);
 }
+
+.dashboardTutorialBtn {
+  background: transparent;
+  color: #40b4ff;
+  border: 2px solid #40b4ff;
+  border-radius: 6px;
+  padding: 0.7rem 1.4rem;
+  font-size: .7rem;
+  font-weight: 500;
+  margin-right: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s;
+}
+.dashboardTutorialBtn:hover,
+.dashboardTutorialBtn:focus {
+  background: #40b4ff;
+  color: var(--white);
+  border-color: #2090dd;
+  transform: scale(1.04);
+}
 .dashboardNoteItem {
   display: flex;
   align-items: center;

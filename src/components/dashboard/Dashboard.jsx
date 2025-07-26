@@ -75,6 +75,13 @@ export default function Dashboard(props) {
             onClearNotes={dashboard.handleClearNotes}
           />
         <button
+          className={styles.dashboardTutorialBtn}
+          onClick={() => dashboard.setShowTutorialModal(true)}
+          type="button"
+        >
+          Tutorial
+        </button>
+        <button
           className={styles.dashboardLogoutBtn}
             onClick={props.onLogout}
           type="button"
