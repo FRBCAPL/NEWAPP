@@ -8,6 +8,7 @@ import MatchChat from "./components/chat/MatchChat";
 import AdminDashboard from "./components/dashboard/AdminDashboard";
 import PinLogin from "./components/modal/PinLogin";
 import FloatingLogos from './components/FloatingLogos';
+import Elite10BallDemo from './components/Elite10BallDemo';
 import AppHeader from './components/AppHeader';
 import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
@@ -173,6 +174,10 @@ function App() {
                           handleLogout={handleLogout}
                         />
                       }
+                    />
+                    <Route
+                      path="/elite10ball"
+                      element={<Elite10BallDemo />}
                     />
                     {/* Catch-all route */}
                     <Route path="*" element={<Navigate to="/" />} />
