@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from "react";
-import table2 from "./PoolTableSVG/table2.svg";
+import React, { useRef, useEffect, Fragment } from "react";
+import predatorTable from "./PoolTableSVG/PredatorTable.png";
 import nineBall from "../assets/nineball.svg";
 import tenBall from "../assets/tenball.svg";
 import eightBall from "../assets/8ball.svg";
@@ -556,7 +556,7 @@ export default function PoolSimulation() {
         boxShadow: "inset 0 0 50px rgba(0,0,0,0.8)",
       }}
     >
-      {/* Overhead lighting effect */}
+      {/* Overhead lighting effect - more natural falloff */}
       <div
         style={{
           position: "absolute",
@@ -564,15 +564,42 @@ export default function PoolSimulation() {
           left: 0,
           width: "100%",
           height: "100%",
-          background: "radial-gradient(ellipse 600px 300px at center 40px, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.10) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%, transparent 90%)",
+          background: "radial-gradient(ellipse 1200px 800px at center 60px, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.04) 20%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0.01) 60%, transparent 80%)",
           zIndex: 3,
           pointerEvents: "none",
+        }}
+      />
+      {/* Subtle overall lighting to smooth transitions */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: "radial-gradient(circle 800px at center 40px, rgba(255,255,255,0.02) 0%, transparent 70%)",
+          zIndex: 3,
+          pointerEvents: "none",
+        }}
+      />
+      {/* Darken the left side (side with fewer balls) to match the right side */}
+      <div
+        style={{
+          position: "absolute",
+          top: "10%",
+          left: "5%",
+          width: "90%",
+          height: "80%",
+          background: "linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.10) 30%, rgba(0,0,0,0.06) 60%, rgba(0,0,0,0.02) 85%, transparent 100%)",
+          zIndex: 3,
+          pointerEvents: "none",
+          borderRadius: "10%",
         }}
       />
       
       <img
         ref={tableImgRef}
-        src={table2}
+        src={predatorTable}
         alt="Pool Table"
         style={{
           width: "100%",
@@ -626,21 +653,6 @@ export default function PoolSimulation() {
       </div>
       {BALLS.map(ball => (
         <React.Fragment key={ball.key}>
-          {/* Ball shadow */}
-          <div
-            style={{
-              position: "absolute",
-              left: (balls.current[ball.key]?.x !== undefined ? balls.current[ball.key].x - BALL_RADIUS + 2 : 0),
-              top: (balls.current[ball.key]?.y !== undefined ? balls.current[ball.key].y - BALL_RADIUS + 2 : 0),
-              width: BALL_SIZE,
-              height: BALL_SIZE,
-              borderRadius: "50%",
-              background: "radial-gradient(ellipse 12px 6px at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)",
-              zIndex: 5,
-              opacity: balls.current[ball.key]?.visible === false ? 0 : 0.6,
-              pointerEvents: "none",
-            }}
-          />
           {/* Ball with enhanced lighting */}
           <img
             src={ball.src}
