@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import predatorTable from "./PoolTableSVG/Predator.png";
+import table2 from "./PoolTableSVG/table2.svg";
 import nineBall from "../assets/nineball.svg";
 import tenBall from "../assets/tenball.svg";
 import eightBall from "../assets/8ball.svg";
@@ -572,7 +572,7 @@ export default function PoolSimulation() {
       
       <img
         ref={tableImgRef}
-        src={predatorTable}
+        src={table2}
         alt="Pool Table"
         style={{
           width: "100%",
