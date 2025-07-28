@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import table2 from "./PoolTableSVG/table2.svg";
+import predatorTable from "./PoolTableSVG/Predator.png";
 import nineBall from "../assets/nineball.svg";
 import tenBall from "../assets/tenball.svg";
 import eightBall from "../assets/8ball.svg";
@@ -419,9 +419,9 @@ export default function PoolSimulation() {
     const subSteps = 16;
 
     // Felt bounds in simulation coordinates
-    const FELT_LEFT = 18.25;
+    const FELT_LEFT = 30.0; // Fine-tuned left rail contact point
     const FELT_RIGHT = 570.77;
-    const FELT_TOP = 20.20;
+    const FELT_TOP = 24.5; // Fine-tuned top rail contact point
     const FELT_BOTTOM = 270.18;
 
     function step() {
@@ -437,7 +437,7 @@ export default function PoolSimulation() {
           // --- Rail collision using felt bounds ---
           if (nextX < FELT_LEFT + BALL_RADIUS) {
             ball.x = FELT_LEFT + BALL_RADIUS;
-            ball.vx = Math.abs(ball.vx) * 0.8;
+            ball.vx = Math.abs(ball.vx) * 0.85; // Slightly more bounce for left rail
           } else if (nextX > FELT_RIGHT - BALL_RADIUS) {
             ball.x = FELT_RIGHT - BALL_RADIUS;
             ball.vx = -Math.abs(ball.vx) * 0.8;
@@ -447,7 +447,7 @@ export default function PoolSimulation() {
 
           if (nextY < FELT_TOP + BALL_RADIUS) {
             ball.y = FELT_TOP + BALL_RADIUS;
-            ball.vy = Math.abs(ball.vy) * 0.8;
+            ball.vy = Math.abs(ball.vy) * 0.85; // Slightly more bounce for top rail
           } else if (nextY > FELT_BOTTOM - BALL_RADIUS) {
             ball.y = FELT_BOTTOM - BALL_RADIUS;
             ball.vy = -Math.abs(ball.vy) * 0.8;
@@ -551,13 +551,28 @@ export default function PoolSimulation() {
         width: 600,
         height: 300,
         position: "relative",
-        background: "black",
+        background: "linear-gradient(180deg, #1a1a1a 0%, #000000 100%)",
         zIndex: 99999,
+        boxShadow: "inset 0 0 50px rgba(0,0,0,0.8)",
       }}
     >
+      {/* Overhead lighting effect */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: "radial-gradient(ellipse 600px 300px at center 40px, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.10) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%, transparent 90%)",
+          zIndex: 3,
+          pointerEvents: "none",
+        }}
+      />
+      
       <img
         ref={tableImgRef}
-        src={table2}
+        src={predatorTable}
         alt="Pool Table"
         style={{
           width: "100%",
@@ -570,7 +585,8 @@ export default function PoolSimulation() {
           zIndex: 1,
           pointerEvents: "none",
           opacity: 1,
-          filter: 'opacity(1) contrast(1.25) brightness(1.18)'
+          filter: 'opacity(1) contrast(1.3) brightness(1.25) saturate(1.1)',
+          boxShadow: 'inset 0 0 30px rgba(0,0,0,0.3)'
         }}
       />
       {/* Centered Words, scaled */}
@@ -608,27 +624,60 @@ export default function PoolSimulation() {
           }}
         />
       </div>
-      {BALLS.map(ball =>
-        <img
-          key={ball.key}
-          src={ball.src}
-          alt={ball.alt}
-          ref={ballRefs.current[ball.key]}
-          className={styles.pinBallImg}
-          style={{
-            position: "absolute",
-            left: (balls.current[ball.key]?.x !== undefined ? balls.current[ball.key].x - BALL_RADIUS : 0),
-            top: (balls.current[ball.key]?.y !== undefined ? balls.current[ball.key].y - BALL_RADIUS : 0),
-            width: BALL_SIZE,
-            height: BALL_SIZE,
-            zIndex: 10,
-            opacity: balls.current[ball.key]?.visible === false ? 0 : 1,
-            transition: "none",
-            pointerEvents: "none",
-            filter: 'opacity(1) contrast(1.25) brightness(1.18)'
-          }}
-        />
-      )}
+      {BALLS.map(ball => (
+        <React.Fragment key={ball.key}>
+          {/* Ball shadow */}
+          <div
+            style={{
+              position: "absolute",
+              left: (balls.current[ball.key]?.x !== undefined ? balls.current[ball.key].x - BALL_RADIUS + 2 : 0),
+              top: (balls.current[ball.key]?.y !== undefined ? balls.current[ball.key].y - BALL_RADIUS + 2 : 0),
+              width: BALL_SIZE,
+              height: BALL_SIZE,
+              borderRadius: "50%",
+              background: "radial-gradient(ellipse 12px 6px at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)",
+              zIndex: 5,
+              opacity: balls.current[ball.key]?.visible === false ? 0 : 0.6,
+              pointerEvents: "none",
+            }}
+          />
+          {/* Ball with enhanced lighting */}
+          <img
+            src={ball.src}
+            alt={ball.alt}
+            ref={ballRefs.current[ball.key]}
+            className={styles.pinBallImg}
+            style={{
+              position: "absolute",
+              left: (balls.current[ball.key]?.x !== undefined ? balls.current[ball.key].x - BALL_RADIUS : 0),
+              top: (balls.current[ball.key]?.y !== undefined ? balls.current[ball.key].y - BALL_RADIUS : 0),
+              width: BALL_SIZE,
+              height: BALL_SIZE,
+              zIndex: 10,
+              opacity: balls.current[ball.key]?.visible === false ? 0 : 1,
+              transition: "none",
+              pointerEvents: "none",
+              filter: 'opacity(1) contrast(1.3) brightness(1.2) saturate(1.1) drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+              borderRadius: "50%",
+            }}
+          />
+          {/* Ball highlight */}
+          <div
+            style={{
+              position: "absolute",
+              left: (balls.current[ball.key]?.x !== undefined ? balls.current[ball.key].x - BALL_RADIUS + 3 : 0),
+              top: (balls.current[ball.key]?.y !== undefined ? balls.current[ball.key].y - BALL_RADIUS + 3 : 0),
+              width: BALL_SIZE - 6,
+              height: BALL_SIZE - 6,
+              borderRadius: "50%",
+              background: "radial-gradient(ellipse 8px 4px at 30% 30%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 50%, transparent 100%)",
+              zIndex: 11,
+              opacity: balls.current[ball.key]?.visible === false ? 0 : 0.8,
+              pointerEvents: "none",
+            }}
+          />
+        </React.Fragment>
+      ))}
     </div>
   );
 }
