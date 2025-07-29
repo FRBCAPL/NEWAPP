@@ -1,0 +1,419 @@
+.tutorialOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.tutorialModal {
+  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid rgba(34, 197, 94, 0.3);
+  border-radius: 16px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.7),
+    0 0 40px rgba(34, 197, 94, 0.1);
+  animation: modalSlideIn 0.4s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.tutorialHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+.tutorialHeader h2 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: bold;
+  background: linear-gradient(45deg, #22c55e, #10b981);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.closeButton {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.closeButton:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  transform: scale(1.1);
+}
+
+.progressBar {
+  margin: 16px 24px;
+  height: 6px;
+  background: rgba(51, 65, 85, 0.5);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #10b981);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.stepIndicators {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 24px;
+  flex-wrap: wrap;
+}
+
+.stepDot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(148, 163, 184, 0.3);
+  background: rgba(30, 41, 59, 0.6);
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepDot:hover {
+  border-color: rgba(34, 197, 94, 0.5);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.stepDot.active {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  transform: scale(1.1);
+}
+
+.stepDot.completed {
+  border-color: #16a34a;
+  background: rgba(22, 163, 74, 0.2);
+  color: #16a34a;
+}
+
+.tutorialContent {
+  padding: 24px;
+  text-align: center;
+}
+
+.stepIcon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepTitle {
+  margin: 0 0 16px 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #f1f5f9;
+}
+
+.stepContent {
+  margin: 0 0 24px 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #cbd5e1;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tipsList {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(51, 65, 85, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: left;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.tipsList h4 {
+  margin: 0 0 12px 0;
+  color: #22c55e;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.tipsList ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.tipsList li {
+  margin: 8px 0;
+  color: #e2e8f0;
+  line-height: 1.4;
+}
+
+.tutorialControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-top: 1px solid rgba(51, 65, 85, 0.3);
+  gap: 16px;
+}
+
+.controlButton {
+  background: rgba(51, 65, 85, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #f1f5f9;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  max-width: 120px;
+}
+
+.controlButton:hover:not(:disabled) {
+  background: rgba(71, 85, 105, 0.8);
+  border-color: rgba(148, 163, 184, 0.5);
+  transform: translateY(-2px);
+}
+
+.controlButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.startPracticeButton {
+  background: linear-gradient(45deg, #22c55e, #16a34a);
+  border: none;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  max-width: 180px;
+  font-size: 1rem;
+}
+
+.startPracticeButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.3);
+}
+
+.stepCounter {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  flex: 1;
+}
+
+.tutorialFooter {
+  text-align: center;
+  padding: 16px 24px 24px 24px;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* Mobile Responsive Design */
+@media (max-width: 768px) {
+  .tutorialOverlay {
+    padding: 12px;
+  }
+  
+  .tutorialModal {
+    max-height: 95vh;
+  }
+  
+  .tutorialHeader {
+    padding: 20px 20px 12px 20px;
+  }
+  
+  .tutorialHeader h2 {
+    font-size: 1.5rem;
+  }
+  
+  .progressBar {
+    margin: 12px 20px;
+  }
+  
+  .stepIndicators {
+    padding: 12px 20px;
+    gap: 6px;
+  }
+  
+  .stepDot {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+  
+  .tutorialContent {
+    padding: 20px;
+  }
+  
+  .stepIcon {
+    font-size: 3rem;
+    height: 60px;
+  }
+  
+  .stepTitle {
+    font-size: 1.3rem;
+  }
+  
+  .stepContent {
+    font-size: 1rem;
+  }
+  
+  .tutorialControls {
+    padding: 16px 20px;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .controlButton,
+  .startPracticeButton {
+    max-width: none;
+    width: 100%;
+  }
+  
+  .stepCounter {
+    order: -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .tutorialOverlay {
+    padding: 8px;
+  }
+  
+  .tutorialHeader {
+    padding: 16px;
+  }
+  
+  .tutorialHeader h2 {
+    font-size: 1.25rem;
+  }
+  
+  .stepIndicators {
+    gap: 4px;
+  }
+  
+  .stepDot {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+  
+  .tutorialContent {
+    padding: 16px;
+  }
+  
+  .stepIcon {
+    font-size: 2.5rem;
+    height: 50px;
+  }
+  
+  .tipsList {
+    padding: 16px;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .tutorialModal {
+    animation: none;
+  }
+  
+  .controlButton,
+  .startPracticeButton,
+  .closeButton,
+  .stepDot {
+    transition: none;
+  }
+  
+  .controlButton:hover,
+  .startPracticeButton:hover,
+  .closeButton:hover {
+    transform: none;
+  }
+  
+  .stepDot.active {
+    transform: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .tutorialModal {
+    border-color: #fff;
+    background: #000;
+  }
+  
+  .tutorialHeader h2 {
+    -webkit-text-fill-color: #fff;
+  }
+  
+  .closeButton {
+    border-color: #fff;
+    color: #fff;
+  }
+  
+  .stepDot {
+    border-color: #fff;
+    color: #fff;
+  }
+  
+  .tipsList {
+    border-color: #fff;
+  }
+}
