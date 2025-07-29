@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import table2 from "./PoolTableSVG.svg";
+import table2 from "./PoolTableSVG/table2.svg";
 import nineBall from "../assets/nineball.svg";
 import tenBall from "../assets/tenball.svg";
 import eightBall from "../assets/8ball.svg";
