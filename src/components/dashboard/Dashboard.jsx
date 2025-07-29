@@ -18,11 +18,12 @@ import ProposalDetailsModal from './ProposalDetailsModal';
 import EditProposalModal from './EditProposalModal';
 import LoadingSpinner, { LoadingButton, SkeletonLoader } from "../LoadingSpinner";
 import Modal from '../modal/DraggableModal.jsx';
-import ChallengeStatsDisplay from './ChallengeStatsDisplay';
+
 import DirectMessagingModal from '../DirectMessagingModal';
 import WinnerSelectModal from '../modal/WinnerSelectModal';
 import FloatingLogos from '../FloatingLogos';
 import Phase1Tracker from './Phase1Tracker.jsx';
+import Phase2Tracker from './Phase2Tracker.jsx';
 import MatchValidationModal from './MatchValidationModal';
 
 // Import new services and hooks
@@ -1055,10 +1056,11 @@ export default function Dashboard({
 
 
 
-          {/* --- Challenge Phase Statistics --- */}
-          <ChallengeStatsDisplay 
-            playerName={`${playerName} ${playerLastName}`}
-            division={selectedDivision}
+          {/* --- Phase 2 Challenge Tracker --- */}
+          <Phase2Tracker
+            playerName={playerName}
+            playerLastName={playerLastName}
+            selectedDivision={selectedDivision}
             phase={effectivePhase}
           />
 

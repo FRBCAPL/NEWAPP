@@ -15,6 +15,17 @@ export const challengeService = {
   },
 
   /**
+   * Validate defense acceptance for a challenge
+   */
+  async validateDefenseAcceptance(defenderName, challengerName, division) {
+    return ApiService.post('/api/challenges/validate-defense', {
+      defenderName,
+      challengerName,
+      division
+    });
+  },
+
+  /**
    * Get challenge statistics for a player
    */
   async getChallengeStats(playerName, division) {
