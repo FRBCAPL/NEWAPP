@@ -22,6 +22,9 @@ import ChallengeStatsDisplay from './ChallengeStatsDisplay';
 import DirectMessagingModal from '../DirectMessagingModal';
 import WinnerSelectModal from '../modal/WinnerSelectModal';
 import FloatingLogos from '../FloatingLogos';
+import DeadlineTracker from './DeadlineTracker';
+import StandingsImpactDisplay from './StandingsImpactDisplay';
+import MatchValidationModal from './MatchValidationModal';
 
 // Import new services and hooks
 import { useProposals } from '../../hooks/useProposals';
@@ -29,6 +32,10 @@ import { useMatches } from '../../hooks/useMatches';
 import { proposalService } from '../../services/proposalService';
 import { userService } from '../../services/userService';
 import { noteService } from '../../services/noteService';
+import { seasonService } from '../../services/seasonService';
+import { deadlineNotificationService } from '../../services/deadlineNotificationService';
+import { sendDeadlineReminderEmail } from '../../utils/emailHelpers.js';
+import { format } from 'date-fns';
 import { BACKEND_URL } from '../../config.js';
 
 const sheetID = "1tvMgMHsRwQxsR6lMNlSnztmwpK7fhZeNEyqjTqmRFRc";
@@ -284,6 +291,13 @@ export default function Dashboard({
   const [winnerModalMatch, setWinnerModalMatch] = useState(null);
   const [winnerModalPlayers, setWinnerModalPlayers] = useState({ player1: '', player2: '' });
 
+  // Season and deadline tracking state
+  const [seasonData, setSeasonData] = useState(null);
+  const [currentPhaseInfo, setCurrentPhaseInfo] = useState(null);
+  const [validationModalOpen, setValidationModalOpen] = useState(false);
+  const [matchToValidate, setMatchToValidate] = useState(null);
+  const [testingEmail, setTestingEmail] = useState(false);
+
   const simulationRef = useRef(null);
 
   useEffect(() => {
@@ -293,6 +307,27 @@ export default function Dashboard({
   useEffect(() => {
     setSentCount(sentProposals.length);
   }, [sentProposals]);
+
+  // Fetch season data for deadline tracking
+  useEffect(() => {
+    async function fetchSeasonData() {
+      if (!selectedDivision) return;
+      
+      try {
+        const [seasonResult, phaseResult] = await Promise.all([
+          seasonService.getCurrentSeason(selectedDivision),
+          seasonService.getCurrentPhaseAndWeek(selectedDivision)
+        ]);
+        
+        setSeasonData(seasonResult?.season || null);
+        setCurrentPhaseInfo(phaseResult);
+      } catch (error) {
+        console.error('Error fetching season data:', error);
+      }
+    }
+    
+    fetchSeasonData();
+  }, [selectedDivision]);
 
   // Fetch unread messages count
   useEffect(() => {
@@ -371,7 +406,15 @@ export default function Dashboard({
     );
     
     // Count total matches (not unique opponents) - each match in schedule counts as 1
-    return playerScheduleTotalRequired.length;
+    const calculatedTotal = playerScheduleTotalRequired.length;
+    
+    // Fallback: If no matches found in schedule, use 6 for Phase 1 (per bylaws)
+    if (calculatedTotal === 0 && effectivePhase === "scheduled") {
+      console.log("No schedule matches found, using fallback of 6 matches for Phase 1");
+      return 6;
+    }
+    
+    return calculatedTotal;
   })();
 
   useEffect(() => {
@@ -427,10 +470,12 @@ export default function Dashboard({
       return res.json();
     })
     .then(data => {
+      console.log('Schedule loaded for', selectedDivision, ':', data.length, 'matches');
       setScheduledMatches(data);
     })
     .catch((error) => {
       console.error('Failed to load schedule for', selectedDivision, ':', error);
+      console.log('Schedule URL attempted:', scheduleUrl);
       setScheduledMatches([]);
     });
 }, [selectedDivision]);
@@ -703,6 +748,62 @@ export default function Dashboard({
     }
   }
 
+  // Test deadline reminder email
+  const testDeadlineEmail = async () => {
+    if (!senderEmail || !playerName || !selectedDivision) {
+      alert('Please make sure you are logged in and have selected a division.');
+      return;
+    }
+
+    setTestingEmail(true);
+    try {
+      await sendDeadlineReminderEmail({
+        to_email: senderEmail,
+        to_name: `${playerName} ${playerLastName}`,
+        division: selectedDivision,
+        daysUntilDeadline: 3,
+        completedMatches: completedMatches.length,
+        totalRequiredMatches: totalRequiredMatches,
+        deadlineDate: seasonData ? format(new Date(seasonData.phase1End), 'EEEE, MMMM d, yyyy') : 'July 12, 2025',
+        remainingMatches: totalRequiredMatches - completedMatches.length
+      });
+      
+      alert('✅ Test deadline reminder email sent! Check your inbox.');
+    } catch (error) {
+      console.error('Error sending test email:', error);
+      alert('❌ Error sending test email. Check console for details.');
+    } finally {
+      setTestingEmail(false);
+    }
+  };
+
+  // Check and send automatic deadline reminders
+  useEffect(() => {
+    if (!senderEmail || !playerName || !selectedDivision || !seasonData || effectivePhase !== 'scheduled') {
+      return;
+    }
+
+    const checkAndSendReminder = async () => {
+      try {
+        await deadlineNotificationService.checkAndSendDeadlineReminder(
+          senderEmail, 
+          `${playerName} ${playerLastName}`, 
+          selectedDivision
+        );
+      } catch (error) {
+        console.error('Error checking deadline reminders:', error);
+      }
+    };
+
+    // Check once when component loads
+    checkAndSendReminder();
+
+    // Check every hour for new reminders
+    const interval = setInterval(checkAndSendReminder, 60 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [senderEmail, playerName, playerLastName, selectedDivision, seasonData, effectivePhase]);
+
   // Defensive filter: only show matches for the selected division (in case backend fails)
   const filteredUpcomingMatches = scheduledConfirmedMatches.filter(m =>
     m.divisions && selectedDivision &&
@@ -966,6 +1067,29 @@ export default function Dashboard({
               </span>
             </div>
           )}
+
+          {/* --- Phase 1 Deadline Tracker --- */}
+          {effectivePhase === 'scheduled' && seasonData && (
+            <DeadlineTracker
+              currentPhase={effectivePhase}
+              seasonData={seasonData}
+              completedMatches={completedMatches}
+              totalRequiredMatches={totalRequiredMatches}
+            />
+          )}
+
+          {/* --- Standings Impact Display --- */}
+          {effectivePhase === 'scheduled' && seasonData && (
+            <StandingsImpactDisplay
+              currentPhase={effectivePhase}
+              seasonData={seasonData}
+              completedMatches={completedMatches}
+              totalRequiredMatches={totalRequiredMatches}
+              playerName={playerName}
+            />
+          )}
+
+
 
           {/* --- Challenge Phase Statistics --- */}
           <ChallengeStatsDisplay 
@@ -1318,6 +1442,18 @@ export default function Dashboard({
               onClick={() => setShowStandings(true)}
             >
               📊 View Standings
+            </button>
+            <button
+              className={styles.dashboardBtn}
+              type="button"
+              onClick={testDeadlineEmail}
+              disabled={testingEmail}
+              style={{
+                background: testingEmail ? '#666' : '#28a745',
+                opacity: testingEmail ? 0.6 : 1
+              }}
+            >
+              {testingEmail ? '📧 Sending...' : '📧 Test Email'}
             </button>
           </div>
           {loadingNotes ? (
@@ -1777,6 +1913,24 @@ export default function Dashboard({
       player2={winnerModalPlayers.player2}
       onSelect={async (winner) => {
         if (!winnerModalMatch) return;
+        
+        // Check if Phase 1 deadline has passed
+        if (currentPhaseInfo?.phase === 'scheduled' && seasonData) {
+          const deadlinePassed = seasonService.hasPhase1DeadlinePassed(seasonData);
+          if (deadlinePassed) {
+            const confirmed = window.confirm(
+              '⚠️ PHASE 1 DEADLINE HAS PASSED!\n\n' +
+              'You are attempting to complete a match after the Phase 1 deadline. ' +
+              'This may affect your standings or eligibility for Phase 2.\n\n' +
+              'Do you want to continue marking this match as completed?'
+            );
+            if (!confirmed) {
+              setWinnerModalOpen(false);
+              return;
+            }
+          }
+        }
+        
         setWinnerModalOpen(false);
         setCompletingMatchId(winnerModalMatch._id);
         try {
@@ -1788,6 +1942,28 @@ export default function Dashboard({
           alert('Failed to mark as completed.');
         }
         setCompletingMatchId(null);
+      }}
+    />
+
+    {/* Match Validation Modal */}
+    <MatchValidationModal
+      isOpen={validationModalOpen}
+      onClose={() => {
+        setValidationModalOpen(false);
+        setMatchToValidate(null);
+      }}
+      match={matchToValidate}
+      onValidate={async (validationData) => {
+        // Handle match validation
+        console.log('Validating match:', validationData);
+        // TODO: Implement validation logic
+        refetchMatches();
+      }}
+      onReject={async (matchId) => {
+        // Handle match rejection
+        console.log('Rejecting match:', matchId);
+        // TODO: Implement rejection logic
+        refetchMatches();
       }}
     />
   </div>

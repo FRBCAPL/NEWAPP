@@ -201,6 +201,33 @@ export default function MatchProposalModal({
       alert("Please fill in all required fields.");
       return;
     }
+
+    // Check if Phase 1 deadline has passed for scheduled matches
+    if (phase === 'scheduled') {
+      const now = new Date();
+      const matchDate = new Date(date);
+      
+      // For Phase 1, matches should be completed by the end of week 6
+      // We'll add a warning if the match is scheduled too close to the deadline
+      const daysUntilMatch = Math.ceil((matchDate - now) / (1000 * 60 * 60 * 24));
+      
+      if (daysUntilMatch < 0) {
+        alert("⚠️ You cannot schedule a match in the past.");
+        return;
+      }
+      
+      if (daysUntilMatch <= 2) {
+        const confirmed = window.confirm(
+          `⚠️ WARNING: This match is scheduled for ${daysUntilMatch} day(s) from now.\n\n` +
+          'Phase 1 matches must be completed by the end of week 6. ' +
+          'Scheduling this close to the deadline may not give enough time to complete the match.\n\n' +
+          'Do you want to continue with this schedule?'
+        );
+        if (!confirmed) {
+          return;
+        }
+      }
+    }
     // Create the proposal data
     const proposalData = {
       senderEmail,

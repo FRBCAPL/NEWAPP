@@ -96,3 +96,45 @@ export function sendConfirmationEmail({
     'g6vqrOs_Jb6LL1VCZ'
   );
 }
+
+// Sends deadline reminder emails for Phase 1
+export function sendDeadlineReminderEmail({
+  to_email,
+  to_name,
+  division,
+  daysUntilDeadline,
+  completedMatches,
+  totalRequiredMatches,
+  deadlineDate,
+  remainingMatches
+}) {
+  // SAFETY CHECK
+  if (!to_email || to_email === "undefined") {
+    console.error("Recipient email is missing. Cannot send deadline reminder.");
+    return Promise.reject(new Error("Recipient email is missing."));
+  }
+
+  const progressPercentage = Math.round((completedMatches / totalRequiredMatches) * 100);
+  const urgencyLevel = daysUntilDeadline <= 1 ? "CRITICAL" : 
+                      daysUntilDeadline <= 3 ? "URGENT" : 
+                      daysUntilDeadline <= 7 ? "WARNING" : "REMINDER";
+
+  return emailjs.send(
+    'service_l5q2047',
+    'template_xbpnbge',
+    {
+      to_email,
+      to_name,
+      division,
+      days_until_deadline: daysUntilDeadline,
+      completed_matches: completedMatches,
+      total_required_matches: totalRequiredMatches,
+      progress_percentage: progressPercentage,
+      deadline_date: deadlineDate,
+      remaining_matches: remainingMatches,
+      urgency_level: urgencyLevel,
+      app_url: "https://newapp-1-ic1v.onrender.com"
+    },
+    'g6vqrOs_Jb6LL1VCZ'
+  );
+}
