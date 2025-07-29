@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { format, differenceInDays, differenceInHours, isAfter, isBefore } from 'date-fns';
 import { seasonService } from '../../services/seasonService.js';
+import { BACKEND_URL } from '../../config.js';
 
-const Phase1Tracker = ({ 
-  currentPhase, 
-  seasonData, 
-  completedMatches, 
-  totalRequiredMatches,
-  playerName 
-}) => {
+  const Phase1Tracker = ({ 
+    currentPhase, 
+    seasonData, 
+    completedMatches, 
+    totalRequiredMatches,
+    playerName,
+    playerLastName,
+    selectedDivision 
+  }) => {
   const [timeLeft, setTimeLeft] = useState(null);
   const [deadlineStatus, setDeadlineStatus] = useState('normal');
   const [standingsImpact, setStandingsImpact] = useState(null);
   const [playerStats, setPlayerStats] = useState(null);
+  const [standings, setStandings] = useState([]);
+  const [loadingStandings, setLoadingStandings] = useState(false);
 
   useEffect(() => {
     if (!seasonData || currentPhase !== 'scheduled') {
@@ -58,6 +63,83 @@ const Phase1Tracker = ({
     }
   }, [currentPhase, seasonData, completedMatches, totalRequiredMatches]);
 
+  useEffect(() => {
+    if (selectedDivision && currentPhase === 'scheduled') {
+      loadStandings();
+    }
+  }, [selectedDivision, currentPhase]);
+
+  // Load standings data from backend
+  const loadStandings = async () => {
+    try {
+      setLoadingStandings(true);
+      if (!selectedDivision) {
+        console.warn('No division selected for standings');
+        return;
+      }
+
+      // Use the backend to fetch standings JSON for the division
+      const safeDivision = selectedDivision.replace(/[^A-Za-z0-9]/g, '_');
+      const standingsUrl = `${BACKEND_URL}/static/standings_${safeDivision}.json`;
+      
+      
+      
+      const response = await fetch(standingsUrl);
+      
+      if (!response.ok) {
+        console.warn(`Failed to fetch standings: ${response.status} - ${response.statusText}`);
+        return;
+      }
+      
+      const standingsData = await response.json();
+
+      // Validate standings data structure
+      if (!Array.isArray(standingsData)) {
+        console.error('Standings data is not an array:', standingsData);
+        return;
+      }
+
+      // Validate each entry has required fields
+      const validStandings = standingsData.filter(entry => {
+        if (!entry || typeof entry !== 'object') {
+          console.warn('Invalid standings entry:', entry);
+          return false;
+        }
+        if (!entry.name || !entry.rank) {
+          console.warn('Standings entry missing name or rank:', entry);
+          return false;
+        }
+        const rank = parseInt(entry.rank);
+        if (isNaN(rank) || rank <= 0) {
+          console.warn('Invalid rank in standings entry:', entry);
+          return false;
+        }
+        return true;
+      });
+
+
+      setStandings(validStandings);
+    } catch (error) {
+      console.error('Failed to load standings:', error);
+    } finally {
+      setLoadingStandings(false);
+    }
+  };
+
+  // Get player's actual standings position
+  const getPlayerPosition = (standings, playerName) => {
+    if (!standings || standings.length === 0) {
+      return null;
+    }
+    
+    const normalizedPlayerName = playerName.toLowerCase().trim();
+    const playerEntry = standings.find(entry => 
+      entry.name.toLowerCase().trim() === normalizedPlayerName
+    );
+    
+    return playerEntry ? parseInt(playerEntry.rank) : null;
+  };
+
   const calculateStandingsImpact = () => {
     const completedCount = completedMatches.length;
     const remainingCount = totalRequiredMatches - completedCount;
@@ -79,9 +161,10 @@ const Phase1Tracker = ({
 
     let wins = 0;
     let losses = 0;
+    const fullPlayerName = `${playerName} ${playerLastName}`;
 
     completedMatches.forEach(match => {
-      if (match.winner === playerName) {
+      if (match.winner === fullPlayerName) {
         wins++;
       } else {
         losses++;
@@ -90,22 +173,37 @@ const Phase1Tracker = ({
 
     const winRate = Math.round((wins / (wins + losses)) * 100);
     
-    // Estimate position based on win rate and completed matches
-    // This is a simplified calculation - in real implementation, you'd fetch actual standings
-    let estimatedPosition = 'N/A';
-    if (completedMatches.length >= 3) {
-      if (winRate >= 80) estimatedPosition = '1st-3rd';
-      else if (winRate >= 60) estimatedPosition = '4th-6th';
-      else if (winRate >= 40) estimatedPosition = '7th-9th';
-      else estimatedPosition = '10th+';
+    // Get actual standings position
+    const actualPosition = getPlayerPosition(standings, fullPlayerName);
+    let positionDisplay = 'N/A';
+    
+    if (actualPosition !== null) {
+      positionDisplay = `${actualPosition}${getOrdinalSuffix(actualPosition)}`;
+    } else if (completedMatches.length >= 1) {
+      // Fallback to estimated position if not in standings
+      if (winRate >= 80) positionDisplay = '1st-3rd';
+      else if (winRate >= 60) positionDisplay = '4th-6th';
+      else if (winRate >= 40) positionDisplay = '7th-9th';
+      else positionDisplay = '10th+';
     }
 
     setPlayerStats({
       wins,
       losses,
       winRate,
-      position: estimatedPosition
+      position: positionDisplay,
+      actualPosition
     });
+  };
+
+  // Helper function to get ordinal suffix (1st, 2nd, 3rd, etc.)
+  const getOrdinalSuffix = (num) => {
+    const j = num % 10;
+    const k = num % 100;
+    if (j === 1 && k !== 11) return 'st';
+    if (j === 2 && k !== 12) return 'nd';
+    if (j === 3 && k !== 13) return 'rd';
+    return 'th';
   };
 
   if (!timeLeft || !standingsImpact || currentPhase !== 'scheduled') {
@@ -120,8 +218,7 @@ const Phase1Tracker = ({
     return '#00aa00';                                      // Keep green
   };
 
-  // Debug logging to see what status we're getting
-  console.log('Phase1Tracker - Deadline Status:', deadlineStatus, 'Time Left:', timeLeft);
+
 
   const getStatusMessage = () => {
     const remainingCount = totalRequiredMatches - completedMatches.length;
@@ -272,10 +369,12 @@ const Phase1Tracker = ({
             Position
           </div>
           <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 'bold' }}>
-            {playerStats?.position || 'N/A'}
+            {loadingStandings ? '...' : (playerStats?.position || 'N/A')}
           </div>
           <div style={{ fontSize: '0.7rem', color: '#999' }}>
-            {completedMatches.length >= 3 ? 'Est. rank' : 'Need 3+ matches'}
+            {loadingStandings ? 'Loading...' : 
+             (playerStats?.actualPosition !== null ? 'Live standings' : 
+              (completedMatches.length >= 1 ? 'Est. rank' : 'No matches yet'))}
           </div>
         </div>
       </div>

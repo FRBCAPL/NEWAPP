@@ -78,6 +78,12 @@ export const useMatches = (playerName, division, phase) => {
         const completedMatch = { ...matchToComplete, completed: true };
         return [...prev, completedMatch];
       });
+    },
+    updateCompletedMatch: (updatedMatch) => {
+      // Update a completed match (e.g., when winner is edited)
+      setCompletedMatches(prev => prev.map(match => 
+        match._id === updatedMatch._id ? updatedMatch : match
+      ));
     }
   };
 }; 

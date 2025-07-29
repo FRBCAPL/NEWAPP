@@ -1,4 +1,6 @@
-const API_BASE = "https://atlasbackend-bnng.onrender.com";
+import { BACKEND_URL } from '../config.js';
+
+const API_BASE = BACKEND_URL;
 
 class ApiService {
   static async request(endpoint, options = {}) {

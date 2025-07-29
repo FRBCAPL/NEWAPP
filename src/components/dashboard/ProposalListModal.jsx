@@ -64,7 +64,7 @@ function formatTimeHHMM(timeStr) {
 }
 
 // Add type prop: "received" (default) or "sent"
-function ProposalListModal({ proposals, onSelect, onClose, type = "received", isAdmin = false, senderEmail, senderName }) {
+function ProposalListModal({ proposals, onSelect, onClose, type = "received", isAdmin = false, senderEmail, senderName, onProposalUpdated }) {
   console.log('Proposals:', proposals);
   const [confirmCancelId, setConfirmCancelId] = useState(null);
   const [loadingCancel, setLoadingCancel] = useState(false);
@@ -356,6 +356,12 @@ function ProposalListModal({ proposals, onSelect, onClose, type = "received", is
             const res = await proposalService.markCompleted(editWinnerMatch._id, winner, senderName, senderEmail);
             const updated = res && res.proposal ? res.proposal : { ...editWinnerMatch, winner, winnerChangedByName: senderName, winnerChangedByEmail: senderEmail, winnerChangedAt: new Date().toISOString() };
             setLocalProposals(prev => prev.map(p => p._id === editWinnerMatch._id ? updated : p));
+            
+            // Notify parent component of the update
+            if (onProposalUpdated) {
+              onProposalUpdated(updated);
+            }
+            
             setEditWinnerModalOpen(false);
           } catch (err) {
             alert('Failed to update winner.');

@@ -33,7 +33,7 @@ import { userService } from '../../services/userService';
 import { noteService } from '../../services/noteService';
 import { seasonService } from '../../services/seasonService';
 import { deadlineNotificationService } from '../../services/deadlineNotificationService';
-import { sendDeadlineReminderEmail } from '../../utils/emailHelpers.js';
+
 import { format } from 'date-fns';
 import { BACKEND_URL } from '../../config.js';
 
@@ -266,7 +266,7 @@ export default function Dashboard({
   const fullName = `${playerName} ${playerLastName}`.trim();
   const { pendingProposals, sentProposals, loading: proposalsLoading, refetch: refetchProposals } = useProposals(fullName, selectedDivision);
   const effectivePhase = phaseOverride || currentPhase;
-  const { matches: scheduledConfirmedMatches, completedMatches, scheduledConfirmedMatches: legacyScheduledConfirmedMatches, loading: matchesLoading, refetch: refetchMatches, markMatchCompleted } = useMatches(fullName, selectedDivision, effectivePhase);
+  const { matches: scheduledConfirmedMatches, completedMatches, scheduledConfirmedMatches: legacyScheduledConfirmedMatches, loading: matchesLoading, refetch: refetchMatches, markMatchCompleted, updateCompletedMatch } = useMatches(fullName, selectedDivision, effectivePhase);
 
   // Proposal counts for instant UI update
   const [pendingCount, setPendingCount] = useState(0);
@@ -295,7 +295,7 @@ export default function Dashboard({
   const [currentPhaseInfo, setCurrentPhaseInfo] = useState(null);
   const [validationModalOpen, setValidationModalOpen] = useState(false);
   const [matchToValidate, setMatchToValidate] = useState(null);
-  const [testingEmail, setTestingEmail] = useState(false);
+
 
   const simulationRef = useRef(null);
 
@@ -747,34 +747,7 @@ export default function Dashboard({
     }
   }
 
-  // Test deadline reminder email
-  const testDeadlineEmail = async () => {
-    if (!senderEmail || !playerName || !selectedDivision) {
-      alert('Please make sure you are logged in and have selected a division.');
-      return;
-    }
 
-    setTestingEmail(true);
-    try {
-      await sendDeadlineReminderEmail({
-        to_email: senderEmail,
-        to_name: `${playerName} ${playerLastName}`,
-        division: selectedDivision,
-        daysUntilDeadline: 3,
-        completedMatches: completedMatches.length,
-        totalRequiredMatches: totalRequiredMatches,
-        deadlineDate: seasonData ? format(new Date(seasonData.phase1End), 'EEEE, MMMM d, yyyy') : 'July 12, 2025',
-        remainingMatches: totalRequiredMatches - completedMatches.length
-      });
-      
-      alert('✅ Test deadline reminder email sent! Check your inbox.');
-    } catch (error) {
-      console.error('Error sending test email:', error);
-      alert('❌ Error sending test email. Check console for details.');
-    } finally {
-      setTestingEmail(false);
-    }
-  };
 
   // Check and send automatic deadline reminders
   useEffect(() => {
@@ -1075,6 +1048,8 @@ export default function Dashboard({
               completedMatches={completedMatches}
               totalRequiredMatches={totalRequiredMatches}
               playerName={playerName}
+              playerLastName={playerLastName}
+              selectedDivision={selectedDivision}
             />
           )}
 
@@ -1432,18 +1407,7 @@ export default function Dashboard({
             >
               📊 View Standings
             </button>
-            <button
-              className={styles.dashboardBtn}
-              type="button"
-              onClick={testDeadlineEmail}
-              disabled={testingEmail}
-              style={{
-                background: testingEmail ? '#666' : '#28a745',
-                opacity: testingEmail ? 0.6 : 1
-              }}
-            >
-              {testingEmail ? '📧 Sending...' : '📧 Test Email'}
-            </button>
+
           </div>
           {loadingNotes ? (
             <SkeletonLoader lines={3} height="16px" />
@@ -1891,6 +1855,12 @@ export default function Dashboard({
         isAdmin={userPin === "777777"}
         senderEmail={senderEmail}
         senderName={`${playerName} ${playerLastName}`}
+        onProposalUpdated={(updatedProposal) => {
+          // Immediately update the completed matches with the new winner
+          updateCompletedMatch(updatedProposal);
+          // Also refresh the proposals to ensure consistency
+          refetchProposals();
+        }}
       />
     )}
 
