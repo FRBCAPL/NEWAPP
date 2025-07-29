@@ -1,0 +1,135 @@
+.gameEngine {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  padding: 20px;
+  background: linear-gradient(135deg, #0f1419 0%, #1a2332 50%, #0f1419 100%);
+  overflow: hidden;
+}
+
+.gameCanvas {
+  max-width: 100%;
+  height: auto;
+  border: 3px solid #8B4513;
+  border-radius: 12px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  background: #0d5d2b;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+}
+
+.gameCanvas:hover {
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1),
+    0 0 20px rgba(34, 197, 94, 0.2);
+}
+
+.callShotModal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(15, 20, 25, 0.95);
+  border: 2px solid rgba(34, 197, 94, 0.5);
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 300px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+}
+
+.callShotModal h3 {
+  margin: 0 0 16px 0;
+  color: #22c55e;
+  font-size: 1.25rem;
+}
+
+.callShotModal p {
+  margin: 0 0 20px 0;
+  color: #cbd5e1;
+}
+
+.callShotModal button {
+  background: linear-gradient(45deg, #ef4444, #dc2626);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.callShotModal button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+}
+
+/* Mobile responsive design */
+@media (max-width: 768px) {
+  .gameEngine {
+    padding: 12px;
+  }
+  
+  .gameCanvas {
+    border-width: 2px;
+    border-radius: 8px;
+  }
+  
+  .callShotModal {
+    min-width: 280px;
+    padding: 20px;
+    margin: 0 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gameEngine {
+    padding: 8px;
+  }
+  
+  .callShotModal {
+    min-width: 250px;
+    padding: 16px;
+    margin: 0 12px;
+  }
+  
+  .callShotModal h3 {
+    font-size: 1.1rem;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .gameCanvas {
+    transition: none;
+  }
+  
+  .callShotModal button {
+    transition: none;
+  }
+  
+  .callShotModal button:hover {
+    transform: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .gameCanvas {
+    border-color: #fff;
+  }
+  
+  .callShotModal {
+    border-color: #fff;
+    background: #000;
+  }
+}
