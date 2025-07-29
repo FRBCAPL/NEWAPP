@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
+import TenBallGame from './components/TenBallGame'
+import PoolSimulation from './components/PoolSimulation'
+import PoolSimulation3D from './components/PoolSimulation3D'
 import './App.css'
 
 function App() {
@@ -7,8 +10,6 @@ function App() {
   return (
     <div className="App">
       <div className="game-selector">
-        <h1 style={{color: 'white', textAlign: 'center'}}>🎯 Ten Ball Pool Game</h1>
-        <p style={{color: 'white', textAlign: 'center'}}>Testing basic React rendering...</p>
         <button 
           className={currentGame === 'tenball' ? 'active' : ''}
           onClick={() => setCurrentGame('tenball')}
@@ -30,9 +31,9 @@ function App() {
       </div>
 
       <div className="game-container">
-        <p style={{color: 'white', padding: '20px'}}>
-          React is working! Current game: {currentGame}
-        </p>
+        {currentGame === 'tenball' && <TenBallGame />}
+        {currentGame === 'pool' && <PoolSimulation />}
+        {currentGame === 'pool3d' && <PoolSimulation3D />}
       </div>
     </div>
   )
