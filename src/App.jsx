@@ -1,39 +1,89 @@
 import React, { useState } from 'react'
-import TenBallGame from './components/TenBallGame'
-import PoolSimulation from './components/PoolSimulation'
-import PoolSimulation3D from './components/PoolSimulation3D'
-import './App.css'
 
 function App() {
-  const [currentGame, setCurrentGame] = useState('tenball') // tenball, pool, pool3d
+  const [currentGame, setCurrentGame] = useState('tenball')
 
   return (
-    <div className="App">
-      <div className="game-selector">
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: '#1a1a1a', 
+      color: 'white', 
+      padding: '20px',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <h1 style={{ textAlign: 'center', fontSize: '2rem', marginBottom: '30px' }}>
+        🎯 Ten Ball Pool Game
+      </h1>
+      
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        gap: '20px', 
+        marginBottom: '30px' 
+      }}>
         <button 
-          className={currentGame === 'tenball' ? 'active' : ''}
+          style={{
+            padding: '15px 25px',
+            fontSize: '1.2rem',
+            backgroundColor: currentGame === 'tenball' ? '#4CAF50' : '#333',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer'
+          }}
           onClick={() => setCurrentGame('tenball')}
         >
           🎯 Ten Ball
         </button>
         <button 
-          className={currentGame === 'pool' ? 'active' : ''}
+          style={{
+            padding: '15px 25px',
+            fontSize: '1.2rem',
+            backgroundColor: currentGame === 'pool' ? '#4CAF50' : '#333',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer'
+          }}
           onClick={() => setCurrentGame('pool')}
         >
           🎱 Pool Demo
         </button>
-        <button 
-          className={currentGame === 'pool3d' ? 'active' : ''}
-          onClick={() => setCurrentGame('pool3d')}
-        >
-          🌟 Pool 3D
-        </button>
       </div>
 
-      <div className="game-container">
-        {currentGame === 'tenball' && <TenBallGame />}
-        {currentGame === 'pool' && <PoolSimulation />}
-        {currentGame === 'pool3d' && <PoolSimulation3D />}
+      <div style={{ 
+        backgroundColor: '#2a2a2a', 
+        padding: '30px', 
+        borderRadius: '10px',
+        textAlign: 'center'
+      }}>
+        <h2>Current Game: {currentGame}</h2>
+        <p style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
+          ✅ React is working!<br/>
+          ✅ State management is working!<br/>
+          ✅ Click detection is working!<br/>
+        </p>
+        
+        {currentGame === 'tenball' && (
+          <div style={{ marginTop: '20px' }}>
+            <h3>🎯 Ten Ball Game Selected</h3>
+            <p>This will load the full Ten Ball game with:</p>
+            <ul style={{ textAlign: 'left', maxWidth: '400px', margin: '0 auto' }}>
+              <li>📚 Interactive Tutorial</li>
+              <li>📖 Official CSI Rules</li>
+              <li>🤖 AI Opponents (4 difficulty levels)</li>
+              <li>👥 Two Player Mode</li>
+              <li>🎱 Realistic Physics</li>
+            </ul>
+          </div>
+        )}
+        
+        {currentGame === 'pool' && (
+          <div style={{ marginTop: '20px' }}>
+            <h3>🎱 Pool Demo Selected</h3>
+            <p>This will load the existing pool simulation.</p>
+          </div>
+        )}
       </div>
     </div>
   )
