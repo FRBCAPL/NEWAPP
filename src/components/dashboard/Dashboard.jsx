@@ -22,8 +22,7 @@ import ChallengeStatsDisplay from './ChallengeStatsDisplay';
 import DirectMessagingModal from '../DirectMessagingModal';
 import WinnerSelectModal from '../modal/WinnerSelectModal';
 import FloatingLogos from '../FloatingLogos';
-import DeadlineTracker from './DeadlineTracker';
-import StandingsImpactDisplay from './StandingsImpactDisplay';
+import Phase1Tracker from './Phase1Tracker.jsx';
 import MatchValidationModal from './MatchValidationModal';
 
 // Import new services and hooks
@@ -1068,19 +1067,9 @@ export default function Dashboard({
             </div>
           )}
 
-          {/* --- Phase 1 Deadline Tracker --- */}
+          {/* --- Phase 1 Progress & Deadline Tracker --- */}
           {effectivePhase === 'scheduled' && seasonData && (
-            <DeadlineTracker
-              currentPhase={effectivePhase}
-              seasonData={seasonData}
-              completedMatches={completedMatches}
-              totalRequiredMatches={totalRequiredMatches}
-            />
-          )}
-
-          {/* --- Standings Impact Display --- */}
-          {effectivePhase === 'scheduled' && seasonData && (
-            <StandingsImpactDisplay
+            <Phase1Tracker
               currentPhase={effectivePhase}
               seasonData={seasonData}
               completedMatches={completedMatches}
