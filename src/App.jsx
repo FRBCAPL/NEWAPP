@@ -10,6 +10,7 @@ import PinLogin from "./components/modal/PinLogin";
 import FloatingLogos from './components/FloatingLogos';
 import PoolBallDemo from './components/PoolBallDemo';
 import TenBallTutorialExample from './components/TenBallTutorialExample';
+import TenBallTutorial from './components/TenBallTutorial';
 import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
 import csiLogo from "./assets/csi_logo.png";
@@ -146,6 +147,7 @@ function App() {
             />
             <Route path="/pool-balls" element={<PoolBallDemo />} />
             <Route path="/tutorial-example" element={<TenBallTutorialExample />} />
+            <Route path="/10ball-tutorial" element={<TenBallTutorial />} />
             <Route
               path="*"
               element={
