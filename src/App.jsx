@@ -8,6 +8,7 @@ import MatchChat from "./components/chat/MatchChat";
 import AdminDashboard from "./components/dashboard/AdminDashboard";
 import PinLogin from "./components/modal/PinLogin";
 import FloatingLogos from './components/FloatingLogos';
+import PoolBallDemo from './components/PoolBallDemo';
 import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
 import csiLogo from "./assets/csi_logo.png";
@@ -195,6 +196,7 @@ function App() {
                         />
                       }
                     />
+                    <Route path="/pool-balls" element={<PoolBallDemo />} />
                     {/* Catch-all route */}
                     <Route path="*" element={<Navigate to="/" />} />
                   </Routes>
