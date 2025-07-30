@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realistic Pool Balls Test</title>
+    <style>
+        body {
+            background: #1a1a2e;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 2rem;
+            text-align: center;
+        }
+        .ball-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        .ball {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                inset -8px -8px 16px rgba(0,0,0,0.3),
+                inset 8px 8px 16px rgba(255,255,255,0.1),
+                0 4px 12px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+        .ball-highlight {
+            position: absolute;
+            top: 15%;
+            left: 25%;
+            width: 30%;
+            height: 30%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 40%, transparent 70%);
+            pointer-events: none;
+            z-index: 3;
+        }
+        .ball-number {
+            background: rgba(255,255,255,0.95);
+            border-radius: 50%;
+            width: 60%;
+            height: 60%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #000;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            z-index: 4;
+        }
+        .cue-ball { background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 20%, #f8f8f8 35%, #d0d0d0 70%, #a8a8a8 100%); }
+        .ball-1 { background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 20%, #ffeb3b 35%, #fbc02d 70%, #f57f17 100%); }
+        .ball-8 { background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 20%, #000000 35%, #000000 70%, #000000 100%); }
+        .ball-9 { background: linear-gradient(135deg, #ffeb3b 35%, #ffffff 35%, #ffffff 40%, #ffeb3b 40%, #ffeb3b 60%, #ffffff 60%, #ffffff 65%, #ffeb3b 65%); }
+        .ball-10 { background: linear-gradient(135deg, #2196f3 35%, #ffffff 35%, #ffffff 40%, #2196f3 40%, #2196f3 60%, #ffffff 60%, #ffffff 65%, #2196f3 65%); }
+    </style>
+</head>
+<body>
+    <h1>🎱 Realistic Pool Balls Test</h1>
+    <p>If you can see these balls with 3D effects, the realistic balls are working!</p>
+    
+    <div class="ball-container">
+        <div class="ball cue-ball">
+            <div class="ball-highlight"></div>
+        </div>
+        
+        <div class="ball ball-1">
+            <div class="ball-highlight"></div>
+            <div class="ball-number">1</div>
+        </div>
+        
+        <div class="ball ball-8">
+            <div class="ball-highlight"></div>
+            <div class="ball-number" style="color: white; background: rgba(255,255,255,0.98);">8</div>
+        </div>
+        
+        <div class="ball ball-9">
+            <div class="ball-highlight"></div>
+            <div class="ball-number">9</div>
+        </div>
+        
+        <div class="ball ball-10">
+            <div class="ball-highlight"></div>
+            <div class="ball-number" style="color: white;">10</div>
+        </div>
+    </div>
+    
+    <h3>Features you should see:</h3>
+    <ul style="text-align: left; max-width: 500px; margin: 0 auto;">
+        <li>✅ 3D lighting with highlights on top-left</li>
+        <li>✅ Realistic shadows and depth</li>
+        <li>✅ Proper ball colors (yellow, black, striped, etc.)</li>
+        <li>✅ Numbers in white circles</li>
+        <li>✅ Striped pattern on balls 9 and 10</li>
+    </ul>
+    
+    <p style="margin-top: 2rem;">
+        <strong>Test this file:</strong> Open this HTML file directly in your browser<br>
+        <strong>File location:</strong> /workspace/test-balls.html
+    </p>
+</body>
+</html>

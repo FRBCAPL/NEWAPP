@@ -651,6 +651,24 @@ export default function PoolSimulation() {
             userSelect: "none"
           }}
         />
+        
+        {/* REALISTIC BALL TEST - RIGHT ON TOP OF LOGO */}
+        <div style={{
+          position: "absolute",
+          left: "50%",
+          top: "20%",
+          transform: "translateX(-50%)",
+          zIndex: 99,
+          display: "flex",
+          gap: "10px",
+          backgroundColor: "rgba(255,255,255,0.9)",
+          padding: "10px",
+          borderRadius: "8px"
+        }}>
+          <SimpleRealisticBall number="cue" size={30} />
+          <SimpleRealisticBall number="8" size={30} />
+          <SimpleRealisticBall number="10" size={30} />
+        </div>
       </div>
       {BALLS.map(ball => (
         <div
