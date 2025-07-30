@@ -37,6 +37,7 @@ import { deadlineNotificationService } from '../../services/deadlineNotification
 
 import { format } from 'date-fns';
 import { BACKEND_URL } from '../../config.js';
+import SimpleRealisticBall from '../SimpleRealisticBall';
 
 const sheetID = "1tvMgMHsRwQxsR6lMNlSnztmwpK7fhZeNEyqjTqmRFRc";
 const pinSheetName = "BCAPL SIGNUP";
@@ -1513,6 +1514,24 @@ export default function Dashboard({
            
           </>
         )}
+        
+        {/* REALISTIC BALL TEST */}
+        <div style={{ 
+          margin: '20px 0', 
+          padding: '15px', 
+          background: 'rgba(255,255,255,0.1)', 
+          borderRadius: '8px',
+          textAlign: 'center'
+        }}>
+          <h3 style={{ color: '#fff', marginBottom: '10px' }}>🎱 Realistic Pool Balls</h3>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center' }}>
+            <SimpleRealisticBall number="cue" size={40} />
+            <SimpleRealisticBall number="1" size={40} />
+            <SimpleRealisticBall number="8" size={40} />
+            <SimpleRealisticBall number="9" size={40} />
+            <SimpleRealisticBall number="10" size={40} />
+          </div>
+        </div>
       </div>
     </div>
     {/* Player Search Modal (Phase 2) */}
