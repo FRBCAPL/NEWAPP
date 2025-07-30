@@ -6,6 +6,7 @@ import eightBall from "../assets/8ball.svg";
 import cueBall from "../assets/cueball.svg";
 import styles from "./modal/PinLogin.module.css";
 import logoImg from '../assets/logo.png';
+import SimpleRealisticBall from './SimpleRealisticBall';
 
 // --- Constants ---
 const BALLS = [
@@ -652,43 +653,21 @@ export default function PoolSimulation() {
         />
       </div>
       {BALLS.map(ball => (
-        <React.Fragment key={ball.key}>
-          {/* Ball with enhanced lighting */}
-          <img
-            src={ball.src}
-            alt={ball.alt}
-            ref={ballRefs.current[ball.key]}
-            className={styles.pinBallImg}
-            style={{
-              position: "absolute",
-              left: (balls.current[ball.key]?.x !== undefined ? balls.current[ball.key].x - BALL_RADIUS : 0),
-              top: (balls.current[ball.key]?.y !== undefined ? balls.current[ball.key].y - BALL_RADIUS : 0),
-              width: BALL_SIZE,
-              height: BALL_SIZE,
-              zIndex: 10,
-              opacity: balls.current[ball.key]?.visible === false ? 0 : 1,
-              transition: "none",
-              pointerEvents: "none",
-              filter: 'opacity(1) contrast(1.3) brightness(1.2) saturate(1.1) drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
-              borderRadius: "50%",
-            }}
-          />
-          {/* Ball highlight */}
-          <div
-            style={{
-              position: "absolute",
-              left: (balls.current[ball.key]?.x !== undefined ? balls.current[ball.key].x - BALL_RADIUS + 3 : 0),
-              top: (balls.current[ball.key]?.y !== undefined ? balls.current[ball.key].y - BALL_RADIUS + 3 : 0),
-              width: BALL_SIZE - 6,
-              height: BALL_SIZE - 6,
-              borderRadius: "50%",
-              background: "radial-gradient(ellipse 8px 4px at 30% 30%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 50%, transparent 100%)",
-              zIndex: 11,
-              opacity: balls.current[ball.key]?.visible === false ? 0 : 0.8,
-              pointerEvents: "none",
-            }}
-          />
-        </React.Fragment>
+        <div
+          key={ball.key}
+          ref={ballRefs.current[ball.key]}
+          style={{
+            position: "absolute",
+            left: (balls.current[ball.key]?.x !== undefined ? balls.current[ball.key].x - BALL_RADIUS : 0),
+            top: (balls.current[ball.key]?.y !== undefined ? balls.current[ball.key].y - BALL_RADIUS : 0),
+            zIndex: 10,
+            opacity: balls.current[ball.key]?.visible === false ? 0 : 1,
+            transition: "none",
+            pointerEvents: "none",
+          }}
+        >
+          <SimpleRealisticBall number={ball.key} size={BALL_SIZE} />
+        </div>
       ))}
     </div>
   );
