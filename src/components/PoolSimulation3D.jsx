@@ -5,6 +5,7 @@ import tenBall from "../assets/tenball.svg";
 import eightBall from "../assets/8ball.svg";
 import cueBall from "../assets/cueball.svg";
 import styles from "./modal/PinLogin.module.css";
+import SimpleRealisticBall from './SimpleRealisticBall';
 
 // --- Constants ---
 const BALLS = [
@@ -475,21 +476,18 @@ export default function PoolSimulation() {
       </div>
       {BALLS.map(ball =>
         balls.current[ball.key]?.visible !== false && (
-          <img
+          <div
             key={ball.key}
-            src={ball.src}
-            alt={ball.alt}
             ref={ballRefs.current[ball.key]}
-            className={styles.pinBallImg}
             style={{
               position: "absolute",
               left: (balls.current[ball.key]?.x !== undefined ? balls.current[ball.key].x - BALL_RADIUS : 0),
               top: (balls.current[ball.key]?.y !== undefined ? balls.current[ball.key].y - BALL_RADIUS : 0),
-              width: BALL_SIZE,
-              height: BALL_SIZE,
               zIndex: 10
             }}
-          />
+          >
+            <SimpleRealisticBall number={ball.key} size={BALL_SIZE} />
+          </div>
         )
       )}
     </div>
