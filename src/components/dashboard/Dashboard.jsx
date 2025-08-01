@@ -21,7 +21,6 @@ import Modal from '../modal/DraggableModal.jsx';
 
 import DirectMessagingModal from '../DirectMessagingModal';
 import WinnerSelectModal from '../modal/WinnerSelectModal';
-import FloatingLogos from '../FloatingLogos';
 import Phase1Tracker from './Phase1Tracker.jsx';
 import Phase2Tracker from './Phase2Tracker.jsx';
 import MatchValidationModal from './MatchValidationModal';
@@ -398,12 +397,11 @@ export default function Dashboard({
     
     // Filter by current phase
     const currentPhaseNumber = effectivePhase === "challenge" ? 2 : 1;
-    const playerScheduleTotalRequired = scheduledMatches.filter(
-      m => m.division === selectedDivision &&
-        m.phase === currentPhaseNumber &&
-        ((m.player1 && m.player1.trim().toLowerCase() === fullName.toLowerCase()) ||
-        (m.player2 && m.player2.trim().toLowerCase() === fullName.toLowerCase()))
-    );
+          const playerScheduleTotalRequired = scheduledMatches.filter(
+        m => m.division === selectedDivision &&
+          ((m.player1 && m.player1.trim().toLowerCase() === fullName.toLowerCase()) ||
+          (m.player2 && m.player2.trim().toLowerCase() === fullName.toLowerCase()))
+      );
     
     // Count total matches (not unique opponents) - each match in schedule counts as 1
     const calculatedTotal = playerScheduleTotalRequired.length;
@@ -461,8 +459,19 @@ export default function Dashboard({
     setScheduledMatches([]);
     return;
   }
-  const safeDivision = selectedDivision.replace(/[^A-Za-z0-9]/g, '_');
-  const scheduleUrl = `${BACKEND_URL}/static/schedule_${safeDivision}.json`;
+  // Handle specific division name mappings
+  let scheduleFileName;
+  if (selectedDivision === "FRBCAPL TEST") {
+    scheduleFileName = "schedule_FRBCAPL_TEST.json";
+  } else if (selectedDivision === "Singles Test") {
+    scheduleFileName = "schedule_Singles_Test.json";
+  } else {
+    // Fallback: create safe filename
+    const safeDivision = selectedDivision.replace(/[^A-Za-z0-9]/g, '_');
+    scheduleFileName = `schedule_${safeDivision}.json`;
+  }
+  
+  const scheduleUrl = `${BACKEND_URL}/static/${scheduleFileName}`;
 
   fetch(scheduleUrl)
     .then(res => {
@@ -991,33 +1000,53 @@ export default function Dashboard({
       )
     : null;
 
+  // Check if we're on a mobile device
+  const isMobile = window.innerWidth <= 768;
+
   return (
     <div className={styles.dashboardBg} style={{ position: 'relative' }}>
-      <div className={styles.dashboardFrame} style={{ position: 'relative', zIndex: 1, overflow: 'hidden' }}>
-        {/* <FloatingLogos /> */}
+      <div className={styles.dashboardFrame} style={{ position: 'relative', zIndex: 1 }}>
         {/* Main dashboard content starts here */}
-        <div className={styles.dashboardCard} style={{ position: 'relative', zIndex: 1 }}>
-          <h1 className={styles.dashboardTitle}>
+        <div className={styles.dashboardCard} style={{ 
+          position: 'relative', 
+          zIndex: 1,
+          padding: isMobile ? '8px' : '20px',
+          margin: isMobile ? '4px' : '16px'
+        }}>
+          <h1 className={styles.dashboardTitle} style={{ fontSize: isMobile ? '1.5rem' : '2rem' }}>
             Welcome,
-            <span className={styles.dashboardUserName}>
+            <span className={styles.dashboardUserName} style={{ fontSize: isMobile ? '1.3rem' : '1.8rem' }}>
               {playerName} {playerLastName}
             </span>
           </h1>
-          <div className={styles.announcement}>
+          <div className={styles.announcement} style={{ fontSize: isMobile ? '0.75rem' : '1rem', marginBottom: isMobile ? '8px' : '16px' }}>
             <p>This is the BETA version. </p>Matches that are created, scheduled, and confirmed will NOT be played.<br />
             This is for testing purposes only.
           </div>
-          <br />
+          
+
+          
+          {!isMobile && <br />}
           {/* --- Division Selector --- */}
           {divisions.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <label>
+            <div style={{ 
+              marginBottom: isMobile ? 8 : 16,
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              alignItems: isMobile ? 'flex-start' : 'center',
+              gap: isMobile ? '8px' : '12px'
+            }}>
+              <label style={{ fontSize: isMobile ? '0.9rem' : '1rem' }}>
                 Division:&nbsp;
                 {divisions.length > 1 ? (
                   <select
                     value={selectedDivision}
                     onChange={e => setSelectedDivision(e.target.value)}
-                    style={{ fontSize: "1em", padding: 4, borderRadius: 4 }}
+                    style={{ 
+                      fontSize: isMobile ? "0.9em" : "1em", 
+                      padding: isMobile ? 6 : 4, 
+                      borderRadius: 4 
+                    }}
                   >
                     {divisions.map(div =>
                       <option key={div} value={div}>{div}</option>
@@ -1027,10 +1056,9 @@ export default function Dashboard({
                   <span style={{ fontWeight: 600 }}>{divisions[0]}</span>
                 )}
               </label>
-              &nbsp;&nbsp;&nbsp;
               <span style={{ 
-                fontSize: "0.9em", 
-                padding: "4px 8px", 
+                fontSize: isMobile ? "0.8em" : "0.9em", 
+                padding: isMobile ? "3px 6px" : "4px 8px", 
                 borderRadius: "4px", 
                 backgroundColor: effectivePhase === "challenge" ? "#e53e3e" : "#28a745",
                 color: "white",
@@ -1069,10 +1097,10 @@ export default function Dashboard({
             style={{
               position: "relative",
               overflow: "visible",
-              backgroundColor: "#000",
-              minHeight: "370px",
-              marginBottom: '36px',
-              paddingBottom: '20px',
+              backgroundColor: "rgba(0, 0, 0, .5)",
+              minHeight: isMobile ? "100px" : "370px",
+              marginBottom: isMobile ? '12px' : '36px',
+              paddingBottom: isMobile ? '16px' : '20px',
             }}
           >
             {/* Proposal Buttons - Above Pool Table */}
@@ -1111,23 +1139,47 @@ export default function Dashboard({
 
             {/* PoolSimulation as background and matches list overlayed on table */}
             <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-              <div className={styles.poolTableContainer} style={{ marginBottom: '24px', position: 'relative' }}>
-                <ResponsiveWrapper aspectWidth={600} aspectHeight={300}>
+              <div className={styles.poolTableContainer} style={{ 
+                marginBottom: isMobile ? '8px' : '24px', 
+                position: 'relative',
+                width: '100%',
+                maxWidth: isMobile ? '100%' : '600px'
+              }}>
+                {isMobile ? (
                   <div
                     className={styles.simulationContainer}
                     ref={simulationRef}
+                    style={{
+                      width: '100%',
+                      height: '120px',
+                      position: 'relative'
+                    }}
                   >
                     <PoolSimulation />
                   </div>
-                </ResponsiveWrapper>
+                ) : (
+                  <ResponsiveWrapper aspectWidth={600} aspectHeight={300}>
+                    <div
+                      className={styles.simulationContainer}
+                      ref={simulationRef}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        position: 'relative'
+                      }}
+                    >
+                      <PoolSimulation />
+                    </div>
+                  </ResponsiveWrapper>
+                )}
                 {/* OpponentsModal portal overlay (not inside simulationContainer) */}
                 {opponentsModalPortal}
                 <div className={styles.mobileMatchesOverlay} style={{
                   position: 'absolute',
-                  left: '3.04%', // 18.25/600
-                  width: '92.1%', // (570.77-18.25)/600
-                  bottom: '9.94%', // (300-270.18)/300
-                  height: '60px',
+                  left: isMobile ? '5%' : '3.04%', // 18.25/600
+                  width: isMobile ? '90%' : '92.1%', // (570.77-18.25)/600
+                  bottom: isMobile ? '5%' : '9.94%', // (300-270.18)/300
+                  height: isMobile ? '30px' : '60px',
                   zIndex: 2,
                   pointerEvents: 'auto',
                   display: 'flex',
@@ -1301,9 +1353,11 @@ export default function Dashboard({
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              margin: '5px 0 0 0',
+              margin: '20px 0 0 0',
               width: '100%',
               paddingBottom: '12px',
+              position: 'relative',
+              zIndex: 10,
             }}>
               <div style={{
                 display: 'flex',

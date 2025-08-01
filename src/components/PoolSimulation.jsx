@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, Fragment } from "react";
+import React, { useRef, useEffect, Fragment, useState } from "react";
 import predatorTable from "./PoolTableSVG/PredatorTable.png";
 import nineBall from "../assets/nineball.svg";
 import tenBall from "../assets/tenball.svg";
@@ -24,30 +24,33 @@ const CORNER_MARGIN_FACTOR = 3.0;
 const SIDE_MARGIN_FACTOR = 1.8;
 
 // --- Utility Functions ---
-function isInPocket(ball) {
+function isInPocket(ball, scale = 1) {
+  const scaledBallSize = BALL_SIZE * scale;
+  const scaledBallRadius = BALL_RADIUS * scale;
   const pockets = [
-    { x: PLAYFIELD_OFFSET_X, y: PLAYFIELD_OFFSET_Y, margin: BALL_SIZE * CORNER_MARGIN_FACTOR },
-    { x: PLAYFIELD_OFFSET_X + TABLE_WIDTH, y: PLAYFIELD_OFFSET_Y, margin: BALL_SIZE * CORNER_MARGIN_FACTOR },
-    { x: PLAYFIELD_OFFSET_X, y: PLAYFIELD_OFFSET_Y + TABLE_HEIGHT, margin: BALL_SIZE * CORNER_MARGIN_FACTOR },
-    { x: PLAYFIELD_OFFSET_X + TABLE_WIDTH, y: PLAYFIELD_OFFSET_Y + TABLE_HEIGHT, margin: BALL_SIZE * CORNER_MARGIN_FACTOR },
-    { x: PLAYFIELD_OFFSET_X + TABLE_WIDTH / 2, y: PLAYFIELD_OFFSET_Y, margin: BALL_SIZE * SIDE_MARGIN_FACTOR },
-    { x: PLAYFIELD_OFFSET_X + TABLE_WIDTH / 2, y: PLAYFIELD_OFFSET_Y + TABLE_HEIGHT, margin: BALL_SIZE * SIDE_MARGIN_FACTOR }
+    { x: PLAYFIELD_OFFSET_X, y: PLAYFIELD_OFFSET_Y, margin: scaledBallSize * CORNER_MARGIN_FACTOR },
+    { x: PLAYFIELD_OFFSET_X + TABLE_WIDTH, y: PLAYFIELD_OFFSET_Y, margin: scaledBallSize * CORNER_MARGIN_FACTOR },
+    { x: PLAYFIELD_OFFSET_X, y: PLAYFIELD_OFFSET_Y + TABLE_HEIGHT, margin: scaledBallSize * CORNER_MARGIN_FACTOR },
+    { x: PLAYFIELD_OFFSET_X + TABLE_WIDTH, y: PLAYFIELD_OFFSET_Y + TABLE_HEIGHT, margin: scaledBallSize * CORNER_MARGIN_FACTOR },
+    { x: PLAYFIELD_OFFSET_X + TABLE_WIDTH / 2, y: PLAYFIELD_OFFSET_Y, margin: scaledBallSize * SIDE_MARGIN_FACTOR },
+    { x: PLAYFIELD_OFFSET_X + TABLE_WIDTH / 2, y: PLAYFIELD_OFFSET_Y + TABLE_HEIGHT, margin: scaledBallSize * SIDE_MARGIN_FACTOR }
   ];
   const cx = ball.x;
   const cy = ball.y;
   return pockets.some(
-    pocket => Math.hypot(cx - pocket.x, cy - pocket.y) < pocket.margin + BALL_RADIUS * 0.85
+    pocket => Math.hypot(cx - pocket.x, cy - pocket.y) < pocket.margin + scaledBallRadius * 0.85
   );
 }
 
-function resolveBallCollision(a, b, ballSize) {
+function resolveBallCollision(a, b, ballSize, scale = 1) {
+  const scaledBallSize = ballSize * scale;
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
-  if (dist === 0 || dist >= ballSize) return;
+  if (dist === 0 || dist >= scaledBallSize) return;
 
   // 1. Resolve overlap
-  const overlap = ballSize - dist + 0.01;
+  const overlap = scaledBallSize - dist + 0.01;
   const nx = dx / dist;
   const ny = dy / dist;
   a.x -= nx * (overlap / 2);
@@ -69,7 +72,7 @@ function resolveBallCollision(a, b, ballSize) {
   b.isMoving = true;
 }
 
-function lineIntersectsBall(x1, y1, x2, y2, ball, ignoreKey) {
+function lineIntersectsBall(x1, y1, x2, y2, ball, ignoreKey, scale = 1) {
   if (!ball.visible || ball.key === ignoreKey) return false;
   const A = {x: x1, y: y1};
   const B = {x: x2, y: y2};
@@ -80,7 +83,7 @@ function lineIntersectsBall(x1, y1, x2, y2, ball, ignoreKey) {
   const t = Math.max(0, Math.min(1, (AC.x * AB.x + AC.y * AB.y) / ab2));
   const closest = {x: A.x + AB.x * t, y: A.y + AB.y * t};
   const dist = Math.hypot(closest.x - C.x, closest.y - C.y);
-  return dist < BALL_SIZE * 0.95;
+  return dist < BALL_SIZE * scale * 0.95;
 }
 
 function getPockets() {
@@ -108,6 +111,7 @@ function getPocketOpening(pocket, target) {
 }
 
 export default function PoolSimulation() {
+  const containerRef = useRef(null);
   const tableImgRef = useRef(null);
   const ballRefs = useRef({
     cue: React.createRef(),
@@ -120,6 +124,8 @@ export default function PoolSimulation() {
   const animationFrame = useRef(null);
   const cueTimeout = useRef(null);
   const shotCount = useRef(0);
+  const scaleRef = useRef(1);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Save initial positions for cue ball reset
   function saveInitialPositions() {
@@ -190,18 +196,37 @@ export default function PoolSimulation() {
     }, 1000);
   }
 
-  // On mount: rack and break
+  // Calculate scale factor and rack balls on mount
   useEffect(() => {
-    rackBalls();
-    setTimeout(() => {
-      breakCueBall();
-    }, 1000);
+    if (containerRef.current && !isInitialized) {
+      const container = containerRef.current;
+      const containerWidth = container.offsetWidth;
+      const containerHeight = container.offsetHeight;
+      
+      // For mobile (small containers), use a fixed scale
+      if (containerWidth < 400 || containerHeight < 200) {
+        scaleRef.current = 0.55; // Perfect scale for mobile visibility
+      } else {
+        // For desktop, calculate proper scale
+        const scaleX = containerWidth / TABLE_WIDTH;
+        const scaleY = containerHeight / TABLE_HEIGHT;
+        scaleRef.current = Math.min(scaleX, scaleY);
+      }
+      
+      // Rack balls immediately after scale is calculated
+      rackBalls();
+      setTimeout(() => {
+        breakCueBall();
+      }, 1000);
+      
+      setIsInitialized(true);
+    }
     return () => {
       cancelAnimationFrame(animationFrame.current);
       clearTimeout(cueTimeout.current);
     };
     // eslint-disable-next-line
-  }, []);
+  }, [isInitialized]);
 
   // Break shot: first shot is a blast, then AI takes over
   function breakCueBall() {
@@ -460,7 +485,7 @@ export default function PoolSimulation() {
           ball.vy *= Math.pow(friction, 1 / subSteps);
 
           // Pocket detection
-          if (isInPocket(ball)) {
+          if (isInPocket(ball, scaleRef.current)) {
             ball.isMoving = false;
             ball.visible = false;
             if (!pocketedThisFrame.includes(key)) pocketedThisFrame.push(key);
@@ -484,19 +509,25 @@ export default function PoolSimulation() {
             const a = balls.current[keys[i]];
             const b = balls.current[keys[j]];
             if (!a.visible || !b.visible) continue;
-            resolveBallCollision(a, b, BALL_SIZE);
+            resolveBallCollision(a, b, BALL_SIZE, scaleRef.current);
           }
         }
       }
 
-      // Directly update DOM for all balls (no scaling math needed)
+      // Update DOM for all balls with proper scaling
       Object.entries(balls.current).forEach(([key, ball]) => {
         if (ball.ref.current && ball.visible) {
-          ball.ref.current.style.left = (ball.x - BALL_RADIUS) + "px";
-          ball.ref.current.style.top = (ball.y - BALL_RADIUS) + "px";
-          ball.ref.current.style.width = BALL_SIZE + "px";
-          ball.ref.current.style.height = BALL_SIZE + "px";
+          const left = ((ball.x * scaleRef.current) - (BALL_RADIUS * scaleRef.current));
+          const top = ((ball.y * scaleRef.current) - (BALL_RADIUS * scaleRef.current));
+          const size = (BALL_SIZE * scaleRef.current);
+          
+          ball.ref.current.style.left = left + "px";
+          ball.ref.current.style.top = top + "px";
+          ball.ref.current.style.width = size + "px";
+          ball.ref.current.style.height = size + "px";
           ball.ref.current.style.opacity = 1;
+          
+
         }
       });
 
@@ -547,9 +578,10 @@ export default function PoolSimulation() {
   // --- Render ---
   return (
     <div
+      ref={containerRef}
       style={{
-        width: 600,
-        height: 300,
+        width: "100%",
+        height: "100%",
         position: "relative",
         background: "linear-gradient(180deg, #1a1a1a 0%, #000000 100%)",
         zIndex: 99999,
@@ -639,13 +671,13 @@ export default function PoolSimulation() {
             position: "absolute",
             left: "50%",
             top: "50%",
-            width: "50%",
+            width: "30.5%",
             height: "auto",
             transform: "translate(-50%, -50%)",
             objectFit: "contain",
             zIndex: 2,
-            opacity: 0.55,
-            filter: 'drop-shadow(0 2px 8px #000)',
+            opacity: 0.25,
+            filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.3))',
             pointerEvents: "none",
             userSelect: "none"
           }}
@@ -661,8 +693,8 @@ export default function PoolSimulation() {
             className={styles.pinBallImg}
             style={{
               position: "absolute",
-              left: (balls.current[ball.key]?.x !== undefined ? balls.current[ball.key].x - BALL_RADIUS : 0),
-              top: (balls.current[ball.key]?.y !== undefined ? balls.current[ball.key].y - BALL_RADIUS : 0),
+              left: 0,
+              top: 0,
               width: BALL_SIZE,
               height: BALL_SIZE,
               zIndex: 10,
@@ -677,8 +709,8 @@ export default function PoolSimulation() {
           <div
             style={{
               position: "absolute",
-              left: (balls.current[ball.key]?.x !== undefined ? balls.current[ball.key].x - BALL_RADIUS + 3 : 0),
-              top: (balls.current[ball.key]?.y !== undefined ? balls.current[ball.key].y - BALL_RADIUS + 3 : 0),
+              left: 3,
+              top: 3,
               width: BALL_SIZE - 6,
               height: BALL_SIZE - 6,
               borderRadius: "50%",

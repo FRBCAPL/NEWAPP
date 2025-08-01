@@ -242,13 +242,16 @@ import { BACKEND_URL } from '../../config.js';
 
   const primaryColor = getPrimaryColor();
 
+  // Check if we're on a mobile device
+  const isMobile = window.innerWidth <= 768;
+  
   return (
     <div style={{
       background: `linear-gradient(135deg, ${primaryColor}15, ${primaryColor}25)`,
       border: `2px solid ${primaryColor}`,
       borderRadius: '12px',
-      padding: '16px',
-      margin: '16px 0',
+      padding: isMobile ? '12px' : '16px',
+      margin: isMobile ? '12px 0' : '16px 0',
       boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
     }}>
       {/* Header */}
@@ -256,29 +259,36 @@ import { BACKEND_URL } from '../../config.js';
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '12px'
+        marginBottom: isMobile ? '8px' : '12px',
+        flexWrap: isMobile ? 'wrap' : 'nowrap',
+        gap: isMobile ? '4px' : '0'
       }}>
         <h3 style={{
           margin: 0,
           color: primaryColor,
-          fontSize: '1.1rem',
+          fontSize: isMobile ? '1rem' : '1.1rem',
           fontWeight: 'bold',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px'
+          gap: '6px',
+          flexWrap: 'wrap'
         }}>
           {deadlineStatus === 'critical' && '🚨'}
           {deadlineStatus === 'urgent' && '⚠️'}
           {deadlineStatus === 'warning' && '⚠️'}
           {deadlineStatus === 'passed' && '⏰'}
           {deadlineStatus === 'normal' && '📅'}
-          Phase 1 Progress & Deadline
+          <span style={{ fontSize: isMobile ? '0.9rem' : '1.1rem' }}>
+            Phase 1 Progress & Deadline
+          </span>
         </h3>
         
         <div style={{
-          fontSize: '0.9rem',
+          fontSize: isMobile ? '0.8rem' : '0.9rem',
           color: primaryColor,
-          fontWeight: 'bold'
+          fontWeight: 'bold',
+          textAlign: 'right',
+          minWidth: isMobile ? 'auto' : '80px'
         }}>
           {timeLeft.passed ? (
             'DEADLINE PASSED'
@@ -291,9 +301,9 @@ import { BACKEND_URL } from '../../config.js';
       {/* Status Message */}
       <div style={{
         color: '#fff',
-        fontSize: '0.95rem',
+        fontSize: isMobile ? '0.85rem' : '0.95rem',
         lineHeight: '1.4',
-        marginBottom: '12px'
+        marginBottom: isMobile ? '8px' : '12px'
       }}>
         {getStatusMessage()}
       </div>
@@ -318,24 +328,24 @@ import { BACKEND_URL } from '../../config.js';
       {/* Stats Row */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr',
-        gap: '12px',
-        marginBottom: '12px'
+        gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr',
+        gap: isMobile ? '8px' : '12px',
+        marginBottom: isMobile ? '8px' : '12px'
       }}>
         {/* Progress Stats */}
         <div style={{
           textAlign: 'center',
-          padding: '8px',
+          padding: isMobile ? '6px' : '8px',
           background: 'rgba(0,0,0,0.2)',
           borderRadius: '6px'
         }}>
-          <div style={{ fontSize: '0.8rem', color: '#ccc', marginBottom: '2px' }}>
+          <div style={{ fontSize: isMobile ? '0.7rem' : '0.8rem', color: '#ccc', marginBottom: '2px' }}>
             Progress
           </div>
-          <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 'bold' }}>
+          <div style={{ fontSize: isMobile ? '0.8rem' : '0.9rem', color: '#fff', fontWeight: 'bold' }}>
             {completedMatches.length}/{totalRequiredMatches}
           </div>
-          <div style={{ fontSize: '0.7rem', color: '#999' }}>
+          <div style={{ fontSize: isMobile ? '0.6rem' : '0.7rem', color: '#999' }}>
             {getProgressPercentage()}% complete
           </div>
         </div>
@@ -343,17 +353,17 @@ import { BACKEND_URL } from '../../config.js';
         {/* Win/Loss Record */}
         <div style={{
           textAlign: 'center',
-          padding: '8px',
+          padding: isMobile ? '6px' : '8px',
           background: 'rgba(0,0,0,0.2)',
           borderRadius: '6px'
         }}>
-          <div style={{ fontSize: '0.8rem', color: '#ccc', marginBottom: '2px' }}>
+          <div style={{ fontSize: isMobile ? '0.7rem' : '0.8rem', color: '#ccc', marginBottom: '2px' }}>
             Record
           </div>
-          <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 'bold' }}>
+          <div style={{ fontSize: isMobile ? '0.8rem' : '0.9rem', color: '#fff', fontWeight: 'bold' }}>
             {playerStats?.wins || 0}W - {playerStats?.losses || 0}L
           </div>
-          <div style={{ fontSize: '0.7rem', color: '#999' }}>
+          <div style={{ fontSize: isMobile ? '0.6rem' : '0.7rem', color: '#999' }}>
             {playerStats?.winRate || 0}% win rate
           </div>
         </div>
@@ -361,17 +371,18 @@ import { BACKEND_URL } from '../../config.js';
         {/* Standings Position */}
         <div style={{
           textAlign: 'center',
-          padding: '8px',
+          padding: isMobile ? '6px' : '8px',
           background: 'rgba(0,0,0,0.2)',
-          borderRadius: '6px'
+          borderRadius: '6px',
+          gridColumn: isMobile ? '1 / -1' : 'auto'
         }}>
-          <div style={{ fontSize: '0.8rem', color: '#ccc', marginBottom: '2px' }}>
+          <div style={{ fontSize: isMobile ? '0.7rem' : '0.8rem', color: '#ccc', marginBottom: '2px' }}>
             Position
           </div>
-          <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 'bold' }}>
+          <div style={{ fontSize: isMobile ? '0.8rem' : '0.9rem', color: '#fff', fontWeight: 'bold' }}>
             {loadingStandings ? '...' : (playerStats?.position || 'N/A')}
           </div>
-          <div style={{ fontSize: '0.7rem', color: '#999' }}>
+          <div style={{ fontSize: isMobile ? '0.6rem' : '0.7rem', color: '#999' }}>
             {loadingStandings ? 'Loading...' : 
              (playerStats?.actualPosition !== null ? 'Live standings' : 
               (completedMatches.length >= 1 ? 'Est. rank' : 'No matches yet'))}
@@ -381,12 +392,12 @@ import { BACKEND_URL } from '../../config.js';
 
       {/* Deadline Date */}
       <div style={{
-        fontSize: '0.8rem',
+        fontSize: isMobile ? '0.7rem' : '0.8rem',
         color: '#999',
-        marginTop: '8px',
+        marginTop: isMobile ? '6px' : '8px',
         textAlign: 'center'
       }}>
-        Phase 1 ends: {format(new Date(seasonData.phase1End), 'EEEE, MMMM d, yyyy')}
+        Phase 1 ends: {format(new Date(seasonData.phase1End), isMobile ? 'MMM d, yyyy' : 'EEEE, MMMM d, yyyy')}
       </div>
 
     </div>

@@ -154,37 +154,51 @@ export default function Phase2Tracker({ playerName, playerLastName, selectedDivi
   };
 
   const primaryColor = getPrimaryColor();
+  
+  // Check if we're on a mobile device
+  const isMobile = window.innerWidth <= 768;
 
   return (
-    <div style={getBackgroundStyle()}>
+    <div style={{
+      ...getBackgroundStyle(),
+      padding: isMobile ? '12px' : '16px',
+      margin: isMobile ? '12px 0' : '16px 0'
+    }}>
       {/* Header */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '12px'
+        marginBottom: isMobile ? '8px' : '12px',
+        flexWrap: isMobile ? 'wrap' : 'nowrap',
+        gap: isMobile ? '4px' : '0'
       }}>
         <h3 style={{
           margin: 0,
           color: primaryColor,
-          fontSize: '1.1rem',
+          fontSize: isMobile ? '1rem' : '1.1rem',
           fontWeight: 'bold',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px'
+          gap: '6px',
+          flexWrap: 'wrap'
         }}>
           {getChallengeStatus() === 'completed' && '🎉'}
           {getChallengeStatus() === 'limit_reached' && '⚠️'}
           {getChallengeStatus() === 'active' && '🏆'}
           {getChallengeStatus() === 'progressing' && '📈'}
           {getChallengeStatus() === 'ready' && '⚔️'}
-          Phase 2: Challenge Tracker
+          <span style={{ fontSize: isMobile ? '0.9rem' : '1.1rem' }}>
+            Phase 2: Challenge Tracker
+          </span>
         </h3>
         
         <div style={{
-          fontSize: '0.9rem',
+          fontSize: isMobile ? '0.8rem' : '0.9rem',
           color: primaryColor,
-          fontWeight: 'bold'
+          fontWeight: 'bold',
+          textAlign: 'right',
+          minWidth: isMobile ? 'auto' : '120px'
         }}>
           Phase 2, Week {stats.currentWeek} • Rank #{stats.currentStanding || 'N/A'}
         </div>
@@ -193,9 +207,9 @@ export default function Phase2Tracker({ playerName, playerLastName, selectedDivi
       {/* Status Message */}
       <div style={{
         color: '#fff',
-        fontSize: '0.95rem',
+        fontSize: isMobile ? '0.85rem' : '0.95rem',
         lineHeight: '1.4',
-        marginBottom: '12px'
+        marginBottom: isMobile ? '8px' : '12px'
       }}>
         {getStatusMessage()}
       </div>
@@ -203,13 +217,13 @@ export default function Phase2Tracker({ playerName, playerLastName, selectedDivi
       {/* Main Stats Grid - Better Layout */}
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-        gap: '1rem',
-        marginBottom: '1.5rem'
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))', 
+        gap: isMobile ? '0.75rem' : '1rem',
+        marginBottom: isMobile ? '1rem' : '1.5rem'
       }}>
         {/* Challenge Matches */}
         <div style={{ 
-          padding: '1rem',
+          padding: isMobile ? '0.75rem' : '1rem',
           background: 'rgba(0, 0, 0, 0.4)',
           borderRadius: '8px',
           border: '1px solid rgba(255, 255, 255, 0.15)',

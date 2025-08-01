@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import styles from './MatchDetailsModal.module.css';
 
 import EightBall from '../../assets/8ball.svg';
-import NineBall from '../../assets/nineball.svg';
-import TenBall from '../../assets/tenball.svg';
+import NineBall from '../../assets/ball9.jpg';
+import TenBall from '../../assets/ball10.jpg';
 import WinnerSelectModal from './WinnerSelectModal';
 import { proposalService } from '../../services/proposalService';
 

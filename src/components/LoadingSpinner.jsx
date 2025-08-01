@@ -45,7 +45,7 @@ export default function LoadingSpinner({
         </div>
       )}
       
-      <style jsx>{`
+      <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
@@ -97,7 +97,7 @@ export function LoadingButton({
         children
       )}
       
-      <style jsx>{`
+      <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
@@ -135,7 +135,7 @@ export function SkeletonLoader({
         />
       ))}
       
-      <style jsx>{`
+      <style>{`
         @keyframes shimmer {
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }

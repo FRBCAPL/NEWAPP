@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import table2 from "./PoolTableSVG.svg";
-import nineBall from "../assets/nineball.svg";
-import tenBall from "../assets/tenball.svg";
+import nineBall from "../assets/ball9.jpg";
+import tenBall from "../assets/ball10.jpg";
 import eightBall from "../assets/8ball.svg";
 import cueBall from "../assets/cueball.svg";
 import styles from "./modal/PinLogin.module.css";

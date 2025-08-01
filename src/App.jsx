@@ -8,6 +8,8 @@ import MatchChat from "./components/chat/MatchChat";
 import AdminDashboard from "./components/dashboard/AdminDashboard";
 import PinLogin from "./components/modal/PinLogin";
 import FloatingLogos from './components/FloatingLogos';
+
+import SimplePoolGame from './components/tenball/SimplePoolGame';
 import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
 import csiLogo from "./assets/csi_logo.png";
@@ -129,7 +131,7 @@ function App() {
     <HashRouter>
       <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
         <FloatingLogos />
-        <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none" }}>
+        <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh" }}>
           <AppHeader />
           <Routes>
             <Route
@@ -161,6 +163,11 @@ function App() {
                           <Navigate to="/" />
                         )
                       }
+                    />
+
+                    <Route
+                      path="/simple-pool"
+                      element={<SimplePoolGame />}
                     />
                     <Route
                       path="/dashboard"
