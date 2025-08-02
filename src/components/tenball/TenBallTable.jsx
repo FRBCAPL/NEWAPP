@@ -950,6 +950,8 @@ const TenBallTable = ({
     ctx.setLineDash([]);
   };
 
+  console.log('🎯 TenBallTable rendering with enhanced UI:', { aimLocked, power, english, cueStats });
+  
   return (
     <div className={styles.tenBallTable}>
       <div className={styles.tableContainer}>
@@ -1035,7 +1037,7 @@ const TenBallTable = ({
         </div>
         
         {/* Enhanced Miniclip-Style Controls */}
-        <div className={styles.controls}>
+        <div className={styles.controls} style={{border: '2px solid red', margin: '10px', padding: '10px'}}>
           <div className={styles.shootControl}>
             <button 
               className={`${styles.shootButton} ${!aimLocked || gameState.isAnimating ? styles.disabled : ''}`}
