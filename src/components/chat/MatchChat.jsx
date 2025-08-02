@@ -19,9 +19,10 @@ import PoolSimulation from "../PoolSimulation";
 import AdminAnnouncementInput from "../AdminAnnouncementInput"; // <-- ADD THIS LINE
 
 import styles from "./MatchChat.module.css";
+import { BACKEND_URL } from '../../config.js';
 
 const apiKey = import.meta.env.VITE_STREAM_API_KEY;
-const API_BASE = "https://atlasbackend-bnng.onrender.com";
+const API_BASE = BACKEND_URL;
 const GENERAL_CHANNEL_ID = "general";
 
 function cleanId(id) {

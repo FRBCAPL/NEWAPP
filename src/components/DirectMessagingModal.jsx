@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './DirectMessagingModal.module.css';
 import DraggableModal from './modal/DraggableModal';
+import { BACKEND_URL } from '../config.js';
 
-const BACKEND_URL = "https://atlasbackend-bnng.onrender.com";
-console.log('BACKEND_URL in use:', BACKEND_URL);
+console.log('DirectMessagingModal BACKEND_URL in use:', BACKEND_URL);
 
 export default function DirectMessagingModal({ userName, userEmail, userPin, selectedDivision, opponentEmails = [], onClose }) {
   console.log('Opponent Emails:', opponentEmails);

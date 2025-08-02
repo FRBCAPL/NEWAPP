@@ -5,6 +5,7 @@ import { sendConfirmationEmail } from '../utils/emailHelpers';
 import BilliardBall from "./BilliardBall";
 import styles from "./ConfirmMatch.module.css";
 import Highlight from "./Highlight";
+import { BACKEND_URL } from '../config.js';
 
 // Utility function to format date as MM-DD-YYYY
 function formatDateMMDDYYYY(dateStr) {
@@ -118,7 +119,7 @@ Good luck and have fun!`;
     sendConfirmationEmail(params);
 
     // --- Use to24Hour(time) here! ---
-    fetch('https://atlasbackend-bnng.onrender.com/api/matches', {
+            fetch(`${BACKEND_URL}/api/matches`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

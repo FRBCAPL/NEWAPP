@@ -59,7 +59,7 @@ function normalizeTimeString(time) {
   return t;
 }
 
-const BACKEND_URL = "https://atlasbackend-bnng.onrender.com";
+import { BACKEND_URL } from '../../config.js';
 
 // --- ADD: Utility to sanitize user IDs for Stream Chat ---
 function toStreamUserId(email) {

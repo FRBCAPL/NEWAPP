@@ -5,8 +5,7 @@ import styles from './AdminDashboard.module.css';
 import userSearchStyles from './AdminUserSearch.module.css';
 import UnenteredMatchesModal from "./UnenteredMatchesModal";
 import { FaSyncAlt, FaCheckCircle, FaExclamationCircle, FaUsers, FaCalendarAlt, FaChartBar } from 'react-icons/fa';
-
-const BACKEND_URL = "https://atlasbackend-bnng.onrender.com";
+import { BACKEND_URL } from '../../config.js';
 const apiKey = import.meta.env.VITE_STREAM_API_KEY;
 const adminUserId = "frbcaplgmailcom";
 
@@ -612,29 +611,46 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const client = StreamChat.getInstance(apiKey);
-    async function setup() {
-      try {
-        await fetch(`${BACKEND_URL}/create-user`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: adminUserId, name: "Admin" }),
-        });
-        const response = await fetch(`${BACKEND_URL}/token`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: adminUserId }),
-        });
+            async function setup() {
+          try {
+            console.log('Admin setup starting...');
+            console.log('Admin user ID:', adminUserId);
+            console.log('Backend URL:', BACKEND_URL);
+            
+            // Get token (this will also create the user if needed)
+            console.log('Requesting admin token...');
+            const response = await fetch(`${BACKEND_URL}/token`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: adminUserId }),
+            });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Token request failed:', response.status, errorText);
+          throw new Error(`Token request failed: ${response.status} - ${errorText}`);
+        }
+        
         const data = await response.json();
+        console.log('Token response:', data);
+        
         if (!data.token) {
-          alert("Failed to get admin token");
+          console.error('No token in response:', data);
+          alert("Failed to get admin token - no token in response");
           return;
         }
+        
+        console.log('Connecting to Stream Chat...');
         await client.connectUser({ id: adminUserId, name: "Admin" }, data.token);
         setChatClient(client);
+        
+        console.log('Querying channels...');
         const filters = { type: "messaging" };
         const sort = [{ last_message_at: -1 }];
         const channels = await client.queryChannels(filters, sort, { watch: false, state: true });
         setChannels(channels);
+        
+        console.log('Admin setup completed successfully');
       } catch (err) {
         console.error("Admin setup error:", err);
         alert("Admin setup error: " + err.message);

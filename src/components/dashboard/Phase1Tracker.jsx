@@ -20,33 +20,78 @@ import { BACKEND_URL } from '../../config.js';
   const [loadingStandings, setLoadingStandings] = useState(false);
 
   useEffect(() => {
-    if (!seasonData || currentPhase !== 'scheduled') {
+    if (!selectedDivision || currentPhase !== 'scheduled') {
       setTimeLeft(null);
       return;
     }
 
-    const updateTimeLeft = () => {
-      const now = new Date();
-      const phase1End = new Date(seasonData.phase1End);
-      
-      if (isAfter(now, phase1End)) {
-        setTimeLeft({ days: 0, hours: 0, passed: true });
-        setDeadlineStatus('passed');
-      } else {
-        const daysLeft = differenceInDays(phase1End, now);
-        const hoursLeft = differenceInHours(phase1End, now) % 24;
+    const updateTimeLeft = async () => {
+      try {
+        // Load schedule from the backend to get current match dates
+        const safeDivision = selectedDivision.replace(/[^A-Za-z0-9]/g, '_');
+        const scheduleUrl = `${BACKEND_URL}/static/schedule_${safeDivision}.json`;
         
-        setTimeLeft({ days: daysLeft, hours: hoursLeft, passed: false });
-        
-        if (daysLeft <= 0 && hoursLeft <= 24) {
-          setDeadlineStatus('critical');
-        } else if (daysLeft <= 2) {
-          setDeadlineStatus('urgent');
-        } else if (daysLeft <= 7) {
-          setDeadlineStatus('warning');
-        } else {
-          setDeadlineStatus('normal');
+        const response = await fetch(scheduleUrl);
+        if (!response.ok) {
+          console.warn(`Failed to fetch schedule: ${response.status} - ${response.statusText}`);
+          return;
         }
+        
+        const scheduleData = await response.json();
+        
+        if (!Array.isArray(scheduleData) || scheduleData.length === 0) {
+          console.warn('No schedule data available');
+          return;
+        }
+
+        // Calculate Phase 1 deadline based on the 6th week of matches (Phase 1 = 6 weeks)
+        // Sort matches by date and get the last match of week 6
+        const sortedMatches = scheduleData
+          .filter(match => match.date)
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        if (sortedMatches.length === 0) {
+          console.warn('No valid matches found in schedule');
+          return;
+        }
+
+        // Get the 6th week matches (assuming 8 matches per week, so matches 33-40)
+        // Adjust this calculation based on your actual schedule structure
+        const phase1EndMatchIndex = Math.min(47, sortedMatches.length - 1); // 6 weeks * 8 matches = 48 matches, but use 47 for index
+        const phase1EndMatch = sortedMatches[phase1EndMatchIndex];
+        
+        if (!phase1EndMatch || !phase1EndMatch.date) {
+          console.warn('Could not determine Phase 1 end date from schedule');
+          return;
+        }
+
+        // Set deadline to end of the day for the last Phase 1 match
+        const phase1EndDate = new Date(phase1EndMatch.date);
+        phase1EndDate.setHours(23, 59, 59, 999); // End of day
+        
+        const now = new Date();
+        
+        if (isAfter(now, phase1EndDate)) {
+          setTimeLeft({ days: 0, hours: 0, passed: true });
+          setDeadlineStatus('passed');
+        } else {
+          const daysLeft = differenceInDays(phase1EndDate, now);
+          const hoursLeft = differenceInHours(phase1EndDate, now) % 24;
+          
+          setTimeLeft({ days: daysLeft, hours: hoursLeft, passed: false });
+          
+          if (daysLeft <= 0 && hoursLeft <= 24) {
+            setDeadlineStatus('critical');
+          } else if (daysLeft <= 2) {
+            setDeadlineStatus('urgent');
+          } else if (daysLeft <= 7) {
+            setDeadlineStatus('warning');
+          } else {
+            setDeadlineStatus('normal');
+          }
+        }
+      } catch (error) {
+        console.error('Error calculating Phase 1 deadline from schedule:', error);
       }
     };
 
@@ -54,14 +99,14 @@ import { BACKEND_URL } from '../../config.js';
     const interval = setInterval(updateTimeLeft, 60000);
 
     return () => clearInterval(interval);
-  }, [seasonData, currentPhase]);
+  }, [selectedDivision, currentPhase]);
 
   useEffect(() => {
-    if (currentPhase === 'scheduled' && seasonData && completedMatches) {
+    if (currentPhase === 'scheduled' && selectedDivision && completedMatches) {
       calculateStandingsImpact();
       calculatePlayerStats();
     }
-  }, [currentPhase, seasonData, completedMatches, totalRequiredMatches]);
+  }, [currentPhase, selectedDivision, completedMatches, totalRequiredMatches]);
 
   useEffect(() => {
     if (selectedDivision && currentPhase === 'scheduled') {

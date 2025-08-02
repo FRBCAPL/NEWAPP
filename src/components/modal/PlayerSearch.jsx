@@ -17,7 +17,7 @@ const STANDINGS_URLS = {
   "Singles Test": "https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=9058a0cc-3231-4118-bd91-b305006fe578"
 };
 
-const BACKEND_URL = "https://atlasbackend-bnng.onrender.com";
+import { BACKEND_URL } from '../../config.js';
 
 // --- Utility: Normalize time string for display ---
 function normalizeTime(str) {

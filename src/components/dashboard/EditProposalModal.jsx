@@ -13,7 +13,7 @@ function formatDateYYYYMMDD(date) {
   return `${year}-${month}-${day}`;
 }
 
-const BACKEND_URL = "https://atlasbackend-bnng.onrender.com";
+import { BACKEND_URL } from '../../config.js';
 
 // Helper functions for time handling
 function normalizeTimeString(time) {

@@ -299,6 +299,49 @@ export default function Dashboard({
 
   const simulationRef = useRef(null);
 
+  // Test backend connection on component mount
+  useEffect(() => {
+    const testBackendConnection = async () => {
+      try {
+        // Log device info for debugging
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        console.log('Device Info:', {
+          userAgent: navigator.userAgent,
+          isMobile: isMobile,
+          backendUrl: BACKEND_URL,
+          protocol: window.location.protocol,
+          hostname: window.location.hostname
+        });
+
+        console.log('Testing backend connection...');
+        const response = await fetch(`${BACKEND_URL}/health`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          mode: 'cors',
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          console.log('✅ Backend connection successful');
+        } else {
+          console.error('❌ Backend connection failed:', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('❌ Backend connection error:', error);
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+      }
+    };
+
+    testBackendConnection();
+  }, []);
+
   useEffect(() => {
     setPendingCount(pendingProposals.length);
   }, [pendingProposals]);
@@ -1022,6 +1065,38 @@ export default function Dashboard({
           <div className={styles.announcement} style={{ fontSize: isMobile ? '0.75rem' : '1rem', marginBottom: isMobile ? '8px' : '16px' }}>
             <p>This is the BETA version. </p>Matches that are created, scheduled, and confirmed will NOT be played.<br />
             This is for testing purposes only.
+          </div>
+          
+          {/* 10-Ball Tutorial Link */}
+          <div style={{ 
+            marginBottom: isMobile ? 12 : 16,
+            textAlign: 'center'
+          }}>
+            <button
+              onClick={() => window.location.hash = '#/tenball-tutorial'}
+              style={{
+                background: 'linear-gradient(45deg, #4CAF50, #8BC34A)',
+                border: 'none',
+                color: 'white',
+                padding: isMobile ? '10px 16px' : '12px 20px',
+                borderRadius: '25px',
+                cursor: 'pointer',
+                fontSize: isMobile ? '0.9rem' : '1rem',
+                fontWeight: 'bold',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(76, 175, 80, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 6px 20px rgba(76, 175, 80, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 4px 15px rgba(76, 175, 80, 0.3)';
+              }}
+            >
+              🎱 Learn 10-Ball Rules & Play Tutorial Game
+            </button>
           </div>
           
 

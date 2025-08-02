@@ -8,7 +8,7 @@ import MatchChat from "./components/chat/MatchChat";
 import AdminDashboard from "./components/dashboard/AdminDashboard";
 import PinLogin from "./components/modal/PinLogin";
 import FloatingLogos from './components/FloatingLogos';
-
+import TenBallTutorial from './components/TenBallTutorial';
 import SimplePoolGame from './components/tenball/SimplePoolGame';
 import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
@@ -168,6 +168,10 @@ function App() {
                     <Route
                       path="/simple-pool"
                       element={<SimplePoolGame />}
+                    />
+                    <Route
+                      path="/tenball-tutorial"
+                      element={<TenBallTutorial />}
                     />
                     <Route
                       path="/dashboard"

@@ -121,20 +121,20 @@
 }
 
 .dashboardSectionTitle {
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   color: var(--accent-red);
-  font-weight: 600;
-  margin-bottom: 0.0rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
   padding-top: 1em;
-
+  text-align: center;
 }
 
 .dashboardHelperText {
   color: var(--white);
-  font-size: 1rem;
-  margin-bottom: 0.7em;
+  font-size: 1.1rem;
+  margin-bottom: 1em;
   text-align: center;
-  font-weight: 400;
+  font-weight: 500;
   letter-spacing: 0.01em;
 }
 .matchesSection {
@@ -255,11 +255,12 @@
 .dashboardActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 1.2rem;
   justify-content: center;
-  margin-top: .2rem;
-  margin-bottom: .5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
   width: 100%;
+  align-items: center;
 }
 
 .dashboardBtn {
@@ -267,11 +268,22 @@
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 0.8em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
+  padding: 0.9em 1.4em;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s;
+  min-height: 48px;
+  min-width: 120px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboardBtn:hover {
+  background: #d32f2f;
+  transform: translateY(-1px);
 }
 .dashboardBtn:disabled {
   background: #444;
@@ -576,6 +588,19 @@
     font-size: 1.2rem;
     margin-bottom: 0.5rem;
   }
+
+  /* Proposal buttons for tablet/mobile */
+  .proposalAlertButton {
+    font-size: 0.9rem;
+    padding: 0.6em 1em;
+    min-width: 120px;
+    min-height: 40px;
+  }
+
+  .proposalAlertRow {
+    gap: 0.8rem;
+    margin: 0.3rem 0 0.8rem 0;
+  }
 }
 
 @media (max-width: 500px) {
@@ -665,13 +690,14 @@
 
   .proposalAlertRow {
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.5rem;
   }
 
   .proposalAlertButton {
     width: 100%;
-    font-size: 0.8rem;
-    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+    padding: 0.7rem 1rem;
+    min-height: 44px;
   }
 
   .newsUpdatesHeader {
@@ -760,8 +786,9 @@
   }
 
   .proposalAlertButton {
-    font-size: 0.75rem;
-    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    padding: 0.6rem 0.8rem;
+    min-height: 40px;
   }
 
   .newsUpdatesHeader button {
@@ -973,9 +1000,11 @@
 }
 .proposalAlertRow {
   display: flex;
-  gap: 1.5rem;          /* Increased spacing between buttons */
-  margin: 0 0 0.0rem 0; /* Less space above/below the row */
+  gap: 1.2rem;          /* Adjusted spacing between buttons */
+  margin: 0.5rem 0 1rem 0; /* Better spacing above/below the row */
   justify-content: center;
+  flex-wrap: wrap;       /* Allow wrapping on smaller screens */
+  align-items: center;
 }
 
 .proposalAlertButton {
@@ -983,15 +1012,26 @@
   background: #f0ad4e;
   color: #222;
   border: 2px solid #d32f2f;
-  border-radius: 5px;
-  padding: 0.3em 0.4em;   /* Reduced padding for smaller button */
-  font-size: 0.8rem;    /* Reduced font size */
+  border-radius: 8px;
+  padding: 0.8em 1.2em;   /* Increased padding for better desktop experience */
+  font-size: 1rem;    /* Increased font size for desktop */
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 1px 4px #0001;
-  transition: background 0.15s, border-color 0.15s;
-  min-width: 100px;     /* Reduced min-width */
-  min-height: 8px;     /* Reduced min-height */
+  box-shadow: 0 2px 8px #0002;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  min-width: 140px;     /* Increased min-width for better desktop appearance */
+  min-height: 44px;     /* Increased min-height for better touch targets */
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.proposalAlertButton:hover {
+  background: #e09b3d;
+  border-color: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px #0003;
 }
 
 .proposalAlertButton:last-child {
