@@ -76,201 +76,171 @@ const SimplePoolGame = () => {
      );
    }, []);
    
-   // Trajectory prediction function with ball collision physics
-   const predictTrajectory = useCallback((startX, startY, startVx, startVy, maxSteps = 100) => {
-     const trajectory = [{ x: startX, y: startY }];
-     let x = startX;
-     let y = startY;
-     let vx = startVx;
-     let vy = startVy;
+   // Multi-ball trajectory prediction system
+   const predictAllBallTrajectories = useCallback((cueBallVx, cueBallVy) => {
+     const trajectories = {};
      const friction = 0.99;
-     
-     console.log('🎯 Starting trajectory prediction:', {
-       startX, startY, startVx, startVy, maxSteps,
-       initialSpeed: Math.sqrt(startVx * startVx + startVy * startVy)
-     });
-     
-     // Felt bounds (same as in animation)
      const FELT_LEFT = 30.0;
      const FELT_RIGHT = 570.77;
      const FELT_TOP = 24.5;
      const FELT_BOTTOM = 270.18;
      
-     for (let step = 0; step < maxSteps; step++) {
-       // Apply friction
-       vx *= friction;
-       vy *= friction;
+     // Ball colors for trajectory lines
+     const ballColors = {
+       1: '#ffff00', // Yellow
+       2: '#0000ff', // Blue
+       3: '#ff0000', // Red
+       4: '#800080', // Purple
+       5: '#ffa500', // Orange
+       6: '#008000', // Green
+       7: '#8b4513', // Brown
+       8: '#000000', // Black
+       9: '#ffff00', // Yellow stripe
+       10: '#ff0000' // Red (10-ball)
+     };
+     
+     // Simulate the entire shot sequence
+     const simulateShot = () => {
+       const ballStates = new Map();
        
-       // Stop if very slow
-       if (Math.abs(vx) < 0.03 && Math.abs(vy) < 0.03) {
-         break;
-       }
-       
-       // Calculate next position
-       let nextX = x + vx;
-       let nextY = y + vy;
-       
-       // Check rail collisions
-       let bounced = false;
-       
-       if (nextX < FELT_LEFT + BALL_RADIUS) {
-         nextX = FELT_LEFT + BALL_RADIUS;
-         vx = Math.abs(vx) * 0.85;
-         bounced = true;
-       } else if (nextX > FELT_RIGHT - BALL_RADIUS) {
-         nextX = FELT_RIGHT - BALL_RADIUS;
-         vx = -Math.abs(vx) * 0.8;
-         bounced = true;
-       }
-       
-       if (nextY < FELT_TOP + BALL_RADIUS) {
-         nextY = FELT_TOP + BALL_RADIUS;
-         vy = Math.abs(vy) * 0.85;
-         bounced = true;
-       } else if (nextY > FELT_BOTTOM - BALL_RADIUS) {
-         nextY = FELT_BOTTOM - BALL_RADIUS;
-         vy = -Math.abs(vy) * 0.8;
-         bounced = true;
-       }
-       
-       // Check pocket detection
-       const ball = { x: nextX, y: nextY };
-       if (isInPocket(ball)) {
-         trajectory.push({ x: nextX, y: nextY, pocketed: true });
-         break;
-       }
-       
-       // Check ball collisions with physics
-       let ballCollision = false;
-       let hitBall = null;
-       let collisionPoint = null;
-       
+       // Initialize all balls with current positions
        gameState.balls.forEach(ball => {
          if (ball.visible && !ball.pocketed) {
-           const dx = ball.x - nextX;
-           const dy = ball.y - nextY;
-           const dist = Math.sqrt(dx * dx + dy * dy);
-           if (dist < BALL_SIZE) {
-             ballCollision = true;
-             hitBall = ball;
-             collisionPoint = { x: nextX, y: nextY };
-           }
+           ballStates.set(ball.id, {
+             x: ball.x,
+             y: ball.y,
+             vx: 0,
+             vy: 0,
+             visible: true,
+             trajectory: [{ x: ball.x, y: ball.y }]
+           });
          }
        });
        
-               if (ballCollision && hitBall) {
-          // Add collision point
-          trajectory.push({ x: collisionPoint.x, y: collisionPoint.y, collision: true });
-          
-          // Calculate post-collision trajectory for cue ball
-          const dx = hitBall.x - collisionPoint.x;
-          const dy = hitBall.y - collisionPoint.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          
-          if (dist > 0) {
-            // Normal vector
-            const nx = dx / dist;
-            const ny = dy / dist;
-            
-            // Relative velocity
-            const relVelX = vx - 0; // Assuming hit ball is stationary
-            const relVelY = vy - 0;
-            
-            // Dot product for impulse calculation
-            const relVelDot = relVelX * nx + relVelY * ny;
-            
-            // Apply impulse (simplified elastic collision)
-            const impulse = -relVelDot;
-            vx += impulse * nx;
-            vy += impulse * ny;
-            
-            // Continue trajectory with new velocity
-            let postCollisionX = collisionPoint.x;
-            let postCollisionY = collisionPoint.y;
-            let postCollisionVx = vx;
-            let postCollisionVy = vy;
-            
-            // Continue for the full path to show complete post-collision trajectory
-            for (let postStep = 0; postStep < 100; postStep++) {
-              // Apply friction
-              postCollisionVx *= friction;
-              postCollisionVy *= friction;
-              
-              // Stop if very slow
-              if (Math.abs(postCollisionVx) < 0.03 && Math.abs(postCollisionVy) < 0.03) {
-                break;
-              }
-              
-              // Calculate next position
-              let nextPostX = postCollisionX + postCollisionVx;
-              let nextPostY = postCollisionY + postCollisionVy;
-              
-              // Check rail collisions
-              let postBounced = false;
-              
-              if (nextPostX < FELT_LEFT + BALL_RADIUS) {
-                nextPostX = FELT_LEFT + BALL_RADIUS;
-                postCollisionVx = Math.abs(postCollisionVx) * 0.85;
-                postBounced = true;
-              } else if (nextPostX > FELT_RIGHT - BALL_RADIUS) {
-                nextPostX = FELT_RIGHT - BALL_RADIUS;
-                postCollisionVx = -Math.abs(postCollisionVx) * 0.8;
-                postBounced = true;
-              }
-              
-              if (nextPostY < FELT_TOP + BALL_RADIUS) {
-                nextPostY = FELT_TOP + BALL_RADIUS;
-                postCollisionVy = Math.abs(postCollisionVy) * 0.85;
-                postBounced = true;
-              } else if (nextPostY > FELT_BOTTOM - BALL_RADIUS) {
-                nextPostY = FELT_BOTTOM - BALL_RADIUS;
-                postCollisionVy = -Math.abs(postCollisionVy) * 0.8;
-                postBounced = true;
-              }
-              
-              // Check pocket detection
-              const postBall = { x: nextPostX, y: nextPostY };
-              if (isInPocket(postBall)) {
-                trajectory.push({ x: nextPostX, y: nextPostY, pocketed: true, postCollision: true });
-                break;
-              }
-              
-              // Update position
-              postCollisionX = nextPostX;
-              postCollisionY = nextPostY;
-              trajectory.push({ x: postCollisionX, y: postCollisionY, bounced: postBounced, postCollision: true });
-              
-              // Stop if ball is too slow after bounce
-              if (postBounced && (Math.abs(postCollisionVx) < 0.1 || Math.abs(postCollisionVy) < 0.1)) {
-                break;
-              }
-            }
-          }
-          
-          // Return the trajectory now - don't continue the main loop
-          return trajectory;
-        }
+       // Add cue ball
+       ballStates.set('cue', {
+         x: gameState.cueBall.x,
+         y: gameState.cueBall.y,
+         vx: cueBallVx,
+         vy: cueBallVy,
+         visible: true,
+         trajectory: [{ x: gameState.cueBall.x, y: gameState.cueBall.y }]
+       });
        
-       // Update position
-       x = nextX;
-       y = nextY;
-       trajectory.push({ x, y, bounced });
-       
-       // Stop if ball is too slow after bounce
-       if (bounced && (Math.abs(vx) < 0.1 || Math.abs(vy) < 0.1)) {
-         break;
+                // Run physics simulation
+         for (let step = 0; step < 500; step++) {
+           const activeBalls = Array.from(ballStates.values()).filter(ball => ball.visible);
+           
+           // Update ball positions
+           activeBalls.forEach(ball => {
+             if (Math.abs(ball.vx) < 0.01 && Math.abs(ball.vy) < 0.01) {
+               ball.vx = 0;
+               ball.vy = 0;
+               return;
+             }
+           
+           // Apply friction
+           ball.vx *= friction;
+           ball.vy *= friction;
+           
+           // Calculate next position
+           let nextX = ball.x + ball.vx;
+           let nextY = ball.y + ball.vy;
+           
+                        // Check rail collisions
+             let bounced = false;
+             if (nextX < FELT_LEFT + BALL_RADIUS) {
+               nextX = FELT_LEFT + BALL_RADIUS;
+               ball.vx = Math.abs(ball.vx) * 0.85;
+               bounced = true;
+             } else if (nextX > FELT_RIGHT - BALL_RADIUS) {
+               nextX = FELT_RIGHT - BALL_RADIUS;
+               ball.vx = -Math.abs(ball.vx) * 0.8;
+               bounced = true;
+             }
+             
+             if (nextY < FELT_TOP + BALL_RADIUS) {
+               nextY = FELT_TOP + BALL_RADIUS;
+               ball.vy = Math.abs(ball.vy) * 0.85;
+               bounced = true;
+             } else if (nextY > FELT_BOTTOM - BALL_RADIUS) {
+               nextY = FELT_BOTTOM - BALL_RADIUS;
+               ball.vy = -Math.abs(ball.vy) * 0.8;
+               bounced = true;
+             }
+           
+           // Check pocket detection
+           const pocketBall = { x: nextX, y: nextY };
+           if (isInPocket(pocketBall)) {
+             ball.visible = false;
+             ball.trajectory.push({ x: nextX, y: nextY, pocketed: true });
+             return;
+           }
+           
+                        // Update position
+             ball.x = nextX;
+             ball.y = nextY;
+             ball.trajectory.push({ x: nextX, y: nextY, bounced });
+         });
+         
+         // Check ball-ball collisions
+         for (let i = 0; i < activeBalls.length; i++) {
+           for (let j = i + 1; j < activeBalls.length; j++) {
+             const ballA = activeBalls[i];
+             const ballB = activeBalls[j];
+             
+             if (!ballA.visible || !ballB.visible) continue;
+             
+             const dx = ballB.x - ballA.x;
+             const dy = ballB.y - ballA.y;
+             const dist = Math.sqrt(dx * dx + dy * dy);
+             
+             if (dist < BALL_SIZE) {
+               // Resolve collision
+               const nx = dx / dist;
+               const ny = dy / dist;
+               
+               const dvx = ballA.vx - ballB.vx;
+               const dvy = ballA.vy - ballB.vy;
+               const relVel = dvx * nx + dvy * ny;
+               
+               if (relVel > 0) {
+                 const impulse = -relVel;
+                 ballA.vx += impulse * nx;
+                 ballA.vy += impulse * ny;
+                 ballB.vx -= impulse * nx;
+                 ballB.vy -= impulse * ny;
+                 
+                 // Mark collision point
+                 ballA.trajectory[ballA.trajectory.length - 1].collision = true;
+                 ballB.trajectory[ballB.trajectory.length - 1].collision = true;
+               }
+             }
+           }
+         }
+         
+                    // Stop if all balls are stationary
+           const allStopped = activeBalls.every(ball => 
+             Math.abs(ball.vx) < 0.01 && Math.abs(ball.vy) < 0.01
+           );
+         
+         if (allStopped) break;
        }
-     }
+       
+       // Convert to trajectories object
+       ballStates.forEach((ball, id) => {
+         if (ball.trajectory.length > 1) {
+           trajectories[id] = {
+             points: ball.trajectory,
+             color: ballColors[id] || '#ffffff'
+           };
+         }
+       });
+     };
      
-     console.log('🎯 Trajectory prediction completed:', {
-       finalLength: trajectory.length,
-       finalPoint: trajectory[trajectory.length - 1],
-       finalSpeed: Math.sqrt(vx * vx + vy * vy),
-       stoppedEarly: trajectory.length < maxSteps
-     });
-     
-     return trajectory;
-   }, [gameState.balls, isInPocket]);
+     simulateShot();
+     return trajectories;
+   }, [gameState.balls, gameState.cueBall, isInPocket]);
   
   // Ball collision resolution (from working simulation)
   const resolveBallCollision = useCallback((a, b) => {
@@ -675,7 +645,7 @@ const SimplePoolGame = () => {
       }
     });
     
-         // Draw dynamic trajectory prediction FIRST (before balls)
+         // Draw multi-ball trajectory predictions FIRST (before balls)
      if (showAimLine && !gameState.isAnimating) {
        const cueBall = gameState.cueBall;
        const currentAngle = aimLocked ? lockedAimAngle : aimAngle;
@@ -685,120 +655,66 @@ const SimplePoolGame = () => {
        const startVx = Math.cos(currentAngle) * baseSpeed;
        const startVy = Math.sin(currentAngle) * baseSpeed;
        
-       // Predict the complete trajectory
-       const trajectory = predictTrajectory(cueBall.x, cueBall.y, startVx, startVy);
+       // Predict all ball trajectories
+       const allTrajectories = predictAllBallTrajectories(startVx, startVy);
        
-       console.log('🎯 Trajectory prediction:', {
-         length: trajectory.length,
-         startPoint: trajectory[0],
-         endPoint: trajectory[trajectory.length - 1],
-         hasCollision: trajectory.some(p => p.collision),
-         hasBounce: trajectory.some(p => p.bounced),
-         power: power,
-         angle: currentAngle
-       });
-       
-       if (trajectory.length > 1) {
-                   // Draw the trajectory path
-          ctx.save();
-          ctx.strokeStyle = aimLocked ? '#ff0000' : '#ffff00'; // Red for locked, bright yellow for unlocked
-          ctx.lineWidth = aimLocked ? 8 : 6; // Much thicker lines
-          ctx.globalAlpha = 1.0; // Fully opaque
-          ctx.setLineDash([]); // Solid line - no dashes
-          
-          ctx.beginPath();
-          ctx.moveTo(trajectory[0].x, trajectory[0].y);
-          
-          console.log('🎯 Drawing trajectory line from', trajectory[0], 'to', trajectory[trajectory.length - 1], 'with', trajectory.length, 'points');
-          
-          // Draw every point in the trajectory to ensure full path is visible
-          for (let i = 1; i < trajectory.length; i++) {
-            const point = trajectory[i];
-            ctx.lineTo(point.x, point.y);
-            
-            // Add a small debug dot every 10 points to verify drawing
-            if (i % 10 === 0) {
-              ctx.save();
-              ctx.fillStyle = '#ffff00';
-              ctx.globalAlpha = 0.5;
-              ctx.beginPath();
-              ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
-              ctx.fill();
-              ctx.restore();
-            }
-            
-            // Draw bounce indicators
-            if (point.bounced) {
-              ctx.save();
-              ctx.fillStyle = '#ffff00';
-              ctx.globalAlpha = 0.8;
-              ctx.beginPath();
-              ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
-              ctx.fill();
-              ctx.restore();
-            }
-            
-                         // Draw collision indicator as transparent ball
+       // Draw each ball's trajectory (only show significant ones)
+       Object.entries(allTrajectories).forEach(([ballId, trajectory]) => {
+         // At higher power, only show trajectories that travel a longer distance
+         const minPoints = power > 0.7 ? 8 : 3;
+         if (trajectory.points.length > minPoints) {
+           ctx.save();
+           ctx.strokeStyle = trajectory.color;
+           ctx.lineWidth = 2;
+           // Reduce opacity more at higher power to prevent clutter
+           const powerFactor = Math.max(0.3, 0.8 - (power * 0.4));
+           ctx.globalAlpha = powerFactor;
+           ctx.setLineDash([]);
+           
+           ctx.beginPath();
+           ctx.moveTo(trajectory.points[0].x, trajectory.points[0].y);
+           
+           // Draw trajectory path (skip some points to reduce density)
+           for (let i = 1; i < trajectory.points.length; i += 2) {
+             const point = trajectory.points[i];
+             ctx.lineTo(point.x, point.y);
+           }
+           
+           // Draw final point
+           const lastPoint = trajectory.points[trajectory.points.length - 1];
+           ctx.lineTo(lastPoint.x, lastPoint.y);
+           
+           ctx.stroke();
+           ctx.restore();
+           
+           // Draw collision indicators (only for significant collisions)
+           for (let i = 1; i < trajectory.points.length; i++) {
+             const point = trajectory.points[i];
              if (point.collision) {
                ctx.save();
-               ctx.fillStyle = '#ff0000';
-               ctx.globalAlpha = 0.3;
-               ctx.beginPath();
-               ctx.arc(point.x, point.y, BALL_RADIUS, 0, 2 * Math.PI);
-               ctx.fill();
-               ctx.strokeStyle = '#ff0000';
-               ctx.lineWidth = 1;
+               ctx.fillStyle = trajectory.color;
                ctx.globalAlpha = 0.6;
                ctx.beginPath();
-               ctx.arc(point.x, point.y, BALL_RADIUS, 0, 2 * Math.PI);
-               ctx.stroke();
+               ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
+               ctx.fill();
                ctx.restore();
-               // Don't break here - continue to show post-collision path
              }
-            
-            // Draw pocket indicator
-            if (point.pocketed) {
-              ctx.save();
-              ctx.fillStyle = '#00ff00';
-              ctx.globalAlpha = 0.8;
-              ctx.beginPath();
-              ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
-              ctx.fill();
-              ctx.restore();
-              break;
-            }
-          }
-          
-          ctx.stroke();
-          ctx.restore();
-          
-          console.log('🎯 Trajectory line drawn with', trajectory.length, 'points');
-         
-                   // Draw power indicator dots along the trajectory
-          const numDots = Math.floor(power * 10) + 1;
-          ctx.save();
-          ctx.fillStyle = aimLocked ? '#ff6b6b' : '#ffffff';
-          ctx.globalAlpha = 0.6;
-          
-          for (let i = 2; i <= numDots + 1 && i < trajectory.length; i++) {
-            const point = trajectory[i];
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
-            ctx.fill();
-          }
-          ctx.restore();
-         
-         // Draw end point indicator
-         const lastPoint = trajectory[trajectory.length - 1];
-         ctx.save();
-         ctx.fillStyle = aimLocked ? '#ff6b6b' : '#ffffff';
-         ctx.globalAlpha = 0.8;
-         ctx.beginPath();
-         ctx.arc(lastPoint.x, lastPoint.y, 4, 0, 2 * Math.PI);
-         ctx.fill();
-                   ctx.restore();
-        }
-      }
+             
+             // Draw pocket indicators
+             if (point.pocketed) {
+               ctx.save();
+               ctx.fillStyle = '#00ff00';
+               ctx.globalAlpha = 0.8;
+               ctx.beginPath();
+               ctx.arc(point.x, point.y, 6, 0, 2 * Math.PI);
+               ctx.fill();
+               ctx.restore();
+               break;
+             }
+           }
+         }
+       });
+     }
       
       // Draw cue ball LAST (on top of everything, without measles effect)
       if (gameState.cueBall.visible) {
@@ -822,7 +738,7 @@ const SimplePoolGame = () => {
           ctx.restore();
         }
       }
-     }, [gameState, showAimLine, aimAngle, ballImages, power, aimLocked, lockedAimAngle, predictTrajectory]);
+     }, [gameState, showAimLine, aimAngle, ballImages, power, aimLocked, lockedAimAngle, predictAllBallTrajectories]);
   
   // Draw on state changes
   useEffect(() => {
