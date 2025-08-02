@@ -400,4 +400,395 @@
     padding: 6px 12px;
     font-size: 0.8rem;
   }
+}
+
+/* Enhanced Miniclip-style UI Components */
+
+/* Power Bar Container */
+.powerBarContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.powerVisualBar {
+  width: 100%;
+  height: 12px;
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  position: relative;
+}
+
+.powerFill {
+  height: 100%;
+  background: linear-gradient(90deg, 
+    #4CAF50 0%, 
+    #FDD835 50%, 
+    #FF5722 80%, 
+    #D32F2F 100%
+  );
+  border-radius: 6px;
+  transition: width 0.2s ease;
+  position: relative;
+}
+
+.powerFill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.3) 50%, 
+    transparent 100%
+  );
+}
+
+/* Spin Control (Miniclip style) */
+.spinControl {
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.spinControl label {
+  display: block;
+  margin-bottom: 12px;
+  color: #ffd700;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.9rem;
+}
+
+.spinPad {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.spinArea {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+  cursor: crosshair;
+  transition: all 0.3s ease;
+}
+
+.spinArea:hover {
+  border-color: #ffd700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.spinCircle {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+}
+
+.spinDot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #ffd700;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 215, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.spinLabels {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.spinLabel {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.spinLabel.top {
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.spinLabel.bottom {
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.spinLabel.left {
+  left: -35px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.spinLabel.right {
+  right: -35px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Controls Layout */
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+  max-width: 800px;
+  padding: 20px;
+  background: linear-gradient(145deg, rgba(26, 26, 46, 0.9), rgba(30, 30, 50, 0.9));
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.shootControl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.shootButton {
+  padding: 15px 30px;
+  background: linear-gradient(145deg, #4CAF50, #45a049);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+  min-width: 150px;
+}
+
+.shootButton:hover:not(.disabled) {
+  background: linear-gradient(145deg, #45a049, #4CAF50);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+  transform: translateY(-2px);
+}
+
+.shootButton.disabled {
+  background: linear-gradient(145deg, #666, #555);
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.powerControl {
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.powerControl label {
+  display: block;
+  margin-bottom: 10px;
+  color: #ffd700;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.9rem;
+}
+
+.powerSlider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.powerSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffd700;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.powerSlider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffd700;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+/* Cue Selector */
+.cueSelector {
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.cueSelector h4 {
+  margin: 0 0 15px 0;
+  color: #ffd700;
+  font-size: 1.1rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.cueOptions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.cueOption {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #b8c5d6;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cueOption:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #ffd700;
+  color: #ffd700;
+}
+
+.cueOption.active {
+  background: linear-gradient(145deg, #ffd700, #ffed4e);
+  color: #1a1a2e;
+  border-color: #ffd700;
+  font-weight: 600;
+}
+
+.statBars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.statRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+}
+
+.statRow span:first-child {
+  width: 45px;
+  color: #b8c5d6;
+  font-weight: 500;
+}
+
+.statRow span:last-child {
+  width: 35px;
+  color: #ffd700;
+  font-weight: 600;
+  text-align: right;
+}
+
+.statBar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.statFill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #FDD835, #FF5722);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .controls {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .shootButton {
+    min-width: 120px;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+  
+  .spinArea {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .cueSelector h4 {
+    font-size: 1rem;
+  }
+  
+  .statRow {
+    font-size: 0.8rem;
+  }
+  
+  .spinControl label {
+    font-size: 0.9rem;
+  }
+  
+  .spinLabel {
+    font-size: 0.6rem;
+  }
+  
+  .powerVisualBar {
+    height: 10px;
+  }
+  
+  .cueOptions {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  
+  .cueOption {
+    font-size: 0.7rem;
+    padding: 6px 10px;
+  }
 } 

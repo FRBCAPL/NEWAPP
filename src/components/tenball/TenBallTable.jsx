@@ -41,20 +41,34 @@ const TenBallTable = ({
     isAnimating: false
   });
   
-  // Advanced aiming system state
+  // Enhanced Miniclip-style aiming system state
   const [aimAngle, setAimAngle] = useState(0);
   const [power, setPower] = useState(0.5);
-  const [english, setEnglish] = useState({ x: 0, y: 0 });
+  const [english, setEnglish] = useState({ x: 0, y: 0 }); // Renamed from spin for consistency
   const [selectedTargetBall, setSelectedTargetBall] = useState(null);
   const [trajectories, setTrajectories] = useState([]);
   const [aimLine, setAimLine] = useState(null); // Separate state for aim line
   const [aimLocked, setAimLocked] = useState(false);
+  const [lockedAimAngle, setLockedAimAngle] = useState(0);
   const aimLockedRef = useRef(aimLocked);
   useEffect(() => {
     aimLockedRef.current = aimLocked;
   }, [aimLocked]);
   const [hint, setHint] = useState('');
   const [showHint, setShowHint] = useState(false);
+  
+  // Enhanced Miniclip-style control states
+  const [showSpinControl, setShowSpinControl] = useState(false);
+  const [showPowerBar, setShowPowerBar] = useState(false);
+  const [showAimLine, setShowAimLine] = useState(false);
+  
+  // Cue attributes (Miniclip style)
+  const [cueStats, setCueStats] = useState({
+    force: 8,    // Affects maximum power - higher for tutorial
+    spin: 7,     // Affects maximum spin amount
+    aim: 9,      // Affects aim line length  
+    time: 6      // Affects shot timer
+  });
   
   // Trajectory update ref (kept for compatibility)
   const trajectoryUpdateRef = useRef(null);
@@ -178,17 +192,25 @@ const TenBallTable = ({
     return hints[currentStep] || "Take your shot!";
   }, [currentStep]);
 
-  // Trajectory prediction functions
-  const predictTrajectory = useCallback((startX, startY, angle, power, english) => {
-    const trajectory = [];
+  // Enhanced Miniclip-style trajectory prediction with spin effects
+  const predictTrajectory = useCallback((startX, startY, angle, power, englishData, maxSteps = 150) => {
+    const trajectory = [{ x: startX, y: startY }];
     let x = startX;
     let y = startY;
-    let vx = Math.cos(angle) * power * 18; // Match the actual shot power
-    let vy = Math.sin(angle) * power * 18;
     
-    // Add english effect (matching actual physics)
-    vx += english.x * power * 5.4; // 0.3 * 18
-    vy += english.y * power * 5.4;
+    // Calculate initial velocity with spin effects and cue stats
+    const basePower = power * (cueStats.force / 10) * 18; // Cue force affects power
+    let vx = Math.cos(angle) * basePower;
+    let vy = Math.sin(angle) * basePower;
+    
+    // Apply enhanced spin effects (English)
+    const spinMultiplier = cueStats.spin / 10;
+    vx += englishData.x * basePower * 0.3 * spinMultiplier;
+    vy += englishData.y * basePower * 0.3 * spinMultiplier;
+    
+    const friction = 0.99;
+    let spinDecay = 0.98; // Spin gradually reduces
+    let currentSpin = { x: englishData.x, y: englishData.y };
     
     // Felt bounds (same as physics simulation)
     const FELT_LEFT = 30.0;
@@ -196,41 +218,69 @@ const TenBallTable = ({
     const FELT_TOP = 24.5;
     const FELT_BOTTOM = 270.18;
     
-    // Predict path for 100 steps
-    for (let i = 0; i < 100; i++) {
-      trajectory.push({ x, y });
+    // Predict path for enhanced steps
+    for (let i = 0; i < maxSteps; i++) {
+      // Apply friction
+      vx *= friction;
+      vy *= friction;
       
-      // Apply friction (matching physics simulation)
-      vx *= 0.99;
-      vy *= 0.99;
+      // Apply spin effects during motion
+      if (Math.abs(currentSpin.x) > 0.01 || Math.abs(currentSpin.y) > 0.01) {
+        vx += currentSpin.x * 0.1;
+        vy += currentSpin.y * 0.1;
+        currentSpin.x *= spinDecay;
+        currentSpin.y *= spinDecay;
+      }
+      
+      // Stop if very slow
+      if (Math.abs(vx) < 0.03 && Math.abs(vy) < 0.03) {
+        break;
+      }
       
       // Update position
       x += vx;
       y += vy;
       
-      // Check for rail bounces (using felt boundaries)
+      // Enhanced rail collision with spin effects
+      let bounced = false;
+      
       if (x <= FELT_LEFT + BALL_SIZE) {
         vx = Math.abs(vx) * 0.85;
         x = FELT_LEFT + BALL_SIZE;
+        // Side spin affects rail bounce
+        if (currentSpin.x < 0) vy += currentSpin.x * 2; // Left spin affects vertical bounce
+        bounced = true;
       } else if (x >= FELT_RIGHT - BALL_SIZE) {
         vx = -Math.abs(vx) * 0.8;
         x = FELT_RIGHT - BALL_SIZE;
+        // Side spin affects rail bounce  
+        if (currentSpin.x > 0) vy += currentSpin.x * 2; // Right spin affects vertical bounce
+        bounced = true;
       }
       
       if (y <= FELT_TOP + BALL_SIZE) {
         vy = Math.abs(vy) * 0.85;
         y = FELT_TOP + BALL_SIZE;
+        // Top/bottom spin affects rail bounce
+        if (currentSpin.y < 0) vx += currentSpin.y * 2; // Bottom spin affects horizontal bounce
+        bounced = true;
       } else if (y >= FELT_BOTTOM - BALL_SIZE) {
         vy = -Math.abs(vy) * 0.8;
         y = FELT_BOTTOM - BALL_SIZE;
+        // Top/bottom spin affects rail bounce
+        if (currentSpin.y > 0) vx += currentSpin.y * 2; // Top spin affects horizontal bounce
+        bounced = true;
       }
+      
+      // Add trajectory point with bounce info
+      trajectory.push({ x, y, bounced });
       
       // Stop if ball is too slow
       if (Math.abs(vx) < 0.1 && Math.abs(vy) < 0.1) break;
     }
     
     return trajectory;
-  }, []);
+  }, [cueStats]);
 
   const predictBallCollisions = useCallback((trajectory, balls) => {
     const collisions = [];
@@ -650,41 +700,24 @@ const TenBallTable = ({
     startPhysicsSimulation();
   }, [startPhysicsSimulation]);
 
-  // Handle mouse events - simplified aim line that follows mouse
+  // Enhanced Miniclip-style mouse handlers
   const handleMouseDown = useCallback((e) => {
-    if (gameState.gamePhase === 'end') return;
+    if (gameState.gamePhase === 'end' || gameState.isAnimating) return;
 
-    // Clear previous aim line when starting to aim again
-    if (!aimLocked) {
-      setAimLine(null);
-    }
+    // Show enhanced controls
+    setShowAimLine(true);
+    setShowPowerBar(true);
+    setShowSpinControl(true);
 
-    // On any table click, toggle aim lock
-    setAimLocked((prev) => {
-      if (!prev) {
-        // Just locked: freeze aimAngle and trajectories
-        setAimAngle(lastAimAngleRef.current);
-        updateTrajectories(lastAimAngleRef.current, power, english);
-      }
-      return !prev;
-    });
-
-    // (Optional: keep ball selection logic if needed)
-    // const rect = canvasRef.current.getBoundingClientRect();
-    // const x = e.clientX - rect.left;
-    // const y = e.clientY - rect.top;
-    // gameState.balls.forEach(ball => {
-    //   if (ball.visible) {
-    //   const ballDistance = Math.sqrt((x - ball.x) ** 2 + (y - ball.y) ** 2);
-    //   if (ballDistance <= BALL_SIZE) {
-    //     setSelectedTargetBall(ball.id);
-    //   }
-    // }
-    // });
-  }, [gameState.gamePhase, power, english, updateTrajectories, aimLocked]);
+    // Lock the current aim angle
+    setAimLocked(true);
+    setLockedAimAngle(aimAngle);
+    
+    console.log('🎯 Aim locked at angle:', aimAngle * (180/Math.PI), 'degrees');
+  }, [gameState.gamePhase, gameState.isAnimating, aimAngle]);
 
   const handleMouseMove = useCallback((e) => {
-    if (gameState.isAnimating || aimLockedRef.current) return;
+    if (gameState.isAnimating) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -692,19 +725,29 @@ const TenBallTable = ({
 
     const cueBall = gameState.cueBall;
     const angle = Math.atan2(y - cueBall.y, x - cueBall.x);
-    setAimAngle(angle);
-    lastAimAngleRef.current = angle;
+    
+    if (!aimLocked) {
+      setAimAngle(angle);
+      lastAimAngleRef.current = angle;
+      setShowAimLine(true); // Show aim line when hovering
 
-    if (trajectoryUpdateRef.current) {
-      clearTimeout(trajectoryUpdateRef.current);
+      if (trajectoryUpdateRef.current) {
+        clearTimeout(trajectoryUpdateRef.current);
+      }
+      trajectoryUpdateRef.current = setTimeout(() => {
+        updateTrajectories(angle, power, english);
+      }, 50);
     }
-    trajectoryUpdateRef.current = setTimeout(() => {
-      updateTrajectories(angle, power, english);
-    }, 100);
-  }, [gameState.isAnimating, gameState.cueBall, power, english, updateTrajectories]);
+  }, [gameState.isAnimating, gameState.cueBall, power, english, updateTrajectories, aimLocked]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (!aimLocked) {
+      setShowAimLine(false);
+    }
+  }, [aimLocked]);
 
   const handleMouseUp = useCallback(() => {
-    // No longer needed for aiming
+    // Enhanced mouse up behavior
   }, []);
 
   // Initialize game
@@ -917,6 +960,7 @@ const TenBallTable = ({
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
           className={styles.tableCanvas}
         />
         
@@ -934,16 +978,53 @@ const TenBallTable = ({
         )}
       </div>
       
-      {/* Shoot Button - Right under the table */}
-      <div className={styles.shootButtonContainer}>
-        <button
-          className={styles.shootButton}
-          onClick={() => {
-            executeShot(aimAngle, power, english);
-          }}
-        >
-          SHOOT!
-        </button>
+      {/* Cue Stats Display (Miniclip style) */}
+      <div className={styles.cueSelector}>
+        <h4>Cue Attributes</h4>
+        <div className={styles.cueOptions}>
+          <button 
+            className={`${styles.cueOption} ${styles.active}`}
+            onClick={() => setCueStats({force: 8, spin: 7, aim: 9, time: 6})}
+          >
+            Beginner Cue
+          </button>
+          <button 
+            className={styles.cueOption}
+            onClick={() => setCueStats({force: 9, spin: 8, aim: 10, time: 7})}
+          >
+            Pro Cue
+          </button>
+        </div>
+        <div className={styles.statBars}>
+          <div className={styles.statRow}>
+            <span>Force:</span>
+            <div className={styles.statBar}>
+              <div className={styles.statFill} style={{width: `${(cueStats.force / 10) * 100}%`}} />
+            </div>
+            <span>{cueStats.force}/10</span>
+          </div>
+          <div className={styles.statRow}>
+            <span>Spin:</span>
+            <div className={styles.statBar}>
+              <div className={styles.statFill} style={{width: `${(cueStats.spin / 10) * 100}%`}} />
+            </div>
+            <span>{cueStats.spin}/10</span>
+          </div>
+          <div className={styles.statRow}>
+            <span>Aim:</span>
+            <div className={styles.statBar}>
+              <div className={styles.statFill} style={{width: `${(cueStats.aim / 10) * 100}%`}} />
+            </div>
+            <span>{cueStats.aim}/10</span>
+          </div>
+          <div className={styles.statRow}>
+            <span>Time:</span>
+            <div className={styles.statBar}>
+              <div className={styles.statFill} style={{width: `${(cueStats.time / 10) * 100}%`}} />
+            </div>
+            <span>{cueStats.time}/10</span>
+          </div>
+        </div>
       </div>
       
       <div className={styles.gameInfo}>
@@ -953,132 +1034,96 @@ const TenBallTable = ({
           <span>Aim: {aimLocked ? 'Locked' : 'Free'}</span>
         </div>
         
-        {/* Advanced Aiming Controls */}
-        <div className={styles.aimingControls}>
-          {/* Power Slider */}
-          <div className={styles.controlGroup}>
-            <label>Power: {Math.round(power * 100)}%</label>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              value={power}
-              onChange={(e) => {
-                const newPower = parseFloat(e.target.value);
-                setPower(newPower);
-                if (!aimLocked) {
-                  updateTrajectories(aimAngle, newPower, english);
+        {/* Enhanced Miniclip-Style Controls */}
+        <div className={styles.controls}>
+          <div className={styles.shootControl}>
+            <button 
+              className={`${styles.shootButton} ${!aimLocked || gameState.isAnimating ? styles.disabled : ''}`}
+              onClick={() => {
+                if (aimLocked && !gameState.isAnimating) {
+                  executeShot(lockedAimAngle, power, english);
+                  setAimLocked(false);
+                  setShowAimLine(false);
+                  setShowPowerBar(false);
+                  setShowSpinControl(false);
                 }
               }}
-              className={styles.powerSlider}
-            />
+              disabled={!aimLocked || gameState.isAnimating}
+            >
+              {aimLocked ? 'SHOOT!' : 'Aim & Click to Lock'}
+            </button>
           </div>
           
-          {/* English Controls */}
-          <div className={styles.controlGroup}>
+          {/* Enhanced Power Control */}
+          <div className={styles.powerControl}>
+            <div className={styles.powerBarContainer}>
+              <label>Power: {Math.round(power * 100)}%</label>
+              <div className={styles.powerVisualBar}>
+                <div 
+                  className={styles.powerFill} 
+                  style={{width: `${power * 100}%`}}
+                />
+              </div>
+              <input
+                type="range"
+                min="0.1"
+                max="1"
+                step="0.01"
+                value={power}
+                onChange={(e) => {
+                  const newPower = parseFloat(e.target.value);
+                  setPower(newPower);
+                  if (!aimLocked) {
+                    updateTrajectories(aimAngle, newPower, english);
+                  }
+                }}
+                className={styles.powerSlider}
+              />
+            </div>
+          </div>
+          
+          {/* Enhanced Spin Control (Miniclip-style) */}
+          <div className={styles.spinControl}>
             <label>English (Spin)</label>
-            <div className={styles.englishControls}>
-              <div className={styles.englishGrid}>
-                <button
-                  className={`${styles.englishBtn} ${english.x === -1 && english.y === -1 ? styles.active : ''}`}
-                  onClick={() => {
-                    setEnglish({ x: -1, y: -1 });
+            <div className={styles.spinPad}>
+              <div 
+                className={styles.spinArea}
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = (e.clientX - rect.left - rect.width/2) / (rect.width/2);
+                  const y = (e.clientY - rect.top - rect.height/2) / (rect.height/2);
+                  
+                  // Limit to circle
+                  const distance = Math.sqrt(x*x + y*y);
+                  const maxSpin = cueStats.spin / 10;
+                  
+                  if (distance <= 1) {
+                    const newSpin = { 
+                      x: Math.max(-maxSpin, Math.min(maxSpin, x * maxSpin)), 
+                      y: Math.max(-maxSpin, Math.min(maxSpin, y * maxSpin))
+                    };
+                    setEnglish(newSpin);
                     if (!aimLocked) {
-                      updateTrajectories(aimAngle, power, { x: -1, y: -1 });
+                      updateTrajectories(aimAngle, power, newSpin);
                     }
-                  }}
-                >
-                  ↖
-                </button>
-                <button
-                  className={`${styles.englishBtn} ${english.y === -1 ? styles.active : ''}`}
-                  onClick={() => {
-                    setEnglish({ x: 0, y: -1 });
-                    if (!aimLocked) {
-                      updateTrajectories(aimAngle, power, { x: 0, y: -1 });
-                    }
-                  }}
-                >
-                  ↑
-                </button>
-                <button
-                  className={`${styles.englishBtn} ${english.x === 1 && english.y === -1 ? styles.active : ''}`}
-                  onClick={() => {
-                    setEnglish({ x: 1, y: -1 });
-                    if (!aimLocked) {
-                      updateTrajectories(aimAngle, power, { x: 1, y: -1 });
-                    }
-                  }}
-                >
-                  ↗
-                </button>
-                <button
-                  className={`${styles.englishBtn} ${english.x === -1 ? styles.active : ''}`}
-                  onClick={() => {
-                    setEnglish({ x: -1, y: 0 });
-                    if (!aimLocked) {
-                      updateTrajectories(aimAngle, power, { x: -1, y: 0 });
-                    }
-                  }}
-                >
-                  ←
-                </button>
-                <button
-                  className={`${styles.englishBtn} ${english.x === 0 && english.y === 0 ? styles.active : ''}`}
-                  onClick={() => {
-                    setEnglish({ x: 0, y: 0 });
-                    if (!aimLocked) {
-                      updateTrajectories(aimAngle, power, { x: 0, y: 0 });
-                    }
-                  }}
-                >
-                  •
-                </button>
-                <button
-                  className={`${styles.englishBtn} ${english.x === 1 ? styles.active : ''}`}
-                  onClick={() => {
-                    setEnglish({ x: 1, y: 0 });
-                    if (!aimLocked) {
-                      updateTrajectories(aimAngle, power, { x: 1, y: 0 });
-                    }
-                  }}
-                >
-                  →
-                </button>
-                <button
-                  className={`${styles.englishBtn} ${english.x === -1 && english.y === 1 ? styles.active : ''}`}
-                  onClick={() => {
-                    setEnglish({ x: -1, y: 1 });
-                    if (!aimLocked) {
-                      updateTrajectories(aimAngle, power, { x: -1, y: 1 });
-                    }
-                  }}
-                >
-                  ↙
-                </button>
-                <button
-                  className={`${styles.englishBtn} ${english.y === 1 ? styles.active : ''}`}
-                  onClick={() => {
-                    setEnglish({ x: 0, y: 1 });
-                    if (!aimLocked) {
-                      updateTrajectories(aimAngle, power, { x: 0, y: 1 });
-                    }
-                  }}
-                >
-                  ↓
-                </button>
-                <button
-                  className={`${styles.englishBtn} ${english.x === 1 && english.y === 1 ? styles.active : ''}`}
-                  onClick={() => {
-                    setEnglish({ x: 1, y: 1 });
-                    if (!aimLocked) {
-                      updateTrajectories(aimAngle, power, { x: 1, y: 1 });
-                    }
-                  }}
-                >
-                  ↘
-                </button>
+                  }
+                }}
+              >
+                <div className={styles.spinCircle}>
+                  <div 
+                    className={styles.spinDot}
+                    style={{
+                      left: `${50 + (english.x / (cueStats.spin / 10)) * 40}%`,
+                      top: `${50 + (english.y / (cueStats.spin / 10)) * 40}%`
+                    }}
+                  />
+                </div>
+                <div className={styles.spinLabels}>
+                  <span className={`${styles.spinLabel} ${styles.top}`}>Follow</span>
+                  <span className={`${styles.spinLabel} ${styles.bottom}`}>Draw</span>
+                  <span className={`${styles.spinLabel} ${styles.left}`}>Left</span>
+                  <span className={`${styles.spinLabel} ${styles.right}`}>Right</span>
+                </div>
               </div>
             </div>
           </div>
