@@ -216,6 +216,307 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+/* Enhanced Miniclip-style UI Components */
+
+/* Power Bar Container */
+.powerBarContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.powerVisualBar {
+  width: 100%;
+  height: 12px;
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  position: relative;
+}
+
+.powerFill {
+  height: 100%;
+  background: linear-gradient(90deg, 
+    #4CAF50 0%, 
+    #FDD835 50%, 
+    #FF5722 80%, 
+    #D32F2F 100%
+  );
+  border-radius: 6px;
+  transition: width 0.2s ease;
+  position: relative;
+}
+
+.powerFill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.3) 50%, 
+    transparent 100%
+  );
+  animation: powerShine 2s ease-in-out infinite;
+}
+
+@keyframes powerShine {
+  0%, 100% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+}
+
+/* Spin Control */
+.spinControl {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.spinControl label {
+  color: #ffd700;
+  font-weight: bold;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.spinPad {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.spinArea {
+  width: 120px;
+  height: 120px;
+  border: 2px solid #ffd700;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 215, 0, 0.1) 0%,
+    rgba(255, 215, 0, 0.05) 70%,
+    transparent 100%
+  );
+  position: relative;
+  cursor: pointer;
+  box-shadow: 
+    inset 0 0 20px rgba(255, 215, 0, 0.2),
+    0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.spinArea:hover {
+  box-shadow: 
+    inset 0 0 25px rgba(255, 215, 0, 0.3),
+    0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+.spinCenter {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: #ffd700;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 5px rgba(255, 215, 0, 0.8);
+}
+
+.spinIndicator {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #ff4444;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.2s ease;
+  box-shadow: 
+    0 0 10px rgba(255, 68, 68, 0.8),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+}
+
+.spinLabels {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.spinLabel {
+  position: absolute;
+  color: #b8c5d6;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Cue Selector */
+.cueSelector {
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.cueSelector h4 {
+  margin: 0 0 15px 0;
+  color: #ffd700;
+  font-size: 1.1rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.cueOptions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.cueOption {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #b8c5d6;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cueOption:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: #ffd700;
+  color: #ffd700;
+  transform: translateY(-1px);
+}
+
+.cueOption.selected {
+  background: linear-gradient(45deg, #ffd700, #ffed4a);
+  border-color: #ffd700;
+  color: #1a1a2e;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+}
+
+/* Cue Stats Display */
+.cueStats {
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.cueStats h4 {
+  margin: 0 0 15px 0;
+  color: #ffd700;
+  font-size: 1.1rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.statBars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.statRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.statRow span:first-child {
+  min-width: 50px;
+  color: #b8c5d6;
+  font-weight: 500;
+}
+
+.statRow span:last-child {
+  min-width: 35px;
+  color: #ffd700;
+  font-weight: bold;
+  text-align: right;
+}
+
+.statBar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.statFill {
+  height: 100%;
+  background: linear-gradient(90deg, 
+    #4CAF50 0%, 
+    #FDD835 70%, 
+    #FF5722 100%
+  );
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.statFill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.4) 50%, 
+    transparent 100%
+  );
+  animation: statShine 3s ease-in-out infinite;
+}
+
+@keyframes statShine {
+  0%, 100% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+}
+
+/* Enhanced Animations */
+.controls > div {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .simplePoolGame {
@@ -281,5 +582,45 @@
     min-width: 120px;
     padding: 10px 16px;
     font-size: 14px;
+  }
+  
+  /* Responsive styles for new components */
+  .spinArea {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .cueStats h4 {
+    font-size: 1rem;
+  }
+  
+  .statRow {
+    font-size: 0.8rem;
+  }
+  
+  .spinControl label {
+    font-size: 0.9rem;
+  }
+  
+  .spinLabel {
+    font-size: 0.6rem;
+  }
+  
+  .powerVisualBar {
+    height: 10px;
+  }
+  
+  .cueOptions {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  
+  .cueOption {
+    font-size: 0.7rem;
+    padding: 6px 10px;
+  }
+  
+  .cueSelector h4 {
+    font-size: 1rem;
   }
 } 

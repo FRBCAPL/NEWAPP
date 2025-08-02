@@ -18,8 +18,10 @@ import ball9 from '../../assets/ball9.svg';
 import predatorTable from '../PoolTableSVG/PredatorTable.png';
 
 const SimplePoolGame = () => {
-  console.log('🎯 SimplePoolGame component loaded!');
+  console.log('🎯 SimplePoolGame component loaded with Miniclip-style mechanics!');
   const canvasRef = useRef(null);
+  
+  // Enhanced game state with Miniclip-style features
   const [gameState, setGameState] = useState({
     balls: [],
     cueBall: { x: 100, y: 150, vx: 0, vy: 0, visible: true, isMoving: false },
@@ -28,12 +30,27 @@ const SimplePoolGame = () => {
     gamePhase: 'break'
   });
   
+  // Miniclip-style aiming and control system
   const [aimAngle, setAimAngle] = useState(0);
   const [power, setPower] = useState(0.5);
+  const [spin, setSpin] = useState({ x: 0, y: 0 }); // English/spin control
   const [isAiming, setIsAiming] = useState(false);
   const [showAimLine, setShowAimLine] = useState(false);
   const [aimLocked, setAimLocked] = useState(false);
   const [lockedAimAngle, setLockedAimAngle] = useState(0);
+  
+  // Cue attributes (Miniclip style)
+  const [cueStats, setCueStats] = useState({
+    force: 7,    // Affects maximum power
+    spin: 6,     // Affects maximum spin amount
+    aim: 8,      // Affects aim line length  
+    time: 5      // Affects shot timer (not implemented yet)
+  });
+  
+  // Visual feedback states
+  const [showSpinControl, setShowSpinControl] = useState(false);
+  const [showPowerBar, setShowPowerBar] = useState(false);
+  const [trajectory, setTrajectory] = useState([]);
   
   // Table dimensions (from working simulation)
   const TABLE_WIDTH = 600;
@@ -55,9 +72,9 @@ const SimplePoolGame = () => {
     6: ball6, 7: ball7, 8: ball8, 9: ball9, 10: tenBall
   };
   
-     // Image cache
-   const imageCache = useRef({});
-   const tableImageCache = useRef(null);
+  // Image cache
+  const imageCache = useRef({});
+  const tableImageCache = useRef(null);
   
      // Pocket detection (from working simulation)
    const isInPocket = useCallback((ball) => {
@@ -76,125 +93,164 @@ const SimplePoolGame = () => {
      );
    }, []);
    
-   // Trajectory prediction function with ball collision physics
-   const predictTrajectory = useCallback((startX, startY, startVx, startVy, maxSteps = 100) => {
-     const trajectory = [{ x: startX, y: startY }];
-     let x = startX;
-     let y = startY;
-     let vx = startVx;
-     let vy = startVy;
-     const friction = 0.99;
-     
-     console.log('🎯 Starting trajectory prediction:', {
-       startX, startY, startVx, startVy, maxSteps,
-       initialSpeed: Math.sqrt(startVx * startVx + startVy * startVy)
-     });
-     
-     // Felt bounds (same as in animation)
-     const FELT_LEFT = 30.0;
-     const FELT_RIGHT = 570.77;
-     const FELT_TOP = 24.5;
-     const FELT_BOTTOM = 270.18;
-     
-     for (let step = 0; step < maxSteps; step++) {
-       // Apply friction
-       vx *= friction;
-       vy *= friction;
-       
-       // Stop if very slow
-       if (Math.abs(vx) < 0.03 && Math.abs(vy) < 0.03) {
-         break;
-       }
-       
-       // Calculate next position
-       let nextX = x + vx;
-       let nextY = y + vy;
-       
-       // Check rail collisions
-       let bounced = false;
-       
-       if (nextX < FELT_LEFT + BALL_RADIUS) {
-         nextX = FELT_LEFT + BALL_RADIUS;
-         vx = Math.abs(vx) * 0.85;
-         bounced = true;
-       } else if (nextX > FELT_RIGHT - BALL_RADIUS) {
-         nextX = FELT_RIGHT - BALL_RADIUS;
-         vx = -Math.abs(vx) * 0.8;
-         bounced = true;
-       }
-       
-       if (nextY < FELT_TOP + BALL_RADIUS) {
-         nextY = FELT_TOP + BALL_RADIUS;
-         vy = Math.abs(vy) * 0.85;
-         bounced = true;
-       } else if (nextY > FELT_BOTTOM - BALL_RADIUS) {
-         nextY = FELT_BOTTOM - BALL_RADIUS;
-         vy = -Math.abs(vy) * 0.8;
-         bounced = true;
-       }
-       
-       // Check pocket detection
-       const ball = { x: nextX, y: nextY };
-       if (isInPocket(ball)) {
-         trajectory.push({ x: nextX, y: nextY, pocketed: true });
-         break;
-       }
-       
-       // Check ball collisions with physics
-       let ballCollision = false;
-       let hitBall = null;
-       let collisionPoint = null;
-       
-       gameState.balls.forEach(ball => {
-         if (ball.visible && !ball.pocketed) {
-           const dx = ball.x - nextX;
-           const dy = ball.y - nextY;
-           const dist = Math.sqrt(dx * dx + dy * dy);
-           if (dist < BALL_SIZE) {
-             ballCollision = true;
-             hitBall = ball;
-             collisionPoint = { x: nextX, y: nextY };
-           }
-         }
-       });
-       
-               if (ballCollision && hitBall) {
-          // Add collision point
-          trajectory.push({ x: collisionPoint.x, y: collisionPoint.y, collision: true });
-          
-          // Calculate post-collision trajectory for cue ball
-          const dx = hitBall.x - collisionPoint.x;
-          const dy = hitBall.y - collisionPoint.y;
+     // Enhanced Miniclip-style trajectory prediction with spin effects
+  const predictTrajectory = useCallback((startX, startY, angle, power, spinData, maxSteps = 150) => {
+    const trajectory = [{ x: startX, y: startY }];
+    let x = startX;
+    let y = startY;
+    
+    // Calculate initial velocity with spin effects
+    const basePower = power * (cueStats.force / 10) * 15; // Cue force affects power
+    let vx = Math.cos(angle) * basePower;
+    let vy = Math.sin(angle) * basePower;
+    
+    // Apply spin effects (English)
+    const spinMultiplier = cueStats.spin / 10;
+    vx += spinData.x * basePower * 0.2 * spinMultiplier;
+    vy += spinData.y * basePower * 0.2 * spinMultiplier;
+    
+    const friction = 0.99;
+    let spinDecay = 0.98; // Spin gradually reduces
+    let currentSpin = { x: spinData.x, y: spinData.y };
+    
+    console.log('🎯 Enhanced trajectory prediction:', {
+      startX, startY, angle, power, spin: spinData, 
+      initialSpeed: Math.sqrt(vx * vx + vy * vy),
+      cueStats
+    });
+    
+    // Felt bounds (same as in animation)
+    const FELT_LEFT = 30.0;
+    const FELT_RIGHT = 570.77;
+    const FELT_TOP = 24.5;
+    const FELT_BOTTOM = 270.18;
+    
+    for (let step = 0; step < maxSteps; step++) {
+      // Apply friction
+      vx *= friction;
+      vy *= friction;
+      
+      // Apply spin effects during motion
+      if (Math.abs(currentSpin.x) > 0.01 || Math.abs(currentSpin.y) > 0.01) {
+        vx += currentSpin.x * 0.1;
+        vy += currentSpin.y * 0.1;
+        currentSpin.x *= spinDecay;
+        currentSpin.y *= spinDecay;
+      }
+      
+      // Stop if very slow
+      if (Math.abs(vx) < 0.03 && Math.abs(vy) < 0.03) {
+        break;
+      }
+      
+      // Calculate next position
+      let nextX = x + vx;
+      let nextY = y + vy;
+      
+      // Enhanced rail collision with spin effects
+      let bounced = false;
+      
+      if (nextX < FELT_LEFT + BALL_RADIUS) {
+        nextX = FELT_LEFT + BALL_RADIUS;
+        vx = Math.abs(vx) * 0.85;
+        // Side spin affects rail bounce
+        if (currentSpin.x < 0) vy += currentSpin.x * 2; // Left spin affects vertical bounce
+        bounced = true;
+      } else if (nextX > FELT_RIGHT - BALL_RADIUS) {
+        nextX = FELT_RIGHT - BALL_RADIUS;
+        vx = -Math.abs(vx) * 0.8;
+        // Side spin affects rail bounce  
+        if (currentSpin.x > 0) vy += currentSpin.x * 2; // Right spin affects vertical bounce
+        bounced = true;
+      }
+      
+      if (nextY < FELT_TOP + BALL_RADIUS) {
+        nextY = FELT_TOP + BALL_RADIUS;
+        vy = Math.abs(vy) * 0.85;
+        // Top/bottom spin affects rail bounce
+        if (currentSpin.y < 0) vx += currentSpin.y * 2; // Bottom spin affects horizontal bounce
+        bounced = true;
+      } else if (nextY > FELT_BOTTOM - BALL_RADIUS) {
+        nextY = FELT_BOTTOM - BALL_RADIUS;
+        vy = -Math.abs(vy) * 0.8;
+        // Top/bottom spin affects rail bounce
+        if (currentSpin.y > 0) vx += currentSpin.y * 2; // Top spin affects horizontal bounce
+        bounced = true;
+      }
+      
+      // Check pocket detection
+      const ball = { x: nextX, y: nextY };
+      if (isInPocket(ball)) {
+        trajectory.push({ x: nextX, y: nextY, pocketed: true });
+        break;
+      }
+      
+      // Enhanced ball collision detection with spin transfer
+      let ballCollision = false;
+      let hitBall = null;
+      let collisionPoint = null;
+      
+      gameState.balls.forEach(ball => {
+        if (ball.visible && !ball.pocketed) {
+          const dx = ball.x - nextX;
+          const dy = ball.y - nextY;
           const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < BALL_SIZE) {
+            ballCollision = true;
+            hitBall = ball;
+            collisionPoint = { x: nextX, y: nextY };
+          }
+        }
+      });
+      
+      if (ballCollision && hitBall) {
+        // Add collision point
+        trajectory.push({ x: collisionPoint.x, y: collisionPoint.y, collision: true, hitBall: hitBall.id });
+        
+        // Enhanced collision physics with spin transfer
+        const dx = hitBall.x - collisionPoint.x;
+        const dy = hitBall.y - collisionPoint.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        if (dist > 0) {
+          // Normal vector
+          const nx = dx / dist;
+          const ny = dy / dist;
           
-          if (dist > 0) {
-            // Normal vector
-            const nx = dx / dist;
-            const ny = dy / dist;
+          // Relative velocity
+          const relVelX = vx - 0; // Assuming hit ball is stationary
+          const relVelY = vy - 0;
+          
+          // Dot product for impulse calculation
+          const relVelDot = relVelX * nx + relVelY * ny;
+          
+          // Apply impulse with spin effects
+          const impulse = -relVelDot * 0.8; // Reduced for more realistic collision
+          vx += impulse * nx;
+          vy += impulse * ny;
+          
+          // Spin affects post-collision direction
+          if (Math.abs(currentSpin.x) > 0.1) {
+            vy += currentSpin.x * 1.5; // Side spin creates deflection
+          }
+          if (Math.abs(currentSpin.y) > 0.1) {
+            // Top spin: ball follows more forward, Bottom spin: ball draws back
+            const spinEffect = currentSpin.y > 0 ? 1.2 : 0.6;
+            vx *= spinEffect;
+            vy *= spinEffect;
+          }
+          
+          // Continue trajectory with new velocity
+          let postCollisionX = collisionPoint.x;
+          let postCollisionY = collisionPoint.y;
+          let postCollisionVx = vx;
+          let postCollisionVy = vy;
             
-            // Relative velocity
-            const relVelX = vx - 0; // Assuming hit ball is stationary
-            const relVelY = vy - 0;
-            
-            // Dot product for impulse calculation
-            const relVelDot = relVelX * nx + relVelY * ny;
-            
-            // Apply impulse (simplified elastic collision)
-            const impulse = -relVelDot;
-            vx += impulse * nx;
-            vy += impulse * ny;
-            
-            // Continue trajectory with new velocity
-            let postCollisionX = collisionPoint.x;
-            let postCollisionY = collisionPoint.y;
-            let postCollisionVx = vx;
-            let postCollisionVy = vy;
-            
-            // Continue for the full path to show complete post-collision trajectory
-            for (let postStep = 0; postStep < 100; postStep++) {
-              // Apply friction
-              postCollisionVx *= friction;
-              postCollisionVy *= friction;
+                       // Continue for a shorter post-collision trajectory
+           for (let postStep = 0; postStep < 50; postStep++) {
+             // Apply friction
+             postCollisionVx *= friction;
+             postCollisionVy *= friction;
               
               // Stop if very slow
               if (Math.abs(postCollisionVx) < 0.03 && Math.abs(postCollisionVy) < 0.03) {
@@ -270,7 +326,7 @@ const SimplePoolGame = () => {
      });
      
      return trajectory;
-   }, [gameState.balls, isInPocket]);
+   }, [gameState.balls, isInPocket, cueStats]);
   
   // Ball collision resolution (from working simulation)
   const resolveBallCollision = useCallback((a, b) => {
@@ -532,15 +588,34 @@ const SimplePoolGame = () => {
     animationFrame.current = requestAnimationFrame(step);
   }, [gameState, isInPocket, resolveBallCollision]);
   
-  // Handle mouse events for aiming
+  // Enhanced Miniclip-style mouse events for aiming
   const handleMouseDown = useCallback((e) => {
     if (gameState.isAnimating) return;
     
-    // Lock the current aim angle
-    setAimLocked(true);
-    setLockedAimAngle(aimAngle);
-    setShowAimLine(true);
-  }, [gameState.isAnimating, aimAngle]);
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Check if clicking on cue ball for aiming/spin control
+    const cueBall = gameState.cueBall;
+    const distToCueBall = Math.sqrt((x - cueBall.x) ** 2 + (y - cueBall.y) ** 2);
+    
+    if (distToCueBall <= BALL_RADIUS + 20) { // Clicking near cue ball
+      setShowSpinControl(true);
+      setShowPowerBar(true);
+      if (!aimLocked) {
+        setAimLocked(true);
+        setLockedAimAngle(aimAngle);
+        setShowAimLine(true);
+      }
+    } else {
+      // Lock the current aim angle
+      setAimLocked(true);
+      setLockedAimAngle(aimAngle);
+      setShowAimLine(true);
+      setShowPowerBar(true);
+    }
+  }, [gameState.isAnimating, gameState.cueBall, aimAngle, aimLocked]);
   
   const handleMouseMove = useCallback((e) => {
     if (gameState.isAnimating) return;
@@ -553,45 +628,101 @@ const SimplePoolGame = () => {
     const angle = Math.atan2(y - cueBall.y, x - cueBall.x);
     setAimAngle(angle);
     
+    // Update trajectory prediction in real-time
+    if (showAimLine && !gameState.isAnimating) {
+      const predTrajectory = predictTrajectory(cueBall.x, cueBall.y, angle, power, spin);
+      setTrajectory(predTrajectory);
+    }
+    
     // Show aim line when mouse is over the table
     if (!aimLocked) {
       setShowAimLine(true);
     }
-  }, [gameState.isAnimating, gameState.cueBall, aimLocked]);
+  }, [gameState.isAnimating, gameState.cueBall, aimLocked, showAimLine, power, spin, predictTrajectory]);
   
   const handleMouseLeave = useCallback(() => {
     if (!aimLocked) {
       setShowAimLine(false);
+      setTrajectory([]);
     }
   }, [aimLocked]);
   
+  // Enhanced shot execution with spin effects
   const handleShoot = useCallback(() => {
     if (gameState.isAnimating || !aimLocked) return;
     
-    // Execute shot
     const cueBall = gameState.cueBall;
-    const speed = power * 12; // Good speed for realistic play
+    
+    // Calculate enhanced power with cue stats
+    const basePower = power * (cueStats.force / 10) * 15;
+    let vx = Math.cos(lockedAimAngle) * basePower;
+    let vy = Math.sin(lockedAimAngle) * basePower;
+    
+    // Apply spin effects
+    const spinMultiplier = cueStats.spin / 10;
+    vx += spin.x * basePower * 0.2 * spinMultiplier;
+    vy += spin.y * basePower * 0.2 * spinMultiplier;
     
     setGameState(prev => ({
       ...prev,
       cueBall: {
         ...prev.cueBall,
-        vx: Math.cos(lockedAimAngle) * speed,
-        vy: Math.sin(lockedAimAngle) * speed,
-        isMoving: true
+        vx: vx,
+        vy: vy,
+        isMoving: true,
+        spin: { ...spin } // Store spin for physics
       },
       isAnimating: true
     }));
     
     // Reset aiming state
     setAimLocked(false);
-    // setShowAimLine(false); // Keep aim line visible during and after shot
-  }, [gameState.isAnimating, aimLocked, gameState.cueBall, power, lockedAimAngle]);
+    setShowSpinControl(false);
+    setShowPowerBar(false);
+    setTrajectory([]);
+    // Keep aim line visible for feedback
+  }, [gameState.isAnimating, aimLocked, gameState.cueBall, power, lockedAimAngle, spin, cueStats]);
   
   const handleResetAim = useCallback(() => {
     setAimLocked(false);
     setShowAimLine(false);
+    setShowSpinControl(false);
+    setShowPowerBar(false);
+    setTrajectory([]);
+    setSpin({ x: 0, y: 0 });
+    setPower(0.5);
   }, []);
+  
+  // Spin control handlers
+  const handleSpinChange = useCallback((newSpin) => {
+    const maxSpin = cueStats.spin / 10; // Normalize to 0-1
+    const clampedSpin = {
+      x: Math.max(-maxSpin, Math.min(maxSpin, newSpin.x)),
+      y: Math.max(-maxSpin, Math.min(maxSpin, newSpin.y))
+    };
+    setSpin(clampedSpin);
+    
+    // Update trajectory with new spin
+    if (showAimLine && !gameState.isAnimating) {
+      const cueBall = gameState.cueBall;
+      const predTrajectory = predictTrajectory(cueBall.x, cueBall.y, aimAngle, power, clampedSpin);
+      setTrajectory(predTrajectory);
+    }
+  }, [cueStats.spin, showAimLine, gameState.isAnimating, gameState.cueBall, aimAngle, power, predictTrajectory]);
+  
+  // Power control handler
+  const handlePowerChange = useCallback((newPower) => {
+    const maxPower = cueStats.force / 10; // Normalize based on cue force
+    const clampedPower = Math.max(0.1, Math.min(maxPower, newPower));
+    setPower(clampedPower);
+    
+    // Update trajectory with new power
+    if (showAimLine && !gameState.isAnimating) {
+      const cueBall = gameState.cueBall;
+      const predTrajectory = predictTrajectory(cueBall.x, cueBall.y, aimAngle, clampedPower, spin);
+      setTrajectory(predTrajectory);
+    }
+  }, [cueStats.force, showAimLine, gameState.isAnimating, gameState.cueBall, aimAngle, spin, predictTrajectory]);
   
   // Initialize game
   useEffect(() => {
@@ -675,154 +806,179 @@ const SimplePoolGame = () => {
       }
     });
     
-         // Draw dynamic trajectory prediction FIRST (before balls)
-     if (showAimLine && !gameState.isAnimating) {
-       const cueBall = gameState.cueBall;
-       const currentAngle = aimLocked ? lockedAimAngle : aimAngle;
-       
-       // Calculate initial velocity based on power
-       const baseSpeed = power * 12;
-       const startVx = Math.cos(currentAngle) * baseSpeed;
-       const startVy = Math.sin(currentAngle) * baseSpeed;
-       
-       // Predict the complete trajectory
-       const trajectory = predictTrajectory(cueBall.x, cueBall.y, startVx, startVy);
-       
-       console.log('🎯 Trajectory prediction:', {
-         length: trajectory.length,
-         startPoint: trajectory[0],
-         endPoint: trajectory[trajectory.length - 1],
-         hasCollision: trajectory.some(p => p.collision),
-         hasBounce: trajectory.some(p => p.bounced),
-         power: power,
-         angle: currentAngle
-       });
-       
-       if (trajectory.length > 1) {
-                   // Draw the trajectory path
-          ctx.save();
-          ctx.strokeStyle = aimLocked ? '#ff0000' : '#ffff00'; // Red for locked, bright yellow for unlocked
-          ctx.lineWidth = aimLocked ? 8 : 6; // Much thicker lines
-          ctx.globalAlpha = 1.0; // Fully opaque
-          ctx.setLineDash([]); // Solid line - no dashes
-          
-          ctx.beginPath();
-          ctx.moveTo(trajectory[0].x, trajectory[0].y);
-          
-          console.log('🎯 Drawing trajectory line from', trajectory[0], 'to', trajectory[trajectory.length - 1], 'with', trajectory.length, 'points');
-          
-          // Draw every point in the trajectory to ensure full path is visible
-          for (let i = 1; i < trajectory.length; i++) {
-            const point = trajectory[i];
-            ctx.lineTo(point.x, point.y);
-            
-            // Add a small debug dot every 10 points to verify drawing
-            if (i % 10 === 0) {
-              ctx.save();
-              ctx.fillStyle = '#ffff00';
-              ctx.globalAlpha = 0.5;
-              ctx.beginPath();
-              ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
-              ctx.fill();
-              ctx.restore();
-            }
-            
-            // Draw bounce indicators
-            if (point.bounced) {
-              ctx.save();
-              ctx.fillStyle = '#ffff00';
-              ctx.globalAlpha = 0.8;
-              ctx.beginPath();
-              ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
-              ctx.fill();
-              ctx.restore();
-            }
-            
-                         // Draw collision indicator as transparent ball
-             if (point.collision) {
-               ctx.save();
-               ctx.fillStyle = '#ff0000';
-               ctx.globalAlpha = 0.3;
-               ctx.beginPath();
-               ctx.arc(point.x, point.y, BALL_RADIUS, 0, 2 * Math.PI);
-               ctx.fill();
-               ctx.strokeStyle = '#ff0000';
-               ctx.lineWidth = 1;
-               ctx.globalAlpha = 0.6;
-               ctx.beginPath();
-               ctx.arc(point.x, point.y, BALL_RADIUS, 0, 2 * Math.PI);
-               ctx.stroke();
-               ctx.restore();
-               // Don't break here - continue to show post-collision path
-             }
-            
-            // Draw pocket indicator
-            if (point.pocketed) {
-              ctx.save();
-              ctx.fillStyle = '#00ff00';
-              ctx.globalAlpha = 0.8;
-              ctx.beginPath();
-              ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
-              ctx.fill();
-              ctx.restore();
-              break;
-            }
-          }
-          
-          ctx.stroke();
-          ctx.restore();
-          
-          console.log('🎯 Trajectory line drawn with', trajectory.length, 'points');
-         
-                   // Draw power indicator dots along the trajectory
-          const numDots = Math.floor(power * 10) + 1;
-          ctx.save();
-          ctx.fillStyle = aimLocked ? '#ff6b6b' : '#ffffff';
-          ctx.globalAlpha = 0.6;
-          
-          for (let i = 2; i <= numDots + 1 && i < trajectory.length; i++) {
-            const point = trajectory[i];
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
-            ctx.fill();
-          }
-          ctx.restore();
-         
-         // Draw end point indicator
-         const lastPoint = trajectory[trajectory.length - 1];
-         ctx.save();
-         ctx.fillStyle = aimLocked ? '#ff6b6b' : '#ffffff';
-         ctx.globalAlpha = 0.8;
-         ctx.beginPath();
-         ctx.arc(lastPoint.x, lastPoint.y, 4, 0, 2 * Math.PI);
-         ctx.fill();
-                   ctx.restore();
-        }
+    // Enhanced Miniclip-style trajectory and aiming visualization
+    if (showAimLine && !gameState.isAnimating) {
+      const cueBall = gameState.cueBall;
+      const currentAngle = aimLocked ? lockedAimAngle : aimAngle;
+      
+      // Draw enhanced aim line based on cue stats
+      const aimLineLength = (cueStats.aim / 10) * 150; // Length based on cue aim stat
+      const endX = cueBall.x + Math.cos(currentAngle) * aimLineLength;
+      const endY = cueBall.y + Math.sin(currentAngle) * aimLineLength;
+      
+      // Main aim line
+      ctx.save();
+      ctx.strokeStyle = aimLocked ? '#ff4444' : '#ffffff';
+      ctx.lineWidth = aimLocked ? 4 : 3;
+      ctx.globalAlpha = aimLocked ? 0.9 : 0.7;
+      
+      // Create gradient for aim line
+      const gradient = ctx.createLinearGradient(cueBall.x, cueBall.y, endX, endY);
+      gradient.addColorStop(0, aimLocked ? '#ff4444' : '#ffffff');
+      gradient.addColorStop(1, aimLocked ? '#ff888888' : '#ffffff44');
+      ctx.strokeStyle = gradient;
+      
+      ctx.beginPath();
+      ctx.moveTo(cueBall.x, cueBall.y);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+      ctx.restore();
+      
+      // Power indicator circles along aim line
+      const powerSteps = Math.floor(power * 8) + 3;
+      for (let i = 1; i <= powerSteps; i++) {
+        const distance = i * 15;
+        const circleX = cueBall.x + Math.cos(currentAngle) * distance;
+        const circleY = cueBall.y + Math.sin(currentAngle) * distance;
+        
+        ctx.save();
+        ctx.fillStyle = aimLocked ? '#ff6666' : '#ffffff';
+        ctx.globalAlpha = 1 - (i / powerSteps) * 0.5;
+        ctx.beginPath();
+        ctx.arc(circleX, circleY, Math.max(1, 3 - i * 0.2), 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
       }
       
-      // Draw cue ball LAST (on top of everything, without measles effect)
-      if (gameState.cueBall.visible) {
-        const ball = gameState.cueBall;
-        const imageSrc = ballImages.cue;
+      // Draw predicted trajectory if available
+      if (trajectory.length > 1) {
+        ctx.save();
+        ctx.strokeStyle = '#00aaff';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.6;
+        ctx.setLineDash([5, 5]);
         
-        if (!imageCache.current[imageSrc]) {
-          const img = new Image();
-          img.onload = () => {
-            imageCache.current[imageSrc] = img;
-            draw();
-          };
-          img.src = imageSrc;
-        } else {
-          const img = imageCache.current[imageSrc];
+        ctx.beginPath();
+        ctx.moveTo(trajectory[0].x, trajectory[0].y);
+        
+        for (let i = 1; i < trajectory.length; i++) {
+          const point = trajectory[i];
+          ctx.lineTo(point.x, point.y);
+          
+          // Enhanced collision visualization
+          if (point.collision) {
+            ctx.save();
+            ctx.fillStyle = '#ff0066';
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, BALL_RADIUS + 2, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.restore();
+            
+            // Show which ball will be hit
+            if (point.hitBall) {
+              ctx.save();
+              ctx.fillStyle = '#ffffff';
+              ctx.font = '10px Arial';
+              ctx.fillText(`${point.hitBall}`, point.x + 10, point.y - 10);
+              ctx.restore();
+            }
+          }
+          
+          // Enhanced pocket visualization
+          if (point.pocketed) {
+            ctx.save();
+            ctx.fillStyle = '#00ff00';
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.restore();
+          }
+          
+          // Rail bounce indicators
+          if (point.bounced) {
+            ctx.save();
+            ctx.fillStyle = '#ffaa00';
+            ctx.globalAlpha = 0.7;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.restore();
+          }
+        }
+        
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+      
+    // Draw cue ball with enhanced spin visualization
+    if (gameState.cueBall.visible) {
+      const ball = gameState.cueBall;
+      const imageSrc = ballImages.cue;
+      
+      if (!imageCache.current[imageSrc]) {
+        const img = new Image();
+        img.onload = () => {
+          imageCache.current[imageSrc] = img;
+          draw();
+        };
+        img.src = imageSrc;
+      } else {
+        const img = imageCache.current[imageSrc];
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, BALL_RADIUS, 0, 2 * Math.PI);
+        ctx.clip();
+        ctx.drawImage(img, ball.x - BALL_RADIUS, ball.y - BALL_RADIUS, BALL_SIZE, BALL_SIZE);
+        ctx.restore();
+        
+        // Draw spin indicator on cue ball (Miniclip style)
+        if (showSpinControl && (Math.abs(spin.x) > 0.05 || Math.abs(spin.y) > 0.05)) {
           ctx.save();
+          
+          // Draw spin position dot
+          const spinRadius = BALL_RADIUS * 0.6;
+          const spinX = ball.x + spin.x * spinRadius;
+          const spinY = ball.y + spin.y * spinRadius;
+          
+          // Spin indicator background
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
           ctx.beginPath();
-          ctx.arc(ball.x, ball.y, BALL_RADIUS, 0, 2 * Math.PI);
-          ctx.clip();
-          ctx.drawImage(img, ball.x - BALL_RADIUS, ball.y - BALL_RADIUS, BALL_SIZE, BALL_SIZE);
+          ctx.arc(ball.x, ball.y, BALL_RADIUS + 3, 0, 2 * Math.PI);
+          ctx.fill();
+          
+          // Spin position indicator
+          ctx.fillStyle = '#ff4444';
+          ctx.beginPath();
+          ctx.arc(spinX, spinY, 2, 0, 2 * Math.PI);
+          ctx.fill();
+          
+          // Spin direction lines
+          if (Math.abs(spin.x) > 0.1) {
+            ctx.strokeStyle = spin.x > 0 ? '#00ff00' : '#ff0000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(ball.x, ball.y - BALL_RADIUS - 8);
+            ctx.lineTo(ball.x, ball.y + BALL_RADIUS + 8);
+            ctx.stroke();
+          }
+          
+          if (Math.abs(spin.y) > 0.1) {
+            ctx.strokeStyle = spin.y > 0 ? '#0088ff' : '#ffaa00';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(ball.x - BALL_RADIUS - 8, ball.y);
+            ctx.lineTo(ball.x + BALL_RADIUS + 8, ball.y);
+            ctx.stroke();
+          }
+          
           ctx.restore();
         }
       }
-     }, [gameState, showAimLine, aimAngle, ballImages, power, aimLocked, lockedAimAngle, predictTrajectory]);
+    }
+     }, [gameState, showAimLine, aimAngle, ballImages, power, aimLocked, lockedAimAngle, predictTrajectory, trajectory, showSpinControl, spin, cueStats]);
   
   // Draw on state changes
   useEffect(() => {
@@ -853,62 +1009,194 @@ const SimplePoolGame = () => {
          />
       </div>
       
-             <div className={styles.controls}>
-         <div className={styles.shootControl}>
-           <button 
-             className={`${styles.shootButton} ${!aimLocked || gameState.isAnimating ? styles.disabled : ''}`}
-             onClick={handleShoot}
-             disabled={!aimLocked || gameState.isAnimating}
-           >
-             {aimLocked ? 'SHOOT!' : 'Aim & Click to Lock'}
-           </button>
-         </div>
-         
-         <div className={styles.powerControl}>
-           <label>Power: {Math.round(power * 100)}%</label>
-           <input
-             type="range"
-             min="0.1"
-             max="1"
-             step="0.01"
-             value={power}
-             onChange={(e) => setPower(parseFloat(e.target.value))}
-             className={styles.powerSlider}
-           />
-         </div>
-         
-         <div className={styles.gameInfo}>
-           <span>Player: {gameState.currentPlayer}</span>
-           <span>Phase: {gameState.gamePhase}</span>
-           <span>Status: {gameState.isAnimating ? 'Animating' : aimLocked ? 'Aim Locked' : 'Ready'}</span>
-         </div>
-         
-         <div className={styles.buttonRow}>
-           <button 
-             className={styles.resetAimButton}
-             onClick={handleResetAim}
-             disabled={gameState.isAnimating}
-           >
-             Reset Aim
-           </button>
-           
-           <button 
-             className={styles.resetButton}
-             onClick={() => {
-               setGameState(prev => ({
-                 ...prev,
-                 balls: initializeBalls(),
-                 cueBall: { x: 100, y: 150, vx: 0, vy: 0, visible: true, isMoving: false },
-                 isAnimating: false
-               }));
-               setAimLocked(false);
-               setShowAimLine(false);
-             }}
-           >
-             Reset Game
-           </button>
-         </div>
-       </div>
+                   {/* Enhanced Miniclip-style Controls */}
+      <div className={styles.controls}>
+        {/* Main Shoot Button */}
+        <div className={styles.shootControl}>
+          <button 
+            className={`${styles.shootButton} ${!aimLocked || gameState.isAnimating ? styles.disabled : ''}`}
+            onClick={handleShoot}
+            disabled={!aimLocked || gameState.isAnimating}
+          >
+            {aimLocked ? 'SHOOT!' : 'Click Table to Aim'}
+          </button>
+        </div>
+
+        {/* Enhanced Power Control with Visual Bar */}
+        {showPowerBar && (
+          <div className={styles.powerControl}>
+            <label>Power: {Math.round(power * 100)}%</label>
+            <div className={styles.powerBarContainer}>
+              <input
+                type="range"
+                min="0.1"
+                max="1"
+                step="0.01"
+                value={power}
+                onChange={(e) => handlePowerChange(parseFloat(e.target.value))}
+                className={styles.powerSlider}
+              />
+              <div className={styles.powerVisualBar}>
+                <div 
+                  className={styles.powerFill}
+                  style={{ width: `${power * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Miniclip-style Spin Control */}
+        {showSpinControl && (
+          <div className={styles.spinControl}>
+            <label>English (Spin)</label>
+            <div className={styles.spinPad}>
+              <div 
+                className={styles.spinArea}
+                onMouseDown={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const centerX = rect.width / 2;
+                  const centerY = rect.height / 2;
+                  const x = (e.clientX - rect.left - centerX) / centerX;
+                  const y = (e.clientY - rect.top - centerY) / centerY;
+                  
+                  // Clamp to circle
+                  const distance = Math.sqrt(x * x + y * y);
+                  if (distance <= 1) {
+                    handleSpinChange({ x, y });
+                  } else {
+                    const normalizedX = x / distance;
+                    const normalizedY = y / distance;
+                    handleSpinChange({ x: normalizedX, y: normalizedY });
+                  }
+                }}
+              >
+                <div className={styles.spinCenter} />
+                <div 
+                  className={styles.spinIndicator}
+                  style={{
+                    left: `${50 + (spin.x * 40)}%`,
+                    top: `${50 + (spin.y * 40)}%`
+                  }}
+                />
+              </div>
+              <div className={styles.spinLabels}>
+                <span className={styles.spinLabel} style={{top: '10%', left: '50%', transform: 'translateX(-50%)'}}>
+                  Top Spin
+                </span>
+                <span className={styles.spinLabel} style={{bottom: '10%', left: '50%', transform: 'translateX(-50%)'}}>
+                  Back Spin
+                </span>
+                <span className={styles.spinLabel} style={{left: '10%', top: '50%', transform: 'translateY(-50%)'}}>
+                  Left
+                </span>
+                <span className={styles.spinLabel} style={{right: '10%', top: '50%', transform: 'translateY(-50%)'}}>
+                  Right
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Cue Selector (Miniclip style) */}
+        <div className={styles.cueSelector}>
+          <h4>Select Cue</h4>
+          <div className={styles.cueOptions}>
+            <button 
+              className={`${styles.cueOption} ${cueStats.force === 5 ? styles.selected : ''}`}
+              onClick={() => setCueStats({ force: 5, spin: 4, aim: 6, time: 8 })}
+            >
+              Beginner Cue
+            </button>
+            <button 
+              className={`${styles.cueOption} ${cueStats.force === 7 ? styles.selected : ''}`}
+              onClick={() => setCueStats({ force: 7, spin: 6, aim: 8, time: 5 })}
+            >
+              Standard Cue
+            </button>
+            <button 
+              className={`${styles.cueOption} ${cueStats.force === 9 ? styles.selected : ''}`}
+              onClick={() => setCueStats({ force: 9, spin: 8, aim: 9, time: 3 })}
+            >
+              Pro Cue
+            </button>
+            <button 
+              className={`${styles.cueOption} ${cueStats.force === 10 ? styles.selected : ''}`}
+              onClick={() => setCueStats({ force: 10, spin: 10, aim: 10, time: 2 })}
+            >
+              Master Cue
+            </button>
+          </div>
+        </div>
+
+        {/* Cue Stats Display (Miniclip style) */}
+        <div className={styles.cueStats}>
+          <h4>Cue Attributes</h4>
+          <div className={styles.statBars}>
+            <div className={styles.statRow}>
+              <span>Force:</span>
+              <div className={styles.statBar}>
+                <div className={styles.statFill} style={{width: `${(cueStats.force / 10) * 100}%`}} />
+              </div>
+              <span>{cueStats.force}/10</span>
+            </div>
+            <div className={styles.statRow}>
+              <span>Spin:</span>
+              <div className={styles.statBar}>
+                <div className={styles.statFill} style={{width: `${(cueStats.spin / 10) * 100}%`}} />
+              </div>
+              <span>{cueStats.spin}/10</span>
+            </div>
+            <div className={styles.statRow}>
+              <span>Aim:</span>
+              <div className={styles.statBar}>
+                <div className={styles.statFill} style={{width: `${(cueStats.aim / 10) * 100}%`}} />
+              </div>
+              <span>{cueStats.aim}/10</span>
+            </div>
+            <div className={styles.statRow}>
+              <span>Time:</span>
+              <div className={styles.statBar}>
+                <div className={styles.statFill} style={{width: `${(cueStats.time / 10) * 100}%`}} />
+              </div>
+              <span>{cueStats.time}/10</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Game Information */}
+        <div className={styles.gameInfo}>
+          <span>Player: {gameState.currentPlayer}</span>
+          <span>Phase: {gameState.gamePhase}</span>
+          <span>Status: {gameState.isAnimating ? 'Animating' : aimLocked ? 'Aim Locked' : 'Ready'}</span>
+        </div>
+        
+        {/* Control Buttons */}
+        <div className={styles.buttonRow}>
+          <button 
+            className={styles.resetAimButton}
+            onClick={handleResetAim}
+            disabled={gameState.isAnimating}
+          >
+            Reset Aim
+          </button>
+          
+          <button 
+            className={styles.resetButton}
+            onClick={() => {
+              setGameState(prev => ({
+                ...prev,
+                balls: initializeBalls(),
+                cueBall: { x: 100, y: 150, vx: 0, vy: 0, visible: true, isMoving: false },
+                isAnimating: false
+              }));
+              handleResetAim();
+            }}
+          >
+            Reset Game
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
