@@ -18,6 +18,7 @@ import { BACKEND_URL } from '../../config.js';
   const [playerStats, setPlayerStats] = useState(null);
   const [standings, setStandings] = useState([]);
   const [loadingStandings, setLoadingStandings] = useState(false);
+  const [phase1EndDate, setPhase1EndDate] = useState(null);
 
   useEffect(() => {
     if (!selectedDivision || currentPhase !== 'scheduled') {
@@ -65,11 +66,14 @@ import { BACKEND_URL } from '../../config.js';
           return;
         }
 
-        // Set deadline to end of the day for the last Phase 1 match
-        const phase1EndDate = new Date(phase1EndMatch.date);
-        phase1EndDate.setHours(23, 59, 59, 999); // End of day
-        
-        const now = new Date();
+                 // Set deadline to end of the day for the last Phase 1 match
+         const phase1EndDate = new Date(phase1EndMatch.date);
+         phase1EndDate.setHours(23, 59, 59, 999); // End of day
+         
+         // Store the date for display
+         setPhase1EndDate(phase1EndDate);
+         
+         const now = new Date();
         
         if (isAfter(now, phase1EndDate)) {
           setTimeLeft({ days: 0, hours: 0, passed: true });
@@ -435,15 +439,15 @@ import { BACKEND_URL } from '../../config.js';
         </div>
       </div>
 
-      {/* Deadline Date */}
-      <div style={{
-        fontSize: isMobile ? '0.7rem' : '0.8rem',
-        color: '#999',
-        marginTop: isMobile ? '6px' : '8px',
-        textAlign: 'center'
-      }}>
-        Phase 1 ends: {format(new Date(seasonData.phase1End), isMobile ? 'MMM d, yyyy' : 'EEEE, MMMM d, yyyy')}
-      </div>
+             {/* Deadline Date */}
+       <div style={{
+         fontSize: isMobile ? '0.7rem' : '0.8rem',
+         color: '#999',
+         marginTop: isMobile ? '6px' : '8px',
+         textAlign: 'center'
+       }}>
+         Phase 1 ends: {phase1EndDate ? format(phase1EndDate, isMobile ? 'MMM d, yyyy' : 'EEEE, MMMM d, yyyy') : 'Loading...'}
+       </div>
 
     </div>
   );
