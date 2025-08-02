@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import TenBallGame from './tenball/TenBallGame';
+import SimplePoolGame from './tenball/SimplePoolGame';
 import TutorialRules from './tenball/TutorialRules';
 import GameModeSelector from './tenball/GameModeSelector';
 import styles from './tenball/TenBallTutorial.module.css';
@@ -133,48 +133,28 @@ const TenBallTutorial = () => {
               onBack={handleTutorialBack}
               onSkip={() => setCurrentMode('practice')}
             />
-            <TenBallGame 
-              mode="tutorial"
-              difficulty={difficulty}
-              showHints={showHints}
-            />
+            <SimplePoolGame />
           </div>
         );
       
       case 'practice':
         return (
-          <TenBallGame 
-            mode="practice"
-            difficulty={difficulty}
-            showHints={showHints}
-          />
+          <SimplePoolGame />
         );
       
       case 'vsComputer':
         return (
-          <TenBallGame 
-            mode="vsComputer"
-            difficulty={difficulty}
-            showHints={showHints}
-          />
+          <SimplePoolGame />
         );
       
       case 'vsLocal':
         return (
-          <TenBallGame 
-            mode="vsLocal"
-            difficulty={difficulty}
-            showHints={showHints}
-          />
+          <SimplePoolGame />
         );
       
       case 'vsOnline':
         return (
-          <TenBallGame 
-            mode="vsOnline"
-            difficulty={difficulty}
-            showHints={showHints}
-          />
+          <SimplePoolGame />
         );
       
       default:
