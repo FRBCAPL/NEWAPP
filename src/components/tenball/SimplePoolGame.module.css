@@ -23,6 +23,11 @@
   border-radius: 5px;
   background: #0d5c0d;
   box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  touch-action: none; /* Prevent default touch behaviors */
 }
 
 .controls {

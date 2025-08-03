@@ -18,7 +18,7 @@ import ball9 from '../../assets/ball9.svg';
 import predatorTable from '../PoolTableSVG/PredatorTable.png';
 
 const SimplePoolGame = () => {
-  console.log('🎯 SimplePoolGame component loaded!');
+  // Remove the console.log that's causing spam
   const canvasRef = useRef(null);
   const [gameState, setGameState] = useState({
     balls: [],
@@ -502,8 +502,8 @@ const SimplePoolGame = () => {
     animationFrame.current = requestAnimationFrame(step);
   }, [gameState, isInPocket, resolveBallCollision]);
   
-  // Handle mouse events for aiming
-  const handleMouseDown = useCallback((e) => {
+  // Universal aiming system (works on both PC and mobile)
+  const handlePointerDown = useCallback((e) => {
     if (gameState.isAnimating) return;
     
     // Lock the current aim angle
@@ -512,7 +512,7 @@ const SimplePoolGame = () => {
     setShowAimLine(true);
   }, [gameState.isAnimating, aimAngle]);
   
-  const handleMouseMove = useCallback((e) => {
+  const handlePointerMove = useCallback((e) => {
     if (gameState.isAnimating) return;
     
     const rect = canvasRef.current.getBoundingClientRect();
@@ -523,17 +523,52 @@ const SimplePoolGame = () => {
     const angle = Math.atan2(y - cueBall.y, x - cueBall.x);
     setAimAngle(angle);
     
-    // Show aim line when mouse is over the table
+    // Show aim line when pointer is over the table
     if (!aimLocked) {
       setShowAimLine(true);
     }
-  }, [gameState.isAnimating, gameState.cueBall, aimLocked]);
+  }, [gameState.isAnimating, gameState.cueBall.x, gameState.cueBall.y, aimLocked]);
   
-  const handleMouseLeave = useCallback(() => {
+  const handlePointerLeave = useCallback(() => {
     if (!aimLocked) {
       setShowAimLine(false);
     }
   }, [aimLocked]);
+  
+  // Touch-specific handlers for better mobile support
+  const handleTouchStart = useCallback((e) => {
+    if (gameState.isAnimating) return;
+    
+    const touch = e.touches[0];
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    
+    const cueBall = gameState.cueBall;
+    const angle = Math.atan2(y - cueBall.y, x - cueBall.x);
+    setAimAngle(angle);
+    setAimLocked(true);
+    setLockedAimAngle(angle);
+    setShowAimLine(true);
+  }, [gameState.isAnimating, gameState.cueBall.x, gameState.cueBall.y]);
+  
+  const handleTouchMove = useCallback((e) => {
+    if (gameState.isAnimating || !aimLocked) return;
+    
+    const touch = e.touches[0];
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    
+    const cueBall = gameState.cueBall;
+    const angle = Math.atan2(y - cueBall.y, x - cueBall.x);
+    setAimAngle(angle);
+    setLockedAimAngle(angle);
+  }, [gameState.isAnimating, aimLocked, gameState.cueBall.x, gameState.cueBall.y]);
+  
+  const handleTouchEnd = useCallback((e) => {
+    // Keep aim locked for touch - user will use shoot button
+  }, []);
   
   const handleShoot = useCallback(() => {
     if (gameState.isAnimating || !aimLocked) return;
@@ -740,10 +775,10 @@ const SimplePoolGame = () => {
       }
      }, [gameState, showAimLine, aimAngle, ballImages, power, aimLocked, lockedAimAngle, predictAllBallTrajectories]);
   
-  // Draw on state changes
+  // Draw on state changes - only when necessary
   useEffect(() => {
     draw();
-  }, [draw]);
+  }, [gameState.isAnimating, showAimLine, aimAngle, power, aimLocked, lockedAimAngle]);
   
   // Load table image
   useEffect(() => {
@@ -755,6 +790,37 @@ const SimplePoolGame = () => {
     tableImg.src = predatorTable;
   }, [draw]);
   
+  // Add touch event listeners with non-passive option
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const handleTouchStartNonPassive = (e) => {
+      e.preventDefault();
+      handleTouchStart(e);
+    };
+    
+    const handleTouchMoveNonPassive = (e) => {
+      e.preventDefault();
+      handleTouchMove(e);
+    };
+    
+    const handleTouchEndNonPassive = (e) => {
+      e.preventDefault();
+      handleTouchEnd(e);
+    };
+    
+    canvas.addEventListener('touchstart', handleTouchStartNonPassive, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMoveNonPassive, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEndNonPassive, { passive: false });
+    
+    return () => {
+      canvas.removeEventListener('touchstart', handleTouchStartNonPassive);
+      canvas.removeEventListener('touchmove', handleTouchMoveNonPassive);
+      canvas.removeEventListener('touchend', handleTouchEndNonPassive);
+    };
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+  
   return (
     <div className={styles.simplePoolGame}>
       <div className={styles.tableContainer}>
@@ -762,9 +828,9 @@ const SimplePoolGame = () => {
            ref={canvasRef}
            width={TABLE_WIDTH}
            height={TABLE_HEIGHT}
-           onMouseDown={handleMouseDown}
-           onMouseMove={handleMouseMove}
-           onMouseLeave={handleMouseLeave}
+           onPointerDown={handlePointerDown}
+           onPointerMove={handlePointerMove}
+           onPointerLeave={handlePointerLeave}
            className={styles.tableCanvas}
          />
       </div>
