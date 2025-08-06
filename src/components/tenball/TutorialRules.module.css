@@ -2,10 +2,13 @@
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 15px;
-  padding: 25px;
+  padding: 20px;
   height: fit-content;
   max-height: 600px;
   overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .header {
@@ -108,21 +111,25 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .navButton {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
+  gap: 6px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  min-width: fit-content;
 }
 
 .navButton:hover:not(.disabled) {
@@ -137,18 +144,23 @@
 
 .centerButtons {
   display: flex;
-  gap: 10px;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
 }
 
 .skipButton {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #b8c5d6;
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  min-width: fit-content;
 }
 
 .skipButton:hover {
@@ -160,15 +172,17 @@
   background: linear-gradient(45deg, #4CAF50, #8BC34A);
   border: none;
   color: white;
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
+  gap: 6px;
+  font-size: 0.85rem;
   font-weight: bold;
+  white-space: nowrap;
+  min-width: fit-content;
 }
 
 .nextButton:hover, .startButton:hover {
@@ -178,7 +192,7 @@
 
 .quickRules {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 20px;
+  padding-top: 15px;
 }
 
 .quickRules h5 {
@@ -191,32 +205,40 @@
 .ruleGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 6px;
 }
 
 .ruleItem {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  padding: 8px 12px;
+  border-radius: 4px;
+  padding: 6px 8px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.8rem;
+  gap: 6px;
+  font-size: 0.75rem;
   color: #b8c5d6;
+  min-height: 24px;
+}
+
+.ruleItem span:last-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
 }
 
 .ruleNumber {
   background: #ffd700;
   color: #1a1a2e;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   flex-shrink: 0;
 }
 

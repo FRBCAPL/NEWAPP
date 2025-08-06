@@ -2,7 +2,7 @@ import React from 'react';
 import { FaGraduationCap } from 'react-icons/fa';
 import styles from './GameModeSelector.module.css';
 
-const GameModeSelector = ({ onModeSelect }) => {
+const GameModeSelector = ({ onModeSelect, fromLogin = false }) => {
   const gameModes = [
     {
       id: 'tutorial',
@@ -26,12 +26,14 @@ const GameModeSelector = ({ onModeSelect }) => {
       }}
     >
       <div className={styles.header}>
-        <button 
-          className={styles.backToDashboardButton}
-          onClick={() => window.location.href = '/dashboard'}
-        >
-          ← Back to Dashboard
-        </button>
+        {!fromLogin && (
+          <button 
+            className={styles.backToDashboardButton}
+            onClick={() => window.location.href = '/dashboard'}
+          >
+            ← Back to Dashboard
+          </button>
+        )}
         <h2>10-Ball Tutorial</h2>
         <p>Learn and master the official CSI 10-Ball rules</p>
       </div>
@@ -65,9 +67,9 @@ const GameModeSelector = ({ onModeSelect }) => {
         <h3>What You'll Learn</h3>
         <ul>
           <li>Official CSI 10-Ball Rules</li>
-          <li>Break Requirements/Push Out</li>
-          <li>Call Shot Requirements</li>
-          <li>Illegally Pocketed Balls</li>
+          <li>Break/Push Out Requirements</li>
+          <li>Call Shot/Ball in Hand Requirements</li>
+          <li>Illegally Pocketed Balls/Opponent's Option</li>
           <li>Foul Detection and Penalties</li>
           <li>Advanced Shot Planning</li>
         </ul>

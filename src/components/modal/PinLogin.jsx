@@ -3,6 +3,7 @@ import fetchSheetData from "../../utils/fetchSheetData";
 import styles from "./PinLogin.module.css";
 import ResponsiveWrapper from "../ResponsiveWrapper";
 import PoolSimulation from "../PoolSimulation";
+import TenBallTutorial from "../TenBallTutorial";
 
 // --- Google Sheet config ---
 const sheetID = "1tvMgMHsRwQxsR6lMNlSnztmwpK7fhZeNEyqjTqmRFRc";
@@ -16,6 +17,7 @@ export default function Login({ onSuccess }) {
   const [input, setInput] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showGame, setShowGame] = useState(false);
 
   // --- Verify Email or PIN against Google Sheet ---
   const verifyInput = async () => {
@@ -53,6 +55,40 @@ export default function Login({ onSuccess }) {
     if (e.key === "Enter") verifyInput();
   };
 
+  // If game is shown, render the game component directly without any container
+  if (showGame) {
+    return (
+      <div style={{ 
+        position: "relative", 
+        minHeight: "100vh", 
+        width: "100%", 
+        overflowX: "hidden", 
+        background: "#000" 
+      }}>
+        <button
+          onClick={() => setShowGame(false)}
+          style={{ 
+            position: "fixed",
+            top: "0px",
+            left: "0px",
+            zIndex: 1000,
+            backgroundColor: "#e53e3e",
+            color: "white",
+            border: "none",
+            padding: "12px 20px",
+            borderRadius: "0 0 8px 0",
+            fontSize: "14px",
+            cursor: "pointer",
+            fontWeight: "bold"
+          }}
+        >
+          ← Back to Login
+        </button>
+        <TenBallTutorial fromLogin={true} onBackToLogin={() => setShowGame(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className={styles.pinLoginBg}>
       <div className={styles.pinLoginFrame}>
@@ -65,6 +101,25 @@ export default function Login({ onSuccess }) {
         >
           Sign Up for Beta Test
         </a>
+        
+        <button
+          onClick={() => setShowGame(true)}
+          className={styles.gameAccessBtn}
+          style={{ 
+            marginBottom: "1.5rem",
+            backgroundColor: "#4CAF50",
+            color: "white",
+            border: "none",
+            padding: "12px 24px",
+            borderRadius: "8px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            cursor: "pointer",
+            boxShadow: "0 4px 8px rgba(0,0,0,0.2)"
+          }}
+        >
+          🎱 Play 10-Ball Tutorial (No Login Required)
+        </button>
         <div className={styles.simulationContainer}>
           <ResponsiveWrapper aspectWidth={600} aspectHeight={300}>
             <PoolSimulation />

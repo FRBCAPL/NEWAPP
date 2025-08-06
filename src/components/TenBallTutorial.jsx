@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import SimplePoolGame from './tenball/SimplePoolGame';
 import TutorialRules from './tenball/TutorialRules';
 import GameModeSelector from './tenball/GameModeSelector';
+import TipManager from './tenball/TipManager';
 import styles from './tenball/TenBallTutorial.module.css';
 
-const TenBallTutorial = () => {
+const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
   const [currentMode, setCurrentMode] = useState('menu'); // menu, tutorial, game
   const [tutorialStep, setTutorialStep] = useState(0);
   const [showHints, setShowHints] = useState(true);
@@ -23,23 +24,25 @@ const TenBallTutorial = () => {
 
   const tutorialSteps = [
     {
+      title: "The Break Shot",
+      content: "Start the game with a legal break shot. You must break from the kitchen hitting the 1-ball first and drive at least 4 balls to the rails or pocket a ball.",
+      proTip: "A good break can set up your entire game!"
+    },
+    
+    {
       title: "Welcome to 10-Ball!",
       content: "10-Ball is a call-shot game where you must hit the lowest numbered ball first and call your shots. The 10-ball is the game-winning ball!",
       proTip: "Always hit the lowest numbered ball first!"
     },
-    {
-      title: "The Break Shot",
-      content: "Start the game with a legal break shot. You must hit the 1-ball first and drive at least 4 balls to the rails or pocket a ball.",
-      proTip: "A good break can set up your entire game!"
-    },
+  
     {
       title: "Call Shot Rules",
       content: "After the break, you must call both the ball and the pocket for every shot. If you don't call it, it doesn't count!",
-      proTip: "Be specific about which pocket you're aiming for!"
+      proTip: "CSI rules state that you do not have to call obvious shots. Banks, Kicks, and Caroms should always be called. Be specific about which pocket you're aiming for! Make sure your opponent acknowledges your called shot."
     },
     {
       title: "Push Out Option",
-      content: "After a legal break, the incoming player may choose to 'push out' - shoot the cue ball anywhere without hitting any ball. The opponent then chooses to shoot or pass.",
+      content: "After a legal break, the incoming player may choose to 'push out' - shoot the cue ball anywhere without hitting any ball.The opponent then chooses to shoot or pass.",
       proTip: "Use push out to improve your position when the table is difficult!"
     },
     {
@@ -49,7 +52,7 @@ const TenBallTutorial = () => {
     },
     {
       title: "Winning the Game",
-      content: "Legally pocket the 10-ball to win! Remember, you must call the 10-ball and the pocket, and hit the lowest numbered ball first.",
+      content: "Legally pocket the 10-ball to win! Yes, you can win with an early ten ball...Remember, you must call the 10-ball and the pocket, and hit the lowest numbered ball first.",
       proTip: "The 10-ball is the only ball that matters for winning!"
     },
     {
@@ -116,6 +119,7 @@ const TenBallTutorial = () => {
         return (
           <GameModeSelector 
             onModeSelect={handleGameModeSelect}
+            fromLogin={fromLogin}
           />
         );
       
@@ -130,13 +134,13 @@ const TenBallTutorial = () => {
               onBack={handleTutorialBack}
               onSkip={() => setCurrentMode('game')}
             />
-            <SimplePoolGame />
+            <SimplePoolGame onGameEnd={handleGameEnd} />
           </div>
         );
       
       case 'game':
         return (
-          <SimplePoolGame />
+          <SimplePoolGame onGameEnd={handleGameEnd} />
         );
       
       default:
@@ -148,7 +152,21 @@ const TenBallTutorial = () => {
     <div className={styles.container}>
       {renderContent()}
       
-      {currentMode !== 'menu' && (
+      {/* Contextual Tips Manager */}
+      {(currentMode === 'game' || currentMode === 'tutorial') && (
+        <TipManager 
+          gameState={gameState}
+          onTipShown={(tipKey) => console.log(`Tip shown: ${tipKey}`)}
+          ref={(tipManagerRef) => {
+            // Store the tip manager reference so the game can trigger tips
+            if (tipManagerRef) {
+              window.tipManager = tipManagerRef;
+            }
+          }}
+        />
+      )}
+      
+      {currentMode !== 'menu' && !fromLogin && (
         <div className={styles.navigation}>
           <button 
             className={styles.backButton}

@@ -32,6 +32,14 @@
   margin: 0 auto;
 }
 
+/* Special styling when game is shown */
+.pinLoginFrame.gameMode {
+  max-width: 95vw;
+  min-width: 800px;
+  padding: 20px;
+  border-radius: 20px;
+}
+
 .pinLoginCard {
   width: auto;
   max-width: 400px;
@@ -225,6 +233,11 @@
     min-width: 0;
     border-radius: 10px;
     padding: 3px;
+  }
+  .pinLoginFrame.gameMode {
+    max-width: 98vw;
+    min-width: 0;
+    padding: 10px;
   }
   .pinLoginCard {
     max-width: 98vw;
