@@ -1,16 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import SimplePoolGame from './tenball/SimplePoolGame';
 import TutorialRules from './tenball/TutorialRules';
 import GameModeSelector from './tenball/GameModeSelector';
 import styles from './tenball/TenBallTutorial.module.css';
 
 const TenBallTutorial = () => {
-  const [currentMode, setCurrentMode] = useState('menu'); // menu, tutorial, practice, vsComputer, vsLocal, vsOnline
+  const [currentMode, setCurrentMode] = useState('menu'); // menu, tutorial, game
+  const [tutorialStep, setTutorialStep] = useState(0);
+  const [showHints, setShowHints] = useState(true);
   const [gameState, setGameState] = useState({
     player1Score: 0,
     player2Score: 0,
     currentPlayer: 1,
-    gamePhase: 'break', // break, play, end
+    gamePhase: 'break',
     rules: {
       callPocket: true,
       pushOut: true,
@@ -18,50 +20,47 @@ const TenBallTutorial = () => {
       jumpShots: true
     }
   });
-  const [tutorialStep, setTutorialStep] = useState(0);
-  const [showHints, setShowHints] = useState(true);
-  const [difficulty, setDifficulty] = useState('beginner'); // beginner, intermediate, advanced
 
   const tutorialSteps = [
     {
       title: "Welcome to 10-Ball!",
-      content: "10-Ball is a rotation game where you must hit the lowest numbered ball first. The 10-ball is the money ball - pocket it legally to win!",
-      highlight: null
+      content: "10-Ball is a call-shot game where you must hit the lowest numbered ball first and call your shots. The 10-ball is the game-winning ball!",
+      proTip: "Always hit the lowest numbered ball first!"
     },
     {
       title: "The Break Shot",
-      content: "Start by breaking the rack. You must hit the 1-ball first and drive at least 4 balls to a rail or pocket a ball to have a legal break.",
-      highlight: "break"
+      content: "Start the game with a legal break shot. You must hit the 1-ball first and drive at least 4 balls to the rails or pocket a ball.",
+      proTip: "A good break can set up your entire game!"
     },
     {
-      title: "Legal Shots",
-      content: "After the break, you must always hit the lowest numbered ball on the table first. If you pocket any ball legally, you continue shooting.",
-      highlight: "legal"
+      title: "Call Shot Rules",
+      content: "After the break, you must call both the ball and the pocket for every shot. If you don't call it, it doesn't count!",
+      proTip: "Be specific about which pocket you're aiming for!"
     },
     {
-      title: "Call Pocket",
-      content: "In 10-Ball, you must call your shot - specify which ball you're shooting and which pocket it will go in. If you make it in the called pocket, you continue.",
-      highlight: "call"
-    },
-    {
-      title: "Push Out",
+      title: "Push Out Option",
       content: "After a legal break, the incoming player may choose to 'push out' - shoot the cue ball anywhere without hitting any ball. The opponent then chooses to shoot or pass.",
-      highlight: "push"
+      proTip: "Use push out to improve your position when the table is difficult!"
     },
     {
-      title: "Fouls",
-      content: "Common fouls include: not hitting the lowest ball first, not driving any ball to a rail, scratching, jumping the cue ball off the table, or making the wrong ball in the wrong pocket.",
-      highlight: "fouls"
-    },
-    {
-      title: "Three Foul Rule",
-      content: "If a player commits three consecutive fouls, they lose the game. This encourages defensive play and strategic thinking.",
-      highlight: "threefoul"
+      title: "Fouls and Penalties",
+      content: "Common fouls include: scratching (cue ball in pocket), hitting wrong ball first, not hitting any rail after contact, and jumping the cue ball off the table.",
+      proTip: "Three consecutive fouls by the same player results in loss of game!"
     },
     {
       title: "Winning the Game",
-      content: "To win, you must legally pocket the 10-ball. If you pocket the 10-ball on a foul or out of order, it's spotted and you lose your turn.",
-      highlight: "win"
+      content: "Legally pocket the 10-ball to win! Remember, you must call the 10-ball and the pocket, and hit the lowest numbered ball first.",
+      proTip: "The 10-ball is the only ball that matters for winning!"
+    },
+    {
+      title: "Strategy Tips",
+      content: "Plan your shots ahead, use defensive play when needed, and always consider your opponent's options after your shot.",
+      proTip: "Sometimes the best shot is the one that leaves your opponent nothing!"
+    },
+    {
+      title: "Ready to Play!",
+      content: "You now know the basics of 10-Ball! Practice these rules and strategies to improve your game.",
+      proTip: "Practice makes perfect - keep playing and learning!"
     }
   ];
 
@@ -77,7 +76,7 @@ const TenBallTutorial = () => {
     if (tutorialStep < tutorialSteps.length - 1) {
       setTutorialStep(tutorialStep + 1);
     } else {
-      setCurrentMode('practice');
+      setCurrentMode('game');
     }
   };
 
@@ -117,8 +116,6 @@ const TenBallTutorial = () => {
         return (
           <GameModeSelector 
             onModeSelect={handleGameModeSelect}
-            onDifficultyChange={setDifficulty}
-            difficulty={difficulty}
           />
         );
       
@@ -131,28 +128,13 @@ const TenBallTutorial = () => {
               totalSteps={tutorialSteps.length}
               onNext={handleTutorialNext}
               onBack={handleTutorialBack}
-              onSkip={() => setCurrentMode('practice')}
+              onSkip={() => setCurrentMode('game')}
             />
             <SimplePoolGame />
           </div>
         );
       
-      case 'practice':
-        return (
-          <SimplePoolGame />
-        );
-      
-      case 'vsComputer':
-        return (
-          <SimplePoolGame />
-        );
-      
-      case 'vsLocal':
-        return (
-          <SimplePoolGame />
-        );
-      
-      case 'vsOnline':
+      case 'game':
         return (
           <SimplePoolGame />
         );
@@ -163,34 +145,30 @@ const TenBallTutorial = () => {
   };
 
   return (
-    <div className={styles.tenBallTutorial}>
-      <div className={styles.header}>
-        <h1>10-Ball Tutorial Game</h1>
-        <p>Learn and master the official CSI 10-Ball rules</p>
-        {currentMode !== 'menu' && (
+    <div className={styles.container}>
+      {renderContent()}
+      
+      {currentMode !== 'menu' && (
+        <div className={styles.navigation}>
           <button 
             className={styles.backButton}
             onClick={() => setCurrentMode('menu')}
           >
             ← Back to Menu
           </button>
-        )}
-      </div>
-      
-      <div className={styles.content}>
-        {renderContent()}
-      </div>
+        </div>
+      )}
       
       {currentMode !== 'menu' && (
-        <div className={styles.controls}>
-          <label className={styles.hintToggle}>
-            <input 
-              type="checkbox" 
-              checked={showHints} 
-              onChange={(e) => setShowHints(e.target.checked)}
-            />
-            Show Hints & Tips
-          </label>
+        <div className={styles.gameInfo}>
+          <div className={styles.scoreBoard}>
+            <div className={styles.playerScore}>
+              <span>Player 1: {gameState.player1Score}</span>
+            </div>
+            <div className={styles.playerScore}>
+              <span>Player 2: {gameState.player2Score}</span>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
 import styles from './dashboard.module.css';
+import tenBall from '../../assets/tenball.svg';
 import PoolSimulation from "../PoolSimulation.jsx";
 import ResponsiveWrapper from "../ResponsiveWrapper";
 import StandingsModal from "./StandingsModal.jsx";
@@ -1095,7 +1096,8 @@ export default function Dashboard({
                 e.target.style.boxShadow = '0 4px 15px rgba(76, 175, 80, 0.3)';
               }}
             >
-              🎱 Learn 10-Ball Rules & Play Tutorial Game
+              <img src={tenBall} alt="10-Ball" style={{ width: '20px', height: '20px', marginRight: '8px', display: 'inline-block', verticalAlign: 'text-bottom' }} />
+              Play 10-Ball Tutorial & Learn Official CSI Rules
             </button>
           </div>
           

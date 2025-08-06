@@ -1,3 +1,22 @@
+.container {
+  max-width: 300px !important;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  width: 300px !important;
+  box-sizing: border-box !important;
+  overflow-x: hidden !important;
+}
+
+/* Force all child elements to respect the container width */
+.container > * {
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
 .tenBallTutorial {
   max-width: 1200px;
   margin: 0 auto;
