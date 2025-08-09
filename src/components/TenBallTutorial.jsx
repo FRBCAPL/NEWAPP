@@ -42,7 +42,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     },
     {
       title: "Push Out Option",
-      content: "After a legal break, the incoming player may choose to 'push out' - shoot the cue ball anywhere without hitting any ball.The opponent then chooses to shoot or pass.",
+      content: "After a legal break, the incoming player may choose to 'push out' - shoot the cue ball anywhere without hitting any ball. The opponent then chooses to shoot or pass.",
       proTip: "Use push out to improve your position when the table is difficult!"
     },
     {

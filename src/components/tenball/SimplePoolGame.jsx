@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './SimplePoolGame.module.css';
+import { PHASES, isBreak, isPlay, nextPhaseAfterShot, shouldEnablePushOut, canShowPushOut } from './turnStateMachine';
+  // Debug flag and logger
+  const DEBUG = false;
+  const debugLog = (...args) => {
+    if (DEBUG) {
+      // eslint-disable-next-line no-console
+      console.log(...args);
+    }
+  };
 
 // Import ball images
 import cueBall from '../../assets/cueball.svg';
@@ -18,6 +27,22 @@ import ball9 from '../../assets/ball9.svg';
 import predatorTable from '../PoolTableSVG/PredatorTable.png';
 import frbcaplLogo from '../../assets/logo.png';
 import cue1Image from '../../assets/cue1.jpg';
+import {
+  TABLE_WIDTH,
+  TABLE_HEIGHT,
+  BALL_SIZE,
+  BALL_RADIUS,
+  PLAYFIELD_OFFSET_X,
+  PLAYFIELD_OFFSET_Y,
+  CORNER_MARGIN_FACTOR,
+  SIDE_MARGIN_FACTOR,
+  KITCHEN_LEFT,
+  KITCHEN_RIGHT,
+  KITCHEN_TOP,
+  KITCHEN_BOTTOM,
+    FOOT_SPOT_X,
+    FOOT_SPOT_Y,
+} from './constants';
 
 const SimplePoolGame = ({ onGameEnd }) => {
   // Remove the console.log that's causing spam
@@ -27,7 +52,7 @@ const SimplePoolGame = ({ onGameEnd }) => {
     cueBall: { x: 100, y: 150, originalX: 100, originalY: 150, vx: 0, vy: 0, visible: true, isMoving: false, rotation: 0, rotationSpeed: 0 },
     isAnimating: false,
     currentPlayer: 1,
-    gamePhase: 'break',
+    gamePhase: PHASES.BREAK,
     ballInHand: false,
     scratchOccurred: false
   });
@@ -73,21 +98,7 @@ const SimplePoolGame = ({ onGameEnd }) => {
   const [illegallyPocketedBalls, setIllegallyPocketedBalls] = useState([]); // Track illegally pocketed balls
   const [showIllegalPocketOption, setShowIllegalPocketOption] = useState(false); // Show opponent option modal
   
-  // Table dimensions (from working simulation)
-  const TABLE_WIDTH = 600;
-  const TABLE_HEIGHT = 300;
-  const BALL_SIZE = 15;
-  const BALL_RADIUS = BALL_SIZE / 2;
-  const PLAYFIELD_OFFSET_X = 0;
-  const PLAYFIELD_OFFSET_Y = 0;
-  const CORNER_MARGIN_FACTOR = 3.2; // More forgiving corner pockets for easier aiming
-const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to go in
-  
-  // Kitchen area (behind the head string) - for break shots and ball-in-hand
-  const KITCHEN_LEFT = 30; // Start from the felt (not the rail)
-  const KITCHEN_RIGHT = 160; // Head string position (middle diamond)
-  const KITCHEN_TOP = 24.5;
-  const KITCHEN_BOTTOM = 270.18;
+  // Table/physics constants moved to constants.js
   
   // Animation refs
   const animationFrame = useRef(null);
@@ -119,8 +130,10 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
     if (!isCallShotMode) return;
     
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    // Compute scale dynamically based on rendered size vs canvas size
+    const scale = rect.width / TABLE_WIDTH;
+    const x = (event.clientX - rect.left) / scale;
+    const y = (event.clientY - rect.top) / scale;
     
     // Check if clicking on a ball
     const clickedBall = gameState.balls.find(ball => 
@@ -169,7 +182,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
      
      return closestPocket ? closestPocket.id : null;
    }, []);
-
+  
      // Pocket detection (from working simulation)
    const isInPocket = useCallback((ball) => {
      const pockets = [
@@ -216,21 +229,21 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
      // Get lowest numbered ball on table (CSI rule requirement)
   const getLowestNumberedBall = useCallback(() => {
     const visibleBalls = gameState.balls.filter(ball => ball.visible && !ball.pocketed);
-    console.log('Visible balls on table:', visibleBalls.map(b => b.id).sort((a, b) => a - b));
+    debugLog('Visible balls on table:', visibleBalls.map(b => b.id).sort((a, b) => a - b));
     if (visibleBalls.length === 0) return null;
     const lowest = visibleBalls.reduce((lowest, ball) => ball.id < lowest.id ? ball : lowest);
-    console.log('Lowest numbered ball:', lowest.id);
+    debugLog('Lowest numbered ball:', lowest.id);
     return lowest;
   }, [gameState.balls]);
 
   // Foul detection functions
   const detectFouls = useCallback(() => {
-    console.log('=== DETECT FOULS CALLED ===');
-    console.log('isPushOut in detectFouls:', isPushOut);
+    debugLog('=== DETECT FOULS CALLED ===');
+    debugLog('isPushOut in detectFouls:', isPushOut);
     
     if (isPushOut) {
       // Only scratch is a foul during push out
-      console.log('Push out detected in detectFouls - returning null (no foul)');
+      debugLog('Push out detected in detectFouls - returning null (no foul)');
       return null;
     }
 
@@ -240,7 +253,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
 
     // Check for scratch (cue ball pocketed)
     if (!gameState.cueBall.visible) {
-      console.log('Foul detected - scratch (cue ball pocketed)');
+      debugLog('Foul detected - scratch (cue ball pocketed)');
       foulDetected = 'scratch';
     }
 
@@ -250,7 +263,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       
       // Check if 1-ball was hit first
       if (firstBallHit && firstBallHit !== 1) {
-        console.log('Break foul detected - did not hit 1-ball first. Hit:', firstBallHit);
+        debugLog('Break foul detected - did not hit 1-ball first. Hit:', firstBallHit);
         foulDetected = 'break_wrong_ball_first';
       }
       
@@ -264,7 +277,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       
       // If no ball was pocketed AND fewer than 4 object balls hit cushions, it's a foul
       if (ballsPocketedThisShot.length === 0 && cushionsHit < 4) {
-        console.log('Break foul detected - no ball pocketed and only', cushionsHit, 'object balls hit cushions');
+        debugLog('Break foul detected - no ball pocketed and only', cushionsHit, 'object balls hit cushions');
         foulDetected = 'break_insufficient_cushions';
       }
       
@@ -273,15 +286,15 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
 
     // Check if wrong ball hit first (must hit lowest numbered ball first)
     if (!foulDetected && firstBallHit && currentLowestBall && firstBallHit !== currentLowestBall.id) {
-      console.log('Wrong ball first foul - Hit:', firstBallHit, 'Lowest:', currentLowestBall.id);
-      console.log('Visible balls on table:', gameState.balls.filter(b => b.visible && !b.pocketed).map(b => b.id).sort((a, b) => a - b));
+      debugLog('Wrong ball first foul - Hit:', firstBallHit, 'Lowest:', currentLowestBall.id);
+      debugLog('Visible balls on table:', gameState.balls.filter(b => b.visible && !b.pocketed).map(b => b.id).sort((a, b) => a - b));
       foulDetected = 'wrong_ball_first';
     }
     
     // Check if no contact was made at all (player missed all balls)
     if (!foulDetected && !contactMade && !isPushOut && gameState.gamePhase !== 'break') {
-      console.log('Foul detected - no contact made with any ball');
-      console.log('isPushOut in no_contact check:', isPushOut);
+      debugLog('Foul detected - no contact made with any ball');
+      debugLog('isPushOut in no_contact check:', isPushOut);
       foulDetected = 'no_contact';
     }
 
@@ -294,14 +307,14 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       
       // If no ball was pocketed AND no rail contact occurred, it's a foul
       if (ballsPocketedThisShot.length === 0) {
-        console.log('Foul detected - no rail contact and no ball pocketed. Contact made:', contactMade, 'Rail contact:', railContact, 'First ball hit:', firstBallHit);
-        console.log('isPushOut in no_rail_contact check:', isPushOut);
+        debugLog('Foul detected - no rail contact and no ball pocketed. Contact made:', contactMade, 'Rail contact:', railContact, 'First ball hit:', firstBallHit);
+        debugLog('isPushOut in no_rail_contact check:', isPushOut);
         foulDetected = 'no_rail_contact';
       }
     }
     
-    console.log('Foul detection check - Contact made:', contactMade, 'Rail contact:', railContact, 'First ball hit:', firstBallHit, 'Foul detected:', foulDetected);
-    console.log('Current lowest ball:', currentLowestBall ? currentLowestBall.id : 'none');
+    debugLog('Foul detection check - Contact made:', contactMade, 'Rail contact:', railContact, 'First ball hit:', firstBallHit, 'Foul detected:', foulDetected);
+    debugLog('Current lowest ball:', currentLowestBall ? currentLowestBall.id : 'none');
 
     return foulDetected;
   }, [isPushOut, firstBallHit, railContact, contactMade, getLowestNumberedBall, gameState.balls, lowestNumberedBall, gameState.cueBall.visible, gameState.gamePhase, objectBallsHitCushions]);
@@ -327,14 +340,14 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       if (ball.id === calledBall) {
         // Called ball was pocketed - check if it went in the called pocket
         if (ball.pocketedPocket !== calledPocket) {
-          console.log('Illegally pocketed ball:', ball.id, '- called ball went in wrong pocket');
+          debugLog('Illegally pocketed ball:', ball.id, '- called ball went in wrong pocket');
           illegallyPocketed.push(ball);
         }
       } else {
         // Not the called ball - check if called ball was legally pocketed
         const calledBallPocketed = ballsPocketedThisShot.find(b => b.id === calledBall);
         if (!calledBallPocketed || calledBallPocketed.pocketedPocket !== calledPocket) {
-          console.log('Illegally pocketed ball:', ball.id, '- not called ball and called ball not legally pocketed');
+          debugLog('Illegally pocketed ball:', ball.id, '- not called ball and called ball not legally pocketed');
           illegallyPocketed.push(ball);
         }
       }
@@ -347,7 +360,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
     // Use shotPlayer instead of currentPlayer to ensure we're handling the foul for the correct player
     const playerWhoFouled = shotPlayer || gameState.currentPlayer;
     
-    console.log('Handling foul:', foulType, 'for player:', playerWhoFouled);
+    debugLog('Handling foul:', foulType, 'for player:', playerWhoFouled);
     
     // Dispatch foul event for tip system
     window.dispatchEvent(new CustomEvent('gameFoul', { detail: { foulType, player: playerWhoFouled } }));
@@ -366,18 +379,18 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
     
     // Update consecutive fouls (for 3-foul rule)
     setConsecutiveFouls(prev => {
-      console.log('Handling foul - Previous consecutive fouls:', prev, 'Player who fouled:', playerWhoFouled);
+      debugLog('Handling foul - Previous consecutive fouls:', prev, 'Player who fouled:', playerWhoFouled);
       const newConsecutiveFouls = {
         ...prev,
         [playerWhoFouled]: prev[playerWhoFouled] + 1
         // Don't reset other player's fouls - each player maintains their own count
       };
       
-      console.log('Handling foul - New consecutive fouls:', newConsecutiveFouls);
+      debugLog('Handling foul - New consecutive fouls:', newConsecutiveFouls);
       
       // Check for 3-foul rule (player loses after 3 consecutive fouls)
       if (newConsecutiveFouls[playerWhoFouled] >= 3) {
-        console.log(`Player ${playerWhoFouled} loses due to 3 consecutive fouls!`);
+        debugLog(`Player ${playerWhoFouled} loses due to 3 consecutive fouls!`);
         // Dispatch three foul event for tip system
         window.dispatchEvent(new CustomEvent('threeFoul', { detail: { player: playerWhoFouled } }));
         // You could add a game over state here
@@ -510,11 +523,92 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
      return nearest;
    }, []);
    
-      // Calculate ghost ball position - DISABLED to prevent interference with aiming
-   const calculateGhostBall = useCallback((targetX, targetY, aimX, aimY) => {
-     // Ghost ball system completely disabled - return null to prevent any interference
-     return null;
-   }, []);
+        // Calculate ghost ball position for aim line display
+  const calculateGhostBall = useCallback((targetX, targetY, aimX, aimY) => {
+    // Calculate the ghost ball position (where the cue ball should be to hit the target)
+    const dx = targetX - aimX;
+    const dy = targetY - aimY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance < BALL_RADIUS * 2) {
+      // Too close - no valid ghost ball position
+      return null;
+    }
+    
+    // Calculate the ghost ball position
+    const ghostX = targetX - (dx / distance) * (BALL_RADIUS * 2);
+    const ghostY = targetY - (dy / distance) * (BALL_RADIUS * 2);
+    
+    return { x: ghostX, y: ghostY };
+  }, []);
+
+  // UI hit-test helper for push out checkbox (canvas overlay)
+  function isPushOutCheckboxClick(x, y) {
+    return x >= 15 && x <= 30 && y >= TABLE_HEIGHT - 75 && y <= TABLE_HEIGHT - 60;
+  }
+
+  // Render helper for push out overlay
+  function renderPushOutOverlay(ctx, tableHeight, isPushOutFlag, pushOutAvail, phase) {
+    if (!canShowPushOut(phase, pushOutAvail)) return;
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
+    ctx.fillRect(10, tableHeight - 80, 200, 25);
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(10, tableHeight - 80, 200, 25);
+    
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.9)';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('Push Out Available', 15, tableHeight - 65);
+    
+    // Checkbox
+    ctx.fillStyle = isPushOutFlag ? 'rgba(255, 215, 0, 0.9)' : 'rgba(255, 255, 255, 0.3)';
+    ctx.fillRect(15, tableHeight - 75, 15, 15);
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(15, tableHeight - 75, 15, 15);
+    
+    if (isPushOutFlag) {
+      ctx.fillStyle = 'rgba(255, 215, 0, 0.9)';
+      ctx.font = 'bold 16px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('✓', 22, tableHeight - 65);
+    }
+  }
+
+  // Render helper for trajectory path
+  function renderTrajectoryPath(ctx, points) {
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      const p = points[i];
+      ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+  }
+
+  // Style helper for cue aim overlay
+  function renderCueAimStyle(ctx) {
+    let lineColor = 'rgba(255, 255, 255, 0.8)';
+    if (aimLocked) {
+      lineColor = 'rgba(0, 255, 0, 0.95)';
+    } else if (fineTuningMode) {
+      lineColor = 'rgba(255, 255, 0, 0.9)';
+    }
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = aimLocked ? 4 : (fineTuningMode ? 2 : 3);
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 0.9;
+  }
+
+  // Small helper for angle smoothing (handles wrap-around)
+  function shortestAngleDelta(target, current) {
+    let delta = target - current;
+    while (delta > Math.PI) delta -= Math.PI * 2;
+    while (delta < -Math.PI) delta += Math.PI * 2;
+    return delta;
+  }
    
    // Pocket assistance system for easier pocket aiming
    const getPocketAssistedAim = useCallback((rawAimX, rawAimY) => {
@@ -632,33 +726,33 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
              // Apply friction
              ball.vx *= Math.pow(friction, 1 / subSteps);
              ball.vy *= Math.pow(friction, 1 / subSteps);
-           
-             // Calculate next position
+       
+       // Calculate next position
              let nextX = ball.x + ball.vx / subSteps;
              let nextY = ball.y + ball.vy / subSteps;
-             
+       
              // Rail bounce physics (matching actual game exactly)
-             let bounced = false;
-             if (nextX < FELT_LEFT + BALL_RADIUS) {
+       let bounced = false;
+       if (nextX < FELT_LEFT + BALL_RADIUS) {
                ball.x = FELT_LEFT + BALL_RADIUS;
                ball.vx = Math.abs(ball.vx) * 0.85; // Match actual game
-               bounced = true;
-             } else if (nextX > FELT_RIGHT - BALL_RADIUS) {
+         bounced = true;
+       } else if (nextX > FELT_RIGHT - BALL_RADIUS) {
                ball.x = FELT_RIGHT - BALL_RADIUS;
                ball.vx = -Math.abs(ball.vx) * 0.8; // Match actual game
-               bounced = true;
+         bounced = true;
              } else {
                ball.x = nextX;
-             }
-             
-             if (nextY < FELT_TOP + BALL_RADIUS) {
+       }
+       
+       if (nextY < FELT_TOP + BALL_RADIUS) {
                ball.y = FELT_TOP + BALL_RADIUS;
                ball.vy = Math.abs(ball.vy) * 0.85; // Match actual game
-               bounced = true;
-             } else if (nextY > FELT_BOTTOM - BALL_RADIUS) {
+         bounced = true;
+       } else if (nextY > FELT_BOTTOM - BALL_RADIUS) {
                ball.y = FELT_BOTTOM - BALL_RADIUS;
                ball.vy = -Math.abs(ball.vy) * 0.8; // Match actual game
-               bounced = true;
+         bounced = true;
              } else {
                ball.y = nextY;
              }
@@ -728,14 +822,14 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
              if (ballId !== 'cue' && ball.visible) {
                const dx = ball.x - cueBall.x;
                const dy = ball.y - cueBall.y;
-               const dist = Math.sqrt(dx * dx + dy * dy);
-               
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          
                if (dist > 0 && dist < BALL_SIZE + 0.5) { // Slightly more forgiving collision detection
                  // Simple collision resolution
                  const overlap = BALL_SIZE - dist + 0.01;
-                 const nx = dx / dist;
-                 const ny = dy / dist;
-                 
+            const nx = dx / dist;
+            const ny = dy / dist;
+            
                  // Separate balls with more stable positioning
                  const separationDistance = Math.max(overlap / 2, 0.1); // Minimum separation
                  cueBall.x -= nx * separationDistance;
@@ -982,7 +1076,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
             gameState.cueBall.vx = Math.abs(gameState.cueBall.vx) * 0.85;
             // Track rail contact for foul detection (cue ball hitting rail)
             if (contactMade) {
-              console.log('Rail contact detected for cue ball');
+              debugLog('Rail contact detected for cue ball');
               setRailContact(true);
             }
           } else if (nextX > FELT_RIGHT - BALL_RADIUS) {
@@ -1065,7 +1159,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
             ball.vx = Math.abs(ball.vx) * 0.85;
             // Track rail contact for foul detection (any ball after contact)
             if (contactMade) {
-              console.log('Rail contact detected for ball:', ball.id);
+              debugLog('Rail contact detected for ball:', ball.id);
               setRailContact(true);
             }
             // Track object balls hitting cushions during break
@@ -1162,7 +1256,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
               
               // Track first ball hit for foul detection - only if collision actually occurred
               if (!firstContactDetected && collisionOccurred && gameState.cueBall.isMoving) {
-                console.log('First contact made with ball:', ball.id);
+                debugLog('First contact made with ball:', ball.id);
                 setFirstBallHit(ball.id);
                 setContactMade(true);
                 setFirstContactDetected(true);
@@ -1192,18 +1286,18 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
 
       // Check for push out fouls FIRST (only scratches are fouls during push out)
       if (allStopped && isPushOut && !foulHandled && !shotProcessed && shotPlayer === gameState.currentPlayer) {
-        console.log('=== PUSH OUT DETECTION ===');
-        console.log('isPushOut:', isPushOut);
-        console.log('allStopped:', allStopped);
-        console.log('foulHandled:', foulHandled);
-        console.log('shotProcessed:', shotProcessed);
-        console.log('shotPlayer:', shotPlayer);
-        console.log('currentPlayer:', gameState.currentPlayer);
-        console.log('cueBall visible:', gameState.cueBall.visible);
+        debugLog('=== PUSH OUT DETECTION ===');
+        debugLog('isPushOut:', isPushOut);
+        debugLog('allStopped:', allStopped);
+        debugLog('foulHandled:', foulHandled);
+        debugLog('shotProcessed:', shotProcessed);
+        debugLog('shotPlayer:', shotPlayer);
+        debugLog('currentPlayer:', gameState.currentPlayer);
+        debugLog('cueBall visible:', gameState.cueBall.visible);
         
         // During push out, only scratches are fouls
         if (!gameState.cueBall.visible) {
-          console.log('Push out scratch foul detected');
+          debugLog('Push out scratch foul detected');
           setFoulHandled(true);
           setShotProcessed(true);
           setIsPushOut(false); // Reset push out state after foul detection
@@ -1212,7 +1306,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
           // No scratch occurred, it's a legal push out
           setShotProcessed(true); // Mark shot as processed
           setIsPushOut(false); // Reset push out state after foul detection
-          console.log('Legal push out completed - NO FOULS ALLOWED');
+          debugLog('Legal push out completed - NO FOULS ALLOWED');
         }
       }
       
@@ -1221,19 +1315,19 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       // Also skip if this is a break shot (to prevent break shot from being treated as regular shot)
       if (allStopped && !isPushOut && gameState.gamePhase !== 'break' && !foulHandled && !shotProcessed && shotPlayer === gameState.currentPlayer && shotPlayer !== null && !isBreakShot) {
         // Regular foul detection (not push out)
-        console.log('=== REGULAR FOUL DETECTION ===');
-        console.log('isPushOut:', isPushOut);
-        console.log('allStopped:', allStopped);
-        console.log('foulHandled:', foulHandled);
-        console.log('shotProcessed:', shotProcessed);
-        console.log('shotPlayer:', shotPlayer);
-        console.log('currentPlayer:', gameState.currentPlayer);
-        console.log('gamePhase:', gameState.gamePhase);
-        console.log('isBreakShot:', isBreakShot);
-        console.log('Checking for fouls - Current player:', gameState.currentPlayer, 'First ball hit:', firstBallHit);
+        debugLog('=== REGULAR FOUL DETECTION ===');
+        debugLog('isPushOut:', isPushOut);
+        debugLog('allStopped:', allStopped);
+        debugLog('foulHandled:', foulHandled);
+        debugLog('shotProcessed:', shotProcessed);
+        debugLog('shotPlayer:', shotPlayer);
+        debugLog('currentPlayer:', gameState.currentPlayer);
+        debugLog('gamePhase:', gameState.gamePhase);
+        debugLog('isBreakShot:', isBreakShot);
+        debugLog('Checking for fouls - Current player:', gameState.currentPlayer, 'First ball hit:', firstBallHit);
         const foulDetected = detectFouls();
         if (foulDetected) {
-          console.log('Foul detected:', foulDetected, 'by player:', gameState.currentPlayer);
+          debugLog('Foul detected:', foulDetected, 'by player:', gameState.currentPlayer);
           setFoulHandled(true); // Mark foul as handled immediately
           setShotProcessed(true); // Mark shot as processed
           
@@ -1249,7 +1343,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
             const illegallyPocketed = detectIllegallyPocketedBalls();
             
             if (illegallyPocketed.length > 0) {
-              console.log('Illegally pocketed balls detected:', illegallyPocketed.map(b => b.id));
+              debugLog('Illegally pocketed balls detected:', illegallyPocketed.map(b => b.id));
               setIllegallyPocketedBalls(illegallyPocketed);
               setShowIllegalPocketOption(true);
               setShotProcessed(true);
@@ -1263,7 +1357,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
           }
           
           // No illegally pocketed balls - reset consecutive fouls for the player who took the shot
-          console.log('Legal shot completed - resetting consecutive fouls for player:', shotPlayer);
+          debugLog('Legal shot completed - resetting consecutive fouls for player:', shotPlayer);
           setShotProcessed(true); // Mark shot as processed
           
           // Reset call shot for next turn (after illegally pocketed detection is complete)
@@ -1271,13 +1365,13 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
           setCalledPocket(null);
           setIsPushOut(false); // Reset push out state after foul detection
           setConsecutiveFouls(prev => {
-            console.log('Previous consecutive fouls:', prev);
+            debugLog('Previous consecutive fouls:', prev);
             const newFouls = {
               ...prev,
               [shotPlayer]: 0 // Only reset the fouls for the player who made the legal shot
             };
-            console.log(`Resetting fouls for player ${shotPlayer} only. Player 1 fouls: ${newFouls[1]}, Player 2 fouls: ${newFouls[2]}`);
-            console.log('New consecutive fouls:', newFouls);
+            debugLog(`Resetting fouls for player ${shotPlayer} only. Player 1 fouls: ${newFouls[1]}, Player 2 fouls: ${newFouls[2]}`);
+            debugLog('New consecutive fouls:', newFouls);
             return newFouls;
           });
           
@@ -1288,7 +1382,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
           
           // If no ball was pocketed AND no foul occurred, switch players (player missed)
           if (ballsPocketedThisShot.length === 0) {
-            console.log('No ball pocketed - switching players');
+            debugLog('No ball pocketed - switching players');
       setGameState(prev => ({
         ...prev,
               currentPlayer: prev.currentPlayer === 1 ? 2 : 1
@@ -1300,14 +1394,14 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       }
 
       // Check for break shot fouls (CSI 10-Ball rules)
-      if (allStopped && isBreakShot && !foulHandled && !shotProcessed && shotPlayer === gameState.currentPlayer) {
+      if (allStopped && isBreakShot && !foulHandled && !shotProcessed) {
         // Mark shot as processed immediately to prevent multiple executions
         setShotProcessed(true);
         setIsBreakShot(false); // Reset break shot flag
         
         const breakFoulDetected = detectFouls();
         if (breakFoulDetected) {
-          console.log('Break foul detected:', breakFoulDetected, 'by player:', gameState.currentPlayer);
+          debugLog('Break foul detected:', breakFoulDetected, 'by player:', gameState.currentPlayer);
           setFoulHandled(true);
           handleFoul(breakFoulDetected);
         } else {
@@ -1340,12 +1434,12 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       }
       
       // Trigger lowest ball reminder if balls have stopped and we have a lowest ball
-      if (allStopped && lowestVisibleBall && gameState.gamePhase === 'play') {
+      if (allStopped && lowestVisibleBall && isPlay(gameState.gamePhase)) {
         window.dispatchEvent(new CustomEvent('lowestBall', { detail: { player: gameState.currentPlayer, lowestBall: lowestVisibleBall.id } }));
       }
       
       // Trigger safety opportunity tip occasionally (random chance)
-      if (allStopped && gameState.gamePhase === 'play' && Math.random() < 0.1) { // 10% chance
+      if (allStopped && isPlay(gameState.gamePhase) && Math.random() < 0.1) { // 10% chance
         window.dispatchEvent(new CustomEvent('safetyOpportunity', { detail: { player: gameState.currentPlayer } }));
       }
       
@@ -1357,7 +1451,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
         if (wasTenBallCalled && wasCalledPocketCorrect) {
           // 10-ball was legally called and pocketed - GAME WON!
           const winner = shotPlayer;
-          console.log(`Game won by Player ${winner}! 10-ball was legally called and pocketed.`);
+          debugLog(`Game won by Player ${winner}! 10-ball was legally called and pocketed.`);
           
           // Call the parent's handleGameEnd function to update score
           if (onGameEnd) {
@@ -1378,10 +1472,10 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
               scratchOccurred: false
             }));
             setIsDragging(false);
-            setShowAimLine(true);
+      setShowAimLine(true);
             
             // Reset foul counters for new game
-            console.log('Resetting foul counters after game win');
+            debugLog('Resetting foul counters after game win');
             setConsecutiveFouls({ 1: 0, 2: 0 });
             
             // Force a re-render by updating game state
@@ -1396,10 +1490,10 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
             }
           }, 2000); // 2 second delay to show the win
         } else {
-          // 10-ball was illegally pocketed - spot it and continue game
-          console.log('10-ball illegally pocketed - spotting it back on table');
+          // 10-ball was illegally pocketed - spot it on the foot spot and continue
+          debugLog('10-ball illegally pocketed - spotting it on the foot spot');
           
-          // Spot the 10-ball back on the table
+          // Spot the 10-ball back on the table at the foot spot
           setGameState(prev => ({
             ...prev,
             balls: prev.balls.map(ball => 
@@ -1407,8 +1501,8 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
                 ...ball, 
                 pocketed: false, 
                 visible: true, 
-                x: 300, // Spot in center of table
-                y: 150,
+                x: FOOT_SPOT_X,
+                y: FOOT_SPOT_Y,
                 vx: 0,
                 vy: 0,
                 isMoving: false
@@ -1423,11 +1517,11 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
           
           if (calledBallPocketed && calledBallPocketed.pocketedPocket === calledPocket) {
             // Called ball was made - player continues shooting
-            console.log('Called ball was made - player continues shooting');
+            debugLog('Called ball was made - player continues shooting');
             // No player change needed
           } else {
             // Called ball was not made - switch players
-            console.log('Called ball was not made - switching players');
+            debugLog('Called ball was not made - switching players');
             setGameState(prev => ({
               ...prev,
               currentPlayer: prev.currentPlayer === 1 ? 2 : 1
@@ -1440,12 +1534,32 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
         }
       }
 
+      // Check if game phase is changing from 'break' to 'play'
+      const wasBreakPhase = isBreak(gameState.gamePhase);
+      debugLog('Step function - wasBreakPhase:', wasBreakPhase, 'allStopped:', allStopped, 'gamePhase:', gameState.gamePhase);
+      
       setGameState(prev => ({
         ...prev,
         isAnimating: !allStopped,
-        // Change game phase from 'break' to 'play' after first shot
-        gamePhase: prev.gamePhase === 'break' && !allStopped ? 'play' : prev.gamePhase
+        gamePhase: nextPhaseAfterShot(prev.gamePhase, allStopped)
       }));
+      
+      // Trigger push out tip when transitioning from break to play phase
+      if (shouldEnablePushOut(gameState.gamePhase, allStopped)) {
+        debugLog('Setting pushOutAvailable to true');
+        setPushOutAvailable(true);
+        setFirstShotAfterBreak(false); // Reset for new break
+        
+        // Trigger push out strategy tip after legal break
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('pushOutStrategy', { detail: { player: gameState.currentPlayer } }));
+        }, 500);
+        
+        // Trigger push out opportunity tip
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('pushOutAvailable', { detail: { player: gameState.currentPlayer } }));
+        }, 1000);
+      }
 
       // Continue animation if any balls moving
       if (!allStopped) {
@@ -1461,7 +1575,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
     
     // Check if call shot is required (CSI rules)
     // No call shot required on break shot or push out
-    if (gameState.gamePhase === 'break') {
+    if (isBreak(gameState.gamePhase)) {
       // Break shot - no call shot required
     } else if (isPushOut) {
       // Push out - no call shot required
@@ -1511,31 +1625,19 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       },
       isAnimating: true,
       ballInHand: false, // End ball-in-hand mode when taking a shot
-      gamePhase: prev.gamePhase === 'break' ? 'play' : prev.gamePhase // Change from break to play after first shot
+      gamePhase: prev.gamePhase // Don't change phase here - let animation step handle it
     }));
     
     // Trigger call pocket reminder when transitioning from break to play
-    if (gameState.gamePhase === 'break') {
+    if (isBreak(gameState.gamePhase)) {
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('callPocket', { detail: { player: gameState.currentPlayer } }));
       }, 500);
     }
     
-    // Enable push out after break shot
-    if (gameState.gamePhase === 'break') {
-      setPushOutAvailable(true);
-      setFirstShotAfterBreak(false); // Reset for new break
-      
-      // Trigger push out strategy tip after legal break
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('pushOutStrategy', { detail: { player: gameState.currentPlayer } }));
-      }, 1000); // Small delay to let the break complete
-      
-      // Trigger push out opportunity tip
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('pushOutAvailable', { detail: { player: gameState.currentPlayer } }));
-      }, 1500); // Slightly longer delay
-      setIsBreakShot(true); // Mark this as a break shot
+    // Mark this as a break shot
+    if (isBreak(gameState.gamePhase)) {
+      setIsBreakShot(true);
     }
     
     // Reset aiming state and auto-unlock for next shot
@@ -1582,18 +1684,21 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
     }
     
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Compute scale dynamically based on rendered size vs canvas size
+    const scale = rect.width / TABLE_WIDTH;
+    const x = (e.clientX - rect.left) / scale;
+    const y = (e.clientY - rect.top) / scale;
     
     // Check if click is within table bounds
     const isOnTable = x >= 0 && x <= TABLE_WIDTH && y >= 0 && y <= TABLE_HEIGHT;
     
-    if (isOnTable) {
-      // Handle call shot mode clicks
-      if (isCallShotMode) {
+          if (isOnTable) {
+        // Handle call shot mode clicks
+        if (isCallShotMode) {
         // Check if clicking on push out checkbox
-        if (gameState.gamePhase === 'play' && pushOutAvailable) {
-          if (x >= 15 && x <= 30 && y >= TABLE_HEIGHT - 75 && y <= TABLE_HEIGHT - 60) {
+        if (isPlay(gameState.gamePhase) && pushOutAvailable) {
+          debugLog('Push out checkbox clicked, current isPushOut:', isPushOut);
+          if (isPushOutCheckboxClick(x, y)) {
             setIsPushOut(!isPushOut);
             return;
           }
@@ -1645,7 +1750,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       }
       
       // If ball-in-hand OR during break phase, allow cue ball dragging
-      if (gameState.ballInHand || gameState.gamePhase === 'break') {
+      if (gameState.ballInHand || isBreak(gameState.gamePhase)) {
         if (isClickOnCueBall(x, y)) {
           startDraggingCueBall(x, y);
           return;
@@ -1657,7 +1762,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       setAimLocked(newAimLocked);
       
       // If aim is being locked and we're not in break phase, automatically enter call shot mode
-      if (newAimLocked && gameState.gamePhase !== 'break' && !isPushOut) {
+      if (newAimLocked && !isBreak(gameState.gamePhase) && !isPushOut) {
         setIsCallShotMode(true);
       }
       
@@ -1696,8 +1801,10 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
     if (gameState.isAnimating) return;
     
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Compute scale dynamically based on rendered size vs canvas size
+    const scale = rect.width / TABLE_WIDTH;
+    const x = (e.clientX - rect.left) / scale;
+    const y = (e.clientY - rect.top) / scale;
     
     // Update cue ball position if dragging
     if (isDraggingCueBall) {
@@ -1741,6 +1848,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       isRailFirstShot = true;
     }
     
+    // Simple ball proximity detection
     gameState.balls.forEach(ball => {
       if (ball.visible && !ball.pocketed) {
         // Calculate distance from cue ball to ball center
@@ -1752,9 +1860,8 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
         const angleToBall = Math.atan2(dy, dx);
         const angleDiff = Math.abs(baseAngle - angleToBall);
         
-        // Much more generous detection - allow fine-tuning when aiming anywhere near the ball
-        // Remove distance restriction to allow fine-tuning for far balls
-        if (angleDiff < 0.3) { // 0.3 radians = ~17 degrees, much more generous
+        // Simple detection - if aiming within 15 degrees of a ball
+        if (angleDiff < 0.25) { // ~15 degrees
           if (distance < nearestDistance) {
             nearestDistance = distance;
             nearestBall = ball;
@@ -1764,23 +1871,22 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       }
     });
     
-    // Apply smooth precision adjustment
+    // Simple precision adjustment
     let finalAngle = baseAngle;
     
     if (fineTuningMode) {
-      // Ultra-fine tuning mode - works for any type of shot
-      // Always use fine-tuning when right-click is held, regardless of ball proximity or distance
-      // Use distance-based sensitivity for better control on long shots
+      // Ultra-fine tuning mode with much more granular control
       const distanceToMouse = Math.sqrt((x - clampedCueBall.x) ** 2 + (y - clampedCueBall.y) ** 2);
       
-      // Ultra-precise sensitivity for fine-tuning
-      let baseSensitivity = 0.0005; // 0.05% base sensitivity (ultra-precise)
-      if (isRailFirstShot) {
-        baseSensitivity = 0.0002; // 0.02% for rail-first shots (micro-precise)
-      }
+      // Slightly increase precision for micro-movements
+      let sensitivity = 0.00008; // smaller base angle per pixel
       
-      const distanceMultiplier = Math.min(distanceToMouse / 100, 0.8); // Slightly reduce for far distances
-      const sensitivity = baseSensitivity * distanceMultiplier;
+      // If aiming near a ball, make it even more sensitive for precise contact point control
+      if (isNearBall && nearestBall) {
+        const distanceToBall = Math.sqrt((nearestBall.x - clampedCueBall.x) ** 2 + (nearestBall.y - clampedCueBall.y) ** 2);
+        // Make sensitivity inversely proportional to distance - closer balls get more sensitive control
+        sensitivity = 0.00004 * (distanceToBall / 100);
+      }
       
       const centerX = clampedCueBall.x;
       const centerY = clampedCueBall.y;
@@ -1789,8 +1895,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       finalAngle = Math.atan2(mouseOffsetY, mouseOffsetX);
     } else if (isNearBall) {
       // When near a ball, use reduced sensitivity for more precise control
-      // Scale down mouse movement to 50% for finer control
-      const sensitivity = 0.5; // 50% sensitivity for precise ball contact
+      const sensitivity = 0.45; // slightly finer than before
       const centerX = clampedCueBall.x;
       const centerY = clampedCueBall.y;
       const mouseOffsetX = (x - centerX) * sensitivity;
@@ -1798,32 +1903,29 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       finalAngle = Math.atan2(mouseOffsetY, mouseOffsetX);
     } else {
       // Normal precision for general aiming
-      const normalRadians = (2 * Math.PI) / 180; // 2 degrees for stability
+      const normalRadians = (1.8 * Math.PI) / 180; // slightly smoother
       finalAngle = Math.round(baseAngle / normalRadians) * normalRadians;
     }
     
-    // Apply smoothing to prevent jumping
-    if (fineTuningMode) {
-      // Smooth the angle change to prevent jumping
-      const angleDiff = finalAngle - lastAimAngle;
-      const maxAngleChange = 0.005; // Reduced maximum angle change per frame
-      const smoothedAngleChange = Math.max(-maxAngleChange, Math.min(maxAngleChange, angleDiff));
-      const smoothedAngle = lastAimAngle + smoothedAngleChange;
-      
-      // Quantize the angle to prevent micro-jumps
-      const quantization = 0.001; // Very fine quantization
-      const quantizedAngle = Math.round(smoothedAngle / quantization) * quantization;
-      
-      setAimAngle(quantizedAngle);
-      setLastAimAngle(quantizedAngle);
-    } else {
+    // Apply deadzone to prevent tiny movements from causing jumps
+    const angleDiff = Math.abs(shortestAngleDelta(finalAngle, lastAimAngle));
+    const deadzone = 0.0008; // slightly smaller for more responsiveness
+    
+    if (angleDiff > deadzone || !fineTuningMode) {
       setAimAngle(finalAngle);
       setLastAimAngle(finalAngle);
     }
+    // If angle change is too small and we're in fine-tuning mode, keep the previous angle
     
-    // Ghost ball system completely removed
-    setGhostBall(null);
-    setTargetBall(null);
+    // Update ghost ball and target ball for aim line display
+    if (isNearBall && nearestBall) {
+      const ghostBallPos = calculateGhostBall(nearestBall.x, nearestBall.y, clampedCueBall.x, clampedCueBall.y);
+      setGhostBall(ghostBallPos);
+      setTargetBall(nearestBall);
+    } else {
+      setGhostBall(null);
+      setTargetBall(null);
+    }
   }, [gameState.isAnimating, isDraggingCueBall, updateCueBallPosition, gameState.cueBall, gameState.balls, calculateGhostBall, aimLocked, isCallShotMode]);
   
   const handlePointerLeave = useCallback(() => {
@@ -1948,7 +2050,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
     }
     
     // Draw kitchen area (only for break shots, not for regular ball-in-hand)
-    if (gameState.gamePhase === 'break' && !gameState.isAnimating) {
+    if (isBreak(gameState.gamePhase) && !gameState.isAnimating) {
       ctx.save();
       ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
       ctx.lineWidth = 2;
@@ -2022,7 +2124,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
     
     // Draw simple aim line that follows mouse exactly - DISABLED
     if (false && showAimLine && !gameState.isAnimating) {
-      const cueBall = gameState.cueBall;
+       const cueBall = gameState.cueBall;
       const currentAngle = aimAngle;
       
 
@@ -2120,12 +2222,12 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       
       // Debug: Log the positions being used (commented out to reduce console clutter)
       // console.log(`Trajectory - Mouse angle: ${currentAngle} | Cue ball: ${currentCueBall.x}, ${currentCueBall.y} | Game state cue ball: ${gameState.cueBall.x}, ${gameState.cueBall.y}`);
-      
-      // Calculate initial velocity based on power
+       
+       // Calculate initial velocity based on power
       const baseSpeed = power * 18;
-      const startVx = Math.cos(currentAngle) * baseSpeed;
-      const startVy = Math.sin(currentAngle) * baseSpeed;
-      
+       const startVx = Math.cos(currentAngle) * baseSpeed;
+       const startVy = Math.sin(currentAngle) * baseSpeed;
+       
       // Predict all ball trajectories using current cue ball position
       const allTrajectories = predictAllBallTrajectories(startVx, startVy, currentCueBall);
       
@@ -2133,34 +2235,24 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       if (allTrajectories['cue'] && allTrajectories['cue'].points.length > 1) {
         const firstCollision = allTrajectories['cue'].points.find(p => p.collision);
         if (firstCollision) {
-          console.log('Trajectory collision at:', firstCollision.x.toFixed(2), firstCollision.y.toFixed(2));
+          debugLog('Trajectory collision at:', firstCollision.x.toFixed(2), firstCollision.y.toFixed(2));
           const lowestBall = gameState.balls.find(ball => ball.visible && !ball.pocketed && ball.id === 1);
           if (lowestBall) {
-            console.log('Actual ball 1 position:', lowestBall.x.toFixed(2), lowestBall.y.toFixed(2));
+            debugLog('Actual ball 1 position:', lowestBall.x.toFixed(2), lowestBall.y.toFixed(2));
           }
         }
       }
        
-       // Draw each ball's trajectory (only show significant ones)
+      // Draw each ball's trajectory (only show significant ones)
        Object.entries(allTrajectories).forEach(([ballId, trajectory]) => {
          // Show all trajectories with at least 3 points
          const minPoints = 3;
          if (trajectory.points.length > minPoints) {
           ctx.save();
            
-           // Special handling for cue ball trajectory - show full trajectory as aim line
+           // Special handling for cue ball trajectory - show full trajectory as the aim line
            if (ballId === 'cue') {
-             // Draw the full cue ball trajectory as the aim line
-             let lineColor = 'rgba(255, 255, 255, 0.8)'; // Default white
-             if (aimLocked) {
-               lineColor = 'rgba(0, 255, 0, 0.95)'; // Green when locked
-             } else if (fineTuningMode) {
-               lineColor = 'rgba(255, 255, 0, 0.9)'; // Yellow when fine-tuning
-             }
-             ctx.strokeStyle = lineColor;
-             ctx.lineWidth = aimLocked ? 4 : (fineTuningMode ? 2 : 3); // Thinner line for fine-tuning
-             ctx.setLineDash([]); // Solid line for aim line
-             ctx.globalAlpha = 0.9; // More visible for aim line
+             renderCueAimStyle(ctx);
            } else {
              // Object ball trajectories
              ctx.strokeStyle = trajectory.color;
@@ -2168,33 +2260,22 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
              ctx.globalAlpha = 0.7; // Only set opacity for object balls, not cue ball
            }
            
-           // All trajectories are solid lines (aim line and object ball paths)
-           ctx.setLineDash([]); // Solid line for all trajectories
-          
-          ctx.beginPath();
-           ctx.moveTo(trajectory.points[0].x, trajectory.points[0].y);
-           
-           // Draw trajectory path (draw all points for accuracy)
-           for (let i = 1; i < trajectory.points.length; i++) {
-             const point = trajectory.points[i];
-             ctx.lineTo(point.x, point.y);
-           }
-           
-           ctx.stroke();
+          // Draw path using helper
+          renderTrajectoryPath(ctx, trajectory.points);
               ctx.restore();
             
            // Draw collision indicators (only for significant collisions)
            for (let i = 1; i < trajectory.points.length; i++) {
              const point = trajectory.points[i];
              if (point.collision) {
-               ctx.save();
+              ctx.save();
                ctx.fillStyle = trajectory.color;
                ctx.globalAlpha = 0.6;
-               ctx.beginPath();
+              ctx.beginPath();
                ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
-               ctx.fill();
-               ctx.restore();
-             }
+              ctx.fill();
+              ctx.restore();
+            }
             
              // Draw pocket indicators
             if (point.pocketed) {
@@ -2229,17 +2310,17 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
          
     // Draw highlighted pocket
     if (highlightedPocket && !gameState.isAnimating) {
-         ctx.save();
+               ctx.save();
       ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
       ctx.lineWidth = 3;
       ctx.setLineDash([5, 5]);
       
       // Draw highlighted pocket outline
-         ctx.beginPath();
+               ctx.beginPath();
       ctx.arc(highlightedPocket.x, highlightedPocket.y, 25, 0, 2 * Math.PI);
-      ctx.stroke();
+               ctx.stroke();
       
-                   ctx.restore();
+               ctx.restore();
         }
         
     // Draw pocket assistance zones (when aiming near pockets)
@@ -2260,14 +2341,14 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
       pockets.forEach(pocket => {
         const distance = Math.hypot(mouseX - pocket.x, mouseY - pocket.y);
         if (distance < 80) {
-          ctx.save();
+              ctx.save();
           ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
           ctx.lineWidth = 2;
           ctx.setLineDash([3, 3]);
-          ctx.beginPath();
+              ctx.beginPath();
           ctx.arc(pocket.x, pocket.y, 80, 0, 2 * Math.PI);
           ctx.stroke();
-          ctx.restore();
+              ctx.restore();
         }
       });
     }
@@ -2310,7 +2391,7 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
           ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)';
           ctx.lineWidth = 3;
           ctx.setLineDash([5, 5]);
-          ctx.beginPath();
+            ctx.beginPath();
           ctx.arc(selectedBall.x, selectedBall.y, BALL_RADIUS + 5, 0, 2 * Math.PI);
           ctx.stroke();
         }
@@ -2323,39 +2404,15 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
           ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)';
           ctx.lineWidth = 3;
           ctx.setLineDash([5, 5]);
-          ctx.beginPath();
+         ctx.beginPath();
           ctx.arc(selectedPocket.x, selectedPocket.y, 30, 0, 2 * Math.PI);
           ctx.stroke();
         }
       }
       
       // Draw push out option (only after break)
-      if (gameState.gamePhase === 'play' && pushOutAvailable) {
-        ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
-        ctx.fillRect(10, TABLE_HEIGHT - 80, 200, 25);
-        ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(10, TABLE_HEIGHT - 80, 200, 25);
-        
-        ctx.fillStyle = 'rgba(255, 215, 0, 0.9)';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText('Push Out Available', 15, TABLE_HEIGHT - 65);
-        
-        // Push out checkbox
-        ctx.fillStyle = isPushOut ? 'rgba(255, 215, 0, 0.9)' : 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(15, TABLE_HEIGHT - 75, 15, 15);
-        ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(15, TABLE_HEIGHT - 75, 15, 15);
-        
-        if (isPushOut) {
-          ctx.fillStyle = 'rgba(255, 215, 0, 0.9)';
-          ctx.font = 'bold 16px Arial';
-          ctx.textAlign = 'center';
-          ctx.fillText('✓', 22, TABLE_HEIGHT - 65);
-        }
-      }
+      debugLog('Draw function - gamePhase:', gameState.gamePhase, 'pushOutAvailable:', pushOutAvailable, 'isCallShotMode:', isCallShotMode);
+      renderPushOutOverlay(ctx, TABLE_HEIGHT, isPushOut, pushOutAvailable, gameState.gamePhase);
       
       // Draw action buttons
       if ((calledBall && calledPocket) || isPushOut) {
@@ -2445,32 +2502,51 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
   
   return (
     <div className={styles.simplePoolGame}>
+      {/* Aiming Instructions moved above the table */}
+      <div className={styles.aimingInstructions}>
+        <div className={styles.instructions}>
+          <strong>How To Aim:</strong><br/>
+          Move mouse to aim • Click table to lock aim • Call Shot • Adjust power • Click SHOOT<br/>
+          <small style={{color: '#888', fontSize: '12px'}}>
+            💡 <strong>Aim Line Colors:</strong> White = Aiming • Green = Locked & ready • Yellow = Fine-tuning • Colored = Object ball paths<br/>
+            💡 <strong>Fine-tuning:</strong> Hold right-click for precise aiming, release to lock aim
+          </small>
+        </div>
+      </div>
+
+      {canShowPushOut(gameState.gamePhase, pushOutAvailable) && (
+        <div
+          style={{
+            alignSelf: 'center',
+            margin: '8px 0 14px 0',
+            padding: '6px 14px',
+            background: 'rgba(255, 215, 0, 0.95)',
+            color: '#000',
+            fontWeight: 700,
+            fontSize: '15px',
+            borderRadius: '8px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.25)'
+          }}
+        >
+          Push Out Available
+        </div>
+      )}
+
       <div className={styles.tableContainer}>
                  <canvas
            ref={canvasRef}
            width={TABLE_WIDTH}
            height={TABLE_HEIGHT}
-           onPointerDown={handlePointerDown}
-           onPointerUp={handlePointerUp}
-           onPointerMove={handlePointerMove}
-           onPointerLeave={handlePointerLeave}
-           onContextMenu={(e) => e.preventDefault()} // Prevent right-click context menu
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerMove={handlePointerMove}
+          onPointerLeave={handlePointerLeave}
+          onContextMenu={(e) => e.preventDefault()} // Prevent right-click context menu
            className={styles.tableCanvas}
          />
       </div>
       
              <div className={styles.controls}>
-         <div className={styles.shootControl}>
-           <div className={styles.instructions}>
-             <strong>Beginner-Friendly Aiming:</strong><br/>
-             Move mouse to aim • Click table to lock aim • Adjust power • Click SHOOT<br/>
-             <small style={{color: '#888', fontSize: '12px'}}>
-               💡 <strong>Aim Line Colors:</strong> White = Aiming • Green = Locked & ready • Yellow = Fine-tuning • Colored = Object ball paths<br/>
-               💡 <strong>Fine-tuning:</strong> Hold right-click for precise aiming, release to lock aim
-             </small>
-           </div>
-         </div>
-         
          <div className={styles.powerControl}>
            <label>Power: {Math.round(power * 100)}%</label>
            <div style={{
@@ -2503,13 +2579,13 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
                cursor: 'pointer',
                transform: 'translateX(-50%)'
              }}></div>
-             <input
-               type="range"
-               min="0.1"
-               max="1"
-               step="0.01"
-               value={power}
-               onChange={(e) => setPower(parseFloat(e.target.value))}
+           <input
+             type="range"
+             min="0.1"
+             max="1"
+             step="0.01"
+             value={power}
+             onChange={(e) => setPower(parseFloat(e.target.value))}
                style={{
                  position: 'absolute',
                  top: 0,
@@ -2685,14 +2761,14 @@ const SIDE_MARGIN_FACTOR = 2.5; // More forgiving side pockets - allow balls to 
                    }));
                    // Spot the 10-ball if it was illegally pocketed
                    const tenBall = illegallyPocketedBalls.find(ball => ball.id === 10);
-                   if (tenBall) {
-                     setGameState(prev => ({
-                       ...prev,
-                       balls: prev.balls.map(ball => 
-                         ball.id === 10 ? { ...ball, pocketed: false, visible: true, x: 300, y: 150 } : ball
-                       )
-                     }));
-                   }
+                    if (tenBall) {
+                      setGameState(prev => ({
+                        ...prev,
+                        balls: prev.balls.map(ball => 
+                          ball.id === 10 ? { ...ball, pocketed: false, visible: true, x: FOOT_SPOT_X, y: FOOT_SPOT_Y } : ball
+                        )
+                      }));
+                    }
                    setIllegallyPocketedBalls([]);
                  }}
                  className={styles.acceptButton}

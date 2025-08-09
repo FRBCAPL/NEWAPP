@@ -1,15 +1,24 @@
 .tipContainer {
   position: fixed;
   top: 20px;
-  right: 20px;
+  left: 50%;
   z-index: 1000;
-  transform: translateX(400px);
+  transform: translateX(-50%) translateY(-100%);
   transition: transform 0.5s ease-in-out;
-  max-width: 350px;
+  max-width: 250px;
+  width: 250px;
+  min-width: 250px;
+  box-sizing: border-box;
 }
 
 .tipContainer.show {
-  transform: translateX(0);
+  transform: translateX(-50%) translateY(0);
+}
+
+.tipContainer.dragging {
+  user-select: none;
+  z-index: 1001;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
 
 .tipContent {
@@ -20,6 +29,8 @@
   box-shadow: 0 8px 32px rgba(229, 62, 62, 0.3);
   color: white;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .tipHeader {
@@ -83,9 +94,11 @@
 @media (max-width: 768px) {
   .tipContainer {
     top: 10px;
-    right: 10px;
-    left: 10px;
-    max-width: none;
+    left: 50%;
+    right: auto;
+    max-width: 220px;
+    width: 220px;
+    min-width: 220px;
   }
   
   .tipContent {
