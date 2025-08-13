@@ -3,7 +3,7 @@ import { userService } from '../../services/userService';
 import { seasonService } from '../../services/seasonService';
 import OpponentsModal from './OpponentsModal';
 import PlayerSearch from './PlayerSearch';
-import styles from './PlayerModal.module.css';
+import DraggableModal from './DraggableModal';
 import { BACKEND_URL } from '../../config.js';
 
 export default function DivisionSelectorModal({ 
@@ -181,35 +181,58 @@ export default function DivisionSelectorModal({
 
   if (loading) {
     return (
-      <div className={styles.modalOverlay}>
-        <div className={styles.modal}>
-          <div className={styles.playerModalTitle}>
-            <h2>Loading Divisions...</h2>
-          </div>
-          <div className={styles.playerModalSection}>
-            <p>Please wait while we load your divisions...</p>
-          </div>
+      <DraggableModal
+        open={true}
+        onClose={onClose}
+        title="Loading Divisions..."
+        maxWidth="500px"
+      >
+        <div style={{ textAlign: "center", padding: "2rem" }}>
+          <p>Please wait while we load your divisions...</p>
         </div>
-      </div>
+      </DraggableModal>
     );
   }
 
   if (divisions.length === 0) {
     return (
-      <div className={styles.modalOverlay}>
-        <div className={styles.modal}>
-          <div className={styles.playerModalTitle}>
-            <h2>No Divisions Found</h2>
-            <button onClick={onClose} className={styles.closeBtn}>×</button>
-          </div>
-          <div className={styles.playerModalSection}>
-            <p>You are not registered for any divisions. Please contact an administrator.</p>
-            <button onClick={onClose} className={styles.playerModalBtn}>
-              Close
-            </button>
-          </div>
+      <DraggableModal
+        open={true}
+        onClose={onClose}
+        title="No Divisions Found"
+        maxWidth="500px"
+      >
+        <div style={{ textAlign: "center", padding: "2rem" }}>
+          <p>You are not registered for any divisions. Please contact an administrator.</p>
+          <button 
+            onClick={onClose}
+            style={{
+              background: "linear-gradient(135deg, #232323 0%, #2a0909 100%)",
+              color: "#fff",
+              border: "2px solid #e53e3e",
+              borderRadius: "8px",
+              padding: "0.8rem 1.5rem",
+              fontSize: "1rem",
+              fontWeight: "600",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              marginTop: "1rem"
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = "linear-gradient(135deg, #e53e3e 0%, #c00 100%)";
+              e.target.style.transform = "translateY(-2px)";
+              e.target.style.boxShadow = "0 4px 12px rgba(229, 62, 62, 0.3)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = "linear-gradient(135deg, #232323 0%, #2a0909 100%)";
+              e.target.style.transform = "translateY(0)";
+              e.target.style.boxShadow = "none";
+            }}
+          >
+            Close
+          </button>
         </div>
-      </div>
+      </DraggableModal>
     );
   }
 
@@ -217,43 +240,79 @@ export default function DivisionSelectorModal({
     <>
       {/* Division Selector Modal - only show when not showing other modals */}
       {!showOpponents && !showPlayerSearch && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <div className={styles.playerModalTitle}>
-              <h2>Select Division</h2>
-              <button onClick={onClose} className={styles.closeBtn}>×</button>
-            </div>
-            <div className={styles.playerModalSection}>
-              <p>Choose a division to schedule a match:</p>
-              <div className={styles.divisionList}>
-                {divisions.map(division => (
-                  <button
-                    key={division}
-                    onClick={() => handleDivisionSelect(division)}
-                    className={styles.divisionButton}
-                  >
-                    🏆 {division}
-                  </button>
-                ))}
-              </div>
+        <DraggableModal
+          open={true}
+          onClose={onClose}
+          title="Select Division"
+          maxWidth="500px"
+        >
+          <div style={{
+            maxHeight: "60vh",
+            overflowY: "auto"
+          }}>
+            <p style={{ 
+              color: "#fff", 
+              textAlign: "center", 
+              marginBottom: "1.5rem",
+              fontSize: "1rem"
+            }}>
+              Choose a division to schedule a match:
+            </p>
+            <div style={{
+              display: "grid",
+              gap: "12px"
+            }}>
+              {divisions.map(division => (
+                <button
+                  key={division}
+                  onClick={() => handleDivisionSelect(division)}
+                  style={{
+                    background: "linear-gradient(135deg, #232323 0%, #2a0909 100%)",
+                    color: "#fff",
+                    border: "2px solid #e53e3e",
+                    borderRadius: "8px",
+                    padding: "1rem 1.5rem",
+                    fontSize: "1.1rem",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    textAlign: "left",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = "linear-gradient(135deg, #e53e3e 0%, #c00 100%)";
+                    e.target.style.transform = "translateY(-2px)";
+                    e.target.style.boxShadow = "0 4px 12px rgba(229, 62, 62, 0.3)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = "linear-gradient(135deg, #232323 0%, #2a0909 100%)";
+                    e.target.style.transform = "translateY(0)";
+                    e.target.style.boxShadow = "none";
+                  }}
+                >
+                  🏆 {division}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
+        </DraggableModal>
       )}
 
       {/* Opponents Modal for Phase 1 */}
       {showOpponents && (
         loadingSchedule ? (
-          <div className={styles.modalOverlay}>
-            <div className={styles.modal}>
-              <div className={styles.playerModalTitle}>
-                <h2>Loading Opponents...</h2>
-              </div>
-              <div className={styles.playerModalSection}>
-                <p>Please wait while we load your scheduled opponents...</p>
-              </div>
+          <DraggableModal
+            open={true}
+            onClose={handleModalClose}
+            title="Loading Opponents..."
+            maxWidth="500px"
+          >
+            <div style={{ textAlign: "center", padding: "2rem" }}>
+              <p>Please wait while we load your scheduled opponents...</p>
             </div>
-          </div>
+          </DraggableModal>
         ) : (
           <OpponentsModal
             open={showOpponents}
