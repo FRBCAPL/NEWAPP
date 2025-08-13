@@ -45,7 +45,7 @@
   height: 100vh;
   margin: 0;
   border-radius: 0;
-  background: var(--chat-dark3);
+  background: rgba(34, 34, 34, 0.08);
   box-shadow: 
     0 20px 60px rgba(0,0,0,0.3),
     0 0 0 1px rgba(229, 57, 53, 0.1),
@@ -55,7 +55,7 @@
   position: relative;
   min-width: 0;
   min-height: 0;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(0.5px);
   overflow: hidden;
 }
 
@@ -327,13 +327,13 @@
 .chatContent {
   position: relative;
   z-index: 1;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.1);
 }
 
 /* ---------- Enhanced Sidebar ---------- */
 .sidebar {
   width: 280px;
-  background: linear-gradient(180deg, var(--chat-dark3) 0%, #1a1a1a 100%);
+  background: linear-gradient(180deg, rgba(34, 34, 34, 0.8) 0%, rgba(26, 26, 26, 0.8) 100%);
   color: #fff;
   height: 100%;
   border-right: 2px solid var(--chat-border);
@@ -1125,7 +1125,7 @@
 /* Stream Chat Main Panel Enhancements */
 .str-chat__main-panel {
   position: relative;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.1);
 }
 
 /* Channel Name Preview Enhancement */
