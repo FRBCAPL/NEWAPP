@@ -1,5 +1,4 @@
 import React from "react";
-import { useChannelStateContext } from "stream-chat-react";
 import styles from "./CustomChannelHeader.module.css";
 
 // Utility function to format date as MM-DD-YYYY
@@ -60,27 +59,48 @@ function getInitials(nameOrId) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export default function CustomChannelHeader() {
-  const { channel } = useChannelStateContext();
-  const channelName = channel?.data?.name || channel?.id;
+export default function CustomChannelHeader({ channel, currentUser }) {
+  const channelName = channel?.data?.name || channel?.id || "General Chat";
   const matchDate = channel?.data?.matchDate;
-  const currentUser = channel.getClient().user;
-  const currentUserId = currentUser.id;
+  const currentUserId = currentUser?.id;
 
   // Show all online members, including yourself
-  const onlineMembers = Object.values(channel.state.members || {})
-    .filter(
-      (m) => m.user?.online || m.user?.id === currentUserId
-    )
-    .map((m) => m.user?.name || m.user?.id)
-    .filter(Boolean);
+  const onlineMembers = channel?.state?.members ? 
+    Object.values(channel.state.members)
+      .filter(
+        (m) => m.user?.online || m.user?.id === currentUserId
+      )
+      .map((m) => m.user?.name || m.user?.id)
+      .filter(Boolean) : 
+    [currentUser?.name || currentUser?.id].filter(Boolean);
 
   return (
-    <div className={styles.customChannelHeader}>
-      <div className={styles.customChannelHeaderRow}>
-        <div className={styles.customChannelHeaderLeft}>
+    <div className={styles.customChannelHeader} style={{
+      width: '100%',
+      margin: '0',
+      borderRadius: '0',
+      marginTop: '0',
+      marginBottom: '0'
+    }}>
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        width: '100%'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.8em',
+          fontSize: '1.1em',
+          textAlign: 'center',
+          width: '100%'
+        }}>
           <span className={styles.customChannelHeaderIcon}>💬</span>
-          <span>
+          <span style={{ textAlign: 'center' }}>
             You're in the{" "}
             <span className={styles.customChannelHeaderTitle}>
               "{channelName}"
@@ -93,21 +113,21 @@ export default function CustomChannelHeader() {
             </span>
           )}
         </div>
-      </div>
-      <div className={styles.customChannelHeaderOnline}>
-        <span className={styles.customChannelHeaderOnlineLabel}>Online:</span>
-        {onlineMembers.length === 0 && (
-          <span className={styles.customChannelHeaderNone}>No one online</span>
-        )}
-        {onlineMembers.map((name) => (
-          <span
-            key={name}
-            className={styles.customChannelHeaderAvatar}
-            title={name}
-          >
-            {getInitials(name)}
-          </span>
-        ))}
+        <div className={styles.customChannelHeaderOnline}>
+          <span className={styles.customChannelHeaderOnlineLabel}>Online:</span>
+          {onlineMembers.length === 0 && (
+            <span className={styles.customChannelHeaderNone}>No one online</span>
+          )}
+          {onlineMembers.map((name) => (
+            <span
+              key={name}
+              className={styles.customChannelHeaderAvatar}
+              title={name}
+            >
+              {getInitials(name)}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );

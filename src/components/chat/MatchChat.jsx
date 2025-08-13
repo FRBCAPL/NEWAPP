@@ -1,17 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { StreamChat } from "stream-chat";
-import {
-  Chat,
-  Channel,
-  MessageList,
-  MessageInput,
-  Window,
-  Thread,
-  ChannelList,
-  TypingIndicator,
-} from "stream-chat-react";
-import "stream-chat-react/dist/css/v2/index.css";
 import CustomChannelHeader from "../CustomChannelHeader";
 import CustomMessageUi from "../CustomMessageUi";
 import PoolSimulation from "../PoolSimulation";
@@ -89,6 +78,9 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
   const [showDivisionSelector, setShowDivisionSelector] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(1800);
   const [channelSearch, setChannelSearch] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (secondsLeft <= 0) {
@@ -177,6 +169,7 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
         setDivisionChannels(divisionChannelsObj);
         setGameRoomChannels(gameRooms);
         setChannel(general); // Start with general channel
+        setLoading(false);
       }
     }
     init();
@@ -190,6 +183,14 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
   useEffect(() => {
     setPinnedChannels(pinnedIds);
   }, [pinnedIds]);
+
+  // Load messages when channel changes
+  useEffect(() => {
+    if (channel) {
+      const channelMessages = channel.state.messages || [];
+      setMessages(channelMessages);
+    }
+  }, [channel]);
 
   function logoutAndRedirect() {
     if (chatClient) chatClient.disconnectUser();
@@ -208,22 +209,40 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
     setShowDivisionSelector(true);
   }
 
-  if (!chatClient || !generalChannel)
+  // Send message function
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !channel) return;
+    
+    try {
+      await channel.sendMessage({
+        text: newMessage,
+      });
+      setNewMessage("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
+  // Handle Enter key press
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  if (loading) {
     return (
-      <div className={styles.loadingContainer} style={{height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+      <div className={styles.loadingContainer}>
         <div className={styles.spinner}></div>
         <div>Loading chat...Please wait</div>
       </div>
     );
+  }
 
   const currentUserId = chatClient.user.id;
   const minutes = Math.floor(secondsLeft / 60);
   const seconds = secondsLeft % 60;
-
-  const channelListFilters = {
-    type: "messaging",
-    members: { $in: [currentUserId] },
-  };
 
   // Helper function to render channel with pin
   const renderChannelWithPin = (ch, category = null) => {
@@ -231,7 +250,7 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
     return (
       <div
         key={ch.cid}
-        className={`${styles.channelListRow} ${category ? styles[category] : ''}`}
+        className={`${styles.channelListRow} ${category ? styles[category] : ''} ${channel?.id === ch.id ? styles.active : ''}`}
         onClick={() => {
           setChannel(ch);
           setSidebarOpen(false);
@@ -258,8 +277,8 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
   };
 
   return (
-    <div className={styles.outerChatBg} style={{height: '100%', width: '100%'}}>
-      <div className={styles.chatContainer} style={{height: '100%', width: '100%', maxWidth: 'none', maxHeight: 'none'}}>
+    <div className={styles.outerChatBg}>
+      <div className={styles.chatContainer}>
         <button
           className={styles.hamburgerButton}
           onClick={() => setSidebarOpen(true)}
@@ -275,12 +294,56 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
           />
         )}
 
-        <Chat client={chatClient} theme="str-chat__theme-dark">
-          <div className={styles.topNavBar}>
-            <span className={styles.chatGreeting}>Hello, {userName}!</span>
-            <div className={styles.buttonRow}>
+        <div className={styles.topNavBar}>
+          <div className={styles.buttonRow}>
+            <button
+              className={styles.topChatButton}
+              onClick={() => {
+                if (onClose) {
+                  onClose();
+                } else {
+                  navigate("/");
+                  window.location.reload();
+                }
+              }}
+            >
+              Dashboard
+            </button>
+            <button
+              className={styles.topChatButton}
+              onClick={handleScheduleMatch}
+            >
+              Schedule a Match
+            </button>
+          </div>
+          <span className={styles.chatGreeting}>Hello, {userName}!</span>
+          <div className={styles.logoutWithTimer}>
+            <button
+              className={styles.topChatButton}
+              onClick={logoutAndRedirect}
+            >
+              Logout
+            </button>
+            <span className={styles.timerBox}>
+              Auto Logout: {minutes}:{seconds.toString().padStart(2, "0")}
+            </span>
+          </div>
+        </div>
+
+        <div className={styles.mainChatArea}>
+          <div className={`${styles.sidebar} ${sidebarOpen ? styles.open : ""}`}>
+            <button
+              className={styles.closeSidebarButton}
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close channel list"
+            >
+              ×
+            </button>
+
+            {/* Mobile Navigation Buttons */}
+            <div className={styles.mobileNavButtons}>
               <button
-                className={styles.topChatButton}
+                className={styles.mobileNavButton}
                 onClick={() => {
                   if (onClose) {
                     onClose();
@@ -288,152 +351,144 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
                     navigate("/");
                     window.location.reload();
                   }
-                }}
-              >
-                Dashboard
-              </button>
-              <button
-                className={styles.topChatButton}
-                onClick={handleScheduleMatch}
-              >
-                Schedule a Match
-              </button>
-              <div className={styles.logoutWithTimer}>
-                <button
-                  className={styles.topChatButton}
-                  onClick={logoutAndRedirect}
-                >
-                  Logout
-                </button>
-                <span className={styles.timerBox}>
-                  Auto Logout: {minutes}:{seconds.toString().padStart(2, "0")}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.mainChatArea}>
-            <div className={`${styles.sidebar} ${sidebarOpen ? styles.open : ""}`}>
-              <button
-                className={styles.closeSidebarButton}
-                onClick={() => setSidebarOpen(false)}
-                aria-label="Close channel list"
-              >
-                ×
-              </button>
-
-              {/* General Channel */}
-              <div
-                className={`${styles.generalChannelRow}${
-                  channel?.id === GENERAL_CHANNEL_ID ? " " + styles.active : ""
-                }`}
-                onClick={() => {
-                  setChannel(generalChannel);
                   setSidebarOpen(false);
                 }}
               >
-                <span style={{ marginRight: 8 }}>#</span> General Chat
-              </div>
-
-              {/* Search */}
-              <div className={styles.sidebarSearch}>
-                <input
-                  type="text"
-                  placeholder="Search channels..."
-                  value={channelSearch}
-                  onChange={(e) => setChannelSearch(e.target.value)}
-                />
-              </div>
-
-              <div className={styles.channelListWrapper}>
-                {/* Announcements Section */}
-                <SectionHeader icon="📢">Announcements</SectionHeader>
-                {announcementsChannel && renderChannelWithPin(announcementsChannel, 'announcements')}
-
-                {/* Division Channels Section */}
-                <SectionHeader icon="🏆">Division Channels</SectionHeader>
-                {Object.values(divisionChannels).map(ch => renderChannelWithPin(ch, 'divisions'))}
-
-                {/* Game Rooms Section */}
-                <SectionHeader icon="🎮">Game Rooms</SectionHeader>
-                {gameRoomChannels.map(ch => renderChannelWithPin(ch, 'game-rooms'))}
-
-                {/* Other Channels (from Stream Chat) */}
-                <ChannelList
-                  filters={channelListFilters}
-                  sort={{ last_message_at: -1 }}
-                  options={{ state: true, watch: true, presence: true }}
-                  renderChannels={(channels) => {
-                    channels = Array.isArray(channels) ? channels : [];
-                    
-                    // Filter out channels we've already handled
-                    const handledChannelIds = [
-                      GENERAL_CHANNEL_ID,
-                      ANNOUNCEMENTS_CHANNEL_ID,
-                      ...Object.keys(divisionChannels).map(div => `division-${cleanId(div)}`),
-                      ...gameRoomChannels.map(ch => ch.id)
-                    ];
-                    
-                    const otherChannels = channels.filter(
-                      (ch) => ch && !handledChannelIds.includes(ch.id)
-                    );
-
-                    const pinned = otherChannels.filter((ch) =>
-                      pinnedIds.includes(ch.id)
-                    );
-                    const others = otherChannels.filter(
-                      (ch) => !pinnedIds.includes(ch.id)
-                    );
-
-                    const othersSorted = [...others].sort((a, b) => {
-                      const aTime = a.last_message_at
-                        ? new Date(a.last_message_at).getTime()
-                        : 0;
-                      const bTime = b.last_message_at
-                        ? new Date(b.last_message_at).getTime()
-                        : 0;
-                      return bTime - aTime;
-                    });
-
-                    return (
-                      <>
-                        {/* Pinned Channels */}
-                        {pinned.length > 0 && (
-                          <>
-                            <SectionHeader icon="📌">Pinned Channels</SectionHeader>
-                            {pinned.map(renderChannelWithPin)}
-                          </>
-                        )}
-
-                        {/* Other Channels */}
-                        {othersSorted.length > 0 && (
-                          <>
-                            <SectionHeader icon="💬">Other Channels</SectionHeader>
-                            {othersSorted.map(renderChannelWithPin)}
-                          </>
-                        )}
-                      </>
-                    );
-                  }}
-                />
+                🏠 Dashboard
+              </button>
+              <button
+                className={styles.mobileNavButton}
+                onClick={() => {
+                  handleScheduleMatch();
+                  setSidebarOpen(false);
+                }}
+              >
+                📅 Schedule a Match
+              </button>
+              <button
+                className={styles.mobileNavButton}
+                onClick={() => {
+                  logoutAndRedirect();
+                  setSidebarOpen(false);
+                }}
+              >
+                🚪 Logout
+              </button>
+              <div className={styles.mobileTimerBox}>
+                Auto Logout: {minutes}:{seconds.toString().padStart(2, "0")}
               </div>
             </div>
 
-            <div className={styles.chatWindow}>
-              {channel && (
-                <Channel channel={channel}>
-                  <Window>
-                    <CustomChannelHeader />
-                    <MessageList />
-                    <MessageInput />
-                    <TypingIndicator />
-                  </Window>
-                  <Thread />
-                </Channel>
-              )}
+            {/* General Channel */}
+            <div
+              className={`${styles.generalChannelRow}${
+                channel?.id === GENERAL_CHANNEL_ID ? " " + styles.active : ""
+              }`}
+              onClick={() => {
+                setChannel(generalChannel);
+                setSidebarOpen(false);
+              }}
+            >
+              <span style={{ marginRight: 8 }}>#</span> General Chat
+            </div>
+
+            {/* Search */}
+            <div className={styles.sidebarSearch}>
+              <input
+                type="text"
+                placeholder="Search channels..."
+                value={channelSearch}
+                onChange={(e) => setChannelSearch(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.channelListWrapper}>
+              {/* Announcements Section */}
+              <SectionHeader icon="📢">Announcements</SectionHeader>
+              {announcementsChannel && renderChannelWithPin(announcementsChannel, 'announcements')}
+
+              {/* Division Channels Section */}
+              <SectionHeader icon="🏆">Division Channels</SectionHeader>
+              {Object.values(divisionChannels).map(ch => renderChannelWithPin(ch, 'divisions'))}
+
+              {/* Game Rooms Section */}
+              <SectionHeader icon="🎮">Game Rooms</SectionHeader>
+              {gameRoomChannels.map(ch => renderChannelWithPin(ch, 'game-rooms'))}
+              
+              {/* Play Game Button */}
+              <div 
+                className={`${styles.channelListRow} ${styles.gameButton}`}
+                onClick={() => {
+                  navigate("/tenball");
+                  setSidebarOpen(false);
+                }}
+              >
+                <span style={{ marginRight: 8 }}>🎯</span>
+                Play Pool Game
+              </div>
             </div>
           </div>
-        </Chat>
+
+          <div className={styles.mainChatWindow}>
+            {/* Pool Simulation Background */}
+            <div className={styles.poolBackground}>
+              <PoolSimulation />
+            </div>
+            
+            {channel && (
+              <>
+                <CustomChannelHeader 
+                  channel={channel}
+                  currentUser={chatClient?.user}
+                />
+                
+                {/* Messages Area */}
+                <div className={styles.messagesArea}>
+                  {messages.map((message) => {
+                    const isCurrentUser = message.user?.id === chatClient?.user?.id;
+                    return (
+                      <div 
+                        key={message.id} 
+                        className={`${styles.messageItem} ${isCurrentUser ? styles.messageItemRight : styles.messageItemLeft}`}
+                      >
+                        <div className={styles.messageHeader}>
+                          <span className={styles.messageAuthor}>
+                            {message.user?.name || message.user?.id}
+                          </span>
+                          <span className={styles.messageTime}>
+                            {new Date(message.created_at).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <div className={styles.messageText}>
+                          {message.text}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Message Input */}
+                <div className={styles.messageInputContainer}>
+                  <input
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Type your message..."
+                    className={styles.messageInput}
+                  />
+                  <button
+                    onClick={sendMessage}
+                    className={styles.sendButton}
+                    disabled={!newMessage.trim()}
+                  >
+                    🚀 Send
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
 
         {showDivisionSelector && (
           <DivisionSelectorModal
@@ -443,10 +498,6 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
             onClose={() => setShowDivisionSelector(false)}
           />
         )}
-
-
-
-
       </div>
     </div>
   );

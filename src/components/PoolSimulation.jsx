@@ -619,7 +619,7 @@ export default function PoolSimulation() {
         height: "100%",
         position: "relative",
         background: "linear-gradient(180deg, #1a1a1a 0%, #000000 100%)",
-        zIndex: 99999,
+        zIndex: 0,
         boxShadow: "inset 0 0 50px rgba(0,0,0,0.8)",
       }}
     >

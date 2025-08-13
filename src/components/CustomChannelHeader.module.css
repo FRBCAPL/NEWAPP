@@ -1,21 +1,26 @@
 .customChannelHeader {
-  background: #1a1a1a;
+  background: linear-gradient(135deg, #181818 0%, #1a1a1a 100%);
   color: #fff;
-  border-bottom: 1px solid #333;
+  border-bottom: 2px solid #333;
   padding: 1em 1.5em 0.5em 1.5em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .customChannelHeaderRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  text-align: center;
 }
 
 .customChannelHeaderLeft {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.8em;
   font-size: 1.1em;
+  text-align: center;
+  flex: 1;
 }
 
 .customChannelHeaderIcon {
