@@ -98,84 +98,100 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
     let client = StreamChat.getInstance(apiKey);
     let didConnect = false;
     let isMounted = true;
+    let connectionInProgress = false;
 
     async function init() {
-      // Disconnect any existing connection first
-      if (client.userID) {
-        await client.disconnectUser();
-      }
-      
-      const userId = cleanId(userEmail);
-      const response = await fetch(`${API_BASE}/token`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
-      const { token, userId: actualUserId } = await response.json();
+      if (connectionInProgress) return;
+      connectionInProgress = true;
 
-      await client.connectUser(
-        {
-          id: actualUserId,
-          name: userName,
-          email: userEmail,
-        },
-        token
-      );
-      didConnect = true;
-      if (!isMounted) return;
-
-      setChatClient(client);
-
-      // Create or get general channel
-      const general = client.channel("messaging", GENERAL_CHANNEL_ID, {
-        name: "General Chat",
-        description: "General discussion for all players"
-      });
-      await general.watch({ limit: 30 });
-
-      // Create or get announcements channel
-      const announcements = client.channel("messaging", ANNOUNCEMENTS_CHANNEL_ID, {
-        name: "📢 Announcements",
-        description: "Important announcements and updates"
-      });
-      await announcements.watch({ limit: 30 });
-
-      // Create division-specific channels
-      const divisionChannelsObj = {};
-      for (const division of AVAILABLE_DIVISIONS) {
-        const divisionId = cleanId(division);
-        const divisionChannel = client.channel("messaging", `division-${divisionId}`, {
-          name: `🏆 ${division}`,
-          description: `Discussion for ${division} players`,
-          category: CHANNEL_CATEGORIES.DIVISIONS
+      try {
+        // Always disconnect first, regardless of userID
+        try {
+          await client.disconnectUser();
+        } catch (disconnectError) {
+          // Ignore disconnect errors
+          console.log('Disconnect error (ignored):', disconnectError.message);
+        }
+        
+        const userId = cleanId(userEmail);
+        const response = await fetch(`${API_BASE}/token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId }),
         });
-        await divisionChannel.watch({ limit: 30 });
-        divisionChannelsObj[division] = divisionChannel;
-      }
+        const { token, userId: actualUserId } = await response.json();
 
-      // Create game room channels for future multiplayer
-      const gameRooms = [];
-      for (let i = 1; i <= 5; i++) {
-        const gameRoomId = `game-room-${i}`;
-        const gameRoom = client.channel("messaging", gameRoomId, {
-          name: `🎮 Game Room ${i}`,
-          description: `Multiplayer game room ${i} - for future online play`,
-          category: CHANNEL_CATEGORIES.GAME_ROOMS
-        });
-        await gameRoom.watch({ limit: 30 });
-        gameRooms.push(gameRoom);
-      }
+        await client.connectUser(
+          {
+            id: actualUserId,
+            name: userName,
+            email: userEmail,
+          },
+          token
+        );
+        didConnect = true;
+        if (!isMounted) return;
 
-      if (isMounted) {
-        setGeneralChannel(general);
-        setAnnouncementsChannel(announcements);
-        setDivisionChannels(divisionChannelsObj);
-        setGameRoomChannels(gameRooms);
-        setChannel(general); // Start with general channel
-        setLoading(false);
-      }
-    }
-    init();
+                 setChatClient(client);
+
+         // Create or get general channel
+         const general = client.channel("messaging", GENERAL_CHANNEL_ID, {
+           name: "General Chat",
+           description: "General discussion for all players"
+         });
+         await general.watch({ limit: 30 });
+
+         // Create or get announcements channel
+         const announcements = client.channel("messaging", ANNOUNCEMENTS_CHANNEL_ID, {
+           name: "📢 Announcements",
+           description: "Important announcements and updates"
+         });
+         await announcements.watch({ limit: 30 });
+
+         // Create division-specific channels
+         const divisionChannelsObj = {};
+         for (const division of AVAILABLE_DIVISIONS) {
+           const divisionId = cleanId(division);
+           const divisionChannel = client.channel("messaging", `division-${divisionId}`, {
+             name: `🏆 ${division}`,
+             description: `Discussion for ${division} players`,
+             category: CHANNEL_CATEGORIES.DIVISIONS
+           });
+           await divisionChannel.watch({ limit: 30 });
+           divisionChannelsObj[division] = divisionChannel;
+         }
+
+         // Create game room channels for future multiplayer
+         const gameRooms = [];
+         for (let i = 1; i <= 5; i++) {
+           const gameRoomId = `game-room-${i}`;
+           const gameRoom = client.channel("messaging", gameRoomId, {
+             name: `🎮 Game Room ${i}`,
+             description: `Multiplayer game room ${i} - for future online play`,
+             category: CHANNEL_CATEGORIES.GAME_ROOMS
+           });
+           await gameRoom.watch({ limit: 30 });
+           gameRooms.push(gameRoom);
+         }
+
+         if (isMounted) {
+           setGeneralChannel(general);
+           setAnnouncementsChannel(announcements);
+           setDivisionChannels(divisionChannelsObj);
+           setGameRoomChannels(gameRooms);
+           setChannel(general); // Start with general channel
+           setLoading(false);
+         }
+       } catch (error) {
+         console.error('Error initializing chat:', error);
+         if (isMounted) {
+           setLoading(false);
+         }
+       } finally {
+         connectionInProgress = false;
+       }
+     }
+     init();
 
     return () => {
       isMounted = false;
