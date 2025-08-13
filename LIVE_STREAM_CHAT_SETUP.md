@@ -1,25 +1,28 @@
-# Live Stream Chat Aggregator Setup Guide
+# Facebook/YouTube Live Comment Display Setup Guide
 
-🔴 **Transform your VMix pool streaming with unified social media chat!**
+🔴 **Show your Facebook and YouTube live comments on screen while streaming!**
 
-This system aggregates chat from multiple Facebook pages and YouTube channels into a single Stream Chat interface that works perfectly with VMix as a browser source overlay.
+This system displays real-time comments from your Facebook Live streams and YouTube Live chat directly as overlays in VMix during your pool matches.
 
 ## 🚀 Quick Overview
 
-- **Aggregates chat** from Facebook Pages and YouTube Live streams
-- **Stream Chat integration** using your existing account
-- **VMix compatible** browser source overlay
-- **Real-time WebSocket** communication
-- **Responsive design** with multiple themes
-- **Chat moderation** and filtering
+- **Displays live comments** from YOUR Facebook Live streams in real-time
+- **Shows YouTube chat** from YOUR live streams (requires OAuth setup)
+- **VMix compatible** transparent overlay that won't interfere with your stream
+- **Real-time polling** of live comments (2-3 second updates)
+- **Clean, professional display** with platform indicators
+- **Auto-hide comments** after customizable time periods
 
 ## 📋 Prerequisites
 
-1. **Stream Chat Account** (GetStream.io) - You already have this!
-2. **Facebook Developer Account** (for Facebook Page integration)
-3. **YouTube Data API** access (for YouTube Live chat)
-4. **Node.js 16+** installed on your streaming computer
-5. **VMix** for live streaming
+1. **Facebook Page** that you own/manage (for Facebook Live comments)
+2. **YouTube Channel** that you own/manage (for YouTube Live chat)
+3. **Facebook Developer Account** (free - for API access)
+4. **Google Cloud Console** account (free - for YouTube API)
+5. **Node.js 16+** installed on your streaming computer
+6. **VMix** for live streaming
+
+**Important**: This only works for YOUR own Facebook/YouTube streams, not other people's streams.
 
 ## 🛠️ Installation
 

@@ -32,9 +32,46 @@ const socialMediaPollers = new Map();
 
 console.log('🔴 Starting Social Media Chat Aggregator Server...');
 
-// WebSocket connection handler
+// WebSocket connection handler for live comments
+const liveCommentWss = new WebSocket.Server({ server, path: '/ws/live-comments' });
+
+liveCommentWss.on('connection', (ws) => {
+  console.log('New live comments WebSocket connection established');
+  
+  ws.on('message', async (message) => {
+    try {
+      const data = JSON.parse(message);
+      
+      if (data.type === 'get_live_status') {
+        const liveStatus = await getCurrentLiveStatus();
+        ws.send(JSON.stringify({
+          type: 'live_status',
+          platforms: liveStatus
+        }));
+        
+        // Start live monitoring if streams are active
+        if (liveStatus.facebook.connected || liveStatus.youtube.connected) {
+          startLiveCommentMonitoring(ws, liveStatus);
+        }
+      }
+    } catch (error) {
+      console.error('Live comments WebSocket message error:', error);
+      ws.send(JSON.stringify({
+        type: 'error',
+        message: 'Failed to get live status'
+      }));
+    }
+  });
+  
+  ws.on('close', () => {
+    console.log('Live comments WebSocket connection closed');
+    stopLiveCommentMonitoring(ws);
+  });
+});
+
+// Original WebSocket handler for configuration
 wss.on('connection', (ws) => {
-  console.log('New WebSocket connection established');
+  console.log('New configuration WebSocket connection established');
   
   ws.on('message', async (message) => {
     try {
@@ -153,6 +190,160 @@ app.post('/stream-token', async (req, res) => {
     res.status(500).json({ error: 'Failed to generate token' });
   }
 });
+
+// Live comment monitoring functions
+const liveMonitors = new Map();
+
+async function getCurrentLiveStatus() {
+  const status = {
+    facebook: { connected: false, liveVideoId: null },
+    youtube: { connected: false, liveChatId: null }
+  };
+
+  try {
+    // Check for active Facebook Live streams
+    if (FACEBOOK_ACCESS_TOKEN) {
+      const fbResponse = await axios.get(
+        'https://graph.facebook.com/v18.0/me/live_videos',
+        {
+          params: {
+            access_token: FACEBOOK_ACCESS_TOKEN,
+            fields: 'id,status,title',
+            limit: 1
+          }
+        }
+      );
+
+      if (fbResponse.data.data && fbResponse.data.data.length > 0) {
+        const liveVideo = fbResponse.data.data.find(video => video.status === 'LIVE');
+        if (liveVideo) {
+          status.facebook = {
+            connected: true,
+            liveVideoId: liveVideo.id,
+            title: liveVideo.title
+          };
+        }
+      }
+    }
+
+    // Check for active YouTube Live streams
+    if (YOUTUBE_API_KEY) {
+      // For YouTube, we need OAuth2 authentication to get live streams
+      // This is a simplified check - in production, you'd use OAuth2
+      status.youtube = {
+        connected: false,
+        liveChatId: null,
+        note: 'YouTube Live Chat requires OAuth2 authentication'
+      };
+    }
+  } catch (error) {
+    console.error('Error checking live status:', error);
+  }
+
+  return status;
+}
+
+async function startLiveCommentMonitoring(ws, liveStatus) {
+  const monitorKey = Date.now().toString();
+  const monitors = [];
+
+  // Start Facebook Live comment monitoring
+  if (liveStatus.facebook.connected) {
+    const fbMonitor = setInterval(async () => {
+      try {
+        await fetchFacebookLiveComments(ws, liveStatus.facebook.liveVideoId);
+      } catch (error) {
+        console.error('Facebook live comment error:', error);
+      }
+    }, 2000); // Check every 2 seconds
+
+    monitors.push(fbMonitor);
+  }
+
+  // Start YouTube Live chat monitoring
+  if (liveStatus.youtube.connected) {
+    const ytMonitor = setInterval(async () => {
+      try {
+        await fetchYouTubeLiveChat(ws, liveStatus.youtube.liveChatId);
+      } catch (error) {
+        console.error('YouTube live chat error:', error);
+      }
+    }, 3000); // Check every 3 seconds
+
+    monitors.push(ytMonitor);
+  }
+
+  liveMonitors.set(ws, monitors);
+}
+
+function stopLiveCommentMonitoring(ws) {
+  const monitors = liveMonitors.get(ws);
+  if (monitors) {
+    monitors.forEach(monitor => clearInterval(monitor));
+    liveMonitors.delete(ws);
+  }
+}
+
+async function fetchFacebookLiveComments(ws, liveVideoId) {
+  if (!FACEBOOK_ACCESS_TOKEN || !liveVideoId) return;
+
+  try {
+    const response = await axios.get(
+      `https://graph.facebook.com/v18.0/${liveVideoId}/comments`,
+      {
+        params: {
+          access_token: FACEBOOK_ACCESS_TOKEN,
+          fields: 'id,message,from,created_time',
+          order: 'chronological',
+          limit: 5
+        }
+      }
+    );
+
+    if (response.data.data) {
+      for (const comment of response.data.data) {
+        // Check if this is a new comment (created in last 30 seconds)
+        const commentTime = new Date(comment.created_time);
+        const now = new Date();
+        const timeDiff = now - commentTime;
+
+        if (timeDiff < 30000) { // 30 seconds
+          ws.send(JSON.stringify({
+            type: 'new_comment',
+            comment: {
+              platform: 'facebook',
+              author: comment.from.name,
+              message: comment.message,
+              timestamp: comment.created_time,
+              id: comment.id
+            }
+          }));
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching Facebook live comments:', error);
+  }
+}
+
+async function fetchYouTubeLiveChat(ws, liveChatId) {
+  if (!YOUTUBE_API_KEY || !liveChatId) return;
+
+  try {
+    // Note: This requires OAuth2 token, not just API key
+    // For now, we'll simulate the structure
+    console.log('YouTube Live Chat monitoring (requires OAuth2 setup)');
+    
+    // In production, you would:
+    // 1. Use OAuth2 to authenticate the user
+    // 2. Get their live broadcasts
+    // 3. Extract the liveChatId
+    // 4. Fetch messages using the Live Chat API
+    
+  } catch (error) {
+    console.error('Error fetching YouTube live chat:', error);
+  }
+}
 
 // Facebook API integration
 async function startFacebookPolling(connectionId, pageIds) {
