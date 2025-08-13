@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Aim Line Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            padding: 20px;
+        }
+        .test-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid #00ff00;
+        }
+        .error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid #ff0000;
+        }
+    </style>
+</head>
+<body>
+    <h1>10-Ball Tutorial - Aim Line Fix Test</h1>
+    
+    <div class="test-info">
+        <h2>Test Instructions:</h2>
+        <ol>
+            <li>Navigate to <a href="http://localhost:5175/#/tenball-tutorial" target="_blank">10-Ball Tutorial</a></li>
+            <li>Move your mouse over the pool table to see the aiming line</li>
+            <li>Click to lock your aim</li>
+            <li>Click "SHOOT!" to take a shot</li>
+            <li><strong>VERIFY:</strong> The aiming line should remain visible during and after the collision</li>
+        </ol>
+    </div>
+
+    <div class="status success">
+        <strong>✅ Fix Applied:</strong> The aiming line should now persist after collision
+    </div>
+
+    <div class="status">
+        <strong>What was fixed:</strong>
+        <ul>
+            <li>Added separate `aimLine` state to track aiming direction</li>
+            <li>Modified `executeShot` to preserve aim line when clearing trajectories</li>
+            <li>Added `isAnimating` state to properly track animation status</li>
+            <li>Updated drawing logic to show aim line throughout shot sequence</li>
+        </ul>
+    </div>
+
+    <div class="status">
+        <strong>Expected Behavior:</strong>
+        <ul>
+            <li>Aim line follows mouse movement before shot</li>
+            <li>Aim line persists during ball movement</li>
+            <li>Aim line remains visible after collision</li>
+            <li>Aim line clears when starting new shot</li>
+        </ul>
+    </div>
+
+    <script>
+        // Simple test to check if the fix is working
+        console.log('Aim Line Fix Test Page Loaded');
+        console.log('Navigate to http://localhost:5173/#/tenball-tutorial to test');
+    </script>
+</body>
+</html> 

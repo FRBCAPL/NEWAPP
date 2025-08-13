@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+# dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backend folder (should be in atlasbackend repo)
+backend/
+
+# Vite cache
+.vite/
+
+# Logs
+*.log
+
+# Large files that should not be tracked
+*.blend
+*.obj
+*.fbx
+*.max
+*.mtl
+public/uploads_files_*
+*.zip
+*.rar
+
+# Large 3D model files
+public/uploads_files_713550_pool_balls (1).blend
+public/uploads_files_713550_pool_balls (1).obj
+
+# Deployment files
+app-deployment.zip
