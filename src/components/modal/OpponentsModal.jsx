@@ -1,16 +1,16 @@
 import React from "react";
-import DraggableModal from "./DraggableModal";
+import styles from "./PlayerModal.module.css";
 
 export default function OpponentsModal({ open, onClose, opponents, onOpponentClick, phase }) {
   if (!open) return null;
 
   return (
-    <DraggableModal
-      open={open}
-      onClose={onClose}
-      title={`🎱 Select Opponent - ${phase === "scheduled" ? "Phase 1" : "Phase 2"}`}
-      maxWidth="500px"
-    >
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        <div className={styles.playerModalTitle}>
+          <h2>🎱 Select Opponent - {phase === "scheduled" || phase === "offseason" ? "Phase 1" : "Phase 2"}</h2>
+          <button onClick={onClose} className={styles.closeBtn}>×</button>
+        </div>
       <div style={{ textAlign: "center" }}>
         <p style={{ marginBottom: "1.5rem", color: "#fff", fontSize: "1.1rem" }}>
           Choose an opponent to schedule a match with:
@@ -25,7 +25,9 @@ export default function OpponentsModal({ open, onClose, opponents, onOpponentCli
           {opponents.map((opponent, index) => (
             <button
               key={
-                (opponent.player && opponent.player.email) || opponent.opponentName || index
+                (opponent.player && opponent.player.email) || 
+                `${opponent.opponentName}-${index}` || 
+                `opponent-${index}`
               }
               onClick={() =>
                 onOpponentClick(
@@ -78,6 +80,7 @@ export default function OpponentsModal({ open, onClose, opponents, onOpponentCli
           </div>
         )}
       </div>
-    </DraggableModal>
+    </div>
+  </div>
   );
 }

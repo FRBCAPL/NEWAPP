@@ -12,11 +12,11 @@ import {
   TypingIndicator,
 } from "stream-chat-react";
 import "stream-chat-react/dist/css/v2/index.css";
-import PlayerSearch from "../modal/PlayerSearch";
 import CustomChannelHeader from "../CustomChannelHeader";
 import CustomMessageUi from "../CustomMessageUi";
 import PoolSimulation from "../PoolSimulation";
-import AdminAnnouncementInput from "../AdminAnnouncementInput"; // <-- ADD THIS LINE
+import AdminAnnouncementInput from "../AdminAnnouncementInput";
+import DivisionSelectorModal from '../modal/DivisionSelectorModal';
 
 import styles from "./MatchChat.module.css";
 import { BACKEND_URL } from '../../config.js';
@@ -24,6 +24,21 @@ import { BACKEND_URL } from '../../config.js';
 const apiKey = import.meta.env.VITE_STREAM_API_KEY;
 const API_BASE = BACKEND_URL;
 const GENERAL_CHANNEL_ID = "general";
+const ANNOUNCEMENTS_CHANNEL_ID = "announcements";
+
+// Available divisions - this can be expanded as you add more divisions
+const AVAILABLE_DIVISIONS = [
+  "FRBCAPL TEST",
+  "Singles Test"
+];
+
+// Channel categories for better organization
+const CHANNEL_CATEGORIES = {
+  GENERAL: "general",
+  DIVISIONS: "divisions", 
+  ANNOUNCEMENTS: "announcements",
+  GAME_ROOMS: "game-rooms"
+};
 
 function cleanId(id) {
   return id.toLowerCase().replace(/[^a-z0-9_-]/g, "");
@@ -52,8 +67,11 @@ const PinIcon = ({ pinned, onClick }) => (
   </span>
 );
 
-const SectionHeader = ({ children }) => (
-  <div className={styles.sectionHeader}>{children}</div>
+const SectionHeader = ({ children, icon }) => (
+  <div className={styles.sectionHeader}>
+    {icon && <span style={{ marginRight: '8px' }}>{icon}</span>}
+    {children}
+  </div>
 );
 
 export default function MatchChat({ userName, userEmail, userPin, channelId, onClose }) {
@@ -62,9 +80,13 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chatClient, setChatClient] = useState(null);
   const [generalChannel, setGeneralChannel] = useState(null);
+  const [announcementsChannel, setAnnouncementsChannel] = useState(null);
+  const [divisionChannels, setDivisionChannels] = useState({});
+  const [gameRoomChannels, setGameRoomChannels] = useState([]);
   const [channel, setChannel] = useState(null);
   const [pinnedIds, setPinnedIds] = useState(getPinnedChannels());
   const [showPlayerSearch, setShowPlayerSearch] = useState(false);
+  const [showDivisionSelector, setShowDivisionSelector] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(1800);
   const [channelSearch, setChannelSearch] = useState("");
 
@@ -79,6 +101,7 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
     return () => clearInterval(interval);
   }, [secondsLeft]);
 
+  // Initialize chat client and create channels
   useEffect(() => {
     let client = StreamChat.getInstance(apiKey);
     let didConnect = false;
@@ -107,14 +130,53 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
       if (!isMounted) return;
 
       setChatClient(client);
+
+      // Create or get general channel
       const general = client.channel("messaging", GENERAL_CHANNEL_ID, {
-        name: "General",
+        name: "General Chat",
+        description: "General discussion for all players"
       });
       await general.watch({ limit: 30 });
 
+      // Create or get announcements channel
+      const announcements = client.channel("messaging", ANNOUNCEMENTS_CHANNEL_ID, {
+        name: "📢 Announcements",
+        description: "Important announcements and updates"
+      });
+      await announcements.watch({ limit: 30 });
+
+      // Create division-specific channels
+      const divisionChannelsObj = {};
+      for (const division of AVAILABLE_DIVISIONS) {
+        const divisionId = cleanId(division);
+        const divisionChannel = client.channel("messaging", `division-${divisionId}`, {
+          name: `🏆 ${division}`,
+          description: `Discussion for ${division} players`,
+          category: CHANNEL_CATEGORIES.DIVISIONS
+        });
+        await divisionChannel.watch({ limit: 30 });
+        divisionChannelsObj[division] = divisionChannel;
+      }
+
+      // Create game room channels for future multiplayer
+      const gameRooms = [];
+      for (let i = 1; i <= 5; i++) {
+        const gameRoomId = `game-room-${i}`;
+        const gameRoom = client.channel("messaging", gameRoomId, {
+          name: `🎮 Game Room ${i}`,
+          description: `Multiplayer game room ${i} - for future online play`,
+          category: CHANNEL_CATEGORIES.GAME_ROOMS
+        });
+        await gameRoom.watch({ limit: 30 });
+        gameRooms.push(gameRoom);
+      }
+
       if (isMounted) {
         setGeneralChannel(general);
-        setChannel(general);
+        setAnnouncementsChannel(announcements);
+        setDivisionChannels(divisionChannelsObj);
+        setGameRoomChannels(gameRooms);
+        setChannel(general); // Start with general channel
       }
     }
     init();
@@ -140,6 +202,12 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
     }
   }
 
+  // Handle Schedule Match button - show division selector
+  function handleScheduleMatch() {
+    console.log('Schedule Match button clicked');
+    setShowDivisionSelector(true);
+  }
+
   if (!chatClient || !generalChannel)
     return (
       <div className={styles.loadingContainer} style={{height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
@@ -155,6 +223,38 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
   const channelListFilters = {
     type: "messaging",
     members: { $in: [currentUserId] },
+  };
+
+  // Helper function to render channel with pin
+  const renderChannelWithPin = (ch, category = null) => {
+    if (!ch || !ch.cid) return null;
+    return (
+      <div
+        key={ch.cid}
+        className={`${styles.channelListRow} ${category ? styles[category] : ''}`}
+        onClick={() => {
+          setChannel(ch);
+          setSidebarOpen(false);
+        }}
+      >
+        <div className={styles.channelListName}>
+          <ChannelNameOnlyPreview channel={ch} />
+        </div>
+        <PinIcon
+          pinned={pinnedIds.includes(ch.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            let newIds;
+            if (pinnedIds.includes(ch.id)) {
+              newIds = pinnedIds.filter((id) => id !== ch.id);
+            } else {
+              newIds = [...pinnedIds, ch.id];
+            }
+            setPinnedIds(newIds);
+          }}
+        />
+      </div>
+    );
   };
 
   return (
@@ -194,7 +294,7 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
               </button>
               <button
                 className={styles.topChatButton}
-                onClick={() => setShowPlayerSearch(true)}
+                onClick={handleScheduleMatch}
               >
                 Schedule a Match
               </button>
@@ -222,6 +322,7 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
                 ×
               </button>
 
+              {/* General Channel */}
               <div
                 className={`${styles.generalChannelRow}${
                   channel?.id === GENERAL_CHANNEL_ID ? " " + styles.active : ""
@@ -231,8 +332,10 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
                   setSidebarOpen(false);
                 }}
               >
-                <span style={{ marginRight: 8 }}>#</span> General
+                <span style={{ marginRight: 8 }}>#</span> General Chat
               </div>
+
+              {/* Search */}
               <div className={styles.sidebarSearch}>
                 <input
                   type="text"
@@ -241,20 +344,44 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
                   onChange={(e) => setChannelSearch(e.target.value)}
                 />
               </div>
+
               <div className={styles.channelListWrapper}>
+                {/* Announcements Section */}
+                <SectionHeader icon="📢">Announcements</SectionHeader>
+                {announcementsChannel && renderChannelWithPin(announcementsChannel, 'announcements')}
+
+                {/* Division Channels Section */}
+                <SectionHeader icon="🏆">Division Channels</SectionHeader>
+                {Object.values(divisionChannels).map(ch => renderChannelWithPin(ch, 'divisions'))}
+
+                {/* Game Rooms Section */}
+                <SectionHeader icon="🎮">Game Rooms</SectionHeader>
+                {gameRoomChannels.map(ch => renderChannelWithPin(ch, 'game-rooms'))}
+
+                {/* Other Channels (from Stream Chat) */}
                 <ChannelList
                   filters={channelListFilters}
                   sort={{ last_message_at: -1 }}
                   options={{ state: true, watch: true, presence: true }}
                   renderChannels={(channels) => {
                     channels = Array.isArray(channels) ? channels : [];
-                    const nonGeneral = channels.filter(
-                      (ch) => ch && ch.id !== GENERAL_CHANNEL_ID
+                    
+                    // Filter out channels we've already handled
+                    const handledChannelIds = [
+                      GENERAL_CHANNEL_ID,
+                      ANNOUNCEMENTS_CHANNEL_ID,
+                      ...Object.keys(divisionChannels).map(div => `division-${cleanId(div)}`),
+                      ...gameRoomChannels.map(ch => ch.id)
+                    ];
+                    
+                    const otherChannels = channels.filter(
+                      (ch) => ch && !handledChannelIds.includes(ch.id)
                     );
-                    const pinned = nonGeneral.filter((ch) =>
+
+                    const pinned = otherChannels.filter((ch) =>
                       pinnedIds.includes(ch.id)
                     );
-                    const others = nonGeneral.filter(
+                    const others = otherChannels.filter(
                       (ch) => !pinnedIds.includes(ch.id)
                     );
 
@@ -268,54 +395,22 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
                       return bTime - aTime;
                     });
 
-                    const renderChannelWithPin = (ch) => {
-                      if (!ch || !ch.cid) return null;
-                      return (
-                        <div
-                          key={ch.cid}
-                          className={styles.channelListRow}
-                          onClick={() => {
-                            setChannel(ch);
-                            setSidebarOpen(false);
-                          }}
-                        >
-                          <div className={styles.channelListName}>
-                            <ChannelNameOnlyPreview channel={ch} />
-                          </div>
-                          <PinIcon
-                            pinned={pinnedIds.includes(ch.id)}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              let newIds;
-                              if (pinnedIds.includes(ch.id)) {
-                                newIds = pinnedIds.filter((id) => id !== ch.id);
-                              } else {
-                                newIds = [...pinnedIds, ch.id];
-                              }
-                              setPinnedIds(newIds);
-                            }}
-                          />
-                        </div>
-                      );
-                    };
-
                     return (
                       <>
-                        <SectionHeader>Pinned</SectionHeader>
-                        {pinned.length > 0 ? (
-                          pinned.map(renderChannelWithPin)
-                        ) : (
-                          <div className={styles.noPinnedChannels}>
-                            No pinned channels.
-                          </div>
+                        {/* Pinned Channels */}
+                        {pinned.length > 0 && (
+                          <>
+                            <SectionHeader icon="📌">Pinned Channels</SectionHeader>
+                            {pinned.map(renderChannelWithPin)}
+                          </>
                         )}
-                        <SectionHeader>Your Match Channels</SectionHeader>
-                        {othersSorted.length > 0 ? (
-                          othersSorted.map(renderChannelWithPin)
-                        ) : (
-                          <div className={styles.noChannelsFound}>
-                            No channels found.
-                          </div>
+
+                        {/* Other Channels */}
+                        {othersSorted.length > 0 && (
+                          <>
+                            <SectionHeader icon="💬">Other Channels</SectionHeader>
+                            {othersSorted.map(renderChannelWithPin)}
+                          </>
                         )}
                       </>
                     );
@@ -324,51 +419,34 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
               </div>
             </div>
 
-            <div className={styles.mainChatWindow}>
-              <Channel channel={channel} Message={CustomMessageUi}>
-                <Window>
-                  {/* --- Pool simulation as background --- */}
-                  <div className={styles.messageListBackground} aria-hidden="true">
-                    <PoolSimulation />
-                  </div>
-                  <CustomChannelHeader />
-                  {/* --- ADMIN ANNOUNCEMENT INPUT HERE --- */}
-                  <AdminAnnouncementInput />
-                  <MessageList />
-                  <TypingIndicator />
-                  <MessageInput
-                    additionalTextareaProps={{
-                      placeholder:
-                        "Type a message... :smile: (Markdown & emoji supported!)",
-                    }}
-                  />
-                </Window>
-                <Thread />
-              </Channel>
+            <div className={styles.chatWindow}>
+              {channel && (
+                <Channel channel={channel}>
+                  <Window>
+                    <CustomChannelHeader />
+                    <MessageList />
+                    <MessageInput />
+                    <TypingIndicator />
+                  </Window>
+                  <Thread />
+                </Channel>
+              )}
             </div>
           </div>
         </Chat>
 
-        {showPlayerSearch && (
-          <PlayerSearch
-            onSelect={async (player) => {
-              setShowPlayerSearch(false);
-              // Your propose match logic here
-            }}
-            onClose={() => setShowPlayerSearch(false)}
-            excludeName={userName}
-            senderName={userName}
-            senderEmail={userEmail}
-            onProposalComplete={() => {
-              setShowPlayerSearch(false);
-              if (onClose) {
-                onClose();
-              } else {
-                navigate("/");
-              }
-            }}
+        {showDivisionSelector && (
+          <DivisionSelectorModal
+            userName={userName}
+            userEmail={userEmail}
+            userPin={userPin}
+            onClose={() => setShowDivisionSelector(false)}
           />
         )}
+
+
+
+
       </div>
     </div>
   );

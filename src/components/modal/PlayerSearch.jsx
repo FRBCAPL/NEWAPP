@@ -108,9 +108,14 @@ async function loadStandings(selectedDivision) {
 
 // --- Utility: Get player's standings position ---
 function getPlayerPosition(standings, playerName) {
+  if (!playerName || typeof playerName !== 'string') {
+    console.warn('getPlayerPosition: playerName is undefined or not a string:', playerName);
+    return null;
+  }
+  
   const normalizedPlayerName = playerName.toLowerCase().trim();
   const playerEntry = standings.find(entry => 
-    entry.name.toLowerCase().trim() === normalizedPlayerName
+    entry.name && entry.name.toLowerCase().trim() === normalizedPlayerName
   );
   return playerEntry ? parseInt(playerEntry.rank) : null;
 }
@@ -118,8 +123,8 @@ function getPlayerPosition(standings, playerName) {
 // --- Utility: Sort players by standings rank ---
 function sortPlayersByRank(players, standings) {
   return players.sort((a, b) => {
-    const aName = `${a.firstName} ${a.lastName}`;
-    const bName = `${b.firstName} ${b.lastName}`;
+    const aName = a && a.firstName && a.lastName ? `${a.firstName} ${a.lastName}` : '';
+    const bName = b && b.firstName && b.lastName ? `${b.firstName} ${b.lastName}` : '';
     const aRank = getPlayerPosition(standings, aName);
     const bRank = getPlayerPosition(standings, bName);
     
@@ -163,6 +168,11 @@ function filterPlayersForPhase2(players, standings, currentPlayerName) {
   console.log(`Phase 2 filtering: ${currentPlayerName} is at position ${currentPlayerPosition}`);
 
   const eligiblePlayers = players.filter(player => {
+    if (!player || !player.firstName || !player.lastName) {
+      console.warn('Player data incomplete, excluding from Phase 2 filtering:', player);
+      return false;
+    }
+    
     const opponentName = `${player.firstName} ${player.lastName}`;
     const opponentPosition = getPlayerPosition(standings, opponentName);
     

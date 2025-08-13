@@ -329,3 +329,49 @@
   font-weight: bold;
   margin: 0 0.25em;
 }
+
+/* ========== Division Selector Styles ========== */
+.divisionList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.divisionButton {
+  background: var(--chat-red);
+  color: #fff;
+  border: 2px solid var(--chat-red);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.divisionButton:hover,
+.divisionButton:focus {
+  background: #fff;
+  color: var(--chat-red);
+  border-color: var(--chat-red);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+.divisionButton:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 500px) {
+  .divisionButton {
+    padding: 1.2rem 1rem;
+    font-size: 1rem;
+  }
+}

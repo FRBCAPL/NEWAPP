@@ -37,6 +37,7 @@ import { deadlineNotificationService } from '../../services/deadlineNotification
 
 import { format } from 'date-fns';
 import { BACKEND_URL } from '../../config.js';
+import { useNavigate } from 'react-router-dom';
 
 const sheetID = "1tvMgMHsRwQxsR6lMNlSnztmwpK7fhZeNEyqjTqmRFRc";
 const pinSheetName = "BCAPL SIGNUP";
@@ -299,6 +300,8 @@ export default function Dashboard({
 
 
   const simulationRef = useRef(null);
+
+  const navigate = useNavigate();
 
   // Test backend connection on component mount
   useEffect(() => {
@@ -1670,7 +1673,7 @@ export default function Dashboard({
               type="button"
               style={{ position: 'relative' }}
             >
-              💬 Open Chat
+              💬 Direct Messages
               {unreadMessages > 0 && (
                 <span style={{
                   position: 'absolute',
@@ -1690,6 +1693,18 @@ export default function Dashboard({
                   {unreadMessages > 99 ? '99+' : unreadMessages}
                 </span>
               )}
+            </button>
+            <button
+              className={styles.dashboardBtn}
+              onClick={() => navigate('/chat')}
+              type="button"
+              style={{ 
+                background: '#4ecdc4',
+                borderColor: '#4ecdc4',
+                color: '#fff'
+              }}
+            >
+              🚀 Stream Chat
             </button>
             <h2 className={styles.dashboardSectionTitle}>
               News & Updates

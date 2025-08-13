@@ -99,6 +99,51 @@
   white-space: nowrap;
 }
 
+/* ---------- Enhanced Section Headers ---------- */
+.sectionHeader {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 1.5em 0 0.5em 0;
+  padding: 0.5em 1em;
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid var(--chat-red);
+  border-radius: 0 4px 4px 0;
+  display: flex;
+  align-items: center;
+}
+
+.sectionHeader:first-child {
+  margin-top: 1em;
+}
+
+/* ---------- Channel Categories ---------- */
+.channelListRow.announcements {
+  border-left: 3px solid #ff6b6b;
+}
+
+.channelListRow.divisions {
+  border-left: 3px solid #4ecdc4;
+}
+
+.channelListRow.game-rooms {
+  border-left: 3px solid #45b7d1;
+}
+
+.channelListRow.announcements:hover {
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.channelListRow.divisions:hover {
+  background: rgba(78, 205, 196, 0.1);
+}
+
+.channelListRow.game-rooms:hover {
+  background: rgba(69, 183, 209, 0.1);
+}
+
 /* ---------- Main Chat Area ---------- */
 .mainChatArea {
   display: flex;
@@ -236,12 +281,6 @@
   padding: 24px 0;
   text-align: center;
   font-size: 1em;
-}
-.sectionHeader {
-  color: var(--chat-red);
-  font-weight: bold;
-  padding: 0.5em 1em 0.2em 1em;
-  font-size: 1.1em;
 }
 .sidebarSearch {
   padding: 0.5em 1em;
