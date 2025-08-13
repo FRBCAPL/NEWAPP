@@ -1704,7 +1704,7 @@ export default function Dashboard({
                 color: '#fff'
               }}
             >
-              🚀 Stream Chat
+              🚀 League Chat
             </button>
             <h2 className={styles.dashboardSectionTitle}>
               News & Updates

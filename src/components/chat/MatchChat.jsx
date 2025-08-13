@@ -15,6 +15,9 @@ const API_BASE = BACKEND_URL;
 const GENERAL_CHANNEL_ID = "general";
 const ANNOUNCEMENTS_CHANNEL_ID = "announcements";
 
+// Global flag to prevent multiple connections
+let globalConnectionInProgress = false;
+
 // Available divisions - this can be expanded as you add more divisions
 const AVAILABLE_DIVISIONS = [
   "FRBCAPL TEST",
@@ -95,32 +98,50 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
 
   // Initialize chat client and create channels
   useEffect(() => {
+    // Use global flag to prevent multiple simultaneous initializations
+    if (globalConnectionInProgress) {
+      console.log('Global connection already in progress, skipping...');
+      return;
+    }
+    
+    globalConnectionInProgress = true;
     let client = StreamChat.getInstance(apiKey);
     let didConnect = false;
     let isMounted = true;
-    let connectionInProgress = false;
 
     async function init() {
-      if (connectionInProgress) return;
-      connectionInProgress = true;
+      console.log('Starting chat initialization...');
 
       try {
-        // Always disconnect first, regardless of userID
-        try {
-          await client.disconnectUser();
-        } catch (disconnectError) {
-          // Ignore disconnect errors
-          console.log('Disconnect error (ignored):', disconnectError.message);
+        // Check if already connected
+        if (client.userID) {
+          console.log('Already connected as:', client.userID);
+          try {
+            await client.disconnectUser();
+            console.log('Disconnected existing user');
+          } catch (disconnectError) {
+            console.log('Disconnect error (ignored):', disconnectError.message);
+          }
         }
+
+        // Add a small delay to ensure disconnect completes
+        await new Promise(resolve => setTimeout(resolve, 300));
+        console.log('Delay completed, proceeding with token request...');
         
         const userId = cleanId(userEmail);
+        console.log('Cleaned userId:', userId);
+        console.log('Making token request to:', `${API_BASE}/token`);
         const response = await fetch(`${API_BASE}/token`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),
         });
+        console.log('Token response status:', response.status);
         const { token, userId: actualUserId } = await response.json();
+        console.log('Token received for userId:', actualUserId);
 
+        console.log('Connecting user to Stream Chat...');
+        console.log('Using actualUserId for connection:', actualUserId);
         await client.connectUser(
           {
             id: actualUserId,
@@ -129,73 +150,115 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
           },
           token
         );
+        console.log('User connected successfully!');
         didConnect = true;
         if (!isMounted) return;
 
-                 setChatClient(client);
+        console.log('Setting chat client...');
+        setChatClient(client);
 
-         // Create or get general channel
-         const general = client.channel("messaging", GENERAL_CHANNEL_ID, {
-           name: "General Chat",
-           description: "General discussion for all players"
-         });
-         await general.watch({ limit: 30 });
+        // Create or get general channel
+        console.log('Creating general channel...');
+        const general = client.channel("messaging", GENERAL_CHANNEL_ID, {
+          name: "General Chat",
+          description: "General discussion for all players"
+        });
+        console.log('General channel object created, now watching...');
+        await general.watch({ limit: 30 });
+        console.log('General channel created and watched');
 
-         // Create or get announcements channel
-         const announcements = client.channel("messaging", ANNOUNCEMENTS_CHANNEL_ID, {
-           name: "📢 Announcements",
-           description: "Important announcements and updates"
-         });
-         await announcements.watch({ limit: 30 });
+        // Create or get announcements channel
+        console.log('Creating announcements channel...');
+        const announcements = client.channel("messaging", ANNOUNCEMENTS_CHANNEL_ID, {
+          name: "📢 Announcements",
+          description: "Important announcements and updates"
+        });
+        try {
+          await announcements.watch({ limit: 30 });
+          console.log('Announcements channel created and watched');
+        } catch (error) {
+          console.log('Could not load announcements channel:', error.message);
+        }
 
-         // Create division-specific channels
-         const divisionChannelsObj = {};
-         for (const division of AVAILABLE_DIVISIONS) {
-           const divisionId = cleanId(division);
-           const divisionChannel = client.channel("messaging", `division-${divisionId}`, {
-             name: `🏆 ${division}`,
-             description: `Discussion for ${division} players`,
-             category: CHANNEL_CATEGORIES.DIVISIONS
-           });
-           await divisionChannel.watch({ limit: 30 });
-           divisionChannelsObj[division] = divisionChannel;
-         }
+        // Create division-specific channels
+        console.log('Creating division channels...');
+        const divisionChannelsObj = {};
+        for (const division of AVAILABLE_DIVISIONS) {
+          const divisionId = cleanId(division);
+          const divisionChannel = client.channel("messaging", `division-${divisionId}`, {
+            name: `🏆 ${division}`,
+            description: `Discussion for ${division} players`,
+            category: CHANNEL_CATEGORIES.DIVISIONS
+          });
+          try {
+            await divisionChannel.watch({ limit: 30 });
+            divisionChannelsObj[division] = divisionChannel;
+            console.log(`Division channel created: ${division}`);
+          } catch (error) {
+            console.log(`Could not load division channel ${division}:`, error.message);
+          }
+        }
 
-         // Create game room channels for future multiplayer
-         const gameRooms = [];
-         for (let i = 1; i <= 5; i++) {
-           const gameRoomId = `game-room-${i}`;
-           const gameRoom = client.channel("messaging", gameRoomId, {
-             name: `🎮 Game Room ${i}`,
-             description: `Multiplayer game room ${i} - for future online play`,
-             category: CHANNEL_CATEGORIES.GAME_ROOMS
-           });
-           await gameRoom.watch({ limit: 30 });
-           gameRooms.push(gameRoom);
-         }
+        // Create game room channels
+        console.log('Creating game room channels...');
+        const gameRooms = [];
+        for (let i = 1; i <= 5; i++) {
+          const gameRoomId = `game-room-${i}`;
+          const gameRoom = client.channel("messaging", gameRoomId, {
+            name: `🎮 Game Room ${i}`,
+            description: `Multiplayer game room ${i} - for future online play`,
+            category: CHANNEL_CATEGORIES.GAME_ROOMS
+          });
+          try {
+            await gameRoom.watch({ limit: 30 });
+            gameRooms.push(gameRoom);
+            console.log(`Game room ${i} created`);
+          } catch (error) {
+            console.log(`Could not load game room ${i}:`, error.message);
+          }
+        }
 
-         if (isMounted) {
-           setGeneralChannel(general);
-           setAnnouncementsChannel(announcements);
-           setDivisionChannels(divisionChannelsObj);
-           setGameRoomChannels(gameRooms);
-           setChannel(general); // Start with general channel
-           setLoading(false);
-         }
-       } catch (error) {
-         console.error('Error initializing chat:', error);
-         if (isMounted) {
-           setLoading(false);
-         }
-       } finally {
-         connectionInProgress = false;
-       }
-     }
-     init();
+        console.log('Setting up channel states...');
+        if (isMounted) {
+          setGeneralChannel(general);
+          setAnnouncementsChannel(announcements);
+          setDivisionChannels(divisionChannelsObj);
+          setGameRoomChannels(gameRooms);
+          setChannel(general); // Start with general channel
+          console.log('Setting loading to false...');
+          setLoading(false);
+          console.log('Chat initialization complete!');
+        }
+      } catch (error) {
+        console.error('Error initializing chat:', error);
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+        if (isMounted) {
+          setLoading(false);
+        }
+      } finally {
+        // Reset global flag when done
+        globalConnectionInProgress = false;
+      }
+
+    }
+
+    init();
 
     return () => {
       isMounted = false;
-      if (client && didConnect) client.disconnectUser();
+      if (client && didConnect) {
+        try {
+          client.disconnectUser();
+        } catch (error) {
+          console.log('Error during cleanup disconnect:', error.message);
+        }
+      }
+      // Reset global flag on cleanup
+      globalConnectionInProgress = false;
     };
   }, [userEmail, userName]);
 
@@ -203,11 +266,44 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
     setPinnedChannels(pinnedIds);
   }, [pinnedIds]);
 
-  // Load messages when channel changes
+  // Load messages when channel changes and listen for new messages
   useEffect(() => {
+    console.log('Channel changed:', channel);
     if (channel) {
       const channelMessages = channel.state.messages || [];
+      console.log('Channel messages:', channelMessages);
       setMessages(channelMessages);
+
+      // Listen for new messages
+      const handleNewMessage = (event) => {
+        console.log('New message received:', event);
+        const updatedMessages = channel.state.messages || [];
+        console.log('Updated messages from new message:', updatedMessages);
+        setMessages([...updatedMessages]);
+      };
+
+      // Listen for channel state updates
+      const handleChannelUpdate = () => {
+        console.log('Channel state updated');
+        const updatedMessages = channel.state.messages || [];
+        console.log('Updated messages from state update:', updatedMessages);
+        setMessages([...updatedMessages]);
+      };
+
+      // Set up event listeners
+      channel.on('message.new', handleNewMessage);
+      channel.on('message.updated', handleChannelUpdate);
+      channel.on('message.deleted', handleChannelUpdate);
+
+      // Cleanup listener when channel changes
+      return () => {
+        channel.off('message.new', handleNewMessage);
+        channel.off('message.updated', handleChannelUpdate);
+        channel.off('message.deleted', handleChannelUpdate);
+      };
+    } else {
+      console.log('No channel available');
+      setMessages([]);
     }
   }, [channel]);
 
@@ -230,12 +326,25 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
 
   // Send message function
   const sendMessage = async () => {
-    if (!newMessage.trim() || !channel) return;
+    console.log('Send message called with:', newMessage);
+    console.log('Channel:', channel);
+    
+    if (!newMessage.trim()) {
+      console.log('Message is empty, returning');
+      return;
+    }
+    
+    if (!channel) {
+      console.log('No channel available, returning');
+      return;
+    }
     
     try {
-      await channel.sendMessage({
+      console.log('Sending message to channel...');
+      const response = await channel.sendMessage({
         text: newMessage,
       });
+      console.log('Message sent successfully:', response);
       setNewMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
@@ -259,7 +368,7 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
     );
   }
 
-  const currentUserId = chatClient.user.id;
+  const currentUserId = chatClient?.user?.id;
   const minutes = Math.floor(secondsLeft / 60);
   const seconds = secondsLeft % 60;
 
@@ -464,7 +573,20 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
                 {/* Messages Area */}
                 <div className={styles.messagesArea}>
                   {messages.map((message) => {
-                    const isCurrentUser = message.user?.id === chatClient?.user?.id;
+                    // More robust user comparison that handles both old and new ID formats
+                    const messageUserId = message.user?.id;
+                    const currentUserId = chatClient?.user?.id;
+                    
+                    // Check exact match first
+                    let isCurrentUser = messageUserId === currentUserId;
+                    
+                    // If no exact match, check if the message user ID is the base ID (without timestamp)
+                    // and the current user ID contains that base ID
+                    if (!isCurrentUser && messageUserId && currentUserId) {
+                      const baseUserId = messageUserId.replace(/_\d+$/, ''); // Remove timestamp suffix
+                      isCurrentUser = currentUserId.startsWith(baseUserId);
+                    }
+                    
                     return (
                       <div 
                         key={message.id} 
