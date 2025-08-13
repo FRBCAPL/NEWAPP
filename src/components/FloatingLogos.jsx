@@ -322,9 +322,9 @@ export default function FloatingLogos() {
       <img src={csiLogo} alt="CSI Logo Background" style={logoStyle(csi1, 120, 0.75, "drop-shadow(0 0 12px rgba(245, 30, 30, 0.2))")} />
       <img src={usaplLogo} alt="USAPL Logo Background" style={logoStyle(usapl1, 140, 0.80, "drop-shadow(0 0 10px rgba(245, 30, 30, 0.2))")} />
       <img src={fargorateLogo} alt="Fargorate Logo Background" style={logoStyle(fargorate1, 140, 0.80, "drop-shadow(0 0 10px rgba(245, 30, 30, 0.2))")} />
-      <img src={eightBall} alt="8 Ball Background" style={logoStyle(eightBall1, 40, 0.70, "drop-shadow(0 0 15px rgba(245, 30, 30, 0.3))")} />
-      <img src={nineBall} alt="9 Ball Background" style={logoStyle(nineBall1, 40, 0.70, "drop-shadow(0 0 15px rgba(245, 30, 30, 0.3))")} />
-      <img src={tenBall} alt="10 Ball Background" style={logoStyle(tenBall1, 40, 0.70, "drop-shadow(0 0 15px rgba(245, 30, 30, 0.3))")} />
+      <img src={eightBall} alt="8 Ball Background" style={logoStyle(eightBall1, 40, 0.70, "drop-shadow(0 0 12px rgba(245, 30, 30, 0.3))")} />
+      <img src={nineBall} alt="9 Ball Background" style={logoStyle(nineBall1, 40, 0.70, "drop-shadow(0 0 12px rgba(245, 30, 30, 0.3))")} />
+      <img src={tenBall} alt="10 Ball Background" style={logoStyle(tenBall1, 40, 0.70, "drop-shadow(0 0 12px rgba(245, 30, 30, 0.3))")} />
     </div>
   );
 } 
