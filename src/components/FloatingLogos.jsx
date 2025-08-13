@@ -4,13 +4,16 @@ import bcaplLogo from "../assets/bcapl_logo.png";
 import csiLogo from "../assets/csi_logo.png";
 import usaplLogo from "../assets/usapl_logo.png";
 import fargorateLogo from "../assets/fargorate-logo.png";
+import eightBall from "../assets/8ball.svg";
+import nineBall from "../assets/nineball.svg";
+import tenBall from "../assets/tenball.svg";
 
 export default function FloatingLogos() {
   const [vw, setVw] = useState(window.innerWidth);
   const [vh, setVh] = useState(window.innerHeight);
   
-  // Create configurations for each logo
-  const [logoStates] = useState(() => [0,1,2,3,4].map(() => {
+  // Create configurations for each logo (now 8 total: 5 original + 3 new balls)
+  const [logoStates] = useState(() => [0,1,2,3,4,5,6,7].map(() => {
     const baseSpeed = 0.1 + Math.random() * 0.15; // Slightly slower base speed
     const direction = Math.random() * Math.PI * 2;
     
@@ -215,17 +218,17 @@ export default function FloatingLogos() {
 
   // Initialize speed categories and size changers
   const [initialized] = useState(() => {
-    // Set 2 random logos as fast
+    // Set 3 random logos as fast (increased for more logos)
     const fastIndices = [];
-    while (fastIndices.length < 2) {
-      const idx = Math.floor(Math.random() * 5);
+    while (fastIndices.length < 3) {
+      const idx = Math.floor(Math.random() * 8);
       if (!fastIndices.includes(idx)) fastIndices.push(idx);
     }
     
-    // Set 2 different logos as size changers
+    // Set 3 different logos as size changers (increased for more logos)
     const sizeChangerIndices = [];
-    while (sizeChangerIndices.length < 2) {
-      const idx = Math.floor(Math.random() * 5);
+    while (sizeChangerIndices.length < 3) {
+      const idx = Math.floor(Math.random() * 8);
       if (!sizeChangerIndices.includes(idx) && !fastIndices.includes(idx)) {
         sizeChangerIndices.push(idx);
       }
@@ -253,8 +256,8 @@ export default function FloatingLogos() {
   // Global state to track which logos are fast
   const [fastLogos, setFastLogos] = useState(() => {
     const fastIndices = [];
-    while (fastIndices.length < 2) {
-      const idx = Math.floor(Math.random() * 5);
+    while (fastIndices.length < 3) {
+      const idx = Math.floor(Math.random() * 8);
       if (!fastIndices.includes(idx)) fastIndices.push(idx);
     }
     return fastIndices;
@@ -263,8 +266,8 @@ export default function FloatingLogos() {
   // Function to randomly reassign fast/slow logos
   const reassignSpeeds = () => {
     const newFastIndices = [];
-    while (newFastIndices.length < 2) {
-      const idx = Math.floor(Math.random() * 5);
+    while (newFastIndices.length < 3) {
+      const idx = Math.floor(Math.random() * 8);
       if (!newFastIndices.includes(idx)) newFastIndices.push(idx);
     }
     setFastLogos(newFastIndices);
@@ -285,6 +288,9 @@ export default function FloatingLogos() {
   const csi1 = useLogoAnimation(logoStates[2], 2, fastLogos);
   const usapl1 = useLogoAnimation(logoStates[3], 3, fastLogos);
   const fargorate1 = useLogoAnimation(logoStates[4], 4, fastLogos);
+  const eightBall1 = useLogoAnimation(logoStates[5], 5, fastLogos);
+  const nineBall1 = useLogoAnimation(logoStates[6], 6, fastLogos);
+  const tenBall1 = useLogoAnimation(logoStates[7], 7, fastLogos);
 
   const logoStyle = (logo, baseWidth, opacity, filter) => ({
     position: "absolute",
@@ -316,6 +322,9 @@ export default function FloatingLogos() {
       <img src={csiLogo} alt="CSI Logo Background" style={logoStyle(csi1, 120, 0.75, "drop-shadow(0 0 12px rgba(245, 30, 30, 0.2))")} />
       <img src={usaplLogo} alt="USAPL Logo Background" style={logoStyle(usapl1, 140, 0.80, "drop-shadow(0 0 10px rgba(245, 30, 30, 0.2))")} />
       <img src={fargorateLogo} alt="Fargorate Logo Background" style={logoStyle(fargorate1, 140, 0.80, "drop-shadow(0 0 10px rgba(245, 30, 30, 0.2))")} />
+      <img src={eightBall} alt="8 Ball Background" style={logoStyle(eightBall1, 40, 0.70, "drop-shadow(0 0 15px rgba(245, 30, 30, 0.3))")} />
+      <img src={nineBall} alt="9 Ball Background" style={logoStyle(nineBall1, 40, 0.70, "drop-shadow(0 0 15px rgba(245, 30, 30, 0.3))")} />
+      <img src={tenBall} alt="10 Ball Background" style={logoStyle(tenBall1, 40, 0.70, "drop-shadow(0 0 15px rgba(245, 30, 30, 0.3))")} />
     </div>
   );
 } 
