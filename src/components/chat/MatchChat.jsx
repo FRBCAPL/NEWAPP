@@ -100,25 +100,28 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
     let isMounted = true;
 
     async function init() {
-      if (!client.userID) {
-        const userId = cleanId(userEmail);
-        const response = await fetch(`${API_BASE}/token`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId }),
-        });
-        const { token, userId: actualUserId } = await response.json();
-
-        await client.connectUser(
-          {
-            id: actualUserId,
-            name: userName,
-            email: userEmail,
-          },
-          token
-        );
-        didConnect = true;
+      // Disconnect any existing connection first
+      if (client.userID) {
+        await client.disconnectUser();
       }
+      
+      const userId = cleanId(userEmail);
+      const response = await fetch(`${API_BASE}/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      const { token, userId: actualUserId } = await response.json();
+
+      await client.connectUser(
+        {
+          id: actualUserId,
+          name: userName,
+          email: userEmail,
+        },
+        token
+      );
+      didConnect = true;
       if (!isMounted) return;
 
       setChatClient(client);
