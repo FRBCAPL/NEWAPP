@@ -1,16 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { userService } from '../../services/userService';
 import { seasonService } from '../../services/seasonService';
+import fetchSheetData from '../../utils/fetchSheetData';
+import { parseAvailability } from '../../utils/parseAvailability';
 import OpponentsModal from './OpponentsModal';
 import PlayerSearch from './PlayerSearch';
+import PlayerAvailabilityModal from './PlayerAvailabilityModal';
+import MatchProposalModal from './MatchProposalModal';
 import DraggableModal from './DraggableModal';
 import { BACKEND_URL } from '../../config.js';
+
+const sheetID = "1tvMgMHsRwQxsR6lMNlSnztmwpK7fhZeNEyqjTqmRFRc";
+const pinSheetName = "BCAPL SIGNUP";
 
 export default function DivisionSelectorModal({ 
   userName, 
   userEmail, 
   userPin, 
-  onClose 
+  onClose,
+  fromChat = false
 }) {
   const [divisions, setDivisions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,6 +26,10 @@ export default function DivisionSelectorModal({
   const [currentPhase, setCurrentPhase] = useState('scheduled');
   const [showOpponents, setShowOpponents] = useState(false);
   const [showPlayerSearch, setShowPlayerSearch] = useState(false);
+  const [showPlayerAvailability, setShowPlayerAvailability] = useState(false);
+  const [showMatchProposal, setShowMatchProposal] = useState(false);
+  const [selectedOpponent, setSelectedOpponent] = useState(null);
+  const [proposalData, setProposalData] = useState(null);
   const [scheduledMatches, setScheduledMatches] = useState([]);
   const [players, setPlayers] = useState([]);
   const [loadingSchedule, setLoadingSchedule] = useState(false);
@@ -142,7 +154,7 @@ export default function DivisionSelectorModal({
       
       // Find the player object by name
       const playerObj = players.find(
-        p => `${p.firstName} ${p.lastName}`.trim().toLowerCase() === name.toLowerCase()
+        p => p.name && p.name.trim().toLowerCase() === name.toLowerCase()
       );
       
       return { match: m, player: playerObj, opponentName: name };
@@ -152,9 +164,9 @@ export default function DivisionSelectorModal({
   };
 
   // Handle opponent selection
-  const handleOpponentClick = (opponentName) => {
+  const handleOpponentClick = async (opponentName) => {
     const playerObj = players.find(
-      p => `${p.firstName} ${p.lastName}`.trim().toLowerCase() === opponentName.trim().toLowerCase()
+      p => p.name && p.name.trim().toLowerCase() === opponentName.trim().toLowerCase()
     );
     
     if (!playerObj) {
@@ -166,15 +178,83 @@ export default function DivisionSelectorModal({
       return;
     }
     
-    // Close opponents modal and open player search for this specific opponent
-    setShowOpponents(false);
-    setShowPlayerSearch(true);
+    if (fromChat) {
+      // From chat: fetch detailed player data and open availability modal
+      try {
+        console.log('Fetching detailed player data for:', opponentName);
+        const rows = await fetchSheetData(sheetID, `${pinSheetName}!A1:L1000`);
+        const sheetData = rows
+          .slice(1)
+          .map(row => ({
+            firstName: row[0] || "",
+            lastName: row[1] || "",
+            email: row[2] || "",
+            phone: row[3] || "",
+            locations: row[8] || "",
+            availability: row[7] || "",
+            pin: row[11] || "",
+            preferredContacts: (row[10] || "")
+              .split(/\r?\n/)
+              .map(method => method.trim().toLowerCase())
+              .filter(Boolean),
+          }))
+          .filter(p => p.email && p.firstName && p.lastName);
+        
+        const detailedPlayer = sheetData.find(
+          p => `${p.firstName} ${p.lastName}`.trim().toLowerCase() === opponentName.trim().toLowerCase()
+        );
+        
+                 if (detailedPlayer) {
+           // Parse availability data
+           console.log('Raw availability data:', detailedPlayer.availability);
+           const parsedAvailability = parseAvailability(detailedPlayer.availability);
+           console.log('Parsed availability:', parsedAvailability);
+           const playerWithAvailability = {
+             ...detailedPlayer,
+             availability: parsedAvailability
+           };
+           console.log('Found detailed player data:', playerWithAvailability);
+           setSelectedOpponent(playerWithAvailability);
+        } else {
+          console.log('No detailed data found, using basic player data');
+          setSelectedOpponent(playerObj);
+        }
+      } catch (error) {
+        console.error('Error fetching detailed player data:', error);
+        setSelectedOpponent(playerObj);
+      }
+      
+      setShowOpponents(false);
+      setShowPlayerAvailability(true);
+    } else {
+      // From dashboard: open player search
+      setShowOpponents(false);
+      setShowPlayerSearch(true);
+    }
+  };
+
+  // Handle match proposal from availability modal
+  const handleProposeMatch = (day, slot, phase, division) => {
+    console.log('Proposing match:', { day, slot, phase, division, opponent: selectedOpponent });
+    setProposalData({
+      day,
+      slot,
+      phase,
+      division,
+      opponent: selectedOpponent
+    });
+    setShowPlayerAvailability(false);
+    setShowMatchProposal(true);
   };
 
   // Handle modal close
   const handleModalClose = () => {
     setShowOpponents(false);
     setShowPlayerSearch(false);
+    setShowPlayerAvailability(false);
+    setShowMatchProposal(false);
+    setSelectedOpponent(null);
+    setProposalData(null);
     setSelectedDivision('');
     onClose();
   };
@@ -339,6 +419,39 @@ export default function DivisionSelectorModal({
           phase={currentPhase}
         />
       )}
-    </>
-  );
-}
+
+             {/* Player Availability Modal for Chat */}
+       {showPlayerAvailability && selectedOpponent && (
+         <PlayerAvailabilityModal
+           open={showPlayerAvailability}
+           onClose={handleModalClose}
+           player={selectedOpponent}
+           senderName={userName}
+           senderEmail={userEmail}
+           selectedDivision={selectedDivision}
+           onProposeMatch={handleProposeMatch}
+           phase={currentPhase}
+                  />
+       )}
+
+       {/* Match Proposal Modal */}
+       {showMatchProposal && proposalData && (
+         <MatchProposalModal
+           open={showMatchProposal}
+           onClose={handleModalClose}
+           player={proposalData.opponent}
+           day={proposalData.day}
+           slot={proposalData.slot}
+           senderName={userName}
+           senderEmail={userEmail}
+           selectedDivision={proposalData.division}
+           phase={proposalData.phase}
+           onProposalComplete={() => {
+             console.log('Match proposal sent successfully');
+             handleModalClose();
+           }}
+         />
+       )}
+     </>
+   );
+ }

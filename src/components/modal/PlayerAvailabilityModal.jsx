@@ -54,7 +54,7 @@ export default function PlayerAvailabilityModal({
     <DraggableModal
       open={true}
       onClose={onClose}
-      title={`👤 ${player.firstName} ${player.lastName}`}
+             title={`👤 ${player.name || `${player.firstName} ${player.lastName}`}`}
       maxWidth="600px"
     >
       <div style={{ textAlign: "left" }}>
@@ -77,9 +77,9 @@ export default function PlayerAvailabilityModal({
           }}>
             Preferred Locations:
           </h3>
-          <div style={{ color: "#fff", textAlign: 'center' }}>
-            {player.locations
-              ? (() => {
+                     <div style={{ color: "#fff", textAlign: 'center' }}>
+             {player.locations
+               ? (() => {
                   const locArr = player.locations.split(/\r?\n/).filter(Boolean);
                   const rows = [];
                   for (let i = 0; i < locArr.length; i += 5) {
@@ -106,30 +106,30 @@ export default function PlayerAvailabilityModal({
                       ))}
                     </div>
                   ));
-                })()
-              : "No locations specified"}
+                                 })()
+               : "No locations specified"}
           </div>
         </div>
 
-        {/* Availability Grid */}
-        <div style={{ marginBottom: "1.5rem" }}>
-          <h3 style={{
-            color: "#e53e3e",
-            marginBottom: "0.5rem",
-            fontSize: "1.1rem",
-            textAlign: "center"
-          }}>
-            Availability:
-          </h3>
-          <div style={{
-            color: "#fff",
-            fontSize: "0.9rem",
-            marginBottom: "1rem",
-            textAlign: "center",
-            fontStyle: "italic"
-          }}>
-            Pick a timeblock within a day to schedule a match with this opponent.
-          </div>
+                 {/* Availability Grid */}
+         <div style={{ marginBottom: "1.5rem" }}>
+           <h3 style={{
+             color: "#e53e3e",
+             marginBottom: "0.5rem",
+             fontSize: "1.1rem",
+             textAlign: "center"
+           }}>
+             Availability:
+           </h3>
+                      <div style={{
+             color: "#fff",
+             fontSize: "0.9rem",
+             marginBottom: "1rem",
+             textAlign: "center",
+             fontStyle: "italic"
+           }}>
+             Pick a timeblock within a day to schedule a match with this opponent.
+           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
               {["Mon", "Tue", "Wed"].map((day) => (
@@ -142,7 +142,7 @@ export default function PlayerAvailabilityModal({
                   }}>
                     {day}
                   </div>
-                  {(player.availability[day] || []).length === 0 ? (
+                  {(!player.availability || !player.availability[day] || player.availability[day].length === 0) ? (
                     <div style={{
                       color: "#666",
                       fontSize: "0.8rem",
@@ -207,7 +207,7 @@ export default function PlayerAvailabilityModal({
                   }}>
                     {day}
                   </div>
-                  {(player.availability[day] || []).length === 0 ? (
+                  {(!player.availability || !player.availability[day] || player.availability[day].length === 0) ? (
                     <div style={{
                       color: "#666",
                       fontSize: "0.8rem",

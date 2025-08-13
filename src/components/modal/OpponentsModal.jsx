@@ -33,8 +33,8 @@ export default function OpponentsModal({ open, onClose, opponents, onOpponentCli
                 }
                 onClick={() =>
                   onOpponentClick(
-                    opponent.player
-                      ? `${opponent.player.firstName} ${opponent.player.lastName}`
+                    opponent.player && opponent.player.name
+                      ? opponent.player.name
                       : opponent.opponentName
                   )
                 }
@@ -61,8 +61,8 @@ export default function OpponentsModal({ open, onClose, opponents, onOpponentCli
                   e.target.style.boxShadow = "none";
                 }}
               >
-                {opponent.player
-                  ? `${opponent.player.firstName} ${opponent.player.lastName}`
+                {opponent.player && opponent.player.name
+                  ? opponent.player.name
                   : opponent.opponentName}
               </button>
             ))}

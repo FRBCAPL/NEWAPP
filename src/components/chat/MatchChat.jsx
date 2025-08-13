@@ -637,6 +637,7 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
             userEmail={userEmail}
             userPin={userPin}
             onClose={() => setShowDivisionSelector(false)}
+            fromChat={true}
           />
         )}
       </div>
