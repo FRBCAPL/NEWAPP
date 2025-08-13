@@ -107,11 +107,11 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),
         });
-        const { token } = await response.json();
+        const { token, userId: actualUserId } = await response.json();
 
         await client.connectUser(
           {
-            id: userId,
+            id: actualUserId,
             name: userName,
             email: userEmail,
           },
