@@ -343,17 +343,7 @@ import { BACKEND_URL } from '../../config.js';
            {completedMatches.length}/{totalRequiredMatches} Complete
          </div>
          
-         <div style={{
-           fontSize: isMobile ? '0.8rem' : '0.9rem',
-           color: primaryColor,
-           fontWeight: 'bold',
-           position: 'absolute',
-           bottom: '0',
-           right: '0',
-           fontSize: '0.8rem'
-         }}>
-           {isExpanded ? 'Hide Stats' : 'Show Stats'}
-         </div>
+         {/* Removed the absolutely positioned Show Stats text */}
        </div>
 
       {/* Status Message */}
@@ -364,6 +354,28 @@ import { BACKEND_URL } from '../../config.js';
         marginBottom: isMobile ? '8px' : '12px'
       }}>
         {getStatusMessage()}
+      </div>
+
+      {/* Show Stats Button - 4th line */}
+      <div style={{
+        textAlign: 'center',
+        marginBottom: isMobile ? '8px' : '12px'
+      }}>
+        <div style={{
+          fontSize: isMobile ? '0.8rem' : '0.9rem',
+          color: primaryColor,
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          padding: '4px 8px',
+          borderRadius: '6px',
+          display: 'inline-block',
+          transition: 'background-color 0.2s ease'
+        }}
+                 onMouseEnter={(e) => e.target.style.backgroundColor = `${primaryColor}20`}
+         onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+         >
+                       {isExpanded ? 'Hide Stats ▲' : 'Show Stats ▼'}
+         </div>
       </div>
 
       {/* Expanded Content */}

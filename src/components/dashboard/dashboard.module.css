@@ -612,54 +612,61 @@
   }
 
   .dashboardCard {
-    padding: 0.3rem 0.5rem 0.5rem 0.5rem;
+    padding: 0.5rem 0.8rem 0.8rem 0.8rem;
+    margin: 0.3rem;
   }
 
   .dashboardTitle {
-    font-size: 1.4rem;
-    margin-bottom: 0.3rem;
+    font-size: 1.6rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
   }
 
   .dashboardUserName {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
+    margin-top: 0.2rem;
   }
 
   .dashboardSection,
   .dashboardSectionBox {
-    padding: 0.3rem 0.4rem;
-    margin-bottom: 0.8rem;
+    padding: 0.5rem 0.6rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
   }
  
   .dashboardSimulationBox,
   .simulationContainer {
-    width: 280px;
-    height: 140px;
-    min-width: 100px;
-    min-height: 50px;
-    max-width: 95vw;
-    max-height: 50vw;
+    width: 320px;
+    height: 160px;
+    min-width: 120px;
+    min-height: 60px;
+    max-width: 98vw;
+    max-height: 60vw;
   }
 
   .matchCard {
     flex-wrap: wrap;
-    font-size: 0.85rem;
-    padding: 0.3rem 0.2rem;
-    min-height: 32px;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.3rem;
+    min-height: 36px;
+    margin-bottom: 0.3rem;
   }
 
   .matchCardButton {
     flex-wrap: wrap;
-    font-size: 0.85rem;
-    gap: 0.2em;
+    font-size: 0.9rem;
+    gap: 0.3em;
+    padding: 0.2rem 0.3rem;
   }
 
   .matchCardDetail,
   .matchCardOpponentName,
   .matchCardOpponentLabel {
-    font-size: 0.85rem;
-    margin-right: 0.2em;
+    font-size: 0.9rem;
+    margin-right: 0.3em;
     white-space: normal;
     word-break: break-word;
+    line-height: 1.2;
   }
 
   .dashboardModalContent {
@@ -690,14 +697,17 @@
 
   .proposalAlertRow {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.6rem;
+    margin: 0.5rem 0 1rem 0;
   }
 
   .proposalAlertButton {
     width: 100%;
-    font-size: 0.85rem;
-    padding: 0.7rem 1rem;
-    min-height: 44px;
+    font-size: 0.9rem;
+    padding: 0.8rem 1.2rem;
+    min-height: 48px;
+    border-radius: 8px;
+    font-weight: 600;
   }
 
   .newsUpdatesHeader {
@@ -741,12 +751,12 @@
 
   .dashboardSimulationBox,
   .simulationContainer {
-    width: 240px;
-    height: 120px;
-    min-width: 80px;
-    min-height: 40px;
-    max-width: 92vw;
-    max-height: 45vw;
+    width: 280px;
+    height: 140px;
+    min-width: 100px;
+    min-height: 50px;
+    max-width: 95vw;
+    max-height: 55vw;
   }
 
   .matchCard {
@@ -1554,7 +1564,7 @@
     width: 100vw !important;
     max-width: 100vw !important;
     padding: 0 !important;
-    background: #181818 !important;
+    background: transparent !important;
   }
   .dashboardFrame {
     width: 100% !important;

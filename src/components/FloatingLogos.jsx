@@ -192,13 +192,24 @@ export default function FloatingLogos() {
           currentState.sizeOpacity = 1;
         }
         
-        // Update current state reference
-        currentStateRef.current = {
-          ...currentState,
-          x: newX,
-          y: newY,
-          size: size
-        };
+                 // Calculate rotation for balls - use cumulative rotation for smoothness
+         let rotation = currentState.rotation || 0;
+         if (index >= 5) { // Ball indices are 5, 6, 7 (8-ball, 9-ball, 10-ball)
+           const speed = Math.sqrt(currentState.vx * currentState.vx + currentState.vy * currentState.vy);
+           // Add rotation based on speed and delta time for smooth cumulative rotation
+           // Increased base rotation speed so slowest balls still roll noticeably
+           const rotationIncrement = ((speed * 2.0 + 0.3) * (deltaTime / 16));
+           rotation += rotationIncrement;
+         }
+         
+         // Update current state reference
+         currentStateRef.current = {
+           ...currentState,
+           x: newX,
+           y: newY,
+           size: size,
+           rotation: rotation
+         };
         
         // Only update React state every 100ms to prevent stuttering
         if (now - lastUpdateTime > 100) {
@@ -292,19 +303,24 @@ export default function FloatingLogos() {
   const nineBall1 = useLogoAnimation(logoStates[6], 6, fastLogos);
   const tenBall1 = useLogoAnimation(logoStates[7], 7, fastLogos);
 
-  const logoStyle = (logo, baseWidth, opacity, filter) => ({
-    position: "absolute",
-    left: logo.x,
-    top: logo.y,
-    transform: `translate(-50%, -50%) scale(${logo.size})`,
-    width: baseWidth,
-    height: "auto",
-    opacity: opacity * (logo.edgeOpacity || 1) * (logo.sizeOpacity || 1),
-    zIndex: 1,
-    pointerEvents: "none",
-    filter,
-    transition: "none"
-  });
+  const logoStyle = (logo, baseWidth, opacity, filter, isBall = false) => {
+    // Use rotation from state for balls
+    const rotation = isBall ? (logo.rotation || 0) : 0;
+
+    return {
+      position: "absolute",
+      left: logo.x,
+      top: logo.y,
+      transform: `translate(-50%, -50%) scale(${logo.size}) rotate(${rotation}deg)`,
+      width: baseWidth,
+      height: "auto",
+      opacity: opacity * (logo.edgeOpacity || 1) * (logo.sizeOpacity || 1),
+      zIndex: 0,
+      pointerEvents: "none",
+      filter,
+      transition: "none"
+    };
+  };
 
   return (
     <div style={{
@@ -313,7 +329,7 @@ export default function FloatingLogos() {
       left: 0,
       width: '100vw',
       height: '100vh',
-      zIndex: 1,
+      zIndex: 0,
       pointerEvents: 'none',
       overflow: 'hidden',
     }}>
@@ -322,9 +338,9 @@ export default function FloatingLogos() {
       <img src={csiLogo} alt="CSI Logo Background" style={logoStyle(csi1, 120, 0.75, "drop-shadow(0 0 12px rgba(245, 30, 30, 0.2))")} />
       <img src={usaplLogo} alt="USAPL Logo Background" style={logoStyle(usapl1, 140, 0.80, "drop-shadow(0 0 10px rgba(245, 30, 30, 0.2))")} />
       <img src={fargorateLogo} alt="Fargorate Logo Background" style={logoStyle(fargorate1, 140, 0.80, "drop-shadow(0 0 10px rgba(245, 30, 30, 0.2))")} />
-      <img src={eightBall} alt="8 Ball Background" style={logoStyle(eightBall1, 40, 0.70, "drop-shadow(0 0 10px rgba(245, 30, 30, 0.3))")} />
-      <img src={nineBall} alt="9 Ball Background" style={logoStyle(nineBall1, 40, 0.70, "drop-shadow(0 0 10px rgba(245, 30, 30, 0.3))")} />
-      <img src={tenBall} alt="10 Ball Background" style={logoStyle(tenBall1, 40, 0.70, "drop-shadow(0 0 10px rgba(245, 30, 30, 0.3))")} />
+             <img src={eightBall} alt="8 Ball Background" style={logoStyle(eightBall1, 40, 0.70, "drop-shadow(0 0 10px rgba(245, 30, 30, 0.3))", true)} />
+       <img src={nineBall} alt="9 Ball Background" style={logoStyle(nineBall1, 40, 0.70, "drop-shadow(0 0 10px rgba(245, 30, 30, 0.3))", true)} />
+       <img src={tenBall} alt="10 Ball Background" style={logoStyle(tenBall1, 40, 0.70, "drop-shadow(0 0 10px rgba(245, 30, 30, 0.3))", true)} />
     </div>
   );
 } 

@@ -1057,12 +1057,12 @@ export default function Dashboard({
         <div className={styles.dashboardCard} style={{ 
           position: 'relative', 
           zIndex: 1,
-          padding: isMobile ? '8px' : '20px',
-          margin: isMobile ? '4px' : '16px'
+          padding: isMobile ? '12px' : '20px',
+          margin: isMobile ? '6px' : '16px'
         }}>
-          <h1 className={styles.dashboardTitle} style={{ fontSize: isMobile ? '1.5rem' : '2rem' }}>
+          <h1 className={styles.dashboardTitle} style={{ fontSize: isMobile ? '1.6rem' : '2rem' }}>
             Welcome,
-            <span className={styles.dashboardUserName} style={{ fontSize: isMobile ? '1.3rem' : '1.8rem' }}>
+            <span className={styles.dashboardUserName} style={{ fontSize: isMobile ? '1.4rem' : '1.8rem' }}>
               {playerName} {playerLastName}
             </span>
           </h1>
@@ -1109,47 +1109,70 @@ export default function Dashboard({
 
           
           {!isMobile && <br />}
-          {/* --- Division Selector --- */}
-          {divisions.length > 0 && (
-            <div style={{ 
-              marginBottom: isMobile ? 8 : 16,
-              display: 'flex',
-              flexDirection: isMobile ? 'column' : 'row',
-              alignItems: isMobile ? 'flex-start' : 'center',
-              gap: isMobile ? '8px' : '12px'
-            }}>
-              <label style={{ fontSize: isMobile ? '0.9rem' : '1rem' }}>
-                Division:&nbsp;
-                {divisions.length > 1 ? (
-                  <select
-                    value={selectedDivision}
-                    onChange={e => setSelectedDivision(e.target.value)}
-                    style={{ 
-                      fontSize: isMobile ? "0.9em" : "1em", 
-                      padding: isMobile ? 6 : 4, 
-                      borderRadius: 4 
-                    }}
-                  >
-                    {divisions.map(div =>
-                      <option key={div} value={div}>{div}</option>
-                    )}
-                  </select>
-                ) : (
-                  <span style={{ fontWeight: 600 }}>{divisions[0]}</span>
+                     {/* --- Division Selector --- */}
+           {divisions.length > 0 && (
+             <div style={{ 
+               marginBottom: isMobile ? 8 : 16,
+               display: 'flex',
+               flexDirection: 'column',
+               alignItems: isMobile ? 'flex-start' : 'center',
+               gap: isMobile ? '8px' : '12px'
+             }}>
+               <div style={{
+                 display: 'flex',
+                 flexDirection: isMobile ? 'column' : 'row',
+                 alignItems: isMobile ? 'flex-start' : 'center',
+                 gap: isMobile ? '4px' : '12px',
+                 width: '100%'
+               }}>
+                 <label style={{ fontSize: isMobile ? '0.9rem' : '1rem' }}>
+                   Division:&nbsp;
+                   {divisions.length > 1 ? (
+                     <select
+                       value={selectedDivision}
+                       onChange={e => setSelectedDivision(e.target.value)}
+                       style={{ 
+                         fontSize: isMobile ? "0.9em" : "1em", 
+                         padding: isMobile ? 6 : 4, 
+                         borderRadius: 4 
+                       }}
+                     >
+                       {divisions.map(div =>
+                         <option key={div} value={div}>{div}</option>
+                       )}
+                     </select>
+                   ) : (
+                     <span style={{ fontWeight: 600 }}>{divisions[0]}</span>
+                   )}
+                 </label>
+                 {!isMobile && (
+                   <span style={{ 
+                     fontSize: "0.9em", 
+                     padding: "4px 8px", 
+                     borderRadius: "4px", 
+                     backgroundColor: effectivePhase === "challenge" ? "#e53e3e" : "#28a745",
+                     color: "white",
+                     fontWeight: "600"
+                   }}>
+                     Phase {effectivePhase === "challenge" ? "2" : effectivePhase === "scheduled" ? "1" : "Complete"}
+                   </span>
+                 )}
+               </div>
+                               {isMobile && (
+                  <span style={{ 
+                    fontSize: "0.8em", 
+                    padding: "3px 6px", 
+                    borderRadius: "4px", 
+                    backgroundColor: effectivePhase === "challenge" ? "#e53e3e" : "#28a745",
+                    color: "white",
+                    fontWeight: "600",
+                    alignSelf: 'center'
+                  }}>
+                    Phase {effectivePhase === "challenge" ? "2" : effectivePhase === "scheduled" ? "1" : "Complete"}
+                  </span>
                 )}
-              </label>
-              <span style={{ 
-                fontSize: isMobile ? "0.8em" : "0.9em", 
-                padding: isMobile ? "3px 6px" : "4px 8px", 
-                borderRadius: "4px", 
-                backgroundColor: effectivePhase === "challenge" ? "#e53e3e" : "#28a745",
-                color: "white",
-                fontWeight: "600"
-              }}>
-                Phase {effectivePhase === "challenge" ? "2" : effectivePhase === "scheduled" ? "1" : "Complete"}
-              </span>
-            </div>
-          )}
+             </div>
+           )}
 
           {/* --- Phase 1 Progress & Deadline Tracker --- */}
           {effectivePhase === 'scheduled' && seasonData && (
@@ -1180,9 +1203,9 @@ export default function Dashboard({
               position: "relative",
               overflow: "visible",
               backgroundColor: "rgba(0, 0, 0, .5)",
-              minHeight: isMobile ? "100px" : "370px",
-              marginBottom: isMobile ? '12px' : '36px',
-              paddingBottom: isMobile ? '16px' : '20px',
+              minHeight: isMobile ? "120px" : "370px",
+              marginBottom: isMobile ? '16px' : '36px',
+              paddingBottom: isMobile ? '20px' : '20px',
             }}
           >
             {/* Proposal Buttons - Above Pool Table */}
@@ -1222,10 +1245,10 @@ export default function Dashboard({
             {/* PoolSimulation as background and matches list overlayed on table */}
             <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
               <div className={styles.poolTableContainer} style={{ 
-                marginBottom: isMobile ? '8px' : '24px', 
+                marginBottom: isMobile ? '12px' : '24px', 
                 position: 'relative',
                 width: '100%',
-                maxWidth: isMobile ? '100%' : '600px'
+                maxWidth: isMobile ? '98%' : '600px'
               }}>
                 {isMobile ? (
                   <div
@@ -1233,7 +1256,7 @@ export default function Dashboard({
                     ref={simulationRef}
                     style={{
                       width: '100%',
-                      height: '120px',
+                      height: '140px',
                       position: 'relative'
                     }}
                   >
@@ -1608,56 +1631,58 @@ export default function Dashboard({
                 width: '100%',
                 marginBottom: '12px',
               }}>
-                <button
-                  style={{
-                    background: '#23232a',
-                    color: '#28a745',
-                    borderRadius: 6,
-                    padding: '4px 10px',
-                    fontWeight: 600,
-                    fontSize: '0.92em',
-                    zIndex: 9999,
-                    position: 'relative',
-                    textAlign: 'center',
-                    border: '2px solid #28a745',
-                    minWidth: 0,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    cursor: 'pointer',
-                    margin: '0 4px'
-                  }}
-                  onClick={() => setShowCompletedModal(true)}
-                  title="Click to view completed matches"
-                  type="button"
-                >
-                  {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} Matches Completed: {totalCompleted}
-                </button>
-                <button
-                  style={{
-                    background: '#23232a',
-                    color: '#e53e3e',
-                    borderRadius: 6,
-                    padding: '4px 10px',
-                    fontWeight: 600,
-                    fontSize: '0.92em',
-                    zIndex: 9999,
-                    position: 'relative',
-                    textAlign: 'center',
-                    border: '2px solid #e53e3e',
-                    minWidth: 0,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    cursor: 'pointer',
-                    margin: '0 4px'
-                  }}
-                  title="Schedule a match"
-                  type="button"
-                  onClick={() => handleScheduleMatch()}
-                >
-                  {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} Matches To Schedule: {matchesToScheduleCount}
-                </button>
+                                 <button
+                   style={{
+                     background: '#23232a',
+                     color: '#28a745',
+                     borderRadius: 8,
+                     padding: '8px 16px',
+                     fontWeight: 600,
+                     fontSize: '1.05em',
+                     zIndex: 9999,
+                     position: 'relative',
+                     textAlign: 'center',
+                     border: '2px solid #28a745',
+                     minWidth: 0,
+                     whiteSpace: 'nowrap',
+                     overflow: 'hidden',
+                     textOverflow: 'ellipsis',
+                     cursor: 'pointer',
+                     margin: '0 8px',
+                     transition: 'all 0.2s ease'
+                   }}
+                   onClick={() => setShowCompletedModal(true)}
+                   title="Click to view completed matches"
+                   type="button"
+                 >
+                   {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} Matches Completed: {totalCompleted}
+                 </button>
+                 <button
+                   style={{
+                     background: '#23232a',
+                     color: '#e53e3e',
+                     borderRadius: 8,
+                     padding: '8px 16px',
+                     fontWeight: 600,
+                     fontSize: '1.05em',
+                     zIndex: 9999,
+                     position: 'relative',
+                     textAlign: 'center',
+                     border: '2px solid #e53e3e',
+                     minWidth: 0,
+                     whiteSpace: 'nowrap',
+                     overflow: 'hidden',
+                     textOverflow: 'ellipsis',
+                     cursor: 'pointer',
+                     margin: '0 8px',
+                     transition: 'all 0.2s ease'
+                   }}
+                   title="Schedule a match"
+                   type="button"
+                   onClick={() => handleScheduleMatch()}
+                 >
+                   {effectivePhase === "challenge" ? "Phase 2" : effectivePhase === "scheduled" ? "Phase 1" : effectivePhase} Matches To Schedule: {matchesToScheduleCount}
+                 </button>
               </div>
             </div>
           </section>
