@@ -472,8 +472,8 @@ button:hover {
 body .main-app-content {
   max-width: 1200px !important;
   width: 100% !important;
-  margin: 2rem auto !important;
-  padding: 1.5rem 1rem 2.5rem 1rem !important;
+  margin: 1rem auto !important;
+  padding: 1rem 1rem 2.5rem 1rem !important;
   box-sizing: border-box !important;
   display: block !important;
   word-break: break-word !important;

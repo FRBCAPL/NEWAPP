@@ -304,6 +304,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0.35;
+  filter: blur(1px);
 }
 
 .poolBackground img,
@@ -317,9 +319,11 @@
 /* Mobile responsive pool table */
 @media (max-width: 768px) {
   .poolBackground {
-    width: 100%;
-    max-width: 100%;
-    aspect-ratio: auto;
+    width: 60%;
+    max-width: 500px;
+    aspect-ratio: 2/1;
+    opacity: 0.35;
+    filter: blur(1px);
   }
 }
 
@@ -394,23 +398,45 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   z-index: 999;
+  backdrop-filter: blur(2px);
 }
 
 /* Sidebar close button for mobile */
 .closeSidebarButton {
   display: none;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: var(--chat-red);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 1003;
+  box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3);
+  transition: all 0.2s ease;
+}
+
+.closeSidebarButton:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(229, 57, 53, 0.4);
 }
 
 /* Mobile Navigation Buttons */
 .mobileNavButtons {
   display: none;
   flex-direction: column;
-  gap: 0.5em;
-  padding: 1em;
+  gap: 0.8em;
+  padding: 1.2em;
   border-bottom: 1px solid var(--chat-border);
   margin-bottom: 1em;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 0 0 12px 12px;
 }
 
 .mobileNavButton {
@@ -805,8 +831,11 @@
   }
   
   .poolBackground {
-    width: 80%;
-    max-width: 400px;
+    width: 60%;
+    max-width: 500px;
+    aspect-ratio: 2/1;
+    opacity: 0.15;
+    filter: blur(1px);
   }
 }
 
@@ -849,8 +878,11 @@
   }
   
   .poolBackground {
-    width: 85%;
-    max-width: 450px;
+    width: 60%;
+    max-width: 500px;
+    aspect-ratio: 2/1;
+    opacity: 0.15;
+    filter: blur(1px);
   }
   
   .messagesArea {
@@ -878,110 +910,277 @@
 
 @media (max-width: 600px) {
   .topNavBar {
-    padding: 0.4em 0.6em;
-    gap: 0.3em;
+    padding: 1.2em 1.8em 0.8em 1.8em;
+    gap: 0.8em;
+    flex-wrap: nowrap;
+    min-height: 80px;
   }
   
   .chatGreeting {
-    font-size: 0.95em;
-    margin: 0;
+    font-size: 1.25em;
+    margin: 0 1em;
+    order: unset;
+    width: auto;
+    text-align: center;
+    margin-top: 0;
+  }
+  
+  .buttonRow {
+    order: unset;
+    gap: 0.8em;
+  }
+  
+  .logoutWithTimer {
+    order: unset;
+    gap: 0.8em;
+    align-items: center;
   }
   
   .hamburgerButton {
-    padding: 0.25em;
-    font-size: 1.1em;
-    min-width: 28px;
-    min-height: 28px;
+    padding: 0.5em;
+    font-size: 1.5em;
+    min-width: 44px;
+    min-height: 44px;
+    margin: 0 1em 0 0;
+  }
+  
+  .topChatButton {
+    padding: 0.7em 1.4em;
+    font-size: 0.95em;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 12px;
   }
   
   .mainChatArea {
-    margin-top: 35px;
-    height: calc(100% - 35px);
+    margin-top: 80px;
+    height: calc(100% - 80px);
   }
   
   .poolBackground {
-    width: 90%;
-    max-width: 400px;
+    width: 60%;
+    max-width: 500px;
+    aspect-ratio: 2/1;
+    opacity: 0.15;
+    filter: blur(1px);
   }
   
   .messagesArea {
-    padding: 0.7rem;
+    padding: 1rem;
+    margin-bottom: 0;
   }
   
   .messageItem {
-    padding: 0.7rem;
-    margin-bottom: 0.7rem;
-    max-width: 90%;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    max-width: 70%;
     font-size: 0.95rem;
+    border-radius: 18px;
   }
   
   .messageInputContainer {
-    padding: 0.7rem;
-    gap: 0.5rem;
+    position: relative;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    padding: 1rem;
+    gap: 0.8rem;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: none;
+    border-top: 2px solid var(--chat-border);
+    z-index: 2;
   }
   
   .messageInput {
-    padding: 0.7rem 0.9rem;
+    padding: 0.8rem 1rem;
     font-size: 0.95rem;
     min-height: 44px;
+    border-radius: 12px;
+    flex: 1;
   }
   
   .sendButton {
-    padding: 0.7rem 1.3rem;
-    font-size: 0.9rem;
+    padding: 1rem 1.8rem;
+    font-size: 1rem;
     min-width: 44px;
     min-height: 44px;
+    border-radius: 16px;
+  }
+  
+  .timerBox {
+    font-size: 0.9em;
+    padding: 0.4em 0.9em;
+    border-radius: 8px;
   }
 }
 
 @media (max-width: 480px) {
   .topNavBar {
     flex-direction: row;
-    gap: 0.3em;
-    padding: 0.4em 0.5em;
+    gap: 0.8em;
+    padding: 1.2em 1.8em 0.8em 1.8em;
     align-items: center;
     justify-content: space-between;
+    min-height: 80px;
   }
   
   .chatGreeting {
-    font-size: 0.9em;
-    margin: 0;
-    text-align: left;
+    font-size: 1.25em;
+    margin: 0 1em;
+    text-align: center;
     flex: 1;
+    order: unset;
+    width: auto;
+    margin-top: 0;
+  }
+  
+  .buttonRow {
+    order: unset;
+    gap: 0.8em;
+  }
+  
+  .logoutWithTimer {
+    order: unset;
+    gap: 0.8em;
   }
   
   .hamburgerButton {
-    margin: 0;
-    padding: 0.2em;
-    font-size: 1em;
-    min-width: 24px;
-    min-height: 24px;
+    margin: 0 1em 0 0;
+    padding: 0.5em;
+    font-size: 1.5em;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .topChatButton {
+    padding: 0.7em 1.4em;
+    font-size: 0.95em;
+    min-width: 44px;
+    min-height: 44px;
   }
   
   .mainChatArea {
-    margin-top: 30px;
-    height: calc(100% - 30px);
+    margin-top: 80px;
+    height: calc(100% - 80px);
   }
   
   .poolBackground {
-    width: 95%;
-    max-width: 350px;
+    width: 60%;
+    max-width: 500px;
+    aspect-ratio: 2/1;
+    opacity: 0.15;
+    filter: blur(1px);
   }
   
   .messagesArea {
-    padding: 0.6rem;
+    padding: 1rem;
+    margin-bottom: 0;
+  }
+  
+  .messageItem {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    max-width: 70%;
+    font-size: 0.95rem;
+    border-radius: 18px;
+  }
+  
+  .messageInputContainer {
+    position: relative;
+    padding: 1rem;
+    gap: 0.8rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 2px solid var(--chat-border);
+  }
+  
+  .messageInput {
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    min-height: 44px;
+  }
+  
+  .sendButton {
+    padding: 1rem 1.8rem;
+    font-size: 1rem;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .timerBox {
+    font-size: 0.9em;
+    padding: 0.4em 0.9em;
+  }
+}
+
+@media (max-width: 375px) {
+  .topNavBar {
+    padding: 0.5em 0.6em;
+    gap: 0.3em;
+    min-height: 50px;
+  }
+  
+  .chatGreeting {
+    font-size: 0.95em;
+    margin: 0;
+    order: 2;
+    width: 100%;
+    text-align: center;
+    margin-top: 0.2em;
+  }
+  
+  .buttonRow {
+    order: 1;
+    gap: 0.3em;
+  }
+  
+  .logoutWithTimer {
+    order: 3;
+    gap: 0.3em;
+  }
+  
+  .hamburgerButton {
+    padding: 0.25em;
+    font-size: 1.1em;
+    min-width: 36px;
+    min-height: 36px;
+    margin: 0 0.2em 0 0;
+  }
+  
+  .topChatButton {
+    padding: 0.4em 0.7em;
+    font-size: 0.8rem;
+    min-width: 36px;
+    min-height: 36px;
+  }
+  
+  .mainChatArea {
+    margin-top: 50px;
+    height: calc(100% - 50px);
+  }
+  
+  .poolBackground {
+    width: 60%;
+    max-width: 500px;
+    aspect-ratio: 2/1;
+    opacity: 0.15;
+    filter: blur(1px);
+  }
+  
+  .messagesArea {
+    padding: 0.7rem;
+    margin-bottom: 70px;
   }
   
   .messageItem {
     padding: 0.6rem;
     margin-bottom: 0.6rem;
-    max-width: 95%;
+    max-width: 98%;
     font-size: 0.9rem;
   }
   
   .messageInputContainer {
-    padding: 0.6rem;
-    gap: 0.4rem;
+    padding: 0.7rem;
+    gap: 0.5rem;
   }
   
   .messageInput {
@@ -991,68 +1190,15 @@
   }
   
   .sendButton {
-    padding: 0.6rem 1.1rem;
+    padding: 0.6rem 1rem;
     font-size: 0.85rem;
     min-width: 44px;
     min-height: 44px;
   }
-}
-
-@media (max-width: 375px) {
-  .topNavBar {
-    padding: 0.3em 0.4em;
-    gap: 0.2em;
-  }
   
-  .chatGreeting {
-    font-size: 0.85em;
-    margin: 0;
-  }
-  
-  .hamburgerButton {
-    padding: 0.15em;
-    font-size: 0.9em;
-    min-width: 20px;
-    min-height: 20px;
-  }
-  
-  .mainChatArea {
-    margin-top: 25px;
-    height: calc(100% - 25px);
-  }
-  
-  .poolBackground {
-    width: 100%;
-    max-width: 320px;
-  }
-  
-  .messagesArea {
-    padding: 0.5rem;
-  }
-  
-  .messageItem {
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    max-width: 98%;
-    font-size: 0.85rem;
-  }
-  
-  .messageInputContainer {
-    padding: 0.5rem;
-    gap: 0.3rem;
-  }
-  
-  .messageInput {
-    padding: 0.5rem 0.7rem;
-    font-size: 0.85rem;
-    min-height: 44px;
-  }
-  
-  .sendButton {
-    padding: 0.5rem 0.9rem;
-    font-size: 0.8rem;
-    min-width: 44px;
-    min-height: 44px;
+  .timerBox {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
   }
 }
 
@@ -1068,8 +1214,23 @@
   
   .generalChannelRow,
   .channelListRow {
-    min-height: 44px;
-    padding: 12px 16px;
+    min-height: 48px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    margin: 2px 8px;
+    transition: all 0.2s ease;
+  }
+  
+  .generalChannelRow:hover,
+  .channelListRow:hover {
+    background: rgba(229, 57, 53, 0.1);
+    transform: translateX(4px);
+  }
+  
+  .generalChannelRow.active,
+  .channelListRow.active {
+    background: rgba(229, 57, 53, 0.2);
+    border-left: 3px solid var(--chat-red);
   }
   
   .messageInput {
@@ -1080,6 +1241,7 @@
   .messagesArea {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
+    padding-bottom: 20px;
   }
   
   /* Better mobile spacing */
@@ -1091,10 +1253,54 @@
   .sidebar {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    width: 280px;
+    max-width: 85vw;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
   }
   
   .channelListWrapper {
     padding-bottom: 20px;
+  }
+  
+  /* Show mobile nav buttons on mobile */
+  .mobileNavButtons {
+    display: flex;
+  }
+  
+  /* Hide desktop nav buttons on mobile */
+  .buttonRow,
+  .logoutWithTimer {
+    display: none;
+  }
+  
+  /* Better mobile timer display */
+  .mobileTimerBox {
+    background: rgba(229, 57, 53, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--chat-red);
+    border: 1px solid rgba(229, 57, 53, 0.3);
+  }
+  
+  /* Improve mobile message display */
+  .messageItem {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .messageItemLeft {
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid var(--chat-accent);
+  }
+  
+  .messageItemRight {
+    background: rgba(229, 57, 53, 0.1);
+    border-right: 3px solid var(--chat-red);
   }
 }
 

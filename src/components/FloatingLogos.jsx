@@ -13,7 +13,7 @@ export default function FloatingLogos() {
   const [vh, setVh] = useState(window.innerHeight);
   
   // Create configurations for each logo (now 8 total: 5 original + 3 new balls)
-  const [logoStates] = useState(() => [0,1,2,3,4,5,6,7].map(() => {
+  const [logoStates] = useState(() => [0,1,2,3,4,5,6,7].map((index) => {
     const baseSpeed = 0.1 + Math.random() * 0.15; // Slightly slower base speed
     const direction = Math.random() * Math.PI * 2;
     
@@ -28,6 +28,8 @@ export default function FloatingLogos() {
       speedCategory: 'base',
       lastChange: Date.now(),
       changeInterval: 8000 + Math.random() * 12000,
+      // Add random rotation direction for balls (indices 5, 6, 7)
+      rotationDirection: index >= 5 ? (Math.random() > 0.5 ? 1 : -1) : 0,
     };
   }));
 
@@ -198,7 +200,8 @@ export default function FloatingLogos() {
            const speed = Math.sqrt(currentState.vx * currentState.vx + currentState.vy * currentState.vy);
            // Add rotation based on speed and delta time for smooth cumulative rotation
            // Increased base rotation speed so slowest balls still roll noticeably
-           const rotationIncrement = ((speed * 2.0 + 0.3) * (deltaTime / 16));
+           // Use random rotation direction for each ball
+           const rotationIncrement = ((speed * 2.0 + 0.3) * (deltaTime / 16)) * (currentState.rotationDirection || 1);
            rotation += rotationIncrement;
          }
          

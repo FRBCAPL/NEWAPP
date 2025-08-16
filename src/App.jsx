@@ -25,13 +25,14 @@ function AppHeader() {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      marginBottom: "1.5rem",
-      position: "sticky",
+      padding: "1rem 0",
+      position: "fixed",
       top: 0,
-      zIndex: 2,
-      background: "rgba(20,20,20,0.92)",
-      backdropFilter: "blur(2px)",
-      borderBottom: "1.5px solid #333"
+      left: 0,
+      zIndex: 1000,
+      background: "rgba(0,0,0,0.8)",
+      backdropFilter: "blur(6px)",
+      boxShadow: "0 4px 20px rgba(0,0,0,0.5)"
     }}>
       <span className="app-header-title">
         Front Range Pool League
@@ -131,8 +132,8 @@ function App() {
     <HashRouter>
       <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
         <FloatingLogos />
-        <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh" }}>
-          <AppHeader />
+        <AppHeader />
+        <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "calc(100vh - 80px)", paddingTop: "80px" }}>
           <Routes>
             <Route
               path="/admin"

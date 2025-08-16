@@ -13,6 +13,16 @@
   -webkit-backdrop-filter: blur(3px);
 }
 
+/* Mobile-specific modal positioning to account for fixed header */
+@media (max-width: 768px) {
+  .modalOverlay {
+    top: 80px; /* Account for fixed header height */
+    height: calc(100vh - 80px); /* Subtract header height from viewport height */
+    align-items: flex-start; /* Align to top instead of center */
+    padding-top: 20px; /* Add some padding from the top */
+  }
+}
+
 @keyframes modalBounceIn {
   0% { opacity: 0; transform: scale(0.95) translateY(-40px);}
   70% { opacity: 1; transform: scale(1.02) translateY(8px);}
@@ -37,6 +47,17 @@
   overflow: hidden;
   padding: 0;
   position: relative;
+}
+
+/* Mobile-specific modal content adjustments */
+@media (max-width: 768px) {
+  .modalContent {
+    max-width: calc(100vw - 40px); /* Account for padding */
+    width: calc(100vw - 40px);
+    min-width: auto;
+    height: calc(100vh - 120px); /* Account for header + padding */
+    margin: 0 20px;
+  }
 }
 
 /* --- Modal Header --- */

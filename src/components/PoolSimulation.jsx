@@ -27,18 +27,29 @@ const SIDE_MARGIN_FACTOR = 1.8;
 function isInPocket(ball, scale = 1) {
   const scaledBallSize = BALL_SIZE * scale;
   const scaledBallRadius = BALL_RADIUS * scale;
+  
+  // Use the same pocket positions as getPockets for consistency
+  const container = document.querySelector('[data-pool-container]');
+  if (!container) return false;
+  
+  const containerWidth = container.offsetWidth;
+  const containerHeight = container.offsetHeight;
+  const simWidth = containerWidth / scale;
+  const simHeight = containerHeight / scale;
+  
   const pockets = [
-    { x: PLAYFIELD_OFFSET_X, y: PLAYFIELD_OFFSET_Y, margin: scaledBallSize * CORNER_MARGIN_FACTOR },
-    { x: PLAYFIELD_OFFSET_X + TABLE_WIDTH, y: PLAYFIELD_OFFSET_Y, margin: scaledBallSize * CORNER_MARGIN_FACTOR },
-    { x: PLAYFIELD_OFFSET_X, y: PLAYFIELD_OFFSET_Y + TABLE_HEIGHT, margin: scaledBallSize * CORNER_MARGIN_FACTOR },
-    { x: PLAYFIELD_OFFSET_X + TABLE_WIDTH, y: PLAYFIELD_OFFSET_Y + TABLE_HEIGHT, margin: scaledBallSize * CORNER_MARGIN_FACTOR },
-    { x: PLAYFIELD_OFFSET_X + TABLE_WIDTH / 2, y: PLAYFIELD_OFFSET_Y, margin: scaledBallSize * SIDE_MARGIN_FACTOR },
-    { x: PLAYFIELD_OFFSET_X + TABLE_WIDTH / 2, y: PLAYFIELD_OFFSET_Y + TABLE_HEIGHT, margin: scaledBallSize * SIDE_MARGIN_FACTOR }
+    { x: 0, y: 0, margin: scaledBallSize * 0.8 },
+    { x: simWidth, y: 0, margin: scaledBallSize * 0.8 },
+    { x: 0, y: simHeight, margin: scaledBallSize * 0.8 },
+    { x: simWidth, y: simHeight, margin: scaledBallSize * 0.8 },
+    { x: simWidth / 2, y: 0, margin: scaledBallSize * 0.6 },
+    { x: simWidth / 2, y: simHeight, margin: scaledBallSize * 0.6 }
   ];
+  
   const cx = ball.x;
   const cy = ball.y;
   return pockets.some(
-    pocket => Math.hypot(cx - pocket.x, cy - pocket.y) < pocket.margin + scaledBallRadius * 0.85
+    pocket => Math.hypot(cx - pocket.x, cy - pocket.y) < pocket.margin + scaledBallRadius * 0.9
   );
 }
 
@@ -83,7 +94,8 @@ function lineIntersectsBall(x1, y1, x2, y2, ball, ignoreKey, scale = 1) {
   const t = Math.max(0, Math.min(1, (AC.x * AB.x + AC.y * AB.y) / ab2));
   const closest = {x: A.x + AB.x * t, y: A.y + AB.y * t};
   const dist = Math.hypot(closest.x - C.x, closest.y - C.y);
-  return dist < BALL_SIZE * scale * 0.95;
+  // Much more forgiving collision detection for better shot making
+  return dist < BALL_SIZE * scale * 0.3;
 }
 
 function getPockets(containerWidth = TABLE_WIDTH, containerHeight = TABLE_HEIGHT, scale = 1) {
@@ -99,13 +111,16 @@ function getPockets(containerWidth = TABLE_WIDTH, containerHeight = TABLE_HEIGHT
   ];
 }
 
-// --- New: Aim at the pocket mouth/opening, not the center
+// --- Professional pocket aiming
 function getPocketOpening(pocket, target) {
-  // Offset toward cushion nose; 0.6*BALL_SIZE is a good value for realism
-  const offset = BALL_SIZE * 0.6;
+  // For basic shots, aim directly at the pocket center
   const toPocketX = pocket.x - target.x;
   const toPocketY = pocket.y - target.y;
   const toPocketLen = Math.hypot(toPocketX, toPocketY);
+  
+  // Use no offset for perfect aiming
+  const offset = 0;
+  
   return {
     x: pocket.x - (toPocketX / toPocketLen) * offset,
     y: pocket.y - (toPocketY / toPocketLen) * offset
@@ -139,7 +154,7 @@ export default function PoolSimulation() {
     });
   }
 
-  // Rack balls at start or rerack
+  // Professional ball racking
   function rackBalls() {
     // Calculate table dimensions based on actual container size
     const container = containerRef.current;
@@ -152,13 +167,15 @@ export default function PoolSimulation() {
     const simWidth = containerWidth / scaleRef.current;
     const simHeight = containerHeight / scaleRef.current;
     
-    const rackApexX = simWidth * 0.3;
+    // Professional rack position - slightly off center for better break angles
+    const rackApexX = simWidth * 0.25;
     const rackApexY = simHeight / 2;
     const rackSpacingX = BALL_SIZE * 0.87;
-    const rackSpacingY = BALL_SIZE / 2;
+    const rackSpacingY = BALL_SIZE * 0.5;
 
+    // Minimal jitter for realistic rack
     function jitter() {
-      return (Math.random() - 0.5) * 2.5;
+      return (Math.random() - 0.5) * 1.0; // Reduced jitter for tighter rack
     }
 
     balls.current = {
@@ -185,8 +202,8 @@ export default function PoolSimulation() {
       },
       cue: {
         ref: ballRefs.current.cue,
-        x: simWidth * 0.8 + jitter(),
-        y: simHeight / 2 + jitter(),
+        x: simWidth * 0.85, // Professional cue ball position
+        y: simHeight / 2,
         vx: 0, vy: 0, isMoving: false,
         visible: true
       }
@@ -241,7 +258,7 @@ export default function PoolSimulation() {
     // eslint-disable-next-line
   }, [isInitialized]);
 
-  // Break shot: first shot is a blast, then AI takes over
+  // Professional break shot
   function breakCueBall() {
     if (!balls.current.cue) return;
     if (balls.current.cue.isMoving) return;
@@ -250,14 +267,38 @@ export default function PoolSimulation() {
     shotCount.current += 1;
 
     if (shotCount.current === 1) {
+      // Professional break shot - aim for the second ball in the rack
       const rackApex = balls.current[8];
-      const dx = rackApex.x - cue.x;
-      const dy = rackApex.y - cue.y;
+      const secondBall = balls.current[9]; // Second ball in rack
+      
+      // Calculate break angle - professional players often break from the side
+      const container = containerRef.current;
+      if (!container) return;
+      
+      const containerWidth = container.offsetWidth;
+      const containerHeight = container.offsetHeight;
+      const simWidth = containerWidth / scaleRef.current;
+      const simHeight = containerHeight / scaleRef.current;
+      
+      // Professional break position - from the side rail
+      const breakPositionX = simWidth * 0.85; // Near the side rail
+      const breakPositionY = simHeight * 0.5; // Center height
+      
+      // Move cue ball to professional break position
+      cue.x = breakPositionX;
+      cue.y = breakPositionY;
+      
+      // Aim for the second ball with slight offset for better spread
+      const targetX = secondBall.x + (Math.random() - 0.5) * BALL_SIZE * 0.3;
+      const targetY = secondBall.y + (Math.random() - 0.5) * BALL_SIZE * 0.3;
+      
+      const dx = targetX - cue.x;
+      const dy = targetY - cue.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      // Add a random angle (±5 degrees) and speed (15-17)
-      const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * (Math.PI / 36);
-      const breakSpeed = 15 + Math.random() * 2;
+      // Professional break speed and angle
+      const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * (Math.PI / 45); // ±2 degrees
+      const breakSpeed = 18 + Math.random() * 3; // 18-21 speed for power break
 
       cue.vx = Math.cos(angle) * breakSpeed;
       cue.vy = Math.sin(angle) * breakSpeed;
@@ -269,7 +310,7 @@ export default function PoolSimulation() {
     smartCueShot();
   }
 
-  // AI shot logic (now aims at pocket mouth)
+    // Professional AI - plays like a skilled player
   function smartCueShot() {
     const objectBallOrder = ["8", "9", "10"];
     const targetKey = objectBallOrder.find(key => balls.current[key]?.visible);
@@ -284,178 +325,124 @@ export default function PoolSimulation() {
     
     const containerWidth = container.offsetWidth;
     const containerHeight = container.offsetHeight;
+    const simWidth = containerWidth / scaleRef.current;
+    const simHeight = containerHeight / scaleRef.current;
     const pockets = getPockets(containerWidth, containerHeight, scaleRef.current);
 
-    let best = null;
+    // Professional shot selection - evaluate all possible shots
+    let bestShot = null;
     let bestScore = Infinity;
 
-    // ---------- 1. Try straight-in shots (aiming at the pocket mouth) ----------
     for (const pocket of pockets) {
-      const opening = getPocketOpening(pocket, target);
-      const toOpeningX = opening.x - target.x;
-      const toOpeningY = opening.y - target.y;
-      const toOpeningLen = Math.hypot(toOpeningX, toOpeningY);
+      // Calculate ghost ball position for this pocket
+      const toPocketX = pocket.x - target.x;
+      const toPocketY = pocket.y - target.y;
+      const toPocketLen = Math.hypot(toPocketX, toPocketY);
+      
+      // Professional pocket targeting - aim for pocket center, not point
+      let pocketCenterX = pocket.x;
+      let pocketCenterY = pocket.y;
+      
+             // Simple pocket targeting - aim directly at the pocket
+       // No complex offsets, just aim at the pocket center
+      
+      // Calculate ghost ball position aiming at pocket center
+      const toCenterX = pocketCenterX - target.x;
+      const toCenterY = pocketCenterY - target.y;
+      const toCenterLen = Math.hypot(toCenterX, toCenterY);
+      
+      const ghostX = target.x - (toCenterX / toCenterLen) * BALL_SIZE;
+      const ghostY = target.y - (toCenterY / toCenterLen) * BALL_SIZE;
 
-      // Ghost ball position for straight-in shot
-      const ghostX = target.x - (toOpeningX / toOpeningLen) * BALL_SIZE;
-      const ghostY = target.y - (toOpeningY / toOpeningLen) * BALL_SIZE;
-
-      // Check if cue can hit ghost ball directly (no balls in the way)
-      let blocked = false;
+      // Check if shot is blocked by other balls
+      let pathClear = true;
       for (const otherKey of objectBallOrder) {
         if (otherKey === targetKey) continue;
-        if (balls.current[otherKey]?.visible &&
-            lineIntersectsBall(cue.x, cue.y, ghostX, ghostY, {...balls.current[otherKey], key: otherKey}, targetKey)) {
-          blocked = true;
-          break;
+        if (balls.current[otherKey]?.visible) {
+          const otherBall = balls.current[otherKey];
+          const distToPath = Math.abs((ghostY - cue.y) * otherBall.x - (ghostX - cue.x) * otherBall.y + ghostX * cue.y - ghostY * cue.x) / Math.hypot(ghostX - cue.x, ghostY - cue.y);
+          if (distToPath < BALL_SIZE * 0.6) {
+            pathClear = false;
+            break;
+          }
         }
       }
 
-      // Check if object ball path to pocket opening is clear
-      let pathBlocked = false;
-      for (const otherKey of objectBallOrder.concat("cue")) {
-        if (otherKey === targetKey) continue;
-        if (balls.current[otherKey]?.visible &&
-            lineIntersectsBall(target.x, target.y, opening.x, opening.y, {...balls.current[otherKey], key: otherKey}, targetKey)) {
-          pathBlocked = true;
-          break;
-        }
-      }
+      if (!pathClear) continue;
 
-      // Estimate scratch risk: if cue ball path after hit goes toward a pocket
-      let scratchRisk = 0;
-      for (const testPocket of pockets) {
-        const distToPocket = Math.hypot(ghostX - testPocket.x, ghostY - testPocket.y);
-        if (distToPocket < BALL_SIZE * 1.8) scratchRisk += 1;
-      }
-
-      // Prefer cue ball finishing near center table
-      const centerX = TABLE_WIDTH / 2, centerY = TABLE_HEIGHT / 2;
+      // Professional shot evaluation
       const cueToGhost = Math.hypot(cue.x - ghostX, cue.y - ghostY);
-      const finishDist = Math.hypot(ghostX - centerX, ghostY - centerY);
-
-      // Score: block penalty, path block penalty, scratch penalty, shot distance, cue finish
-      const score =
-        (blocked ? 1000 : 0) +
-        (pathBlocked ? 1000 : 0) +
-        scratchRisk * 150 +
-        cueToGhost * 0.7 +
-        finishDist * 0.3;
+      const targetToPocket = Math.hypot(target.x - pocket.x, target.y - pocket.y);
+      
+      // Score based on difficulty and position play
+      let score = cueToGhost * 0.05; // Distance penalty
+      score += targetToPocket * 0.02; // Object ball distance penalty
+      
+      // Heavily favor easy shots
+      if (cueToGhost < BALL_SIZE * 3) score *= 0.01; // 99% bonus for very close shots
+      else if (cueToGhost < BALL_SIZE * 6) score *= 0.1; // 90% bonus for close shots
+      else if (cueToGhost < BALL_SIZE * 10) score *= 0.3; // 70% bonus for medium shots
+      
+      // Position play bonus - prefer shots that leave good position
+      const nextTargetKey = objectBallOrder.find(key => key !== targetKey && balls.current[key]?.visible);
+      if (nextTargetKey) {
+        const nextTarget = balls.current[nextTargetKey];
+        const predictedCueX = ghostX + (ghostX - cue.x) * 0.3; // Predict cue ball position
+        const predictedCueY = ghostY + (ghostY - cue.y) * 0.3;
+        const positionDistance = Math.hypot(predictedCueX - nextTarget.x, predictedCueY - nextTarget.y);
+        if (positionDistance < BALL_SIZE * 8) score *= 0.5; // 50% bonus for good position
+      }
+      
+      // Small randomness for realism
+      score += Math.random() * 0.2;
 
       if (score < bestScore) {
         bestScore = score;
-        best = { ghostX, ghostY };
+        bestShot = { ghostX, ghostY, targetToPocket, cueToGhost, pocket };
       }
     }
 
-    // ---------- 2. Try simple bank shots if no straight shot found ----------
-    if (!best || bestScore > 999) {
-      for (const pocket of pockets) {
-        // Try banking the object ball off each rail
-        const simWidth = containerWidth / scaleRef.current;
-        const simHeight = containerHeight / scaleRef.current;
-        const rails = [
-          { x: Math.max(target.x, 2 * BALL_RADIUS), y: 0 }, // top
-          { x: Math.max(target.x, 2 * BALL_RADIUS), y: simHeight }, // bottom
-          { x: 0, y: Math.max(target.y, 2 * BALL_RADIUS) }, // left
-          { x: simWidth, y: Math.max(target.y, 2 * BALL_RADIUS) } // right
-        ];
-        for (const rail of rails) {
-          // Reflect the pocket opening across the rail to get the "aim point"
-          const opening = getPocketOpening(pocket, target);
-          let reflectX = opening.x, reflectY = opening.y;
-          if (rail.x === 0) reflectX = -opening.x;
-          if (rail.x === simWidth) reflectX = 2 * simWidth - opening.x;
-          if (rail.y === 0) reflectY = -opening.y;
-          if (rail.y === simHeight) reflectY = 2 * simHeight - opening.y;
-
-          // Calculate the direction from object ball to the "virtual pocket"
-          const toVirtualX = reflectX - target.x;
-          const toVirtualY = reflectY - target.y;
-          const toVirtualLen = Math.hypot(toVirtualX, toVirtualY);
-          const ghostX = target.x - (toVirtualX / toVirtualLen) * BALL_SIZE;
-          const ghostY = target.y - (toVirtualY / toVirtualLen) * BALL_SIZE;
-
-          // Check if cue can hit ghost ball directly (no balls in the way)
-          let blocked = false;
-          for (const otherKey of objectBallOrder) {
-            if (otherKey === targetKey) continue;
-            if (balls.current[otherKey]?.visible &&
-                lineIntersectsBall(cue.x, cue.y, ghostX, ghostY, {...balls.current[otherKey], key: otherKey}, targetKey)) {
-              blocked = true;
-              break;
-            }
-          }
-
-          // Score: block penalty, prefer banks less than straight shots
-          const cueToGhost = Math.hypot(cue.x - ghostX, cue.y - ghostY);
-          const score =
-            (blocked ? 2000 : 0) +
-            cueToGhost * 1.2 + // banks are harder!
-            500; // make banks less preferred than straight shots
-
-          if (score < bestScore) {
-            bestScore = score;
-            best = { ghostX, ghostY };
-          }
-        }
-      }
-    }
-
-    // ---------- 3. Try simple kick shots if still no shot ----------
-    if (!best || bestScore > 1999) {
-      // Try cue ball off each rail to hit the object ball
-      const simWidth = containerWidth / scaleRef.current;
-      const simHeight = containerHeight / scaleRef.current;
-      const rails = [
-        { x: cue.x, y: 0 }, // top
-        { x: cue.x, y: simHeight }, // bottom
-        { x: 0, y: cue.y }, // left
-        { x: simWidth, y: cue.y } // right
-      ];
-      for (const rail of rails) {
-        // Reflect the object ball across the rail to get the "aim point"
-        let reflectX = target.x, reflectY = target.y;
-        if (rail.x === 0) reflectX = -target.x;
-        if (rail.x === simWidth) reflectX = 2 * simWidth - target.x;
-        if (rail.y === 0) reflectY = -target.y;
-        if (rail.y === simHeight) reflectY = 2 * simHeight - target.y;
-
-        // Calculate the direction from cue to the "virtual object ball"
-        const toVirtualX = reflectX - cue.x;
-        const toVirtualY = reflectY - cue.y;
-        const toVirtualLen = Math.hypot(toVirtualX, toVirtualY);
-        const ghostX = cue.x + (toVirtualX / toVirtualLen) * (toVirtualLen * 0.9);
-        const ghostY = cue.y + (toVirtualY / toVirtualLen) * (toVirtualLen * 0.9);
-
-        // Score: prefer shorter kicks, penalize
-        const cueToGhost = Math.hypot(cue.x - ghostX, cue.y - ghostY);
-        const score = cueToGhost * 2 + 2000; // kicks are even less preferred
-
-        if (score < bestScore) {
-          bestScore = score;
-          best = { ghostX, ghostY };
-        }
-      }
-    }
-
-    // ---------- 4. Fallback: random gentle shot ----------
-    if (!best) {
-      const angle = Math.atan2(target.y - cue.y, target.x - cue.x) + (Math.random() - 0.5) * 0.2;
+    // Fallback: simple shot if no good option found
+    if (!bestShot) {
+      const angle = Math.atan2(target.y - cue.y, target.x - cue.x);
       const dist = Math.hypot(target.x - cue.x, target.y - cue.y);
-      best = {
-        ghostX: cue.x + Math.cos(angle) * dist * 0.8,
-        ghostY: cue.y + Math.sin(angle) * dist * 0.8
+      bestShot = {
+        ghostX: cue.x + Math.cos(angle) * dist * 0.7,
+        ghostY: cue.y + Math.sin(angle) * dist * 0.7,
+        targetToPocket: 1000,
+        cueToGhost: dist
       };
     }
 
-    // Shoot!
-    const shotDx = best.ghostX - cue.x;
-    const shotDy = best.ghostY - cue.y;
-    const shotLen = Math.hypot(shotDx, shotDy);
-    const shotSpeed = 7;
-    cue.vx = (shotDx / shotLen) * shotSpeed;
-    cue.vy = (shotDy / shotLen) * shotSpeed;
+    // Professional power control
+    const dx = bestShot.ghostX - cue.x;
+    const dy = bestShot.ghostY - cue.y;
+    const dist = Math.hypot(dx, dy);
+    
+    let shotSpeed;
+    if (dist < BALL_SIZE * 2) {
+      shotSpeed = 3; // Gentle tap for very close shots
+    } else if (dist < BALL_SIZE * 4) {
+      shotSpeed = 4; // Soft stroke for close shots
+    } else if (dist < BALL_SIZE * 8) {
+      shotSpeed = 5; // Medium stroke for medium shots
+    } else if (dist < BALL_SIZE * 12) {
+      shotSpeed = 6; // Firm stroke for longer shots
+    } else {
+      shotSpeed = 7; // Power stroke for long shots
+    }
+    
+    // Adjust power based on object ball distance to pocket
+    if (bestShot.targetToPocket > BALL_SIZE * 6) {
+      shotSpeed += 1; // More power for longer object ball paths
+    }
+    
+    // Add slight randomness for realism
+    shotSpeed += (Math.random() - 0.5) * 0.3;
+    shotSpeed = Math.max(2, Math.min(8, shotSpeed)); // Keep within realistic bounds
+    
+    cue.vx = (dx / dist) * shotSpeed;
+    cue.vy = (dy / dist) * shotSpeed;
     cue.isMoving = true;
     animateBalls();
   }
@@ -477,8 +464,9 @@ export default function PoolSimulation() {
     // Calculate cushion bounds - cushions are the actual rail boundaries
     // The cushions form the playing area boundary, not the felt
     const cushionMargin = BALL_RADIUS * 3.5; // Midway point between too early and too late
+    const rightRailMargin = BALL_RADIUS * 4.5; // Larger margin for right rail to prevent going into rail
     const FELT_LEFT = cushionMargin;
-    const FELT_RIGHT = containerWidth / scaleRef.current - cushionMargin;
+    const FELT_RIGHT = containerWidth / scaleRef.current - rightRailMargin;
     const FELT_TOP = cushionMargin;
     const FELT_BOTTOM = containerHeight / scaleRef.current - cushionMargin;
 
@@ -492,38 +480,64 @@ export default function PoolSimulation() {
           let nextX = ball.x + ball.vx / subSteps;
           let nextY = ball.y + ball.vy / subSteps;
 
-          // --- Rail collision using cushion bounds ---
-          if (nextX < FELT_LEFT + BALL_RADIUS) {
-            ball.x = FELT_LEFT + BALL_RADIUS;
-            ball.vx = Math.abs(ball.vx) * 0.75; // Realistic cushion bounce
-          } else if (nextX > FELT_RIGHT - BALL_RADIUS) {
-            ball.x = FELT_RIGHT - BALL_RADIUS;
-            ball.vx = -Math.abs(ball.vx) * 0.75;
-          } else {
-            ball.x = nextX;
-          }
+          // Check for pocketing BEFORE rail collision
+          const container = containerRef.current;
+          if (container) {
+            const containerWidth = container.offsetWidth;
+            const containerHeight = container.offsetHeight;
+            const simWidth = containerWidth / scaleRef.current;
+            const simHeight = containerHeight / scaleRef.current;
+            
+            const pockets = [
+              { x: 0, y: 0 },
+              { x: simWidth, y: 0 },
+              { x: 0, y: simHeight },
+              { x: simWidth, y: simHeight },
+              { x: simWidth / 2, y: 0 },
+              { x: simWidth / 2, y: simHeight }
+            ];
+            
+            // Check if ball is going into a pocket
+            const isPocketed = pockets.some(pocket => {
+              const distance = Math.hypot(nextX - pocket.x, nextY - pocket.y);
+              // Very large detection area - make sure balls go in
+              return distance < BALL_SIZE * 4.0;
+            });
+            
+            if (isPocketed) {
+              console.log(`Ball ${key} pocketed! Position: (${nextX.toFixed(1)}, ${nextY.toFixed(1)})`);
+              ball.isMoving = false;
+              ball.visible = false;
+              if (!pocketedThisFrame.includes(key)) pocketedThisFrame.push(key);
+              if (ball.ref.current) {
+                ball.ref.current.style.opacity = 0;
+              }
+            } else {
+              // Only do rail collision if ball is not pocketed
+              // --- Rail collision using cushion bounds ---
+              if (nextX < FELT_LEFT + BALL_RADIUS) {
+                ball.x = FELT_LEFT + BALL_RADIUS;
+                ball.vx = Math.abs(ball.vx) * 0.75; // Realistic cushion bounce
+              } else if (nextX > FELT_RIGHT - BALL_RADIUS) {
+                ball.x = FELT_RIGHT - BALL_RADIUS;
+                ball.vx = -Math.abs(ball.vx) * 0.75;
+              } else {
+                ball.x = nextX;
+              }
 
-          if (nextY < FELT_TOP + BALL_RADIUS) {
-            ball.y = FELT_TOP + BALL_RADIUS;
-            ball.vy = Math.abs(ball.vy) * 0.75; // Realistic cushion bounce
-          } else if (nextY > FELT_BOTTOM - BALL_RADIUS) {
-            ball.y = FELT_BOTTOM - BALL_RADIUS;
-            ball.vy = -Math.abs(ball.vy) * 0.75;
-          } else {
-            ball.y = nextY;
-          }
+              if (nextY < FELT_TOP + BALL_RADIUS) {
+                ball.y = FELT_TOP + BALL_RADIUS;
+                ball.vy = Math.abs(ball.vy) * 0.75; // Realistic cushion bounce
+              } else if (nextY > FELT_BOTTOM - BALL_RADIUS) {
+                ball.y = FELT_BOTTOM - BALL_RADIUS;
+                ball.vy = -Math.abs(ball.vy) * 0.75;
+              } else {
+                ball.y = nextY;
+              }
 
-          // Apply friction
-          ball.vx *= Math.pow(friction, 1 / subSteps);
-          ball.vy *= Math.pow(friction, 1 / subSteps);
-
-          // Pocket detection
-          if (isInPocket(ball, scaleRef.current)) {
-            ball.isMoving = false;
-            ball.visible = false;
-            if (!pocketedThisFrame.includes(key)) pocketedThisFrame.push(key);
-            if (ball.ref.current) {
-              ball.ref.current.style.opacity = 0;
+              // Apply friction
+              ball.vx *= Math.pow(friction, 1 / subSteps);
+              ball.vy *= Math.pow(friction, 1 / subSteps);
             }
           }
 
@@ -566,27 +580,55 @@ export default function PoolSimulation() {
         }
       });
 
-      // Cue ball scratch
-      if (!balls.current.cue.visible) {
-        setTimeout(() => {
-          const pos = initialPositions.current["cue"];
-          if (pos) {
-            balls.current["cue"].x = pos.x;
-            balls.current["cue"].y = pos.y;
-          }
-          balls.current["cue"].vx = 0;
-          balls.current["cue"].vy = 0;
-          balls.current["cue"].isMoving = false;
-          balls.current["cue"].visible = true;
-          if (balls.current["cue"].ref.current) {
-            balls.current["cue"].ref.current.style.opacity = 1;
-          }
-          setTimeout(() => {
-            smartCueShot();
-          }, 500);
-        }, 800);
-        return;
-      }
+                  // Cue ball scratch - ball in hand
+            if (!balls.current.cue.visible) {
+              // Wait for all balls to stop before taking ball in hand
+              if (Object.values(balls.current).some(ball => ball.isMoving)) {
+                animationFrame.current = requestAnimationFrame(step);
+                return;
+              }
+              
+              // Ball in hand - place cue ball anywhere on table
+              const container = containerRef.current;
+              if (!container) return;
+              
+              const containerWidth = container.offsetWidth;
+              const containerHeight = container.offsetHeight;
+              const simWidth = containerWidth / scaleRef.current;
+              const simHeight = containerHeight / scaleRef.current;
+              
+              // Place cue ball in a good position for the next shot
+              const availableBalls = ["8", "9", "10"].filter(key => balls.current[key]?.visible);
+              if (availableBalls.length > 0) {
+                const targetKey = availableBalls[0]; // Hit lowest numbered ball first
+                const target = balls.current[targetKey];
+                
+                // Place cue ball near the target for an easy shot
+                const offsetX = (Math.random() - 0.5) * BALL_SIZE * 2;
+                const offsetY = (Math.random() - 0.5) * BALL_SIZE * 2;
+                
+                balls.current["cue"].x = target.x + offsetX;
+                balls.current["cue"].y = target.y + offsetY;
+              } else {
+                // Fallback position
+                balls.current["cue"].x = simWidth * 0.5;
+                balls.current["cue"].y = simHeight * 0.5;
+              }
+              
+              balls.current["cue"].vx = 0;
+              balls.current["cue"].vy = 0;
+              balls.current["cue"].isMoving = false;
+              balls.current["cue"].visible = true;
+              if (balls.current["cue"].ref.current) {
+                balls.current["cue"].ref.current.style.opacity = 1;
+              }
+              
+              // Wait before next shot after scratch
+              setTimeout(() => {
+                smartCueShot();
+              }, 1500);
+              return;
+            }
 
       // 10 ball pocketed (rerack)
       if (!balls.current["10"].visible) {
@@ -603,7 +645,7 @@ export default function PoolSimulation() {
         cueTimeout.current = setTimeout(() => {
           cueTimeout.current = null;
           smartCueShot();
-        }, 1200);
+        }, 2000); // Wait longer for balls to completely stop
       }
     }
 
@@ -611,18 +653,19 @@ export default function PoolSimulation() {
   }
 
   // --- Render ---
-  return (
-    <div
-      ref={containerRef}
-      style={{
-        width: "100%",
-        height: "100%",
-        position: "relative",
-        background: "linear-gradient(180deg, #1a1a1a 0%, #000000 100%)",
-        zIndex: 0,
-        boxShadow: "inset 0 0 50px rgba(0,0,0,0.8)",
-      }}
-    >
+          return (
+          <div
+            ref={containerRef}
+            data-pool-container
+            style={{
+              width: "100%",
+              height: "100%",
+              position: "relative",
+              background: "linear-gradient(180deg, #1a1a1a 0%, #000000 100%)",
+              zIndex: 0,
+              boxShadow: "inset 0 0 50px rgba(0,0,0,0.8)",
+            }}
+          >
       {/* Overhead lighting effect - more natural falloff */}
       <div
         style={{
@@ -649,18 +692,17 @@ export default function PoolSimulation() {
           pointerEvents: "none",
         }}
       />
-      {/* Darken the left side (side with fewer balls) to match the right side */}
+      {/* Subtle overall lighting to smooth transitions */}
       <div
         style={{
           position: "absolute",
-          top: "10%",
-          left: "5%",
-          width: "90%",
-          height: "80%",
-          background: "linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.10) 30%, rgba(0,0,0,0.06) 60%, rgba(0,0,0,0.02) 85%, transparent 100%)",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: "radial-gradient(circle 800px at center 40px, rgba(255,255,255,0.02) 0%, transparent 70%)",
           zIndex: 3,
           pointerEvents: "none",
-          borderRadius: "10%",
         }}
       />
       
