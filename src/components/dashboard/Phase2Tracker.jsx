@@ -1,15 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import { challengeService } from '../../services/challengeService';
+import { format } from 'date-fns';
 import styles from './dashboard.module.css';
 
-export default function Phase2Tracker({ playerName, playerLastName, selectedDivision, phase }) {
+export default function Phase2Tracker({ 
+  playerName, 
+  playerLastName, 
+  selectedDivision, 
+  phase,
+  isMobile,
+  // Add props for modal handlers like Phase 1 tracker
+  onOpenOpponentsModal,
+  onOpenCompletedMatchesModal,
+  onOpenStandingsModal,
+  onOpenAllMatchesModal,
+  onOpenProposalListModal,
+  onOpenSentProposalListModal,
+  onOpenPlayerSearch,
+  pendingCount = 0,
+  sentCount = 0,
+  upcomingMatches = [],
+  onMatchClick,
+  // Add season data for deadline tracking
+  seasonData
+}) {
   const [stats, setStats] = useState(null);
   const [limits, setLimits] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const fullPlayerName = `${playerName} ${playerLastName}`;
+
+  // Calculate Phase 2 deadline status
+  const getPhase2DeadlineStatus = () => {
+    if (!seasonData || !seasonData.phase2End) {
+      return { days: null, status: 'no_deadline' };
+    }
+    
+    const now = new Date();
+    const phase2End = new Date(seasonData.phase2End);
+    const diffTime = phase2End - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+      return { days: Math.abs(diffDays), status: 'passed' };
+    } else if (diffDays <= 1) {
+      return { days: diffDays, status: 'critical' };
+    } else if (diffDays <= 3) {
+      return { days: diffDays, status: 'urgent' };
+    } else if (diffDays <= 7) {
+      return { days: diffDays, status: 'warning' };
+    } else {
+      return { days: diffDays, status: 'normal' };
+    }
+  };
+
+  const deadlineStatus = getPhase2DeadlineStatus();
 
   useEffect(() => {
     if (!playerName || !playerLastName || !selectedDivision || phase !== 'challenge') {
@@ -47,27 +94,36 @@ export default function Phase2Tracker({ playerName, playerLastName, selectedDivi
 
   if (loading) {
     return (
-      <div className={styles.phaseTrackerContainer} style={{ padding: '1rem', marginBottom: '1rem' }}>
-        <div style={{ textAlign: 'center', color: '#888' }}>
-          Loading Phase 2 challenge statistics...
-        </div>
+      <div style={{
+        background: `linear-gradient(135deg, rgba(42, 42, 42, 0.7), rgba(26, 26, 26, 0.8))`,
+        border: '2px solid #ff4444',
+        borderRadius: isMobile ? '8px' : '12px',
+        padding: isMobile ? '1px' : '18px',
+        margin: isMobile ? '-15px 0 0 0' : '16px 0',
+        boxShadow: '0 6px 20px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2)',
+        backdropFilter: 'blur(2px)',
+        textAlign: 'center',
+        color: '#888'
+      }}>
+        Loading Phase 2 challenge statistics...
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={styles.phaseTrackerContainer} style={{ padding: '1rem', marginBottom: '1rem' }}>
-        <div style={{ 
-          textAlign: 'center', 
-          color: '#e53e3e',
-          background: 'rgba(229, 62, 62, 0.1)',
-          border: '1px solid #e53e3e',
-          borderRadius: '6px',
-          padding: '0.5rem'
-        }}>
-          {error}
-        </div>
+      <div style={{
+        background: `linear-gradient(135deg, rgba(42, 42, 42, 0.7), rgba(26, 26, 26, 0.8))`,
+        border: '2px solid #e53e3e',
+        borderRadius: isMobile ? '8px' : '12px',
+        padding: isMobile ? '1px' : '18px',
+        margin: isMobile ? '-15px 0 0 0' : '16px 0',
+        boxShadow: '0 6px 20px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2)',
+        backdropFilter: 'blur(2px)',
+        textAlign: 'center',
+        color: '#e53e3e'
+      }}>
+        {error}
       </div>
     );
   }
@@ -106,31 +162,17 @@ export default function Phase2Tracker({ playerName, playerLastName, selectedDivi
     return '#28a745';
   };
 
-  // Dynamic primary color based on status
+  // Dynamic primary color based on status - using red theme like Phase 1
   const getPrimaryColor = () => {
     const status = getChallengeStatus();
     switch (status) {
       case 'completed': return '#00aa00';      // Green - all done
-      case 'limit_reached': return '#e53e3e';  // Red - hit limit
-      case 'active': return '#28a745';         // Green - good progress
-      case 'progressing': return '#ffaa00';    // Yellow - started
-      case 'ready': return '#ffc107';          // Yellow - ready to start
-      default: return '#ffc107';
+      case 'limit_reached': return '#ff4444';  // Red - hit limit
+      case 'active': return '#ff4444';         // Red - good progress
+      case 'progressing': return '#ff4444';    // Red - started
+      case 'ready': return '#ff4444';          // Red - ready to start
+      default: return '#ff4444';
     }
-  };
-
-  // Dynamic background gradient like Phase1Tracker
-  const getBackgroundStyle = () => {
-    const primaryColor = getPrimaryColor();
-    return {
-      background: `linear-gradient(135deg, ${primaryColor}15, ${primaryColor}25)`,
-      border: `2px solid ${primaryColor}`,
-      borderRadius: '12px',
-      padding: '16px',
-      margin: '16px 0',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-      cursor: 'pointer'
-    };
   };
 
   // Status message with emojis
@@ -139,17 +181,31 @@ export default function Phase2Tracker({ playerName, playerLastName, selectedDivi
     const remainingChallenges = stats.remainingChallenges;
     const remainingDefenses = stats.remainingDefenses;
     
+    // Add deadline status to the message
+    if (deadlineStatus.status === 'passed') {
+      return '⚠️ DEADLINE PASSED!';
+    } else if (deadlineStatus.status === 'critical') {
+      return `🚨 CRITICAL: ENDS in ${deadlineStatus.days} hours!`;
+    } else if (deadlineStatus.status === 'urgent') {
+      return `⚠️ URGENT: ENDS in ${deadlineStatus.days} days!`;
+    } else if (deadlineStatus.status === 'warning') {
+      return `⚠️ WARNING: ENDS in ${deadlineStatus.days} days.`;
+    } else if (deadlineStatus.status === 'normal') {
+      return `ENDS in ${deadlineStatus.days} days.`;
+    }
+    
+    // Fallback to original status messages if no deadline
     switch (status) {
       case 'completed':
-        return '🎉 Phase 2 Complete! You have played all your challenge matches.';
+        return '🎉 Phase 2 Complete!';
       case 'limit_reached':
-        return '⚠️ Challenge limit reached. You can still defend if eligible.';
+        return '⚠️ Challenge limit reached.';
       case 'active':
-        return `🏆 Active in Phase 2! You have ${remainingChallenges} challenges and ${remainingDefenses} defenses remaining.`;
+        return `🏆 Active in Phase 2! ${remainingChallenges} challenges, ${remainingDefenses} defenses remaining.`;
       case 'progressing':
-        return `📈 Phase 2 in progress! You have ${remainingChallenges} challenges and ${remainingDefenses} defenses remaining.`;
+        return `📈 Phase 2 in progress! ${remainingChallenges} challenges, ${remainingDefenses} defenses remaining.`;
       case 'ready':
-        return `⚔️ Ready for Phase 2! You can challenge ${stats.eligibleOpponentsCount} opponent${stats.eligibleOpponentsCount !== 1 ? 's' : ''} and have ${remainingChallenges} challenges remaining.`;
+        return `⚔️ Ready for Phase 2! ${stats.eligibleOpponentsCount} opponents available.`;
       default:
         return 'Phase 2 Challenge Status';
     }
@@ -157,14 +213,23 @@ export default function Phase2Tracker({ playerName, playerLastName, selectedDivi
 
   const primaryColor = getPrimaryColor();
   
-  // Check if we're on a mobile device
-  const isMobile = window.innerWidth <= 768;
-
   return (
     <div style={{
-      ...getBackgroundStyle(),
-      padding: isMobile ? '12px' : '16px',
-      margin: isMobile ? '12px 0' : '16px 0'
+      background: `linear-gradient(135deg, rgba(42, 42, 42, 0.7), rgba(26, 26, 26, 0.8))`,
+      border: `2px solid ${primaryColor}`,
+      borderRadius: isMobile ? '8px' : '12px',
+      padding: isMobile ? '1px' : '18px',
+      margin: isMobile ? '-15px 0 0 0' : '16px 0',
+      boxShadow: '0 6px 20px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2)',
+      cursor: 'pointer',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: isExpanded ? 'flex-start' : 'flex-start',
+      backdropFilter: 'blur(2px)',
+      overflow: isMobile ? 'auto' : 'hidden',
+      maxHeight: isMobile ? 'none' : '35vh',
+      height: isMobile ? (isExpanded ? 'auto' : '40px') : (isExpanded ? 'auto' : '160px'),
+      transition: 'height 0.3s ease, max-height 0.3s ease'
     }}
     onClick={() => setIsExpanded(!isExpanded)}
     >
@@ -172,319 +237,512 @@ export default function Phase2Tracker({ playerName, playerLastName, selectedDivi
       <div style={{
         position: 'relative',
         textAlign: 'center',
-        marginBottom: isMobile ? '8px' : '12px'
+        marginBottom: isMobile ? '0px' : '12px'
       }}>
         <h3 style={{
           margin: 0,
-          color: primaryColor,
-          fontSize: isMobile ? '1rem' : '1.1rem',
+          color: '#ffffff',
+          fontSize: isMobile ? '0.5rem' : '1.1rem',
           fontWeight: 'bold',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '6px',
-          flexWrap: 'wrap'
+          gap: isMobile ? '2px' : '6px',
+          flexWrap: 'wrap',
+          textShadow: '1px 1px 3px rgba(0,0,0,0.9)'
         }}>
           {getChallengeStatus() === 'completed' && '🎉'}
           {getChallengeStatus() === 'limit_reached' && '⚠️'}
           {getChallengeStatus() === 'active' && '🏆'}
           {getChallengeStatus() === 'progressing' && '📈'}
           {getChallengeStatus() === 'ready' && '⚔️'}
-          <span style={{ fontSize: isMobile ? '0.9rem' : '1.1rem' }}>
-            Phase 2: Challenge Tracker
+          <span style={{ fontSize: isMobile ? '0.8rem' : '1.1rem' }}>
+            Phase 2
           </span>
         </h3>
         
-        <div style={{
-          fontSize: isMobile ? '0.8rem' : '0.9rem',
-          color: primaryColor,
-          fontWeight: 'bold',
-          marginTop: '4px'
-        }}>
-          Phase 2, Week {stats.currentWeek} • Rank #{stats.currentStanding || 'N/A'}
-        </div>
+        {/* Status Message */}
+        {!isMobile && (
+          <div style={{
+            color: '#ffffff',
+            fontSize: isMobile ? '0.6rem' : '0.95rem',
+            lineHeight: isMobile ? '1.1' : '1.1',
+            marginTop: isMobile ? '2px' : '4px',
+            marginBottom: isMobile ? '0px' : '8px',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+            fontWeight: '500'
+          }}>
+            {getStatusMessage()}
+          </div>
+        )}
         
-        <div style={{
-          fontSize: isMobile ? '0.8rem' : '0.9rem',
-          color: primaryColor,
-          fontWeight: 'bold',
-          position: 'absolute',
-          bottom: '0',
-          right: '0',
-          fontSize: '0.8rem'
-        }}>
-          {isExpanded ? 'Hide Stats' : 'Show Stats'}
-        </div>
+        {/* Challenge Progress */}
+        {!isMobile && (
+          <div style={{
+            color: '#ffffff',
+            fontSize: isMobile ? '0.55rem' : '0.95rem',
+            fontWeight: 'bold',
+            marginTop: isMobile ? '2px' : '4px',
+            marginBottom: isMobile ? '0px' : '8px',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+            lineHeight: isMobile ? '1.1' : '1.1'
+          }}>
+            {stats.totalChallengeMatches}/{limits.limits.maxChallengeMatches} Challenges
+          </div>
+        )}
+        
+        {/* Defense Progress */}
+        {!isMobile && (
+          <div style={{
+            color: '#ffffff',
+            fontSize: isMobile ? '0.55rem' : '0.95rem',
+            fontWeight: 'bold',
+            marginTop: isMobile ? '2px' : '4px',
+            marginBottom: isMobile ? '0px' : '4px',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+            lineHeight: isMobile ? '1.1' : '1.1'
+          }}>
+            {stats.requiredDefenses}/2 Defenses
+          </div>
+        )}
       </div>
 
-      {/* Status Message */}
+      {/* Show Stats Button */}
       <div style={{
-        color: '#fff',
-        fontSize: isMobile ? '0.85rem' : '0.95rem',
-        lineHeight: '1.4',
-        marginBottom: isMobile ? '8px' : '12px'
+        textAlign: 'center',
+        marginBottom: isMobile ? '0px' : '4px'
       }}>
-        {getStatusMessage()}
+        <div style={{
+          fontSize: isMobile ? '0.5rem' : '0.9rem',
+          color: '#ffffff',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          padding: isMobile ? '1px 3px' : '4px 8px',
+          borderRadius: '6px',
+          display: 'inline-block',
+          transition: 'background-color 0.2s ease',
+          textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+        }}
+        onMouseEnter={(e) => e.target.style.backgroundColor = `${primaryColor}20`}
+        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        >
+          {isExpanded ? 'Hide Stats ▲' : 'Show Stats ▼'}
+        </div>
       </div>
 
       {/* Expanded Content */}
       {isExpanded && (
         <>
-          {/* Main Stats Grid - Better Layout */}
+          {/* Main Stats Grid */}
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))', 
-            gap: isMobile ? '0.75rem' : '1rem',
-            marginBottom: isMobile ? '1rem' : '1.5rem'
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))', 
+            gap: isMobile ? '0.5rem' : '0.75rem',
+            marginBottom: isMobile ? '0.75rem' : '1rem'
           }}>
-            {/* Challenge Matches */}
-            <div style={{ 
-              padding: isMobile ? '0.75rem' : '1rem',
-              background: 'rgba(0, 0, 0, 0.4)',
-              borderRadius: '8px',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-            }}>
+                         {/* Challenge Matches */}
+             <div 
+               onClick={(e) => {
+                 e.stopPropagation();
+                 // For Phase 2, we need to open Phase 2 opponents modal
+                 if (onOpenPlayerSearch) onOpenPlayerSearch();
+               }}
+               style={{ 
+                 padding: isMobile ? '0.5rem' : '0.75rem',
+                 background: 'rgba(255,255,255,0.1)',
+                 borderRadius: '6px',
+                 border: '1px solid rgba(255,255,255,0.1)',
+                 textAlign: 'center',
+                 cursor: 'pointer',
+                 transition: 'background-color 0.2s ease'
+               }}
+               onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.15)'}
+               onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+             >
               <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                marginBottom: '0.75rem',
-                fontSize: '1rem',
-                fontWeight: '600'
+                fontSize: isMobile ? '0.45rem' : '0.8rem',
+                fontWeight: 'bold',
+                color: '#e0e0e0',
+                marginBottom: isMobile ? '2px' : '2px'
               }}>
-                <span style={{ color: '#fff' }}>⚔️ Challenge Matches</span>
-                <span style={{ 
-                  color: getStatusColor(stats.isEligibleForChallenges),
-                  fontWeight: 'bold',
-                  fontSize: '1.1rem'
-                }}>
-                  {stats.totalChallengeMatches}/{limits.limits.maxChallengeMatches}
-                </span>
+                ⚔️ Challenges
               </div>
-              <div style={{ 
-                height: '8px', 
-                background: 'rgba(255, 255, 255, 0.1)', 
-                borderRadius: '4px',
-                marginBottom: '0.75rem'
+              <div style={{
+                fontSize: isMobile ? '0.4rem' : '0.9rem',
+                color: '#ffffff',
+                fontWeight: 'bold',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                marginBottom: isMobile ? '1px' : '4px'
+              }}>
+                {stats.totalChallengeMatches}/{limits.limits.maxChallengeMatches}
+              </div>
+              {/* Progress Bar */}
+              <div style={{
+                width: '100%',
+                height: isMobile ? '2px' : '4px',
+                background: 'rgba(255,255,255,0.2)',
+                borderRadius: '2px',
+                overflow: 'hidden',
+                marginBottom: isMobile ? '1px' : '2px'
               }}>
                 <div style={{
                   width: `${(stats.totalChallengeMatches / limits.limits.maxChallengeMatches) * 100}%`,
                   height: '100%',
-                  backgroundColor: getProgressColor(stats.totalChallengeMatches, limits.limits.maxChallengeMatches),
-                  borderRadius: '4px',
+                  background: getProgressColor(stats.totalChallengeMatches, limits.limits.maxChallengeMatches),
+                  borderRadius: '2px',
                   transition: 'width 0.3s ease'
                 }} />
               </div>
-              <div style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
-                <div style={{ marginBottom: '0.5rem', color: '#ccc' }}>
-                  <span style={{ color: '#28a745' }}>Challenger:</span> {stats.matchesAsChallenger} | 
-                  <span style={{ color: '#ffc107' }}> Defender:</span> {stats.matchesAsDefender}
-                </div>
-                <div style={{ 
-                  color: stats.remainingChallenges > 0 ? '#28a745' : '#e53e3e',
-                  fontWeight: 'bold',
-                  fontSize: '1rem'
-                }}>
-                  {stats.remainingChallenges > 0 ? '✅' : '❌'} Remaining: {stats.remainingChallenges}
-                </div>
+              <div style={{
+                fontSize: isMobile ? '0.4rem' : '0.75rem',
+                color: '#e0e0e0',
+                fontStyle: 'italic',
+                textAlign: 'center',
+                fontWeight: '500'
+              }}>
+                {stats.remainingChallenges} remaining
               </div>
             </div>
 
             {/* Defense Status */}
             <div style={{ 
-              padding: '1rem',
-              background: 'rgba(0, 0, 0, 0.4)',
-              borderRadius: '8px',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+              padding: isMobile ? '0.5rem' : '0.75rem',
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: '6px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              textAlign: 'center'
             }}>
               <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                marginBottom: '0.75rem',
-                fontSize: '1rem',
-                fontWeight: '600'
+                fontSize: isMobile ? '0.45rem' : '0.8rem',
+                fontWeight: 'bold',
+                color: '#e0e0e0',
+                marginBottom: isMobile ? '2px' : '2px'
               }}>
-                <span style={{ color: '#fff' }}>🛡️ Defense Status</span>
-                <span style={{ 
-                  color: getStatusColor(stats.isEligibleForDefense),
-                  fontWeight: 'bold',
-                  fontSize: '1.1rem'
-                }}>
-                  {stats.requiredDefenses}/{limits.limits.maxRequiredDefenses}
-                </span>
+                🛡️ Defenses
               </div>
-              <div style={{ 
-                height: '8px', 
-                background: 'rgba(255, 255, 255, 0.1)', 
-                borderRadius: '4px',
-                marginBottom: '0.75rem'
+              <div style={{
+                fontSize: isMobile ? '0.4rem' : '0.9rem',
+                color: '#ffffff',
+                fontWeight: 'bold',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                marginBottom: isMobile ? '1px' : '4px'
+              }}>
+                {stats.requiredDefenses}/2
+              </div>
+              {/* Progress Bar */}
+              <div style={{
+                width: '100%',
+                height: isMobile ? '2px' : '4px',
+                background: 'rgba(255,255,255,0.2)',
+                borderRadius: '2px',
+                overflow: 'hidden',
+                marginBottom: isMobile ? '1px' : '2px'
               }}>
                 <div style={{
-                  width: `${(stats.requiredDefenses / limits.limits.maxRequiredDefenses) * 100}%`,
+                  width: `${(stats.requiredDefenses / 2) * 100}%`,
                   height: '100%',
-                  backgroundColor: getProgressColor(stats.requiredDefenses, limits.limits.maxRequiredDefenses),
-                  borderRadius: '4px',
+                  background: getProgressColor(stats.requiredDefenses, 2),
+                  borderRadius: '2px',
                   transition: 'width 0.3s ease'
                 }} />
               </div>
-              <div style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
-                <div style={{ marginBottom: '0.5rem', color: '#ccc' }}>
-                  <span style={{ color: '#e53e3e' }}>Required:</span> {stats.requiredDefenses}/2 | 
-                  <span style={{ color: '#ffc107' }}> Voluntary:</span> {stats.voluntaryDefenses}
-                </div>
-                <div style={{ 
-                  color: stats.requiredDefenses < 2 ? '#28a745' : '#ffc107',
-                  fontWeight: 'bold',
-                  fontSize: '1rem'
-                }}>
-                  {stats.requiredDefenses < 2 ? '⚠️' : '✅'} Required Defenses: {stats.requiredDefenses < 2 ? `${2 - stats.requiredDefenses} left` : 'Complete'}
-                </div>
+              <div style={{
+                fontSize: isMobile ? '0.4rem' : '0.75rem',
+                color: '#e0e0e0',
+                fontStyle: 'italic',
+                textAlign: 'center',
+                fontWeight: '500'
+              }}>
+                {2 - stats.requiredDefenses} required left
               </div>
             </div>
 
             {/* Weekly Status */}
             <div style={{ 
-              padding: '1rem',
-              background: 'rgba(0, 0, 0, 0.4)',
-              borderRadius: '8px',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+              padding: isMobile ? '0.5rem' : '0.75rem',
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: '6px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              textAlign: 'center'
             }}>
               <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                marginBottom: '0.75rem',
-                fontSize: '1rem',
-                fontWeight: '600'
+                fontSize: isMobile ? '0.45rem' : '0.8rem',
+                fontWeight: 'bold',
+                color: '#e0e0e0',
+                marginBottom: isMobile ? '2px' : '2px'
               }}>
-                <span style={{ color: '#fff' }}>📅 This Week</span>
-                <span style={{ 
-                  color: limits.weeklyStatus.canChallengeThisWeek || limits.weeklyStatus.canDefendThisWeek ? '#28a745' : '#e53e3e',
-                  fontWeight: 'bold',
-                  fontSize: '1.1rem'
-                }}>
-                  {limits.weeklyStatus.canChallengeThisWeek || limits.weeklyStatus.canDefendThisWeek ? '✅ Available' : '❌ Busy'}
-                </span>
+                📅 This Week
               </div>
-              <div style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
-                <div style={{ marginBottom: '0.5rem', color: '#ccc' }}>
-                  <span style={{ color: '#28a745' }}>Challenges:</span> {limits.weeklyStatus.challengesThisWeek} | 
-                  <span style={{ color: '#ffc107' }}> Defenses:</span> {limits.weeklyStatus.defensesThisWeek}
-                </div>
-                <div style={{ 
-                  color: limits.weeklyStatus.canChallengeThisWeek ? '#28a745' : '#e53e3e',
-                  marginBottom: '0.25rem'
-                }}>
-                  {limits.weeklyStatus.canChallengeThisWeek ? '✅' : '❌'} Can Challenge: {limits.weeklyStatus.canChallengeThisWeek ? 'Yes' : 'No'}
-                </div>
-                <div style={{ 
-                  color: limits.weeklyStatus.canDefendThisWeek ? '#28a745' : '#ffc107'
-                }}>
-                  {limits.weeklyStatus.canDefendThisWeek ? '⚠️' : '❌'} Must Defend: {limits.weeklyStatus.canDefendThisWeek ? 'If Challenged' : 'No'}
-                </div>
+              <div style={{
+                fontSize: isMobile ? '0.4rem' : '0.9rem',
+                color: '#ffffff',
+                fontWeight: 'bold',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                marginBottom: isMobile ? '1px' : '4px'
+              }}>
+                {limits.weeklyStatus.canChallengeThisWeek ? '✅' : '❌'} Available
+              </div>
+              <div style={{
+                fontSize: isMobile ? '0.4rem' : '0.75rem',
+                color: '#e0e0e0',
+                fontStyle: 'italic',
+                textAlign: 'center',
+                fontWeight: '500'
+              }}>
+                {limits.weeklyStatus.challengesThisWeek} challenges
               </div>
             </div>
           </div>
 
-          {/* Status Summary - Enhanced */}
-          <div style={{ 
-            padding: '1rem',
-            background: 'rgba(0, 0, 0, 0.5)',
-            border: `2px solid ${primaryColor}60`,
-            borderRadius: '8px',
-            fontSize: '0.95rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+          {/* Interactive Sections - Like Phase 1 Tracker */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+            gap: isMobile ? '0.5rem' : '0.75rem',
+            marginBottom: isMobile ? '0.75rem' : '1rem'
           }}>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              marginBottom: '0.75rem'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <strong style={{ color: primaryColor, fontSize: '1rem' }}>Status:</strong>
-                <span style={{ 
-                  color: '#fff', 
-                  fontSize: '1rem',
-                  fontWeight: '600',
-                  padding: '0.25rem 0.75rem',
-                  background: `${primaryColor}20`,
-                  borderRadius: '4px',
-                  border: `1px solid ${primaryColor}40`
-                }}>
-                  {getChallengeStatus().replace('_', ' ').toUpperCase()}
-                </span>
-              </div>
-              <div style={{ 
-                fontSize: '0.85rem', 
-                color: '#888',
-                fontStyle: 'italic'
+            {/* Proposals Section */}
+            <div style={{
+              padding: isMobile ? '0.5rem' : '0.75rem',
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: '6px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              textAlign: 'center',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s ease'
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onOpenProposalListModal) onOpenProposalListModal();
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.15)'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+            >
+              <div style={{
+                fontSize: isMobile ? '0.45rem' : '0.8rem',
+                fontWeight: 'bold',
+                color: '#e0e0e0',
+                marginBottom: isMobile ? '2px' : '4px'
               }}>
-                Updated: {new Date(stats.lastUpdated).toLocaleDateString()}
+                📨 Proposals
+              </div>
+              <div style={{
+                fontSize: isMobile ? '0.4rem' : '0.9rem',
+                color: '#ffffff',
+                fontWeight: 'bold',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                marginBottom: isMobile ? '1px' : '4px'
+              }}>
+                {pendingCount} waiting
+              </div>
+              <div style={{
+                fontSize: isMobile ? '0.4rem' : '0.75rem',
+                color: '#e0e0e0',
+                fontStyle: 'italic',
+                textAlign: 'center',
+                fontWeight: '500'
+              }}>
+                {sentCount} sent
               </div>
             </div>
-            
-            {/* Quick Actions Info */}
-            <div style={{ 
-              fontSize: '0.9rem', 
-              color: '#fff',
-              lineHeight: '1.5',
-              padding: '0.75rem',
-              background: 'rgba(255, 255, 255, 0.05)',
+
+                         {/* Schedule Section */}
+             <div style={{
+               padding: isMobile ? '0.5rem' : '0.75rem',
+               background: 'rgba(255,255,255,0.1)',
+               borderRadius: '6px',
+               border: '1px solid rgba(255,255,255,0.1)',
+               textAlign: 'center',
+               cursor: 'pointer',
+               transition: 'background-color 0.2s ease'
+             }}
+             onClick={(e) => {
+               e.stopPropagation();
+               // For Phase 2, we need to open player search instead of opponents modal
+               if (onOpenPlayerSearch) onOpenPlayerSearch();
+             }}
+             onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.15)'}
+             onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+             >
+              <div style={{
+                fontSize: isMobile ? '0.45rem' : '0.8rem',
+                fontWeight: 'bold',
+                color: '#e0e0e0',
+                marginBottom: isMobile ? '2px' : '4px'
+              }}>
+                📅 Schedule
+              </div>
+              <div style={{
+                fontSize: isMobile ? '0.4rem' : '0.9rem',
+                color: '#ffffff',
+                fontWeight: 'bold',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                marginBottom: isMobile ? '1px' : '4px'
+              }}>
+                {stats.eligibleOpponentsCount} available
+              </div>
+              <div style={{
+                fontSize: isMobile ? '0.4rem' : '0.75rem',
+                color: '#e0e0e0',
+                fontStyle: 'italic',
+                textAlign: 'center',
+                fontWeight: '500'
+              }}>
+                click to schedule
+              </div>
+            </div>
+
+            {/* Matches Section */}
+            <div style={{
+              padding: isMobile ? '0.5rem' : '0.75rem',
+              background: 'rgba(255,255,255,0.1)',
               borderRadius: '6px',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
-            }}>
-              {stats.eligibleOpponentsCount > 0 && stats.remainingChallenges > 0 && limits.weeklyStatus.canChallengeThisWeek ? (
-                <div style={{ 
-                  color: '#28a745',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontWeight: '600'
-                }}>
-                  <span style={{ fontSize: '1.2rem' }}>✅</span>
-                  <span>You can challenge <strong>{stats.eligibleOpponentsCount}</strong> opponent{stats.eligibleOpponentsCount !== 1 ? 's' : ''} this week</span>
-                </div>
-              ) : stats.remainingDefenses > 0 && limits.weeklyStatus.canDefendThisWeek ? (
-                <div style={{ 
-                  color: '#28a745',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontWeight: '600'
-                }}>
-                  <span style={{ fontSize: '1.2rem' }}>✅</span>
-                  <span>You can accept defense challenges this week</span>
-                </div>
-              ) : limits.weeklyStatus.canDefendThisWeek ? (
-                <div style={{ 
-                  color: '#ffc107',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontWeight: '600'
-                }}>
-                  <span style={{ fontSize: '1.2rem' }}>⚠️</span>
-                  <span>You have no matches scheduled this week - you <strong>MUST</strong> accept defense challenges</span>
-                </div>
-              ) : (
-                <div style={{ 
-                  color: '#ffc107',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontWeight: '600'
-                }}>
-                  <span style={{ fontSize: '1.2rem' }}>⏳</span>
-                  <span>Waiting for next week or opponent selection</span>
-                </div>
-              )}
+              border: '1px solid rgba(255,255,255,0.1)',
+              textAlign: 'center',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s ease'
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onOpenAllMatchesModal) onOpenAllMatchesModal();
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.15)'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+            >
+              <div style={{
+                fontSize: isMobile ? '0.45rem' : '0.8rem',
+                fontWeight: 'bold',
+                color: '#e0e0e0',
+                marginBottom: isMobile ? '2px' : '4px'
+              }}>
+                🏆 Matches
+              </div>
+              <div style={{
+                fontSize: isMobile ? '0.4rem' : '0.9rem',
+                color: '#ffffff',
+                fontWeight: 'bold',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                marginBottom: isMobile ? '1px' : '4px'
+              }}>
+                {upcomingMatches.length} upcoming
+              </div>
+              <div style={{
+                fontSize: isMobile ? '0.4rem' : '0.75rem',
+                color: '#e0e0e0',
+                fontStyle: 'italic',
+                textAlign: 'center',
+                fontWeight: '500'
+              }}>
+                click match for details
+              </div>
             </div>
           </div>
+
+          {/* Upcoming Matches List */}
+          {upcomingMatches.length > 0 && (
+            <div style={{
+              marginBottom: isMobile ? '0.75rem' : '1rem'
+            }}>
+              <div style={{
+                fontSize: isMobile ? '0.5rem' : '0.9rem',
+                fontWeight: 'bold',
+                color: '#ffffff',
+                marginBottom: isMobile ? '0.25rem' : '0.5rem',
+                textAlign: 'center',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+              }}>
+                Upcoming Matches
+              </div>
+              <div style={{
+                maxHeight: isMobile ? '60px' : '80px',
+                overflowY: 'auto',
+                background: 'rgba(0,0,0,0.3)',
+                borderRadius: '4px',
+                padding: isMobile ? '0.25rem' : '0.5rem'
+              }}>
+                {upcomingMatches.slice(0, 3).map((match, index) => {
+                  let opponent = '';
+                  if (match.senderName && match.receiverName) {
+                    opponent = match.senderName.trim().toLowerCase() === fullPlayerName.toLowerCase()
+                      ? match.receiverName
+                      : match.senderName;
+                  }
+                  
+                  return (
+                    <div
+                      key={match._id || index}
+                      style={{
+                        fontSize: isMobile ? '0.35rem' : '0.7rem',
+                        color: '#ffffff',
+                        padding: isMobile ? '0.2rem 0.3rem' : '0.3rem 0.5rem',
+                        marginBottom: isMobile ? '0.1rem' : '0.2rem',
+                        background: 'rgba(255,255,255,0.1)',
+                        borderRadius: '3px',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s ease',
+                        textAlign: 'center'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onMatchClick) onMatchClick(match);
+                      }}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.2)'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                    >
+                      VS {opponent || 'Unknown'} - {match.date || 'No Date'}
+                    </div>
+                  );
+                })}
+                {upcomingMatches.length > 3 && (
+                  <div style={{
+                    fontSize: isMobile ? '0.35rem' : '0.7rem',
+                    color: '#e0e0e0',
+                    textAlign: 'center',
+                    fontStyle: 'italic',
+                    padding: isMobile ? '0.2rem' : '0.3rem'
+                  }}>
+                    +{upcomingMatches.length - 3} more...
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+                     {/* Status Summary */}
+           <div style={{ 
+             padding: isMobile ? '0.5rem' : '0.75rem',
+             background: 'rgba(0,0,0,0.3)',
+             borderRadius: '4px',
+             border: '1px solid rgba(255,255,255,0.1)',
+             fontSize: isMobile ? '0.4rem' : '0.75rem',
+             color: '#ffffff',
+             textAlign: 'center'
+           }}>
+             {stats.eligibleOpponentsCount > 0 && stats.remainingChallenges > 0 && limits.weeklyStatus.canChallengeThisWeek ? (
+               <div>✅ Can challenge {stats.eligibleOpponentsCount} opponent{stats.eligibleOpponentsCount !== 1 ? 's' : ''} this week</div>
+             ) : stats.remainingDefenses > 0 && limits.weeklyStatus.canDefendThisWeek ? (
+               <div>✅ Can accept defense challenges this week</div>
+             ) : (
+               <div>⏳ Waiting for next week or opponent selection</div>
+             )}
+           </div>
+
+           {/* Phase 2 Deadline Date */}
+           {seasonData && seasonData.phase2End && (
+             <div style={{
+               marginTop: isMobile ? '0.5rem' : '0.75rem',
+               padding: isMobile ? '0.4rem' : '0.6rem',
+               background: 'rgba(0,0,0,0.4)',
+               borderRadius: '4px',
+               border: '1px solid rgba(255,255,255,0.1)',
+               fontSize: isMobile ? '0.35rem' : '0.65rem',
+               color: '#e0e0e0',
+               textAlign: 'center',
+               fontStyle: 'italic'
+             }}>
+               ENDS: {seasonData.phase2End ? format(new Date(seasonData.phase2End), isMobile ? 'MMM d' : 'MMM d, yyyy') : 'Loading...'}
+             </div>
+           )}
         </>
       )}
     </div>

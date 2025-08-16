@@ -280,18 +280,16 @@ import { BACKEND_URL } from '../../config.js';
 
 
   const getStatusMessage = () => {
-    const remainingCount = totalRequiredMatches - completedMatches.length;
-    
     if (deadlineStatus === 'passed') {
-      return `⚠️ PHASE 1 DEADLINE PASSED! You have ${remainingCount} incomplete matches.`;
+      return '⚠️ DEADLINE PASSED!';
     } else if (deadlineStatus === 'critical') {
-      return `🚨 CRITICAL: Phase 1 ends in ${timeLeft.hours} hours! You have ${remainingCount} matches to complete.`;
+      return `🚨 CRITICAL: ENDS in ${timeLeft.hours} hours!`;
     } else if (deadlineStatus === 'urgent') {
-      return `⚠️ URGENT: Phase 1 ends in ${timeLeft.days} days! You have ${remainingCount} matches to complete.`;
+      return `⚠️ URGENT: ENDS in ${timeLeft.days} days!`;
     } else if (deadlineStatus === 'warning') {
-      return `⚠️ WARNING: Phase 1 ends in ${timeLeft.days} days. You have ${remainingCount} matches to complete.`;
+      return `⚠️ WARNING: ENDS in ${timeLeft.days} days.`;
     } else {
-      return `📅 Phase 1 ends in ${timeLeft.days} days. You have ${remainingCount} matches to complete.`;
+      return `ENDS in ${timeLeft.days} days.`;
     }
   };
 
@@ -310,14 +308,14 @@ import { BACKEND_URL } from '../../config.js';
                  margin: isMobile ? '-15px 0 0 0' : '16px 0',
         boxShadow: '0 6px 20px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2)',
         cursor: 'pointer',
-        height: isExpanded ? 'auto' : 'auto',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: isExpanded ? 'flex-start' : 'flex-start',
         backdropFilter: 'blur(2px)',
         overflow: isMobile ? 'auto' : 'hidden',
         maxHeight: isMobile ? 'none' : '35vh',
-        height: isMobile ? 'auto' : '42vh'
+        height: isMobile ? (isExpanded ? 'auto' : '40px') : (isExpanded ? 'auto' : '160px'),
+        transition: 'height 0.3s ease, max-height 0.3s ease'
       }}
     onClick={() => setIsExpanded(!isExpanded)}
     >
@@ -327,62 +325,81 @@ import { BACKEND_URL } from '../../config.js';
           textAlign: 'center',
           marginBottom: isMobile ? '0px' : '12px'
         }}>
-                    <h3 style={{
-             margin: 0,
-             color: '#ffffff',
-             fontSize: isMobile ? '0.5rem' : '1.1rem',
-             fontWeight: 'bold',
-             display: 'flex',
-             alignItems: 'center',
-             justifyContent: 'center',
-             gap: isMobile ? '2px' : '6px',
-             flexWrap: 'wrap',
-             textShadow: '1px 1px 3px rgba(0,0,0,0.9)'
-           }}>
-            {deadlineStatus === 'critical' && '🚨'}
-            {deadlineStatus === 'urgent' && '⚠️'}
-            {deadlineStatus === 'warning' && '⚠️'}
-            {deadlineStatus === 'passed' && '⏰'}
-            {deadlineStatus === 'normal' && '📅'}
-            <span style={{ fontSize: isMobile ? '0.8rem' : '1.1rem' }}>
-              Phase 1
-            </span>
-          </h3>
-         
-                                                                               {!isMobile && (
-                                          <div style={{
+                                         <h3 style={{
+              margin: 0,
               color: '#ffffff',
-              fontSize: isMobile ? '0.55rem' : '0.95rem',
+              fontSize: isMobile ? '0.5rem' : '1.1rem',
               fontWeight: 'bold',
-              marginTop: isMobile ? '2px' : '4px',
-              textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: isMobile ? '2px' : '6px',
+              flexWrap: 'wrap',
+              textShadow: '1px 1px 3px rgba(0,0,0,0.9)'
             }}>
-              {completedMatches.length}/{totalRequiredMatches} Complete
-            </div>
-                                        )}
-         
-         {/* Removed the absolutely positioned Show Stats text */}
-       </div>
-
-                           {/* Status Message */}
-                {!isMobile && (
-                  <div style={{
-          color: '#ffffff',
-          fontSize: isMobile ? '0.6rem' : '0.95rem',
-          lineHeight: isMobile ? '1.1' : '1.4',
-          marginBottom: isMobile ? '0px' : '12px',
-          textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-          fontWeight: '500'
-        }}>
-          {getStatusMessage()}
-        </div>
-                )}
-
-      {/* Show Stats Button - 4th line */}
+             {deadlineStatus === 'critical' && '🚨'}
+             {deadlineStatus === 'urgent' && '⚠️'}
+             {deadlineStatus === 'warning' && '⚠️'}
+             {deadlineStatus === 'passed' && '⏰'}
+             {deadlineStatus === 'normal' && '📅'}
+             <span style={{ fontSize: isMobile ? '0.8rem' : '1.1rem' }}>
+               Phase 1
+             </span>
+           </h3>
+          
+                     {/* Status Message - ends in XX days */}
+           {!isMobile && (
              <div style={{
-         textAlign: 'center',
-         marginBottom: isMobile ? '0px' : '12px'
-       }}>
+               color: '#ffffff',
+               fontSize: isMobile ? '0.6rem' : '0.95rem',
+               lineHeight: isMobile ? '1.1' : '1.1',
+               marginTop: isMobile ? '2px' : '4px',
+               marginBottom: isMobile ? '0px' : '8px',
+               textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+               fontWeight: '500'
+             }}>
+               {getStatusMessage()}
+             </div>
+           )}
+           
+           {/* Completion counter */}
+           {!isMobile && (
+             <div style={{
+               color: '#ffffff',
+               fontSize: isMobile ? '0.55rem' : '0.95rem',
+               fontWeight: 'bold',
+               marginTop: isMobile ? '2px' : '4px',
+               marginBottom: isMobile ? '0px' : '8px',
+               textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+               lineHeight: isMobile ? '1.1' : '1.1'
+             }}>
+               {completedMatches.length}/{totalRequiredMatches} Complete
+             </div>
+           )}
+           
+                                   {/* Remaining matches counter */}
+            {!isMobile && (
+              <div style={{
+                color: '#ffffff',
+                fontSize: isMobile ? '0.55rem' : '0.95rem',
+                fontWeight: 'bold',
+                marginTop: isMobile ? '2px' : '4px',
+                marginBottom: isMobile ? '0px' : '4px',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                lineHeight: isMobile ? '1.1' : '1.1'
+              }}>
+                {totalRequiredMatches - completedMatches.length} to Schedule
+              </div>
+            )}
+           
+           {/* Removed the absolutely positioned Show Stats text */}
+         </div>
+
+       {/* Show Stats Button - 4th line */}
+              <div style={{
+          textAlign: 'center',
+          marginBottom: isMobile ? '0px' : '4px'
+        }}>
                   <div style={{
                          fontSize: isMobile ? '0.5rem' : '0.9rem',
             color: '#ffffff',
@@ -418,10 +435,10 @@ import { BACKEND_URL } from '../../config.js';
                   e.stopPropagation();
                   if (onOpenOpponentsModal) onOpenOpponentsModal();
                 }}
-                                 style={{
-                   background: 'rgba(255,255,255,0.1)',
-                   padding: isMobile ? '1px' : '12px',
-                   borderRadius: '6px',
+                                                                   style={{
+                    background: 'rgba(255,255,255,0.1)',
+                    padding: isMobile ? '1px' : '4px',
+                    borderRadius: '6px',
                    cursor: 'pointer',
                    transition: 'all 0.2s ease',
                    border: '1px solid rgba(255,255,255,0.1)',
@@ -475,15 +492,15 @@ import { BACKEND_URL } from '../../config.js';
                      transition: 'width 0.3s ease'
                    }} />
                  </div>
-                 <div style={{
-                   fontSize: isMobile ? '0.4rem' : '0.75rem',
-                   color: '#e0e0e0',
-                   fontStyle: 'italic',
-                   textAlign: 'center',
-                   fontWeight: '500'
-                 }}>
-                   click to schedule
-                 </div>
+                                   <div style={{
+                    fontSize: isMobile ? '0.4rem' : '0.75rem',
+                    color: '#e0e0e0',
+                    fontStyle: 'italic',
+                    textAlign: 'center',
+                    fontWeight: '500'
+                  }}>
+                    click to schedule
+                  </div>
              </div>
 
                          {/* Record Section */}
@@ -909,7 +926,7 @@ import { BACKEND_URL } from '../../config.js';
                marginTop: isMobile ? '1px' : '4px',
                border: '1px solid rgba(255,255,255,0.1)'
              }}>
-              Ends: {phase1EndDate ? format(phase1EndDate, isMobile ? 'MMM d' : 'MMM d, yyyy') : 'Loading...'}
+                             ENDS: {phase1EndDate ? format(phase1EndDate, isMobile ? 'MMM d' : 'MMM d, yyyy') : 'Loading...'}
             </div>
         </>
       )}

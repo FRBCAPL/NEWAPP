@@ -1090,8 +1090,23 @@ export default function Dashboard({
       )
     : null;
 
-  // Check if we're on a mobile device
-  const isMobile = window.innerWidth <= 768;
+  // Check if we're on a mobile device - improved for iframe compatibility
+  const isMobile = (() => {
+    // First try viewport width (works better in iframes)
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      return true;
+    }
+    // Fallback to user agent detection
+    if (typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      return true;
+    }
+    // Additional check for iframe context
+    if (typeof window !== 'undefined' && window.self !== window.top) {
+      // We're in an iframe, be more conservative with mobile detection
+      return window.innerWidth <= 768 || window.innerHeight <= 600;
+    }
+    return false;
+  })();
 
   return (
     <div className={styles.dashboardBg} style={{ position: 'relative' }}>
@@ -1222,12 +1237,7 @@ export default function Dashboard({
 
 
           {/* --- Phase 2 Challenge Tracker --- */}
-          <Phase2Tracker
-            playerName={playerName}
-            playerLastName={playerLastName}
-            selectedDivision={selectedDivision}
-            phase={effectivePhase}
-          />
+          {/* Phase 2 tracker will be positioned as overlay on pool table */}
 
           {/* --- Upcoming Matches Section --- */}
           <section className={`${styles.dashboardSection} ${styles.dashboardSectionBox} ${styles.matchesSection}`}
@@ -1283,6 +1293,40 @@ export default function Dashboard({
                     />
                   </div>
                 )}
+
+                                 {/* Phase 2 Tracker positioned over the simulation */}
+                 {effectivePhase === 'challenge' && (
+                   <div style={{
+                     position: 'absolute',
+                     top: isMobile ? '25px' : '35px',
+                     left: '50%',
+                     transform: 'translateX(-50%)',
+                     zIndex: 10,
+                     width: isMobile ? '95%' : '75%',
+                     maxWidth: isMobile ? '400px' : '500px',
+                     height: isMobile ? '200px' : '400px'
+                   }}>
+                                         <Phase2Tracker
+                       playerName={playerName}
+                       playerLastName={playerLastName}
+                       selectedDivision={selectedDivision}
+                       phase={effectivePhase}
+                       isMobile={isMobile}
+                       onOpenOpponentsModal={() => setShowOpponents(true)}
+                       onOpenCompletedMatchesModal={() => setShowCompletedModal(true)}
+                       onOpenStandingsModal={() => setShowStandings(true)}
+                       onOpenAllMatchesModal={() => setShowAllMatchesModal(true)}
+                       pendingCount={pendingCount}
+                       sentCount={sentCount}
+                       onOpenProposalListModal={() => setShowProposalListModal(true)}
+                       onOpenSentProposalListModal={() => setShowSentProposalListModal(true)}
+                       onOpenPlayerSearch={() => setShowPlayerSearch(true)}
+                       upcomingMatches={filteredUpcomingMatches}
+                       onMatchClick={handleProposalClick}
+                       seasonData={seasonData}
+                     />
+                  </div>
+                 )}
                 {isMobile ? (
                   <div
                     className={styles.simulationContainer}

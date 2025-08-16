@@ -98,6 +98,32 @@ class SeasonService {
     return now >= phase2Start;
   }
 
+  // Helper method to get days until Phase 2 deadline
+  getDaysUntilPhase2Deadline(seasonData) {
+    if (!seasonData || !seasonData.phase2End) {
+      return null;
+    }
+    
+    const now = new Date();
+    const phase2End = new Date(seasonData.phase2End);
+    const diffTime = phase2End - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
+  }
+
+  // Helper method to check if Phase 2 deadline has passed
+  hasPhase2DeadlinePassed(seasonData) {
+    if (!seasonData || !seasonData.phase2End) {
+      return false;
+    }
+    
+    const now = new Date();
+    const phase2End = new Date(seasonData.phase2End);
+    
+    return now > phase2End;
+  }
+
   // Helper method to get current phase based on dates
   getCurrentPhaseFromDates(seasonData) {
     if (!seasonData) return 'offseason';
