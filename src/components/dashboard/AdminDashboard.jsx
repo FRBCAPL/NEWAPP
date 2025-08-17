@@ -49,8 +49,13 @@ function DivisionScheduleUpdater({ backendUrl }) {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ division: scrapeDivision })
             });
-            const msg = await res.text();
-            setResult("✅ " + msg);
+            const data = await res.json();
+            
+            if (data.deadlineExtended) {
+              setResult(`✅ ${data.message}`);
+            } else {
+              setResult("✅ " + (data.message || "Schedule updated successfully!"));
+            }
           } catch (err) {
             setResult("❌ " + err.message);
           }
@@ -123,8 +128,15 @@ function UpdateScheduleButton({ backendUrl }) {
     try {
       const res = await fetch(`${backendUrl}/admin/update-schedule`, { method: "POST" });
       const data = await res.json();
-      if (res.ok) setResult("✅ " + (data.message || "Schedule updated!"));
-      else setResult("❌ " + (data.error || "Update failed."));
+      if (res.ok) {
+        if (data.deadlineExtended) {
+          setResult("✅ " + data.message);
+        } else {
+          setResult("✅ " + (data.message || "Schedule updated!"));
+        }
+      } else {
+        setResult("❌ " + (data.error || "Update failed."));
+      }
     } catch (err) {
       setResult("❌ Update failed.");
     }

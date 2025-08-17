@@ -5,6 +5,7 @@ import tenBall from '../../assets/tenball.svg';
 import PoolSimulation from "../PoolSimulation.jsx";
 import ResponsiveWrapper from "../ResponsiveWrapper";
 import StandingsModal from "./StandingsModal.jsx";
+import DefenseChallengersModal from "./DefenseChallengersModal.jsx";
 import MatchDetailsModal from "../modal/MatchDetailsModal.jsx";
 import ProposalListModal from './ProposalListModal';
 import ConfirmMatchDetails from '../ConfirmMatchDetails';
@@ -214,6 +215,7 @@ export default function Dashboard({
   const [divisions, setDivisions] = useState([]);
   const [selectedDivision, setSelectedDivision] = useState("");
   const [showStandings, setShowStandings] = useState(false);
+  const [showDefenseChallengers, setShowDefenseChallengers] = useState(false);
   const [showProposalListModal, setShowProposalListModal] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [proposalNote, setProposalNote] = useState("");
@@ -356,13 +358,20 @@ export default function Dashboard({
       if (!selectedDivision) return;
       
       try {
+        console.log('Dashboard - Fetching season data for division:', selectedDivision);
+        
         const [seasonResult, phaseResult] = await Promise.all([
           seasonService.getCurrentSeason(selectedDivision),
           seasonService.getCurrentPhaseAndWeek(selectedDivision)
         ]);
         
+        console.log('Dashboard - Season result:', seasonResult);
+        console.log('Dashboard - Phase result:', phaseResult);
+        
         setSeasonData(seasonResult?.season || null);
         setCurrentPhaseInfo(phaseResult);
+        
+        console.log('Dashboard - Set seasonData:', seasonResult?.season || null);
       } catch (error) {
         console.error('Error fetching season data:', error);
       }
@@ -1269,7 +1278,7 @@ export default function Dashboard({
                      zIndex: 10,
                      width: isMobile ? '95%' : '75%',
                      maxWidth: isMobile ? '400px' : '500px',
-                     height: isMobile ? '200px' : '400px'
+                     height: isMobile ? '100px' : '200px'
                    }}>
                     <Phase1Tracker
                       currentPhase={effectivePhase}
@@ -1304,7 +1313,7 @@ export default function Dashboard({
                      zIndex: 10,
                      width: isMobile ? '95%' : '75%',
                      maxWidth: isMobile ? '400px' : '500px',
-                     height: isMobile ? '200px' : '400px'
+                     height: isMobile ? '100px' : '200px'
                    }}>
                                          <Phase2Tracker
                        playerName={playerName}
@@ -1314,16 +1323,17 @@ export default function Dashboard({
                        isMobile={isMobile}
                        onOpenOpponentsModal={() => setShowOpponents(true)}
                        onOpenCompletedMatchesModal={() => setShowCompletedModal(true)}
-                       onOpenStandingsModal={() => setShowStandings(true)}
-                       onOpenAllMatchesModal={() => setShowAllMatchesModal(true)}
-                       pendingCount={pendingCount}
-                       sentCount={sentCount}
-                       onOpenProposalListModal={() => setShowProposalListModal(true)}
-                       onOpenSentProposalListModal={() => setShowSentProposalListModal(true)}
-                       onOpenPlayerSearch={() => setShowPlayerSearch(true)}
-                       upcomingMatches={filteredUpcomingMatches}
-                       onMatchClick={handleProposalClick}
-                       seasonData={seasonData}
+                                        onOpenStandingsModal={() => setShowStandings(true)}
+                 onOpenDefenseChallengersModal={() => setShowDefenseChallengers(true)}
+                 onOpenAllMatchesModal={() => setShowAllMatchesModal(true)}
+                 pendingCount={pendingCount}
+                 sentCount={sentCount}
+                 onOpenProposalListModal={() => setShowProposalListModal(true)}
+                 onOpenSentProposalListModal={() => setShowSentProposalListModal(true)}
+                 onOpenPlayerSearch={() => setShowPlayerSearch(true)}
+                 upcomingMatches={filteredUpcomingMatches}
+                 onMatchClick={handleProposalClick}
+                 seasonData={seasonData}
                      />
                   </div>
                  )}
@@ -1600,6 +1610,15 @@ export default function Dashboard({
       onClose={() => setShowStandings(false)}
       standingsUrl={STANDINGS_URLS[selectedDivision]}
     />
+
+               {/* Defense Challengers Modal */}
+           <DefenseChallengersModal
+             open={showDefenseChallengers}
+             onClose={() => setShowDefenseChallengers(false)}
+             playerName={playerName}
+             playerLastName={playerLastName}
+             selectedDivision={selectedDivision}
+           />
 
     {/* Match Details Modal */}
     <MatchDetailsModal

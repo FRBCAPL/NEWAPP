@@ -13,6 +13,7 @@ export default function Phase2Tracker({
   onOpenOpponentsModal,
   onOpenCompletedMatchesModal,
   onOpenStandingsModal,
+  onOpenDefenseChallengersModal,
   onOpenAllMatchesModal,
   onOpenProposalListModal,
   onOpenSentProposalListModal,
@@ -34,7 +35,12 @@ export default function Phase2Tracker({
 
   // Calculate Phase 2 deadline status
   const getPhase2DeadlineStatus = () => {
+    // Debug logging
+    console.log('Phase2Tracker - seasonData:', seasonData);
+    console.log('Phase2Tracker - phase:', phase);
+    
     if (!seasonData || !seasonData.phase2End) {
+      console.log('Phase2Tracker - No seasonData or phase2End found');
       return { days: null, status: 'no_deadline' };
     }
     
@@ -42,6 +48,16 @@ export default function Phase2Tracker({
     const phase2End = new Date(seasonData.phase2End);
     const diffTime = phase2End - now;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    console.log('Phase2Tracker - Debug deadline calculation:', {
+      now: now.toISOString(),
+      phase2End: phase2End.toISOString(),
+      diffTime,
+      diffDays,
+      seasonDataPhase2End: seasonData.phase2End,
+      currentDate: now.toLocaleDateString(),
+      phase2EndDate: phase2End.toLocaleDateString()
+    });
     
     if (diffDays < 0) {
       return { days: Math.abs(diffDays), status: 'passed' };
@@ -132,22 +148,22 @@ export default function Phase2Tracker({
     return null;
   }
 
+  // Calculate total matches (challenges + defenses) for 2-4 goal
+  const totalMatches = stats.totalChallengeMatches + stats.requiredDefenses;
+  const minRequiredMatches = 2;
+  const maxAllowedMatches = 4;
+  const remainingMatches = maxAllowedMatches - totalMatches;
+  const isMinimumMet = totalMatches >= minRequiredMatches;
+  const isMaximumReached = totalMatches >= maxAllowedMatches;
+
   // Calculate dynamic status and colors like Phase1Tracker
   const getChallengeStatus = () => {
-    const totalMatches = stats.totalChallengeMatches;
-    const maxMatches = limits.limits.maxChallengeMatches;
-    const remainingChallenges = stats.remainingChallenges;
-    const remainingDefenses = stats.remainingDefenses;
-    
-    // Determine status based on multiple factors
-    if (stats.hasReachedChallengeLimit && stats.hasReachedDefenseLimit) {
-      return 'completed'; // All matches done
-    } else if (stats.hasReachedChallengeLimit || stats.hasReachedDefenseLimit) {
-      return 'limit_reached'; // Hit one limit
-    } else if (totalMatches >= 3) {
-      return 'active'; // Good progress
+    if (isMaximumReached) {
+      return 'completed'; // All matches done (reached 4)
+    } else if (isMinimumMet) {
+      return 'active'; // Met minimum (2+ matches)
     } else if (totalMatches >= 1) {
-      return 'progressing'; // Started
+      return 'progressing'; // Started but below minimum
     } else {
       return 'ready'; // Haven't started
     }
@@ -167,7 +183,6 @@ export default function Phase2Tracker({
     const status = getChallengeStatus();
     switch (status) {
       case 'completed': return '#00aa00';      // Green - all done
-      case 'limit_reached': return '#ff4444';  // Red - hit limit
       case 'active': return '#ff4444';         // Red - good progress
       case 'progressing': return '#ff4444';    // Red - started
       case 'ready': return '#ff4444';          // Red - ready to start
@@ -175,37 +190,37 @@ export default function Phase2Tracker({
     }
   };
 
-  // Status message with emojis
+  // Status message with emojis - updated to reflect 2-4 total matches
   const getStatusMessage = () => {
     const status = getChallengeStatus();
-    const remainingChallenges = stats.remainingChallenges;
-    const remainingDefenses = stats.remainingDefenses;
     
-    // Add deadline status to the message
+    // Add deadline status to the message with date
     if (deadlineStatus.status === 'passed') {
       return '⚠️ DEADLINE PASSED!';
     } else if (deadlineStatus.status === 'critical') {
-      return `🚨 CRITICAL: ENDS in ${deadlineStatus.days} hours!`;
+      const endDate = seasonData && seasonData.phase2End ? format(new Date(seasonData.phase2End), isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
+      return `🚨 CRITICAL: ENDS in ${deadlineStatus.days} hours! (${endDate})`;
     } else if (deadlineStatus.status === 'urgent') {
-      return `⚠️ URGENT: ENDS in ${deadlineStatus.days} days!`;
+      const endDate = seasonData && seasonData.phase2End ? format(new Date(seasonData.phase2End), isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
+      return `⚠️ URGENT: ENDS in ${deadlineStatus.days} days! (${endDate})`;
     } else if (deadlineStatus.status === 'warning') {
-      return `⚠️ WARNING: ENDS in ${deadlineStatus.days} days.`;
+      const endDate = seasonData && seasonData.phase2End ? format(new Date(seasonData.phase2End), isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
+      return `⚠️ WARNING: ENDS in ${deadlineStatus.days} days. (${endDate})`;
     } else if (deadlineStatus.status === 'normal') {
-      return `ENDS in ${deadlineStatus.days} days.`;
+      const endDate = seasonData && seasonData.phase2End ? format(new Date(seasonData.phase2End), isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
+      return `ENDS in ${deadlineStatus.days} days. (${endDate})`;
     }
     
     // Fallback to original status messages if no deadline
     switch (status) {
       case 'completed':
-        return '🎉 Phase 2 Complete!';
-      case 'limit_reached':
-        return '⚠️ Challenge limit reached.';
+        return '🎉 Phase 2 Complete! (4/4 matches)';
       case 'active':
-        return `🏆 Active in Phase 2! ${remainingChallenges} challenges, ${remainingDefenses} defenses remaining.`;
+        return `🏆 Active in Phase 2! ${totalMatches}/4 total matches (need 2-4)`;
       case 'progressing':
-        return `📈 Phase 2 in progress! ${remainingChallenges} challenges, ${remainingDefenses} defenses remaining.`;
+        return `📈 Phase 2 in progress! ${totalMatches}/4 total matches (need 2-4)`;
       case 'ready':
-        return `⚔️ Ready for Phase 2! ${stats.eligibleOpponentsCount} opponents available.`;
+        return `⚔️ Ready for Phase 2! Need 2-4 total matches.`;
       default:
         return 'Phase 2 Challenge Status';
     }
@@ -227,8 +242,8 @@ export default function Phase2Tracker({
       justifyContent: isExpanded ? 'flex-start' : 'flex-start',
       backdropFilter: 'blur(2px)',
       overflow: isMobile ? 'auto' : 'hidden',
-      maxHeight: isMobile ? 'none' : '35vh',
-      height: isMobile ? (isExpanded ? 'auto' : '40px') : (isExpanded ? 'auto' : '160px'),
+                      maxHeight: isMobile ? 'none' : '35vh',
+        height: isMobile ? (isExpanded ? '160px' : '40px') : (isExpanded ? '380px' : '160px'),
       transition: 'height 0.3s ease, max-height 0.3s ease'
     }}
     onClick={() => setIsExpanded(!isExpanded)}
@@ -242,7 +257,7 @@ export default function Phase2Tracker({
         <h3 style={{
           margin: 0,
           color: '#ffffff',
-          fontSize: isMobile ? '0.5rem' : '1.1rem',
+                     fontSize: isMobile ? '0.4rem' : '1.1rem',
           fontWeight: 'bold',
           display: 'flex',
           alignItems: 'center',
@@ -252,11 +267,10 @@ export default function Phase2Tracker({
           textShadow: '1px 1px 3px rgba(0,0,0,0.9)'
         }}>
           {getChallengeStatus() === 'completed' && '🎉'}
-          {getChallengeStatus() === 'limit_reached' && '⚠️'}
           {getChallengeStatus() === 'active' && '🏆'}
           {getChallengeStatus() === 'progressing' && '📈'}
           {getChallengeStatus() === 'ready' && '⚔️'}
-          <span style={{ fontSize: isMobile ? '0.8rem' : '1.1rem' }}>
+                     <span style={{ fontSize: isMobile ? '0.6rem' : '1.1rem' }}>
             Phase 2
           </span>
         </h3>
@@ -276,7 +290,7 @@ export default function Phase2Tracker({
           </div>
         )}
         
-        {/* Challenge Progress */}
+        {/* Total Matches Progress - Updated to show 2-4 goal */}
         {!isMobile && (
           <div style={{
             color: '#ffffff',
@@ -287,11 +301,11 @@ export default function Phase2Tracker({
             textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
             lineHeight: isMobile ? '1.1' : '1.1'
           }}>
-            {stats.totalChallengeMatches}/{limits.limits.maxChallengeMatches} Challenges
+            {totalMatches}/4 Total Matches (need 2-4)
           </div>
         )}
         
-        {/* Defense Progress */}
+        {/* Defense Progress - Updated to show 0-2 required */}
         {!isMobile && (
           <div style={{
             color: '#ffffff',
@@ -302,7 +316,7 @@ export default function Phase2Tracker({
             textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
             lineHeight: isMobile ? '1.1' : '1.1'
           }}>
-            {stats.requiredDefenses}/2 Defenses
+            {stats.requiredDefenses}/2 Defenses (max required)
           </div>
         )}
       </div>
@@ -333,14 +347,14 @@ export default function Phase2Tracker({
       {/* Expanded Content */}
       {isExpanded && (
         <>
-          {/* Main Stats Grid */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))', 
-            gap: isMobile ? '0.5rem' : '0.75rem',
-            marginBottom: isMobile ? '0.75rem' : '1rem'
-          }}>
-                         {/* Challenge Matches */}
+                     {/* Main Stats Grid */}
+           <div style={{ 
+             display: 'grid', 
+             gridTemplateColumns: 'repeat(3, 1fr)', 
+             gap: isMobile ? '0.5rem' : '0.75rem',
+             marginBottom: isMobile ? '0.75rem' : '1rem'
+           }}>
+                         {/* Total Matches - Updated to show 2-4 goal */}
              <div 
                onClick={(e) => {
                  e.stopPropagation();
@@ -365,7 +379,7 @@ export default function Phase2Tracker({
                 color: '#e0e0e0',
                 marginBottom: isMobile ? '2px' : '2px'
               }}>
-                ⚔️ Challenges
+                🏆 Total Matches
               </div>
               <div style={{
                 fontSize: isMobile ? '0.4rem' : '0.9rem',
@@ -374,7 +388,7 @@ export default function Phase2Tracker({
                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
                 marginBottom: isMobile ? '1px' : '4px'
               }}>
-                {stats.totalChallengeMatches}/{limits.limits.maxChallengeMatches}
+                {totalMatches}/4
               </div>
               {/* Progress Bar */}
               <div style={{
@@ -386,9 +400,9 @@ export default function Phase2Tracker({
                 marginBottom: isMobile ? '1px' : '2px'
               }}>
                 <div style={{
-                  width: `${(stats.totalChallengeMatches / limits.limits.maxChallengeMatches) * 100}%`,
+                  width: `${(totalMatches / maxAllowedMatches) * 100}%`,
                   height: '100%',
-                  background: getProgressColor(stats.totalChallengeMatches, limits.limits.maxChallengeMatches),
+                  background: getProgressColor(totalMatches, maxAllowedMatches),
                   borderRadius: '2px',
                   transition: 'width 0.3s ease'
                 }} />
@@ -400,18 +414,29 @@ export default function Phase2Tracker({
                 textAlign: 'center',
                 fontWeight: '500'
               }}>
-                {stats.remainingChallenges} remaining
+                {isMinimumMet ? '✅ Min met' : `${minRequiredMatches - totalMatches} to min`}
               </div>
             </div>
 
-            {/* Defense Status */}
-            <div style={{ 
-              padding: isMobile ? '0.5rem' : '0.75rem',
-              background: 'rgba(255,255,255,0.1)',
-              borderRadius: '6px',
-              border: '1px solid rgba(255,255,255,0.1)',
-              textAlign: 'center'
-            }}>
+                         {/* Defense Status - Updated to show 0-2 required */}
+             <div 
+               onClick={(e) => {
+                 e.stopPropagation();
+                 // For Phase 2 Defense, we need to open defense challengers modal to show players ranked below the user
+                 if (onOpenDefenseChallengersModal) onOpenDefenseChallengersModal();
+               }}
+              style={{ 
+                padding: isMobile ? '0.5rem' : '0.75rem',
+                background: 'rgba(255,255,255,0.1)',
+                borderRadius: '6px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.15)'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+            >
               <div style={{ 
                 fontSize: isMobile ? '0.45rem' : '0.8rem',
                 fontWeight: 'bold',
@@ -453,7 +478,7 @@ export default function Phase2Tracker({
                 textAlign: 'center',
                 fontWeight: '500'
               }}>
-                {2 - stats.requiredDefenses} required left
+                {stats.requiredDefenses >= 2 ? '✅ Max met' : `${2 - stats.requiredDefenses} required left`}
               </div>
             </div>
 
@@ -494,13 +519,13 @@ export default function Phase2Tracker({
             </div>
           </div>
 
-          {/* Interactive Sections - Like Phase 1 Tracker */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-            gap: isMobile ? '0.5rem' : '0.75rem',
-            marginBottom: isMobile ? '0.75rem' : '1rem'
-          }}>
+                     {/* Interactive Sections - Like Phase 1 Tracker */}
+           <div style={{
+             display: 'grid',
+             gridTemplateColumns: 'repeat(3, 1fr)',
+             gap: isMobile ? '0.5rem' : '0.75rem',
+             marginBottom: isMobile ? '0.75rem' : '1rem'
+           }}>
             {/* Proposals Section */}
             <div style={{
               padding: isMobile ? '0.5rem' : '0.75rem',
@@ -708,7 +733,7 @@ export default function Phase2Tracker({
             </div>
           )}
 
-                     {/* Status Summary */}
+                     {/* Status Summary - Updated to reflect 2-4 total matches */}
            <div style={{ 
              padding: isMobile ? '0.5rem' : '0.75rem',
              background: 'rgba(0,0,0,0.3)',
@@ -718,31 +743,14 @@ export default function Phase2Tracker({
              color: '#ffffff',
              textAlign: 'center'
            }}>
-             {stats.eligibleOpponentsCount > 0 && stats.remainingChallenges > 0 && limits.weeklyStatus.canChallengeThisWeek ? (
-               <div>✅ Can challenge {stats.eligibleOpponentsCount} opponent{stats.eligibleOpponentsCount !== 1 ? 's' : ''} this week</div>
-             ) : stats.remainingDefenses > 0 && limits.weeklyStatus.canDefendThisWeek ? (
-               <div>✅ Can accept defense challenges this week</div>
+             {isMinimumMet ? (
+               <div>✅ Minimum requirement met ({totalMatches}/4 total matches)</div>
              ) : (
-               <div>⏳ Waiting for next week or opponent selection</div>
+               <div>📈 Need {minRequiredMatches - totalMatches} more match{minRequiredMatches - totalMatches !== 1 ? 'es' : ''} to meet minimum (2-4 total)</div>
              )}
            </div>
 
-           {/* Phase 2 Deadline Date */}
-           {seasonData && seasonData.phase2End && (
-             <div style={{
-               marginTop: isMobile ? '0.5rem' : '0.75rem',
-               padding: isMobile ? '0.4rem' : '0.6rem',
-               background: 'rgba(0,0,0,0.4)',
-               borderRadius: '4px',
-               border: '1px solid rgba(255,255,255,0.1)',
-               fontSize: isMobile ? '0.35rem' : '0.65rem',
-               color: '#e0e0e0',
-               textAlign: 'center',
-               fontStyle: 'italic'
-             }}>
-               ENDS: {seasonData.phase2End ? format(new Date(seasonData.phase2End), isMobile ? 'MMM d' : 'MMM d, yyyy') : 'Loading...'}
-             </div>
-           )}
+           
         </>
       )}
     </div>
