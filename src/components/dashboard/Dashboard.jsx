@@ -523,7 +523,7 @@ export default function Dashboard({
     scheduleFileName = `schedule_${safeDivision}.json`;
   }
   
-  const scheduleUrl = `${BACKEND_URL}/static/${scheduleFileName}`;
+  const scheduleUrl = `${BACKEND_URL}/static/${scheduleFileName}?t=${Date.now()}`;
 
   fetch(scheduleUrl)
     .then(res => {

@@ -64,7 +64,7 @@ export default function DivisionSelectorModal({
     try {
       // Fetch schedule data
       const scheduleFileName = `schedule_${division.replace(/[^A-Za-z0-9]/g, '_')}.json`;
-      const scheduleUrl = `${BACKEND_URL}/static/${scheduleFileName}`;
+      const scheduleUrl = `${BACKEND_URL}/static/${scheduleFileName}?t=${Date.now()}`;
       
       console.log('🔍 Fetching schedule from:', scheduleUrl);
       
