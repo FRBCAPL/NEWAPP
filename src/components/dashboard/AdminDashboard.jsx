@@ -79,6 +79,77 @@ function DivisionScheduleUpdater({ backendUrl }) {
   );
 }
 
+// --- Update Season Data Button ---
+function UpdateSeasonDataButton({ backendUrl }) {
+  const [divisions, setDivisions] = useState([]);
+  const [selectedDivision, setSelectedDivision] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState("");
+
+  useEffect(() => {
+    fetch(`${backendUrl}/admin/divisions`)
+      .then(res => res.json())
+      .then(data => {
+        const divs = data.map(d => d.name);
+        setDivisions(divs);
+        setSelectedDivision(divs[0] || "");
+      })
+      .catch(() => setDivisions([]));
+  }, [backendUrl]);
+
+  const handleUpdate = async () => {
+    setLoading(true);
+    setResult("");
+    try {
+      const res = await fetch(`${backendUrl}/admin/update-season-data`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ division: selectedDivision })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResult("✅ " + (data.message || "Season data updated successfully!"));
+      } else {
+        setResult("❌ " + (data.error || "Update failed."));
+      }
+    } catch (err) {
+      setResult("❌ Update failed: " + err.message);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ margin: "12px 0" }}>
+      <h3>Update Season Data from Schedule</h3>
+      <select
+        value={selectedDivision}
+        onChange={e => setSelectedDivision(e.target.value)}
+        style={{ marginRight: 8, padding: 4, borderRadius: 4 }}
+      >
+        {divisions.map(div =>
+          <option key={div} value={div}>{div}</option>
+        )}
+      </select>
+      <button
+        onClick={handleUpdate}
+        disabled={loading || !selectedDivision}
+        style={{
+          background: "#28a745",
+          color: "#fff",
+          border: "none",
+          borderRadius: 5,
+          padding: "8px 16px",
+          fontWeight: "bold",
+          cursor: loading ? "not-allowed" : "pointer"
+        }}
+      >
+        {loading ? "Updating..." : "Update Season Data"}
+      </button>
+      {result && <div style={{ marginTop: 8 }}>{result}</div>}
+    </div>
+  );
+}
+
 // --- Button Components ---
 function SyncUsersButton({ backendUrl }) {
   const [loading, setLoading] = useState(false);
@@ -750,6 +821,7 @@ export default function AdminDashboard() {
           <div className={styles.adminCardTitle}><FaSyncAlt /> Data Sync</div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             <DivisionScheduleUpdater backendUrl={BACKEND_URL} />
+            <UpdateSeasonDataButton backendUrl={BACKEND_URL} />
             <UpdateStandingsButton backendUrl={BACKEND_URL} />
             <SyncUsersButton backendUrl={BACKEND_URL} />
           </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { challengeService } from '../../services/challengeService';
 import { format } from 'date-fns';
 import styles from './dashboard.module.css';
+import Phase2RulesModal from '../modal/Phase2RulesModal';
 
 export default function Phase2Tracker({ 
   playerName, 
@@ -30,34 +31,52 @@ export default function Phase2Tracker({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [showRulesModal, setShowRulesModal] = useState(false);
 
   const fullPlayerName = `${playerName} ${playerLastName}`;
 
   // Calculate Phase 2 deadline status
   const getPhase2DeadlineStatus = () => {
-    // Debug logging
-    console.log('Phase2Tracker - seasonData:', seasonData);
-    console.log('Phase2Tracker - phase:', phase);
+    // Debug the season data being received
+    console.log('Phase2Tracker - Received seasonData:', seasonData);
+    console.log('Phase2Tracker - seasonData.phase1End:', seasonData?.phase1End);
     
-    if (!seasonData || !seasonData.phase2End) {
-      console.log('Phase2Tracker - No seasonData or phase2End found');
+    if (!seasonData || !seasonData.phase1End) {
+      console.log('Phase2Tracker - No seasonData or phase1End found');
       return { days: null, status: 'no_deadline' };
     }
     
     const now = new Date();
-    const phase2End = new Date(seasonData.phase2End);
+    const phase1End = new Date(seasonData.phase1End);
+    
+         // Debug the date comparison
+     console.log('Phase2Tracker - Date comparison:');
+     console.log('  now:', now.toISOString());
+     console.log('  phase1End:', phase1End.toISOString());
+     console.log('  nowTime:', now.getTime());
+     console.log('  phase1EndTime:', phase1End.getTime());
+     console.log('  isPhase1Active:', now <= phase1End);
+     console.log('  currentDate:', now.toLocaleDateString());
+     console.log('  phase1EndDate:', phase1End.toLocaleDateString());
+    
+    // If Phase 1 hasn't ended yet, Phase 2 cannot be over
+    if (now <= phase1End) {
+      console.log('Phase2Tracker - Phase 1 is still active, returning phase1_active status');
+      return { days: null, status: 'phase1_active' };
+    }
+    
+    // Phase 2 ends 4 weeks (28 days) after Phase 1 ends
+    const phase2End = new Date(phase1End);
+    phase2End.setDate(phase2End.getDate() + 28);
+    
     const diffTime = phase2End - now;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    console.log('Phase2Tracker - Debug deadline calculation:', {
-      now: now.toISOString(),
-      phase2End: phase2End.toISOString(),
-      diffTime,
-      diffDays,
-      seasonDataPhase2End: seasonData.phase2End,
-      currentDate: now.toLocaleDateString(),
-      phase2EndDate: phase2End.toLocaleDateString()
-    });
+         console.log('Phase2Tracker - Phase 2 calculation:');
+     console.log('  phase2End:', phase2End.toISOString());
+     console.log('  diffTime:', diffTime);
+     console.log('  diffDays:', diffDays);
+     console.log('  status:', diffDays < 0 ? 'passed' : diffDays <= 1 ? 'critical' : diffDays <= 3 ? 'urgent' : diffDays <= 7 ? 'warning' : 'normal');
     
     if (diffDays < 0) {
       return { days: Math.abs(diffDays), status: 'passed' };
@@ -73,6 +92,11 @@ export default function Phase2Tracker({
   };
 
   const deadlineStatus = getPhase2DeadlineStatus();
+  
+  // Debug the final deadline status
+  console.log('Phase2Tracker - Final deadlineStatus:', deadlineStatus);
+  console.log('Phase2Tracker - Final deadlineStatus.status:', deadlineStatus?.status);
+  console.log('Phase2Tracker - Final deadlineStatus.days:', deadlineStatus?.days);
 
   useEffect(() => {
     if (!playerName || !playerLastName || !selectedDivision || phase !== 'challenge') {
@@ -180,6 +204,11 @@ export default function Phase2Tracker({
 
   // Dynamic primary color based on status - using red theme like Phase 1
   const getPrimaryColor = () => {
+    // First check if Phase 1 is still active
+    if (deadlineStatus.status === 'phase1_active') {
+      return '#ffaa00'; // Orange - Phase 1 still active
+    }
+    
     const status = getChallengeStatus();
     switch (status) {
       case 'completed': return '#00aa00';      // Green - all done
@@ -195,19 +224,34 @@ export default function Phase2Tracker({
     const status = getChallengeStatus();
     
     // Add deadline status to the message with date
-    if (deadlineStatus.status === 'passed') {
+    if (deadlineStatus.status === 'phase1_active') {
+      const phase1EndDate = seasonData && seasonData.phase1End ? format(new Date(seasonData.phase1End), isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
+      return `⏳ Phase 1 still active until ${phase1EndDate}`;
+    } else if (deadlineStatus.status === 'passed') {
       return '⚠️ DEADLINE PASSED!';
     } else if (deadlineStatus.status === 'critical') {
-      const endDate = seasonData && seasonData.phase2End ? format(new Date(seasonData.phase2End), isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
+      const phase1End = new Date(seasonData.phase1End);
+      const phase2End = new Date(phase1End);
+      phase2End.setDate(phase2End.getDate() + 28);
+      const endDate = format(phase2End, isMobile ? 'MMM d' : 'MMM d, yyyy');
       return `🚨 CRITICAL: ENDS in ${deadlineStatus.days} hours! (${endDate})`;
     } else if (deadlineStatus.status === 'urgent') {
-      const endDate = seasonData && seasonData.phase2End ? format(new Date(seasonData.phase2End), isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
+      const phase1End = new Date(seasonData.phase1End);
+      const phase2End = new Date(phase1End);
+      phase2End.setDate(phase2End.getDate() + 28);
+      const endDate = format(phase2End, isMobile ? 'MMM d' : 'MMM d, yyyy');
       return `⚠️ URGENT: ENDS in ${deadlineStatus.days} days! (${endDate})`;
     } else if (deadlineStatus.status === 'warning') {
-      const endDate = seasonData && seasonData.phase2End ? format(new Date(seasonData.phase2End), isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
+      const phase1End = new Date(seasonData.phase1End);
+      const phase2End = new Date(phase1End);
+      phase2End.setDate(phase2End.getDate() + 28);
+      const endDate = format(phase2End, isMobile ? 'MMM d' : 'MMM d, yyyy');
       return `⚠️ WARNING: ENDS in ${deadlineStatus.days} days. (${endDate})`;
     } else if (deadlineStatus.status === 'normal') {
-      const endDate = seasonData && seasonData.phase2End ? format(new Date(seasonData.phase2End), isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
+      const phase1End = new Date(seasonData.phase1End);
+      const phase2End = new Date(phase1End);
+      phase2End.setDate(phase2End.getDate() + 28);
+      const endDate = format(phase2End, isMobile ? 'MMM d' : 'MMM d, yyyy');
       return `ENDS in ${deadlineStatus.days} days. (${endDate})`;
     }
     
@@ -242,83 +286,120 @@ export default function Phase2Tracker({
       justifyContent: isExpanded ? 'flex-start' : 'flex-start',
       backdropFilter: 'blur(2px)',
       overflow: isMobile ? 'auto' : 'hidden',
-                      maxHeight: isMobile ? 'none' : '35vh',
-        height: isMobile ? (isExpanded ? '160px' : '40px') : (isExpanded ? '380px' : '160px'),
+      maxHeight: isMobile ? 'none' : '35vh',
+             height: isMobile ? (isExpanded ? '200px' : '40px') : (isExpanded ? '450px' : '160px'),
       transition: 'height 0.3s ease, max-height 0.3s ease'
     }}
     onClick={() => setIsExpanded(!isExpanded)}
     >
-      {/* Header */}
-      <div style={{
-        position: 'relative',
-        textAlign: 'center',
-        marginBottom: isMobile ? '0px' : '12px'
-      }}>
-        <h3 style={{
-          margin: 0,
-          color: '#ffffff',
-                     fontSize: isMobile ? '0.4rem' : '1.1rem',
-          fontWeight: 'bold',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: isMobile ? '2px' : '6px',
-          flexWrap: 'wrap',
-          textShadow: '1px 1px 3px rgba(0,0,0,0.9)'
-        }}>
-          {getChallengeStatus() === 'completed' && '🎉'}
-          {getChallengeStatus() === 'active' && '🏆'}
-          {getChallengeStatus() === 'progressing' && '📈'}
-          {getChallengeStatus() === 'ready' && '⚔️'}
-                     <span style={{ fontSize: isMobile ? '0.6rem' : '1.1rem' }}>
-            Phase 2
-          </span>
-        </h3>
-        
-        {/* Status Message */}
-        {!isMobile && (
-          <div style={{
-            color: '#ffffff',
-            fontSize: isMobile ? '0.6rem' : '0.95rem',
-            lineHeight: isMobile ? '1.1' : '1.1',
-            marginTop: isMobile ? '2px' : '4px',
-            marginBottom: isMobile ? '0px' : '8px',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-            fontWeight: '500'
+             {/* Header */}
+       <div style={{
+         position: 'relative',
+         textAlign: 'center',
+         marginBottom: isMobile ? '0px' : '8px'
+       }}>
+                           <div style={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%'
           }}>
-            {getStatusMessage()}
+            {/* Rules Button - Positioned absolutely on the right */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowRulesModal(true);
+              }}
+              style={{
+                position: 'absolute',
+                right: 0,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'linear-gradient(135deg, #ff4444, #cc3333)',
+                border: '2px solid #ffffff',
+                color: '#ffffff',
+                fontSize: isMobile ? '0.5rem' : '0.8rem',
+                fontWeight: 'bold',
+                padding: isMobile ? '4px 8px' : '6px 12px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                zIndex: 10
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'linear-gradient(135deg, #ff6666, #dd4444)';
+                e.target.style.transform = 'translateY(-50%) scale(1.1)';
+                e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'linear-gradient(135deg, #ff4444, #cc3333)';
+                e.target.style.transform = 'translateY(-50%) scale(1)';
+                e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+              }}
+            >
+              ⚔️ Rules
+            </button>
+            
+            {/* Centered Title */}
+            <h3 style={{
+              margin: 0,
+              color: '#ffffff',
+              fontSize: isMobile ? '0.4rem' : '1.1rem',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: isMobile ? '2px' : '6px',
+              flexWrap: 'wrap',
+              textShadow: '1px 1px 3px rgba(0,0,0,0.9)',
+              textAlign: 'center'
+            }}>
+              {deadlineStatus.status === 'phase1_active' && '⏳'}
+              {deadlineStatus.status !== 'phase1_active' && getChallengeStatus() === 'completed' && '🎉'}
+              {deadlineStatus.status !== 'phase1_active' && getChallengeStatus() === 'active' && '🏆'}
+              {deadlineStatus.status !== 'phase1_active' && getChallengeStatus() === 'progressing' && '📈'}
+              {deadlineStatus.status !== 'phase1_active' && getChallengeStatus() === 'ready' && '⚔️'}
+              <span style={{ fontSize: isMobile ? '0.6rem' : '1.1rem' }}>
+                Phase 2
+              </span>
+            </h3>
           </div>
-        )}
         
-        {/* Total Matches Progress - Updated to show 2-4 goal */}
-        {!isMobile && (
-          <div style={{
-            color: '#ffffff',
-            fontSize: isMobile ? '0.55rem' : '0.95rem',
-            fontWeight: 'bold',
-            marginTop: isMobile ? '2px' : '4px',
-            marginBottom: isMobile ? '0px' : '8px',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-            lineHeight: isMobile ? '1.1' : '1.1'
-          }}>
-            {totalMatches}/4 Total Matches (need 2-4)
-          </div>
-        )}
-        
-        {/* Defense Progress - Updated to show 0-2 required */}
-        {!isMobile && (
-          <div style={{
-            color: '#ffffff',
-            fontSize: isMobile ? '0.55rem' : '0.95rem',
-            fontWeight: 'bold',
-            marginTop: isMobile ? '2px' : '4px',
-            marginBottom: isMobile ? '0px' : '4px',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-            lineHeight: isMobile ? '1.1' : '1.1'
-          }}>
-            {stats.requiredDefenses}/2 Defenses (max required)
-          </div>
-        )}
+                 {/* Status Message - Compact */}
+         {!isMobile && (
+           <div style={{
+             color: '#ffffff',
+             fontSize: isMobile ? '0.6rem' : '0.85rem',
+             lineHeight: isMobile ? '1.1' : '1.1',
+             marginTop: isMobile ? '2px' : '3px',
+             marginBottom: isMobile ? '0px' : '6px',
+             textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+             fontWeight: '500'
+           }}>
+             {getStatusMessage()}
+           </div>
+         )}
+         
+         {/* Combined Progress - Compact */}
+         {!isMobile && (
+           <div style={{
+             color: '#ffffff',
+             fontSize: isMobile ? '0.55rem' : '0.8rem',
+             fontWeight: 'bold',
+             marginTop: isMobile ? '2px' : '3px',
+             marginBottom: isMobile ? '0px' : '6px',
+             textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+             lineHeight: isMobile ? '1.1' : '1.1'
+           }}>
+             {totalMatches}/4 Total • {stats.requiredDefenses}/2 Defenses
+           </div>
+         )}
       </div>
 
       {/* Show Stats Button */}
@@ -347,53 +428,53 @@ export default function Phase2Tracker({
       {/* Expanded Content */}
       {isExpanded && (
         <>
-                     {/* Main Stats Grid */}
-           <div style={{ 
-             display: 'grid', 
-             gridTemplateColumns: 'repeat(3, 1fr)', 
-             gap: isMobile ? '0.5rem' : '0.75rem',
-             marginBottom: isMobile ? '0.75rem' : '1rem'
-           }}>
-                         {/* Total Matches - Updated to show 2-4 goal */}
-             <div 
-               onClick={(e) => {
-                 e.stopPropagation();
-                 // For Phase 2, we need to open Phase 2 opponents modal
-                 if (onOpenPlayerSearch) onOpenPlayerSearch();
-               }}
-               style={{ 
-                 padding: isMobile ? '0.5rem' : '0.75rem',
-                 background: 'rgba(255,255,255,0.1)',
-                 borderRadius: '6px',
-                 border: '1px solid rgba(255,255,255,0.1)',
-                 textAlign: 'center',
-                 cursor: 'pointer',
-                 transition: 'background-color 0.2s ease'
-               }}
-               onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.15)'}
-               onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-             >
-              <div style={{ 
-                fontSize: isMobile ? '0.45rem' : '0.8rem',
-                fontWeight: 'bold',
-                color: '#e0e0e0',
-                marginBottom: isMobile ? '2px' : '2px'
-              }}>
-                🏆 Total Matches
-              </div>
-              <div style={{
-                fontSize: isMobile ? '0.4rem' : '0.9rem',
-                color: '#ffffff',
-                fontWeight: 'bold',
-                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                marginBottom: isMobile ? '1px' : '4px'
-              }}>
-                {totalMatches}/4
-              </div>
+          {/* Main Stats Grid */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(3, 1fr)', 
+            gap: isMobile ? '0.4rem' : '0.6rem',
+            marginBottom: isMobile ? '0.5rem' : '0.75rem'
+          }}>
+            {/* Total Matches - Updated to show 2-4 goal */}
+            <div 
+              onClick={(e) => {
+                e.stopPropagation();
+                // For Phase 2, we need to open Phase 2 opponents modal
+                if (onOpenPlayerSearch) onOpenPlayerSearch();
+              }}
+              style={{ 
+                padding: isMobile ? '0.4rem' : '0.6rem',
+                background: 'rgba(255,255,255,0.1)',
+                borderRadius: '6px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.15)'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+            >
+                             <div style={{ 
+                 fontSize: isMobile ? '0.45rem' : '0.8rem',
+                 fontWeight: 'bold',
+                 color: '#e0e0e0',
+                 marginBottom: isMobile ? '2px' : '3px'
+               }}>
+                 🏆 Total Matches
+               </div>
+               <div style={{
+                 fontSize: isMobile ? '0.4rem' : '0.9rem',
+                 color: '#ffffff',
+                 fontWeight: 'bold',
+                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                 marginBottom: isMobile ? '2px' : '4px'
+               }}>
+                 {totalMatches}/4
+               </div>
               {/* Progress Bar */}
               <div style={{
                 width: '100%',
-                height: isMobile ? '2px' : '4px',
+                height: isMobile ? '2px' : '3px',
                 background: 'rgba(255,255,255,0.2)',
                 borderRadius: '2px',
                 overflow: 'hidden',
@@ -408,7 +489,7 @@ export default function Phase2Tracker({
                 }} />
               </div>
               <div style={{
-                fontSize: isMobile ? '0.4rem' : '0.75rem',
+                fontSize: isMobile ? '0.35rem' : '0.65rem',
                 color: '#e0e0e0',
                 fontStyle: 'italic',
                 textAlign: 'center',
@@ -418,15 +499,15 @@ export default function Phase2Tracker({
               </div>
             </div>
 
-                         {/* Defense Status - Updated to show 0-2 required */}
-             <div 
-               onClick={(e) => {
-                 e.stopPropagation();
-                 // For Phase 2 Defense, we need to open defense challengers modal to show players ranked below the user
-                 if (onOpenDefenseChallengersModal) onOpenDefenseChallengersModal();
-               }}
+            {/* Defense Status - Updated to show 0-2 required */}
+            <div 
+              onClick={(e) => {
+                e.stopPropagation();
+                // For Phase 2 Defense, we need to open defense challengers modal to show players ranked below the user
+                if (onOpenDefenseChallengersModal) onOpenDefenseChallengersModal();
+              }}
               style={{ 
-                padding: isMobile ? '0.5rem' : '0.75rem',
+                padding: isMobile ? '0.4rem' : '0.6rem',
                 background: 'rgba(255,255,255,0.1)',
                 borderRadius: '6px',
                 border: '1px solid rgba(255,255,255,0.1)',
@@ -437,27 +518,27 @@ export default function Phase2Tracker({
               onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.15)'}
               onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
             >
-              <div style={{ 
-                fontSize: isMobile ? '0.45rem' : '0.8rem',
-                fontWeight: 'bold',
-                color: '#e0e0e0',
-                marginBottom: isMobile ? '2px' : '2px'
-              }}>
-                🛡️ Defenses
-              </div>
-              <div style={{
-                fontSize: isMobile ? '0.4rem' : '0.9rem',
-                color: '#ffffff',
-                fontWeight: 'bold',
-                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                marginBottom: isMobile ? '1px' : '4px'
-              }}>
-                {stats.requiredDefenses}/2
-              </div>
+                             <div style={{ 
+                 fontSize: isMobile ? '0.45rem' : '0.8rem',
+                 fontWeight: 'bold',
+                 color: '#e0e0e0',
+                 marginBottom: isMobile ? '2px' : '3px'
+               }}>
+                 🛡️ Defenses
+               </div>
+               <div style={{
+                 fontSize: isMobile ? '0.4rem' : '0.9rem',
+                 color: '#ffffff',
+                 fontWeight: 'bold',
+                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                 marginBottom: isMobile ? '2px' : '4px'
+               }}>
+                 {stats.requiredDefenses}/2
+               </div>
               {/* Progress Bar */}
               <div style={{
                 width: '100%',
-                height: isMobile ? '2px' : '4px',
+                height: isMobile ? '2px' : '3px',
                 background: 'rgba(255,255,255,0.2)',
                 borderRadius: '2px',
                 overflow: 'hidden',
@@ -472,7 +553,7 @@ export default function Phase2Tracker({
                 }} />
               </div>
               <div style={{
-                fontSize: isMobile ? '0.4rem' : '0.75rem',
+                fontSize: isMobile ? '0.35rem' : '0.65rem',
                 color: '#e0e0e0',
                 fontStyle: 'italic',
                 textAlign: 'center',
@@ -484,31 +565,31 @@ export default function Phase2Tracker({
 
             {/* Weekly Status */}
             <div style={{ 
-              padding: isMobile ? '0.5rem' : '0.75rem',
+              padding: isMobile ? '0.4rem' : '0.6rem',
               background: 'rgba(255,255,255,0.1)',
               borderRadius: '6px',
               border: '1px solid rgba(255,255,255,0.1)',
               textAlign: 'center'
             }}>
               <div style={{ 
-                fontSize: isMobile ? '0.45rem' : '0.8rem',
+                fontSize: isMobile ? '0.4rem' : '0.7rem',
                 fontWeight: 'bold',
                 color: '#e0e0e0',
-                marginBottom: isMobile ? '2px' : '2px'
+                marginBottom: isMobile ? '1px' : '2px'
               }}>
                 📅 This Week
               </div>
               <div style={{
-                fontSize: isMobile ? '0.4rem' : '0.9rem',
+                fontSize: isMobile ? '0.35rem' : '0.8rem',
                 color: '#ffffff',
                 fontWeight: 'bold',
                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                marginBottom: isMobile ? '1px' : '4px'
+                marginBottom: isMobile ? '1px' : '2px'
               }}>
                 {limits.weeklyStatus.canChallengeThisWeek ? '✅' : '❌'} Available
               </div>
               <div style={{
-                fontSize: isMobile ? '0.4rem' : '0.75rem',
+                fontSize: isMobile ? '0.35rem' : '0.65rem',
                 color: '#e0e0e0',
                 fontStyle: 'italic',
                 textAlign: 'center',
@@ -519,16 +600,63 @@ export default function Phase2Tracker({
             </div>
           </div>
 
-                     {/* Interactive Sections - Like Phase 1 Tracker */}
-           <div style={{
-             display: 'grid',
-             gridTemplateColumns: 'repeat(3, 1fr)',
-             gap: isMobile ? '0.5rem' : '0.75rem',
-             marginBottom: isMobile ? '0.75rem' : '1rem'
-           }}>
+           {/* NEW: Dynamic Challenge Limits Section - Smart Layout */}
+           {limits.dynamicLimits && (
+             <div style={{
+               padding: isMobile ? '0.4rem' : '0.6rem',
+               background: 'rgba(255, 193, 7, 0.1)',
+               border: '1px solid rgba(255, 193, 7, 0.3)',
+               borderRadius: '6px',
+               marginBottom: isMobile ? '0.5rem' : '0.75rem',
+               color: '#ffffff'
+             }}>
+               <div style={{
+                 fontSize: isMobile ? '0.4rem' : '0.7rem',
+                 fontWeight: 'bold',
+                 color: '#ffc107',
+                 marginBottom: isMobile ? '0.25rem' : '0.4rem',
+                 textAlign: 'center'
+               }}>
+                 ⚔️ Dynamic Challenge Limits
+               </div>
+               <div style={{
+                 display: 'grid',
+                 gridTemplateColumns: 'repeat(2, 1fr)',
+                 gap: isMobile ? '0.3rem' : '0.5rem',
+                 fontSize: isMobile ? '0.35rem' : '0.65rem',
+                 color: '#ffffff',
+                 textAlign: 'center',
+                 lineHeight: isMobile ? '1.2' : '1.3'
+               }}>
+                 <div>
+                   <strong>Times Challenged:</strong> {limits.dynamicLimits.timesChallenged}
+                 </div>
+                 <div>
+                   <strong>Base Allowed:</strong> {limits.dynamicLimits.baseChallengesAllowed}
+                 </div>
+                 <div>
+                   <strong>Challenges Issued:</strong> {limits.dynamicLimits.challengesIssued}
+                 </div>
+                 <div style={{ 
+                   color: limits.dynamicLimits.remainingChallenges > 0 ? '#28a745' : '#e53e3e',
+                   fontWeight: 'bold'
+                 }}>
+                   <strong>Remaining:</strong> {limits.dynamicLimits.remainingChallenges}
+                 </div>
+               </div>
+             </div>
+           )}
+
+          {/* Interactive Sections - Compact Version */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: isMobile ? '0.4rem' : '0.6rem',
+            marginBottom: isMobile ? '0.5rem' : '0.75rem'
+          }}>
             {/* Proposals Section */}
             <div style={{
-              padding: isMobile ? '0.5rem' : '0.75rem',
+              padding: isMobile ? '0.4rem' : '0.6rem',
               background: 'rgba(255,255,255,0.1)',
               borderRadius: '6px',
               border: '1px solid rgba(255,255,255,0.1)',
@@ -544,24 +672,24 @@ export default function Phase2Tracker({
             onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
             >
               <div style={{
-                fontSize: isMobile ? '0.45rem' : '0.8rem',
+                fontSize: isMobile ? '0.4rem' : '0.7rem',
                 fontWeight: 'bold',
                 color: '#e0e0e0',
-                marginBottom: isMobile ? '2px' : '4px'
+                marginBottom: isMobile ? '1px' : '2px'
               }}>
                 📨 Proposals
               </div>
               <div style={{
-                fontSize: isMobile ? '0.4rem' : '0.9rem',
+                fontSize: isMobile ? '0.35rem' : '0.8rem',
                 color: '#ffffff',
                 fontWeight: 'bold',
                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                marginBottom: isMobile ? '1px' : '4px'
+                marginBottom: isMobile ? '1px' : '2px'
               }}>
                 {pendingCount} waiting
               </div>
               <div style={{
-                fontSize: isMobile ? '0.4rem' : '0.75rem',
+                fontSize: isMobile ? '0.35rem' : '0.65rem',
                 color: '#e0e0e0',
                 fontStyle: 'italic',
                 textAlign: 'center',
@@ -571,43 +699,43 @@ export default function Phase2Tracker({
               </div>
             </div>
 
-                         {/* Schedule Section */}
-             <div style={{
-               padding: isMobile ? '0.5rem' : '0.75rem',
-               background: 'rgba(255,255,255,0.1)',
-               borderRadius: '6px',
-               border: '1px solid rgba(255,255,255,0.1)',
-               textAlign: 'center',
-               cursor: 'pointer',
-               transition: 'background-color 0.2s ease'
-             }}
-             onClick={(e) => {
-               e.stopPropagation();
-               // For Phase 2, we need to open player search instead of opponents modal
-               if (onOpenPlayerSearch) onOpenPlayerSearch();
-             }}
-             onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.15)'}
-             onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-             >
+            {/* Schedule Section */}
+            <div style={{
+              padding: isMobile ? '0.4rem' : '0.6rem',
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: '6px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              textAlign: 'center',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s ease'
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              // For Phase 2, we need to open player search instead of opponents modal
+              if (onOpenPlayerSearch) onOpenPlayerSearch();
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.15)'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+            >
               <div style={{
-                fontSize: isMobile ? '0.45rem' : '0.8rem',
+                fontSize: isMobile ? '0.4rem' : '0.7rem',
                 fontWeight: 'bold',
                 color: '#e0e0e0',
-                marginBottom: isMobile ? '2px' : '4px'
+                marginBottom: isMobile ? '1px' : '2px'
               }}>
                 📅 Schedule
               </div>
               <div style={{
-                fontSize: isMobile ? '0.4rem' : '0.9rem',
+                fontSize: isMobile ? '0.35rem' : '0.8rem',
                 color: '#ffffff',
                 fontWeight: 'bold',
                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                marginBottom: isMobile ? '1px' : '4px'
+                marginBottom: isMobile ? '1px' : '2px'
               }}>
                 {stats.eligibleOpponentsCount} available
               </div>
               <div style={{
-                fontSize: isMobile ? '0.4rem' : '0.75rem',
+                fontSize: isMobile ? '0.35rem' : '0.65rem',
                 color: '#e0e0e0',
                 fontStyle: 'italic',
                 textAlign: 'center',
@@ -619,7 +747,7 @@ export default function Phase2Tracker({
 
             {/* Matches Section */}
             <div style={{
-              padding: isMobile ? '0.5rem' : '0.75rem',
+              padding: isMobile ? '0.4rem' : '0.6rem',
               background: 'rgba(255,255,255,0.1)',
               borderRadius: '6px',
               border: '1px solid rgba(255,255,255,0.1)',
@@ -635,57 +763,57 @@ export default function Phase2Tracker({
             onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
             >
               <div style={{
-                fontSize: isMobile ? '0.45rem' : '0.8rem',
+                fontSize: isMobile ? '0.4rem' : '0.7rem',
                 fontWeight: 'bold',
                 color: '#e0e0e0',
-                marginBottom: isMobile ? '2px' : '4px'
+                marginBottom: isMobile ? '1px' : '2px'
               }}>
                 🏆 Matches
               </div>
               <div style={{
-                fontSize: isMobile ? '0.4rem' : '0.9rem',
+                fontSize: isMobile ? '0.35rem' : '0.8rem',
                 color: '#ffffff',
                 fontWeight: 'bold',
                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                marginBottom: isMobile ? '1px' : '4px'
+                marginBottom: isMobile ? '1px' : '2px'
               }}>
                 {upcomingMatches.length} upcoming
               </div>
               <div style={{
-                fontSize: isMobile ? '0.4rem' : '0.75rem',
+                fontSize: isMobile ? '0.35rem' : '0.65rem',
                 color: '#e0e0e0',
                 fontStyle: 'italic',
                 textAlign: 'center',
                 fontWeight: '500'
               }}>
-                click match for details
+                click for details
               </div>
             </div>
           </div>
 
-          {/* Upcoming Matches List */}
+          {/* Upcoming Matches List - Only show if there are matches */}
           {upcomingMatches.length > 0 && (
             <div style={{
-              marginBottom: isMobile ? '0.75rem' : '1rem'
+              marginBottom: isMobile ? '0.5rem' : '0.75rem'
             }}>
               <div style={{
-                fontSize: isMobile ? '0.5rem' : '0.9rem',
+                fontSize: isMobile ? '0.4rem' : '0.7rem',
                 fontWeight: 'bold',
                 color: '#ffffff',
-                marginBottom: isMobile ? '0.25rem' : '0.5rem',
+                marginBottom: isMobile ? '0.2rem' : '0.4rem',
                 textAlign: 'center',
                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
               }}>
                 Upcoming Matches
               </div>
               <div style={{
-                maxHeight: isMobile ? '60px' : '80px',
+                maxHeight: isMobile ? '50px' : '60px',
                 overflowY: 'auto',
                 background: 'rgba(0,0,0,0.3)',
                 borderRadius: '4px',
-                padding: isMobile ? '0.25rem' : '0.5rem'
+                padding: isMobile ? '0.2rem' : '0.4rem'
               }}>
-                {upcomingMatches.slice(0, 3).map((match, index) => {
+                {upcomingMatches.slice(0, 2).map((match, index) => {
                   let opponent = '';
                   if (match.senderName && match.receiverName) {
                     opponent = match.senderName.trim().toLowerCase() === fullPlayerName.toLowerCase()
@@ -697,10 +825,10 @@ export default function Phase2Tracker({
                     <div
                       key={match._id || index}
                       style={{
-                        fontSize: isMobile ? '0.35rem' : '0.7rem',
+                        fontSize: isMobile ? '0.3rem' : '0.6rem',
                         color: '#ffffff',
-                        padding: isMobile ? '0.2rem 0.3rem' : '0.3rem 0.5rem',
-                        marginBottom: isMobile ? '0.1rem' : '0.2rem',
+                        padding: isMobile ? '0.15rem 0.25rem' : '0.25rem 0.4rem',
+                        marginBottom: isMobile ? '0.1rem' : '0.15rem',
                         background: 'rgba(255,255,255,0.1)',
                         borderRadius: '3px',
                         cursor: 'pointer',
@@ -718,41 +846,46 @@ export default function Phase2Tracker({
                     </div>
                   );
                 })}
-                {upcomingMatches.length > 3 && (
+                {upcomingMatches.length > 2 && (
                   <div style={{
-                    fontSize: isMobile ? '0.35rem' : '0.7rem',
+                    fontSize: isMobile ? '0.3rem' : '0.6rem',
                     color: '#e0e0e0',
                     textAlign: 'center',
                     fontStyle: 'italic',
-                    padding: isMobile ? '0.2rem' : '0.3rem'
+                    padding: isMobile ? '0.15rem' : '0.25rem'
                   }}>
-                    +{upcomingMatches.length - 3} more...
+                    +{upcomingMatches.length - 2} more...
                   </div>
                 )}
               </div>
             </div>
           )}
 
-                     {/* Status Summary - Updated to reflect 2-4 total matches */}
-           <div style={{ 
-             padding: isMobile ? '0.5rem' : '0.75rem',
-             background: 'rgba(0,0,0,0.3)',
-             borderRadius: '4px',
-             border: '1px solid rgba(255,255,255,0.1)',
-             fontSize: isMobile ? '0.4rem' : '0.75rem',
-             color: '#ffffff',
-             textAlign: 'center'
-           }}>
-             {isMinimumMet ? (
-               <div>✅ Minimum requirement met ({totalMatches}/4 total matches)</div>
-             ) : (
-               <div>📈 Need {minRequiredMatches - totalMatches} more match{minRequiredMatches - totalMatches !== 1 ? 'es' : ''} to meet minimum (2-4 total)</div>
-             )}
-           </div>
-
-           
-        </>
-      )}
-    </div>
-  );
-} 
+          {/* Status Summary - Compact Version */}
+          <div style={{ 
+            padding: isMobile ? '0.4rem' : '0.6rem',
+            background: 'rgba(0,0,0,0.3)',
+            borderRadius: '4px',
+            border: '1px solid rgba(255,255,255,0.1)',
+            fontSize: isMobile ? '0.35rem' : '0.65rem',
+            color: '#ffffff',
+            textAlign: 'center'
+          }}>
+            {isMinimumMet ? (
+              <div>✅ Minimum requirement met ({totalMatches}/4 total matches)</div>
+            ) : (
+              <div>📈 Need {minRequiredMatches - totalMatches} more match{minRequiredMatches - totalMatches !== 1 ? 'es' : ''} to meet minimum (2-4 total)</div>
+            )}
+          </div>
+                 </>
+       )}
+       
+       {/* Phase 2 Rules Modal */}
+       <Phase2RulesModal
+         isOpen={showRulesModal}
+         onClose={() => setShowRulesModal(false)}
+         isMobile={isMobile}
+       />
+     </div>
+   );
+ } 
