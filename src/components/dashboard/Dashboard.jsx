@@ -523,7 +523,7 @@ export default function Dashboard({
     scheduleFileName = `schedule_${safeDivision}.json`;
   }
   
-  const scheduleUrl = `${BACKEND_URL}/static/${scheduleFileName}`;
+  const scheduleUrl = `${BACKEND_URL}/static/${scheduleFileName}?t=${Date.now()}`;
 
   fetch(scheduleUrl)
     .then(res => {
@@ -532,6 +532,19 @@ export default function Dashboard({
     })
     .then(data => {
       console.log('Schedule loaded for', selectedDivision, ':', data.length, 'matches');
+      console.log('🚨 DEBUG: About to check schedule data...');
+      console.log('🚨 DEBUG: Data type:', typeof data);
+      console.log('🚨 DEBUG: Is array?', Array.isArray(data));
+      console.log('🔍 FIRST 3 MATCHES:', data.slice(0, 3));
+      console.log('🔍 SEARCHING FOR MARK SLAM IN SCHEDULE');
+      
+      const markMatches = data.filter(m => {
+        const player1Lower = (m.player1 || '').toLowerCase();
+        const player2Lower = (m.player2 || '').toLowerCase();
+        return player1Lower.includes('mark') || player2Lower.includes('mark');
+      });
+      console.log('🔍 FOUND', markMatches.length, 'matches with Mark:', markMatches);
+      
       setScheduledMatches(data);
     })
     .catch((error) => {
