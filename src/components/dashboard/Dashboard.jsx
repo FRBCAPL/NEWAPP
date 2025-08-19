@@ -532,6 +532,9 @@ export default function Dashboard({
     })
     .then(data => {
       console.log('Schedule loaded for', selectedDivision, ':', data.length, 'matches');
+      console.log('🚨 DEBUG: About to check schedule data...');
+      console.log('🚨 DEBUG: Data type:', typeof data);
+      console.log('🚨 DEBUG: Is array?', Array.isArray(data));
       console.log('🔍 FIRST 3 MATCHES:', data.slice(0, 3));
       console.log('🔍 SEARCHING FOR MARK SLAM IN SCHEDULE');
       
