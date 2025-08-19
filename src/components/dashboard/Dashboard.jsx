@@ -532,25 +532,15 @@ export default function Dashboard({
     })
     .then(data => {
       console.log('Schedule loaded for', selectedDivision, ':', data.length, 'matches');
+      console.log('🔍 FIRST 3 MATCHES:', data.slice(0, 3));
+      console.log('🔍 SEARCHING FOR MARK SLAM IN SCHEDULE');
       
-      // DEBUG: Check what's actually in the schedule
-      if (data.length > 0) {
-        console.log('🔍 Sample match structure:', data[0]);
-        console.log('🔍 All player names in schedule:');
-        const allPlayers = new Set();
-        data.forEach(match => {
-          if (match.player1) allPlayers.add(match.player1);
-          if (match.player2) allPlayers.add(match.player2);
-        });
-        console.log([...allPlayers].sort());
-        
-        console.log('🔍 Looking for player:', 'Mark Slam');
-        const markMatches = data.filter(m => 
-          (m.player1 && m.player1.toLowerCase().includes('mark')) ||
-          (m.player2 && m.player2.toLowerCase().includes('mark'))
-        );
-        console.log('🔍 Matches containing "mark":', markMatches);
-      }
+      const markMatches = data.filter(m => {
+        const player1Lower = (m.player1 || '').toLowerCase();
+        const player2Lower = (m.player2 || '').toLowerCase();
+        return player1Lower.includes('mark') || player2Lower.includes('mark');
+      });
+      console.log('🔍 FOUND', markMatches.length, 'matches with Mark:', markMatches);
       
       setScheduledMatches(data);
     })
