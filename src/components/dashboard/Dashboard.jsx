@@ -1512,10 +1512,57 @@ export default function Dashboard({
            
             <button
               className={styles.dashboardAdminBtn}
-              onClick={() => setPhaseOverride(phaseOverride === "challenge" ? "scheduled" : "challenge")}
+              onClick={async () => {
+                if (phaseOverride === "challenge") {
+                  // Switching back to Phase 1 - just update UI
+                  setPhaseOverride("scheduled");
+                } else {
+                  // Switching to Phase 2 - activate it in the backend
+                  try {
+                    const response = await fetch(`${BACKEND_URL}/api/seasons/activate-phase2/${encodeURIComponent(selectedDivision)}`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                      console.log('✅ Phase 2 activated successfully:', data.message);
+                      setPhaseOverride("challenge");
+                      // Show success message and refresh season data
+                      alert('✅ Phase 2 activated successfully! The system will now allow Phase 2 challenges.');
+                      // Refresh season data without reloading the page
+                      if (selectedDivision) {
+                        // Trigger a re-fetch of season data
+                        const refreshSeasonData = async () => {
+                          try {
+                            const [seasonResult, phaseResult] = await Promise.all([
+                              seasonService.getCurrentSeason(selectedDivision),
+                              seasonService.getCurrentPhaseAndWeek(selectedDivision)
+                            ]);
+                            setSeasonData(seasonResult?.season || null);
+                            setCurrentPhaseInfo(phaseResult);
+                          } catch (error) {
+                            console.error('Error refreshing season data:', error);
+                          }
+                        };
+                        refreshSeasonData();
+                      }
+                    } else {
+                      console.error('❌ Failed to activate Phase 2:', data.error);
+                      alert('Failed to activate Phase 2: ' + data.error);
+                    }
+                  } catch (error) {
+                    console.error('❌ Error activating Phase 2:', error);
+                    alert('Error activating Phase 2: ' + error.message);
+                  }
+                }
+              }}
               type="button"
             >
-              {phaseOverride === "challenge" ? "Switch to Phase 1 (Scheduled)" : "Switch to Phase 2 (Challenge)"}
+              {phaseOverride === "challenge" ? "Switch to Phase 1 (Scheduled)" : "Activate Phase 2 (Challenge)"}
             </button>
             {phaseOverride && (
               <button

@@ -20,5 +20,16 @@ export const matchService = {
 
   async createMatch(matchData) {
     return ApiService.post('/api/matches', matchData);
+  },
+
+  // Add method to get all matches (for admin/overview purposes)
+  async getAllMatchesForDivision(division) {
+    const params = division ? `?division=${encodeURIComponent(division)}` : '';
+    return ApiService.get(`/api/matches/all-matches${params}`);
+  },
+
+  // Add method to get match stats
+  async getMatchStats(playerName, division) {
+    return ApiService.get(`/api/matches/stats/${encodeURIComponent(playerName)}/${encodeURIComponent(division)}`);
   }
 }; 

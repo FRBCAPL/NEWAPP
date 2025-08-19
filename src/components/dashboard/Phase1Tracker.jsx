@@ -42,9 +42,16 @@ import { BACKEND_URL } from '../../config.js';
       try {
         // Load schedule from the backend to get current match dates
         const safeDivision = selectedDivision.replace(/[^A-Za-z0-9]/g, '_');
-        const scheduleUrl = `${BACKEND_URL}/static/schedule_${safeDivision}.json`;
+        const timestamp = Date.now(); // Cache-busting parameter
+        const scheduleUrl = `${BACKEND_URL}/static/schedule_${safeDivision}.json?t=${timestamp}`;
         
-        const response = await fetch(scheduleUrl);
+        const response = await fetch(scheduleUrl, {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
         if (!response.ok) {
           console.warn(`Failed to fetch schedule: ${response.status} - ${response.statusText}`);
           return;

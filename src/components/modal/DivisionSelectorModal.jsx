@@ -62,23 +62,32 @@ export default function DivisionSelectorModal({
   const fetchScheduleData = async (division) => {
     setLoadingSchedule(true);
     try {
-      // Fetch schedule data
+      // Fetch schedule data with cache-busting
       const scheduleFileName = `schedule_${division.replace(/[^A-Za-z0-9]/g, '_')}.json`;
-      const scheduleUrl = `${BACKEND_URL}/static/${scheduleFileName}`;
+      const timestamp = Date.now(); // Cache-busting parameter
+      const scheduleUrl = `${BACKEND_URL}/static/${scheduleFileName}?t=${timestamp}`;
       
-      console.log('🔍 Fetching schedule from:', scheduleUrl);
-      
-      const scheduleResponse = await fetch(scheduleUrl);
+      const scheduleResponse = await fetch(scheduleUrl, {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       if (!scheduleResponse.ok) throw new Error("Schedule not found");
       const scheduleData = await scheduleResponse.json();
-      console.log('🔍 Schedule data loaded:', scheduleData.length, 'matches');
       setScheduledMatches(scheduleData);
       
-      // Fetch players data
-      const playersResponse = await fetch(`${BACKEND_URL}/api/users`);
+      // Fetch players data with cache-busting
+      const playersResponse = await fetch(`${BACKEND_URL}/api/users?t=${timestamp}`, {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       if (!playersResponse.ok) throw new Error("Players not found");
       const playersData = await playersResponse.json();
-      console.log('🔍 Players data loaded:', playersData.length, 'players');
       setPlayers(playersData);
       
     } catch (error) {
@@ -98,25 +107,18 @@ export default function DivisionSelectorModal({
       // Get current phase for this division
       const phaseResult = await seasonService.getCurrentPhaseAndWeek(division);
       const phase = phaseResult?.phase || 'scheduled';
-      console.log('🔍 DivisionSelectorModal - Phase detection:', {
-        division,
-        phase,
-        willShowOpponents: phase === 'scheduled' || phase === 'offseason'
-      });
       setCurrentPhase(phase);
       
-             // Open appropriate modal based on phase
-       // For Phase 1, we want to show opponents (scheduled matches)
-       // For Phase 2 or other phases, we want to show player search (challenge matches)
-       if (phase === 'scheduled' || phase === 'offseason') {
-         // Fetch schedule data for Phase 1 opponents
-         console.log('🔍 Opening OpponentsModal for phase:', phase);
-         await fetchScheduleData(division);
-         setShowOpponents(true);
-       } else {
-         console.log('🔍 Opening PlayerSearch for phase:', phase);
-         setShowPlayerSearch(true);
-       }
+      // Open appropriate modal based on phase
+      // For Phase 1, we want to show opponents (scheduled matches)
+      // For Phase 2 or other phases, we want to show player search (challenge matches)
+      if (phase === 'scheduled' || phase === 'offseason') {
+        // Fetch schedule data for Phase 1 opponents
+        await fetchScheduleData(division);
+        setShowOpponents(true);
+      } else {
+        setShowPlayerSearch(true);
+      }
     } catch (error) {
       console.error('Error fetching phase data:', error);
       // Default to PlayerSearch if phase detection fails
@@ -126,13 +128,14 @@ export default function DivisionSelectorModal({
 
   // Prepare opponents list for Phase 1 (same logic as dashboard)
   const getOpponentsToSchedule = () => {
-    if (!scheduledMatches.length || !players.length) {
+    if (!scheduledMatches.length || !players.length || !selectedDivision) {
       return [];
     }
     
     const fullPlayerName = `${userName}`;
     const matchesToSchedule = [];
     
+    // Filter matches for the current user that are not scheduled
     for (const match of scheduledMatches) {
       if (match.player1 && match.player2 && !match.scheduled) {
         const player1Name = match.player1.trim();
@@ -145,6 +148,11 @@ export default function DivisionSelectorModal({
       }
     }
     
+    // Filter players to only include those in the selected division
+    const divisionPlayers = players.filter(p => 
+      p.divisions && p.divisions.includes(selectedDivision)
+    );
+    
     // Prepare the opponents list for the modal
     const opponentsToSchedule = matchesToSchedule.map(m => {
       const name = m.player1 && m.player1.trim().toLowerCase() === fullPlayerName.toLowerCase()
@@ -152,8 +160,8 @@ export default function DivisionSelectorModal({
         : m.player1?.trim();
       if (!name) return null;
       
-      // Find the player object by name
-      const playerObj = players.find(
+      // Find the player object by name (only from the selected division)
+      const playerObj = divisionPlayers.find(
         p => p.name && p.name.trim().toLowerCase() === name.toLowerCase()
       );
       
@@ -165,7 +173,12 @@ export default function DivisionSelectorModal({
 
   // Handle opponent selection
   const handleOpponentClick = async (opponentName) => {
-    const playerObj = players.find(
+    // Filter players to only include those in the selected division
+    const divisionPlayers = players.filter(p => 
+      p.divisions && p.divisions.includes(selectedDivision)
+    );
+    
+    const playerObj = divisionPlayers.find(
       p => p.name && p.name.trim().toLowerCase() === opponentName.trim().toLowerCase()
     );
     
@@ -181,7 +194,6 @@ export default function DivisionSelectorModal({
     if (fromChat) {
       // From chat: fetch detailed player data and open availability modal
       try {
-        console.log('Fetching detailed player data for:', opponentName);
         const rows = await fetchSheetData(sheetID, `${pinSheetName}!A1:L1000`);
         const sheetData = rows
           .slice(1)
@@ -204,19 +216,15 @@ export default function DivisionSelectorModal({
           p => `${p.firstName} ${p.lastName}`.trim().toLowerCase() === opponentName.trim().toLowerCase()
         );
         
-                 if (detailedPlayer) {
-           // Parse availability data
-           console.log('Raw availability data:', detailedPlayer.availability);
-           const parsedAvailability = parseAvailability(detailedPlayer.availability);
-           console.log('Parsed availability:', parsedAvailability);
-           const playerWithAvailability = {
-             ...detailedPlayer,
-             availability: parsedAvailability
-           };
-           console.log('Found detailed player data:', playerWithAvailability);
-           setSelectedOpponent(playerWithAvailability);
+        if (detailedPlayer) {
+          // Parse availability data
+          const parsedAvailability = parseAvailability(detailedPlayer.availability);
+          const playerWithAvailability = {
+            ...detailedPlayer,
+            availability: parsedAvailability
+          };
+          setSelectedOpponent(playerWithAvailability);
         } else {
-          console.log('No detailed data found, using basic player data');
           setSelectedOpponent(playerObj);
         }
       } catch (error) {
@@ -235,7 +243,6 @@ export default function DivisionSelectorModal({
 
   // Handle match proposal from availability modal
   const handleProposeMatch = (day, slot, phase, division) => {
-    console.log('Proposing match:', { day, slot, phase, division, opponent: selectedOpponent });
     setProposalData({
       day,
       slot,
@@ -412,7 +419,6 @@ export default function DivisionSelectorModal({
           senderName={userName}
           senderEmail={userEmail}
           onProposalComplete={() => {
-            console.log('Proposal sent successfully');
             handleModalClose();
           }}
           selectedDivision={selectedDivision}
@@ -447,7 +453,6 @@ export default function DivisionSelectorModal({
            selectedDivision={proposalData.division}
            phase={proposalData.phase}
            onProposalComplete={() => {
-             console.log('Match proposal sent successfully');
              handleModalClose();
            }}
          />

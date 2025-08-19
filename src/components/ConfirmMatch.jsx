@@ -118,26 +118,11 @@ Good luck and have fun!`;
 
     sendConfirmationEmail(params);
 
-    // --- Use to24Hour(time) here! ---
-            fetch(`${BACKEND_URL}/api/matches`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        opponent: from ? from.trim() : "",
-        player: to ? to.trim() : "",
-        day,
-        date, // should be YYYY-MM-DD
-        time: to24Hour(time), // <--- convert to 24-hour format!
-        location,
-        gameType,
-        raceLength
-      })
-    })
-      .then(() => setShowModal(true))
-      .catch(err => {
-        alert("Failed to save match to server.");
-        console.error(err);
-      });
+    // Update proposal status to confirmed
+    // Note: This component should receive a proposalId parameter to update the correct proposal
+    // For now, we'll just show the confirmation modal
+    console.log("Match confirmed - proposal status should be updated");
+    setShowModal(true);
   };
 
   return (

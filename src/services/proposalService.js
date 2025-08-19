@@ -27,5 +27,11 @@ export const proposalService = {
 
   async cancelProposal(proposalId) {
     return ApiService.post(`/api/proposals/${proposalId}/cancel`);
+  },
+
+  // Add method to get all proposals (for admin/overview purposes)
+  async getAllProposals(division) {
+    const params = division ? `?division=${encodeURIComponent(division)}` : '';
+    return ApiService.get(`/api/proposals/debug-list${params}`);
   }
 }; 
