@@ -341,182 +341,485 @@
   border: 2px solid #ffd700;
 }
 
-@media (max-width: 900px) {
-  .adminRowWrapper {
-    flex-direction: column;
-    gap: 0.3rem;
+/* ===============================
+   ADMIN DASHBOARD MOBILE OPTIMIZATIONS
+   =============================== */
+
+/* Large tablets and small desktops */
+@media (max-width: 1024px) {
+  .adminDashboardRoot {
+    padding: 12px;
   }
   
-  .adminButtonStack {
+  .adminDashboardMainColumn {
     max-width: 100%;
-    min-width: 0;
+  }
+  
+  .adminCard {
+    padding: 16px;
+    margin-bottom: 16px;
+    border-radius: 12px;
+  }
+  
+  .adminCardTitle {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+  }
+  
+  .adminActionButton {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    min-height: 44px;
+  }
+}
+
+/* Tablets and large phones */
+@media (max-width: 768px) {
+  .adminDashboardRoot {
+    padding: 8px;
+  }
+  
+  .adminDashboardNav {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 8px;
+  }
+  
+  .adminDashboardNav button {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    min-height: 44px;
+    border-radius: 8px;
+  }
+  
+  .adminDashboardMainColumn {
+    gap: 12px;
+  }
+  
+  .adminCard {
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+  }
+  
+  .adminCardTitle {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    padding: 8px 0;
+  }
+  
+  .adminActionButton {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    min-height: 42px;
+    border-radius: 6px;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
+  .scrollableCardContent {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 8px;
+  }
+  
+  /* Admin Match Manager mobile optimizations */
+  .adminMatchManager {
+    width: 100%;
+  }
+  
+  .adminMatchManager h3 {
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+  
+  .adminMatchManager select {
+    padding: 8px;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    min-height: 40px;
+  }
+  
+  .adminMatchManager button {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    min-height: 36px;
+    border-radius: 4px;
+  }
+  
+  .adminMatchManager table {
+    font-size: 0.8rem;
+  }
+  
+  .adminMatchManager th,
+  .adminMatchManager td {
+    padding: 6px 4px;
+  }
+  
+  /* Grid layout for match manager */
+  .adminMatchManager .matchGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .adminMatchManager .matchSection {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px;
+  }
+  
+  .adminMatchManager .matchSection h4 {
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+  
+  .adminMatchManager .matchActions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .adminMatchManager .matchActions button {
+    width: 100%;
+    margin: 0;
+    padding: 4px 6px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .adminDashboardRoot {
+    padding: 4px;
+  }
+  
+  .adminDashboardNav {
+    padding: 8px;
+    gap: 6px;
+  }
+  
+  .adminDashboardNav button {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+    min-height: 40px;
+  }
+  
+  .adminDashboardMainColumn {
+    gap: 8px;
+  }
+  
+  .adminCard {
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+  }
+  
+  .adminCardTitle {
+    font-size: 1rem;
+    margin-bottom: 8px;
+    padding: 6px 0;
+  }
+  
+  .adminActionButton {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    min-height: 38px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+  
+  .scrollableCardContent {
+    max-height: 300px;
+    padding: 6px;
+  }
+  
+  /* Admin Match Manager small phone optimizations */
+  .adminMatchManager h3 {
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+  
+  .adminMatchManager select {
+    padding: 6px;
+    font-size: 0.85rem;
+    min-height: 36px;
+  }
+  
+  .adminMatchManager button {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    min-height: 32px;
+  }
+  
+  .adminMatchManager table {
+    font-size: 0.75rem;
+  }
+  
+  .adminMatchManager th,
+  .adminMatchManager td {
+    padding: 4px 2px;
+  }
+  
+  .adminMatchManager .matchGrid {
+    gap: 8px;
+  }
+  
+  .adminMatchManager .matchSection {
+    padding: 6px;
+  }
+  
+  .adminMatchManager .matchSection h4 {
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+  }
+  
+  .adminMatchManager .matchActions button {
+    padding: 3px 4px;
+    font-size: 0.7rem;
+  }
+  
+  /* Improve form layouts on small screens */
+  .adminForm {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .adminForm input,
+  .adminForm select,
+  .adminForm textarea {
+    padding: 8px;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    min-height: 40px;
+  }
+  
+  .adminForm button {
+    padding: 10px;
+    font-size: 0.9rem;
+    min-height: 44px;
+    border-radius: 6px;
+  }
+}
+
+/* Extra small phones */
+@media (max-width: 360px) {
+  .adminDashboardRoot {
+    padding: 2px;
+  }
+  
+  .adminDashboardNav {
+    padding: 6px;
+    gap: 4px;
+  }
+  
+  .adminDashboardNav button {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    min-height: 36px;
+  }
+  
+  .adminCard {
+    padding: 6px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+  }
+  
+  .adminCardTitle {
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+    padding: 4px 0;
+  }
+  
+  .adminActionButton {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    min-height: 34px;
+    border-radius: 3px;
+    margin-bottom: 4px;
+  }
+  
+  .scrollableCardContent {
+    max-height: 250px;
+    padding: 4px;
+  }
+  
+  /* Admin Match Manager extra small optimizations */
+  .adminMatchManager h3 {
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+  }
+  
+  .adminMatchManager select {
+    padding: 4px;
+    font-size: 0.8rem;
+    min-height: 32px;
+  }
+  
+  .adminMatchManager button {
+    padding: 3px 6px;
+    font-size: 0.7rem;
+    min-height: 28px;
+  }
+  
+  .adminMatchManager table {
+    font-size: 0.7rem;
+  }
+  
+  .adminMatchManager th,
+  .adminMatchManager td {
+    padding: 2px 1px;
+  }
+  
+  .adminMatchManager .matchGrid {
+    gap: 6px;
+  }
+  
+  .adminMatchManager .matchSection {
+    padding: 4px;
+  }
+  
+  .adminMatchManager .matchSection h4 {
+    font-size: 0.8rem;
+    margin-bottom: 3px;
+  }
+  
+  .adminMatchManager .matchActions button {
+    padding: 2px 3px;
+    font-size: 0.65rem;
+  }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .adminDashboardRoot {
+    padding: 6px;
+  }
+  
+  .adminDashboardNav {
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 0.2rem;
+    gap: 6px;
   }
   
-  .adminSectionRow {
-    flex-direction: column;
-    gap: 0.3rem;
+  .adminDashboardNav button {
+    width: auto;
+    flex: 1;
+    min-width: 120px;
   }
   
-  .adminSection {
-    min-width: 0;
-    max-width: 100%;
-  }
-  .adminChatWrapper {
-    flex-direction: column;
-    gap: 0.7rem;
-    margin-top: 0.7rem;
-  }
-  .adminChannelList {
-    min-width: auto;
-    max-height: 50vh;
-  }
-  
-  .adminChannelMessages {
-    max-height: 50vh;
-  }
-  .adminCard {
-    padding: 1rem 0.5rem 0.7rem 0.5rem;
-    margin-bottom: 1rem;
-    font-size: 0.97em;
-  }
-  .adminCardTitle {
-    font-size: 1.1rem;
-  }
   .adminDashboardMainColumn {
-    grid-template-columns: 1fr;
-    gap: 1.2rem;
-    padding: 0 0.5rem;
+    gap: 10px;
   }
-}
-
-@media (max-width: 700px) {
-  .adminDashboardNav {
+  
+  .adminCard {
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .adminActionButton {
+    width: auto;
+    margin-right: 8px;
+    margin-bottom: 6px;
+  }
+  
+  /* Admin Match Manager landscape optimizations */
+  .adminMatchManager .matchGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  
+  .adminMatchManager .matchActions {
+    flex-direction: row;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    gap: 3px;
   }
   
-  .adminDashboardNav button {
-    padding: 0.4em 0.8em;
-    font-size: 0.9rem;
-    margin-right: 0.25rem;
-  }
-  
-  .adminControlsGrid {
-    gap: 0.7rem;
-    grid-template-columns: 1fr;
-  }
-  .adminControlsGrid > .adminSection {
-    min-width: 0;
-    max-width: 100%;
-  }
-  .adminChatWrapper {
-    margin-top: 0.5rem;
-  }
-  
-  .adminChannelList h3,
-  .adminChannelMessages h3 {
-    font-size: 1rem;
-  }
-  
-  .adminMessageItem {
-    font-size: 0.9rem;
-    padding: 0.5em 0;
-  }
-  
-  .adminChannelName {
-    font-size: 0.95em;
-  }
-  
-  .adminSection {
-    padding: 0.7rem 0.2rem;
-    font-size: 0.95em;
-  }
-  
-  .adminCard {
-    padding: 1rem 0.5rem 0.7rem 0.5rem;
-    margin-bottom: 1rem;
-    font-size: 0.97em;
-  }
-  .adminCardTitle {
-    font-size: 1.1rem;
-  }
-  .adminDashboardMainColumn {
-    padding: 0.5rem;
-  }
-  .adminButtonRow {
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 0.7rem;
-  }
-  .adminButtonCell {
-    width: 100%;
-    justify-content: stretch;
-  }
-  .adminButtonCell button,
-  .adminButtonCell > * {
-    width: 100% !important;
+  .adminMatchManager .matchActions button {
+    width: auto;
+    flex: 1;
+    min-width: 80px;
   }
 }
 
-@media (max-width: 500px) {
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .adminActionButton {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+  
+  .adminDashboardNav button {
+    min-height: 44px;
+    padding: 12px 16px;
+  }
+  
+  .adminMatchManager button {
+    min-height: 40px;
+    padding: 8px 12px;
+  }
+  
+  .adminMatchManager select {
+    min-height: 44px;
+    padding: 10px;
+  }
+  
+  /* Remove hover effects on touch devices */
+  .adminActionButton:hover {
+    transform: none;
+  }
+  
+  .adminDashboardNav button:hover {
+    transform: none;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .adminCard {
+    border-width: 0.5px;
+  }
+  
+  .adminActionButton {
+    border-width: 0.5px;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .adminActionButton {
+    transition: none;
+  }
+  
+  .adminActionButton:hover {
+    transform: none;
+  }
+  
+  .adminDashboardNav button {
+    transition: none;
+  }
+  
+  .adminDashboardNav button:hover {
+    transform: none;
+  }
+}
+
+/* Dark mode optimizations */
+@media (prefers-color-scheme: dark) {
+  .adminCard {
+    background: rgba(24,24,27,0.9);
+    border-color: rgba(255,255,255,0.1);
+  }
+  
+  .adminActionButton {
+    background: rgba(35,35,42,0.8);
+    border-color: rgba(255,255,255,0.2);
+  }
+  
   .adminDashboardNav {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
-  }
-  
-  .adminDashboardNav button {
-    margin-right: 0;
-    width: 100%;
-  }
-  
-  .adminChannelList,
-  .adminChannelMessages {
-    padding: 0.75rem 0.5rem;
-    max-height: 35vh;
-  }
-  
-  .adminChannelListItem {
-    padding: 0.4em 0.2em;
-  }
-  
-  .adminMessageItem {
-    font-size: 0.85rem;
-    padding: 0.4em 0;
-  }
-  
-  .adminDeleteChannelBtn,
-  .adminDeleteMessageBtn {
-    padding: 0.15em 0.5em;
-    font-size: 0.9em;
-  }
-  
-  .adminSection {
-    padding: 0.4rem 0.1rem;
-    font-size: 0.9em;
-  }
-  
-  .adminCard {
-    padding: 0.7rem 0.2rem 0.5rem 0.2rem;
-    margin-bottom: 0.7rem;
-    font-size: 0.93em;
-  }
-  .adminCardTitle {
-    font-size: 1rem;
-  }
-}
-
-@media (min-width: 1200px) {
-  .adminDashboardMainColumn {
-    max-width: none;
-    margin: 0;
-    gap: 3rem;
-  }
-  .adminChannelList, .adminChannelMessages {
-    max-width: none;
+    background: rgba(24,24,27,0.8);
+    border-color: rgba(255,255,255,0.1);
   }
 }

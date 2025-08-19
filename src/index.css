@@ -373,3 +373,168 @@ button:focus-visible {
   border: none;
   padding: 0;
 }
+
+/* ===============================
+   GLOBAL MOBILE OPTIMIZATIONS
+   =============================== */
+
+/* Prevent horizontal scrolling on all devices */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  position: relative;
+}
+
+/* Better mobile font rendering */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Touch-friendly tap highlights */
+* {
+  -webkit-tap-highlight-color: rgba(229, 62, 62, 0.2);
+}
+
+/* Better mobile scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  /* Prevent zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Better touch targets */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent text selection on interactive elements */
+  button, a, [role="button"] {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Better focus indicators */
+  button:focus, a:focus, input:focus, select:focus, textarea:focus {
+    outline: 2px solid var(--accent-red);
+    outline-offset: 2px;
+  }
+  
+  /* Reduce motion for better performance */
+  * {
+    animation-duration: 0.2s !important;
+    transition-duration: 0.2s !important;
+  }
+}
+
+/* Extra small phone optimizations */
+@media (max-width: 360px) {
+  /* Even smaller touch targets for very small screens */
+  button, a, [role="button"] {
+    min-height: 40px;
+    min-width: 40px;
+  }
+  
+  /* Smaller font sizes for better fit */
+  body {
+    font-size: 14px;
+  }
+  
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.3rem; }
+  h3 { font-size: 1.1rem; }
+  h4 { font-size: 1rem; }
+  h5 { font-size: 0.9rem; }
+  h6 { font-size: 0.8rem; }
+}
+
+/* Landscape orientation optimizations */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Reduce padding in landscape */
+  body {
+    padding: 4px;
+  }
+  
+  /* Better use of horizontal space */
+  .container {
+    max-width: 100%;
+    padding: 0 8px;
+  }
+}
+
+/* High DPI display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Sharper borders */
+  * {
+    border-width: 0.5px;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Dark mode optimizations */
+@media (prefers-color-scheme: dark) {
+  /* Better contrast in dark mode */
+  body {
+    background-color: #0a0a0a;
+    color: #ffffff;
+  }
+  
+  /* Better focus indicators in dark mode */
+  button:focus, a:focus, input:focus, select:focus, textarea:focus {
+    outline-color: #ff6b6b;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover effects on touch devices */
+  *:hover {
+    transform: none !important;
+  }
+  
+  /* Better touch feedback */
+  button:active, a:active, [role="button"]:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Print optimizations */
+@media print {
+  * {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  
+  body {
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}

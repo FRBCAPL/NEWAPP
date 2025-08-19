@@ -1928,3 +1928,472 @@
   max-width: none;
   background: var(--chat-dark);
 }
+
+/* ===============================
+   CHAT MOBILE OPTIMIZATIONS
+   =============================== */
+
+/* Large tablets and small desktops */
+@media (max-width: 1024px) {
+  .chatContainer {
+    max-width: 95%;
+    margin: 0 auto;
+  }
+  
+  .chatHeader {
+    padding: 12px 16px;
+    border-radius: 8px;
+  }
+  
+  .chatMessages {
+    max-height: 60vh;
+    padding: 12px;
+  }
+  
+  .messageInput {
+    padding: 12px;
+    border-radius: 8px;
+  }
+  
+  .sendButton {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    min-height: 44px;
+  }
+}
+
+/* Tablets and large phones */
+@media (max-width: 768px) {
+  .chatContainer {
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .chatHeader {
+    padding: 10px 12px;
+    border-radius: 0;
+    flex-shrink: 0;
+  }
+  
+  .chatHeader h3 {
+    font-size: 1.1rem;
+  }
+  
+  .chatMessages {
+    flex: 1;
+    max-height: none;
+    padding: 8px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .message {
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+    max-width: 85%;
+  }
+  
+  .message.sent {
+    margin-left: auto;
+    background-color: var(--accent-red);
+    color: white;
+  }
+  
+  .message.received {
+    margin-right: auto;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .messageInput {
+    padding: 10px;
+    border-radius: 20px;
+    margin: 8px;
+    font-size: 0.9rem;
+    min-height: 44px;
+  }
+  
+  .sendButton {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    min-height: 44px;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+  }
+  
+  .messageTime {
+    font-size: 0.7rem;
+    margin-top: 2px;
+  }
+  
+  .messageSender {
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-bottom: 2px;
+  }
+  
+  .messageText {
+    font-size: 0.9rem;
+    line-height: 1.3;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .chatContainer {
+    height: 100vh;
+  }
+  
+  .chatHeader {
+    padding: 8px 10px;
+  }
+  
+  .chatHeader h3 {
+    font-size: 1rem;
+  }
+  
+  .chatMessages {
+    padding: 6px;
+  }
+  
+  .message {
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    border-radius: 10px;
+    max-width: 90%;
+  }
+  
+  .messageInput {
+    padding: 8px 12px;
+    margin: 6px;
+    font-size: 0.85rem;
+    min-height: 40px;
+  }
+  
+  .sendButton {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    min-height: 40px;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .messageTime {
+    font-size: 0.65rem;
+    margin-top: 1px;
+  }
+  
+  .messageSender {
+    font-size: 0.75rem;
+    margin-bottom: 1px;
+  }
+  
+  .messageText {
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+}
+
+/* Extra small phones */
+@media (max-width: 360px) {
+  .chatHeader {
+    padding: 6px 8px;
+  }
+  
+  .chatHeader h3 {
+    font-size: 0.9rem;
+  }
+  
+  .chatMessages {
+    padding: 4px;
+  }
+  
+  .message {
+    padding: 4px 6px;
+    margin-bottom: 4px;
+    border-radius: 8px;
+    max-width: 95%;
+  }
+  
+  .messageInput {
+    padding: 6px 10px;
+    margin: 4px;
+    font-size: 0.8rem;
+    min-height: 36px;
+  }
+  
+  .sendButton {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    min-height: 36px;
+    width: 36px;
+    height: 36px;
+  }
+  
+  .messageTime {
+    font-size: 0.6rem;
+  }
+  
+  .messageSender {
+    font-size: 0.7rem;
+  }
+  
+  .messageText {
+    font-size: 0.8rem;
+    line-height: 1.1;
+  }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .chatContainer {
+    height: 100vh;
+  }
+  
+  .chatHeader {
+    padding: 6px 10px;
+  }
+  
+  .chatHeader h3 {
+    font-size: 0.9rem;
+  }
+  
+  .chatMessages {
+    max-height: 70vh;
+    padding: 6px;
+  }
+  
+  .messageInput {
+    padding: 8px 12px;
+    margin: 6px;
+    font-size: 0.85rem;
+    min-height: 40px;
+  }
+  
+  .sendButton {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    min-height: 40px;
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .sendButton {
+    min-height: 44px;
+    width: 44px;
+    height: 44px;
+  }
+  
+  .messageInput {
+    min-height: 44px;
+    padding: 12px;
+  }
+  
+  /* Remove hover effects on touch devices */
+  .sendButton:hover {
+    transform: none;
+  }
+  
+  .message:hover {
+    transform: none;
+  }
+  
+  /* Better touch feedback */
+  .sendButton:active {
+    transform: scale(0.95);
+  }
+  
+  .message:active {
+    transform: scale(0.98);
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .chatContainer {
+    border-width: 0.5px;
+  }
+  
+  .message {
+    border-width: 0.5px;
+  }
+  
+  .messageInput {
+    border-width: 0.5px;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .sendButton {
+    transition: none;
+  }
+  
+  .sendButton:hover {
+    transform: none;
+  }
+  
+  .message {
+    transition: none;
+  }
+  
+  .message:hover {
+    transform: none;
+  }
+}
+
+/* Dark mode optimizations */
+@media (prefers-color-scheme: dark) {
+  .chatContainer {
+    background: rgba(24,24,27,0.95);
+    border-color: rgba(255,255,255,0.1);
+  }
+  
+  .chatHeader {
+    background: rgba(35,35,42,0.8);
+    border-color: rgba(255,255,255,0.1);
+  }
+  
+  .message.received {
+    background-color: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.1);
+  }
+  
+  .messageInput {
+    background: rgba(35,35,42,0.8);
+    border-color: rgba(255,255,255,0.2);
+    color: #fff;
+  }
+  
+  .sendButton {
+    background: rgba(35,35,42,0.8);
+    border-color: rgba(255,255,255,0.2);
+  }
+}
+
+/* Focus states for accessibility */
+.sendButton:focus,
+.messageInput:focus {
+  outline: 2px solid var(--accent-red);
+  outline-offset: 2px;
+}
+
+/* Loading states */
+.sendButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Message status indicators */
+.message.sending {
+  opacity: 0.7;
+}
+
+.message.sent {
+  opacity: 1;
+}
+
+.message.error {
+  background-color: #ef4444;
+  color: white;
+}
+
+/* Typing indicator */
+.typingIndicator {
+  padding: 8px 12px;
+  margin: 4px 8px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  font-style: italic;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+/* Message grouping */
+.messageGroup {
+  margin-bottom: 12px;
+}
+
+.messageGroup .message {
+  margin-bottom: 2px;
+}
+
+.messageGroup .message:last-child {
+  margin-bottom: 8px;
+}
+
+/* Timestamp grouping */
+.messageGroup .messageTime {
+  display: none;
+}
+
+.messageGroup .message:last-child .messageTime {
+  display: block;
+}
+
+/* Better message spacing on mobile */
+@media (max-width: 768px) {
+  .messageGroup {
+    margin-bottom: 8px;
+  }
+  
+  .messageGroup .message:last-child {
+    margin-bottom: 6px;
+  }
+}
+
+/* Smooth scrolling for messages */
+.chatMessages {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Auto-scroll to bottom indicator */
+.scrollToBottom {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  background: var(--accent-red);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  z-index: 1000;
+}
+
+.scrollToBottom:hover {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .scrollToBottom {
+    bottom: 70px;
+    right: 15px;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .scrollToBottom {
+    bottom: 60px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+  }
+}
