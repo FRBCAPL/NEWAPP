@@ -277,7 +277,8 @@ export default function MatchProposalModal({
           location,
           note: message,
           gameType,
-          raceLength
+          raceLength,
+          proposalId: data.proposalId
         });
 
         // Show confirmation

@@ -22,10 +22,16 @@ import LoadingSpinner, { LoadingButton, SkeletonLoader } from "../LoadingSpinner
 import Modal from '../modal/DraggableModal.jsx';
 
 import DirectMessagingModal from '../DirectMessagingModal';
+import MatchChat from '../chat/MatchChat';
 import WinnerSelectModal from '../modal/WinnerSelectModal';
 import Phase1Tracker from './Phase1Tracker.jsx';
 import Phase2Tracker from './Phase2Tracker.jsx';
 import MatchValidationModal from './MatchValidationModal';
+import ErrorBoundary from '../ErrorBoundary';
+
+import SmartMatchmakingModal from '../modal/SmartMatchmakingModal';
+
+
 
 // Import new services and hooks
 import { useProposals } from '../../hooks/useProposals';
@@ -242,6 +248,7 @@ export default function Dashboard({
 
   const [scheduledMatches, setScheduledMatches] = useState([]);
   const [showOpponents, setShowOpponents] = useState(false);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(null);
   const [showPlayerSearch, setShowPlayerSearch] = useState(false);
 
   // Admin Player Search
@@ -276,6 +283,11 @@ export default function Dashboard({
   const [showProposalDetailsModal, setShowProposalDetailsModal] = useState(false);
   const [showEditProposalModal, setShowEditProposalModal] = useState(false);
 
+  // All Matches Modal state
+  const [matchesSearchTerm, setMatchesSearchTerm] = useState('');
+  const [matchesStatusFilter, setMatchesStatusFilter] = useState('all');
+  const [matchesSortBy, setMatchesSortBy] = useState('date');
+
   // New state for loading state of Complete button
   const [completingMatchId, setCompletingMatchId] = useState(null);
   const [isCreatingProposal, setIsCreatingProposal] = useState(false);
@@ -283,6 +295,7 @@ export default function Dashboard({
 
   // Chat modal state
   const [showChatModal, setShowChatModal] = useState(false);
+  const [chatType, setChatType] = useState('direct'); // 'direct' or 'league'
   const [unreadMessages, setUnreadMessages] = useState(0);
 
   // Add state at the top of the Dashboard component
@@ -296,10 +309,32 @@ export default function Dashboard({
   const [validationModalOpen, setValidationModalOpen] = useState(false);
   const [matchToValidate, setMatchToValidate] = useState(null);
 
+  // Standings state
+  const [standings, setStandings] = useState([]);
+  const [loadingStandings, setLoadingStandings] = useState(false);
+
 
   const simulationRef = useRef(null);
 
   const navigate = useNavigate();
+
+  // Check if we're on a mobile device - improved for iframe compatibility
+  const isMobile = (() => {
+    // First try viewport width (works better in iframes)
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      return true;
+    }
+    // Fallback to user agent detection
+    if (typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      return true;
+    }
+    // Additional check for iframe context
+    if (typeof window !== 'undefined' && window.self !== window.top) {
+      // We're in an iframe, be more conservative with mobile detection
+      return window.innerWidth <= 768 || window.innerHeight <= 600;
+    }
+    return false;
+  })();
 
   // Test backend connection on component mount
   useEffect(() => {
@@ -378,6 +413,62 @@ export default function Dashboard({
     }
     
     fetchSeasonData();
+  }, [selectedDivision]);
+
+  // Fetch standings data
+  useEffect(() => {
+    async function fetchStandings() {
+      if (!selectedDivision) return;
+      
+      try {
+        setLoadingStandings(true);
+        
+        // Use the backend to fetch standings JSON for the division
+        const safeDivision = selectedDivision.replace(/[^A-Za-z0-9]/g, '_');
+        const standingsUrl = `${BACKEND_URL}/static/standings_${safeDivision}.json`;
+        
+        const response = await fetch(standingsUrl);
+        
+        if (!response.ok) {
+          console.warn(`Failed to fetch standings: ${response.status} - ${response.statusText}`);
+          return;
+        }
+        
+        const standingsData = await response.json();
+
+        // Validate standings data structure
+        if (!Array.isArray(standingsData)) {
+          console.error('Standings data is not an array:', standingsData);
+          return;
+        }
+
+        // Validate each entry has required fields
+        const validStandings = standingsData.filter(entry => {
+          if (!entry || typeof entry !== 'object') {
+            console.warn('Invalid standings entry:', entry);
+            return false;
+          }
+          if (!entry.name || !entry.rank) {
+            console.warn('Standings entry missing name or rank:', entry);
+            return false;
+          }
+          const rank = parseInt(entry.rank);
+          if (isNaN(rank) || rank <= 0) {
+            console.warn('Invalid rank in standings entry:', entry);
+            return false;
+          }
+          return true;
+        });
+
+        setStandings(validStandings);
+      } catch (error) {
+        console.error('Failed to load standings:', error);
+      } finally {
+        setLoadingStandings(false);
+      }
+    }
+    
+    fetchStandings();
   }, [selectedDivision]);
 
   // Fetch unread messages count
@@ -497,9 +588,24 @@ export default function Dashboard({
               p.firstName &&
               p.lastName
           );
-        if (isMounted) setPlayers(playerList);
+        if (isMounted) {
+          setPlayers(playerList);
+          setAllPlayers(playerList);
+          
+          // Set current user for smart match functionality
+          const currentUserData = playerList.find(p => 
+            p.firstName === playerName && p.lastName === playerLastName
+          );
+          if (currentUserData) {
+            setCurrentUser(currentUserData);
+          }
+        }
       } catch (err) {
-        if (isMounted) setPlayers([]);
+        if (isMounted) {
+          setPlayers([]);
+          setAllPlayers([]);
+          setCurrentUser(null);
+        }
       }
     }
     loadPlayers();
@@ -725,14 +831,14 @@ export default function Dashboard({
       // Skip if this scheduled match is already completed
       const schedOpponent = schedMatch.player1 && schedMatch.player1.trim().toLowerCase() === fullName.toLowerCase()
         ? schedMatch.player2 : schedMatch.player1;
-      const isCompleted = completedMatches.some(cm => {
-        const cmPlayers = [cm.senderName?.trim().toLowerCase(), cm.receiverName?.trim().toLowerCase()];
-        return (
-          Array.isArray(cm.divisions) && cm.divisions.includes(selectedDivision) &&
-          cmPlayers.includes(fullName.toLowerCase()) &&
-          cmPlayers.includes(schedOpponent?.trim().toLowerCase())
-        );
-      });
+             const isCompleted = completedMatches.some(cm => {
+         const cmPlayers = [cm.player1Id?.trim().toLowerCase(), cm.player2Id?.trim().toLowerCase()];
+         return (
+           cm.division === selectedDivision &&
+           cmPlayers.includes(fullName.toLowerCase()) &&
+           cmPlayers.includes(schedOpponent?.trim().toLowerCase())
+         );
+       });
       if (isCompleted) {
         continue; // Don't count this match if completed
       }
@@ -740,12 +846,12 @@ export default function Dashboard({
       for (let i = 0; i < scheduledConfirmedMatches.length; i++) {
         if (usedConfirmed.has(i)) continue;
         const backendMatch = scheduledConfirmedMatches[i];
-        const backendPlayers = [backendMatch.senderName?.trim().toLowerCase(), backendMatch.receiverName?.trim().toLowerCase()];
-        if (
-          Array.isArray(backendMatch.divisions) && backendMatch.divisions.includes(selectedDivision) &&
-          backendPlayers.includes(fullName.toLowerCase()) &&
-          backendPlayers.includes(schedOpponent?.trim().toLowerCase())
-        ) {
+                 const backendPlayers = [backendMatch.player1Id?.trim().toLowerCase(), backendMatch.player2Id?.trim().toLowerCase()];
+         if (
+           backendMatch.division === selectedDivision &&
+           backendPlayers.includes(fullName.toLowerCase()) &&
+           backendPlayers.includes(schedOpponent?.trim().toLowerCase())
+         ) {
           usedConfirmed.add(i);
           found = true;
           break;
@@ -776,7 +882,13 @@ export default function Dashboard({
   }).filter(Boolean);
 
   function handleOpponentClick(opponentName) {
-    const playerObj = players.find(
+    // Find the player object from the opponents list first
+    const opponentData = opponentsToSchedule.find(opp => 
+      opp.opponentName && opp.opponentName.trim().toLowerCase() === opponentName.trim().toLowerCase()
+    );
+    
+    // If not found in opponents list, try to find in all players
+    const playerObj = opponentData?.player || players.find(
       p => `${p.firstName} ${p.lastName}`.trim().toLowerCase() === opponentName.trim().toLowerCase()
     );
     
@@ -784,6 +896,13 @@ export default function Dashboard({
       alert("Player data not found for: " + opponentName);
       return;
     }
+    
+    if (smartMatchMode) {
+      // Smart match mode - go directly to smart matchmaking
+      handleOpponentSelectedForSmartMatch(playerObj);
+      return;
+    }
+    
     if (!playerObj.email) {
       alert("This opponent does not have an email on file and cannot be proposed a match.");
       return;
@@ -791,6 +910,31 @@ export default function Dashboard({
     setSelectedOpponent(playerObj);
     setShowPlayerAvailability(true);
     setShowOpponents(false); // Close the Opponents modal
+  }
+
+  // Smart Match handlers
+  function handleSmartMatchClick() {
+    console.log('Smart match button clicked!');
+    console.log('currentUser:', currentUser);
+    console.log('allPlayers:', allPlayers);
+    console.log('allPlayers length:', allPlayers?.length);
+    
+    if (!currentUser || !allPlayers || allPlayers.length === 0) {
+      console.log('Player data not available, showing alert');
+      alert("Player data not available for smart match. Please try again.");
+      return;
+    }
+    
+    // Use the existing opponents modal but with smart match mode
+    setShowOpponents(true);
+    setSmartMatchMode(true);
+  }
+
+  function handleOpponentSelectedForSmartMatch(opponent) {
+    setSelectedOpponentForSmartMatch(opponent);
+    setShowOpponents(false);
+    setSmartMatchMode(false);
+    setShowSmartMatchmakingModal(true);
   }
 
   function refreshSchedule() {
@@ -839,10 +983,83 @@ export default function Dashboard({
   }, [senderEmail, playerName, playerLastName, selectedDivision, seasonData, effectivePhase]);
 
   // Defensive filter: only show matches for the selected division (in case backend fails)
-  const filteredUpcomingMatches = scheduledConfirmedMatches.filter(m =>
-    m.divisions && selectedDivision &&
-    Array.isArray(m.divisions) && m.divisions.includes(selectedDivision)
+  const baseFilteredMatches = scheduledConfirmedMatches.filter(m =>
+    m.division === selectedDivision
   );
+
+  // Apply search and filters to matches
+  const filteredUpcomingMatches = baseFilteredMatches
+    .filter(match => {
+      // Search filter
+      if (matchesSearchTerm) {
+        let opponent = '';
+        if (match.player1Id && match.player2Id) {
+          if (match.player1Id.trim().toLowerCase() === fullName.trim().toLowerCase()) {
+            opponent = match.player2Id;
+          } else {
+            opponent = match.player1Id;
+          }
+        } else if (match.senderName && match.receiverName) {
+          if (match.senderName.trim().toLowerCase() === fullName.trim().toLowerCase()) {
+            opponent = match.receiverName;
+          } else {
+            opponent = match.senderName;
+          }
+        }
+        
+        if (!opponent.toLowerCase().includes(matchesSearchTerm.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Status filter
+      if (matchesStatusFilter !== 'all') {
+        if (matchesStatusFilter === 'completed' && match.status !== 'completed') {
+          return false;
+        }
+        if (matchesStatusFilter === 'pending' && match.status !== 'pending') {
+          return false;
+        }
+        if (matchesStatusFilter === 'upcoming' && match.status === 'completed') {
+          return false;
+        }
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      // Sort matches
+      switch (matchesSortBy) {
+        case 'date':
+          const dateA = a.scheduledDate ? new Date(a.scheduledDate) : new Date(a.date || 0);
+          const dateB = b.scheduledDate ? new Date(b.scheduledDate) : new Date(b.date || 0);
+          return dateA - dateB;
+        case 'opponent':
+          let opponentA = '';
+          let opponentB = '';
+          
+          if (a.player1Id && a.player2Id) {
+            opponentA = a.player1Id.trim().toLowerCase() === fullName.trim().toLowerCase() ? a.player2Id : a.player1Id;
+          } else if (a.senderName && a.receiverName) {
+            opponentA = a.senderName.trim().toLowerCase() === fullName.trim().toLowerCase() ? a.receiverName : a.senderName;
+          }
+          
+          if (b.player1Id && b.player2Id) {
+            opponentB = b.player1Id.trim().toLowerCase() === fullName.trim().toLowerCase() ? b.player2Id : b.player1Id;
+          } else if (b.senderName && b.receiverName) {
+            opponentB = b.senderName.trim().toLowerCase() === fullName.trim().toLowerCase() ? b.receiverName : b.senderName;
+          }
+          
+          return opponentA.localeCompare(opponentB);
+        case 'status':
+          const statusOrder = { 'pending': 1, 'confirmed': 2, 'completed': 3 };
+          const statusA = statusOrder[a.status] || 0;
+          const statusB = statusOrder[b.status] || 0;
+          return statusA - statusB;
+        default:
+          return 0;
+      }
+    });
 
   // Update the logic where a match/proposal is clicked:
   function handleProposalClick(match) {
@@ -850,204 +1067,457 @@ export default function Dashboard({
     setModalOpen(true);
   }
 
-     // Define allMatchesModal before the return statement
+               // Define allMatchesModal before the return statement
    const allMatchesModal = showAllMatchesModal && (
-     <div className={styles.modalOverlay}>
-       <div className={styles.modalContent} style={{
-         maxWidth: 600, 
-         maxHeight: '80vh', 
-         overflowY: 'auto',
-         background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',
-         backdropFilter: 'blur(8px)',
-         border: '2px solid rgba(255, 255, 255, 0.1)',
-         borderRadius: '12px',
-         boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3)'
+     <Modal
+       open={showAllMatchesModal}
+       onClose={() => {
+         setShowAllMatchesModal(false);
+         // Reset filters when closing
+         setMatchesSearchTerm('');
+         setMatchesStatusFilter('all');
+         setMatchesSortBy('date');
+       }}
+       title={`🎯 All Upcoming Matches (${filteredUpcomingMatches.length})`}
+       maxWidth="600px"
+       maxHeight="70vh"
+     >
+       {/* Search and Filter Bar */}
+       <div style={{
+         display: 'flex',
+         gap: '12px',
+         flexWrap: isMobile ? 'wrap' : 'nowrap',
+         alignItems: 'center',
+         marginBottom: '16px'
        }}>
-         <h2 style={{ 
-           color: '#fff', 
-           marginBottom: 16,
-           textAlign: 'center',
-           fontSize: '1.4rem',
-           fontWeight: 'bold',
-           textShadow: '1px 1px 3px rgba(0,0,0,0.8)'
-         }}>All Upcoming Matches</h2>
-        <ul className={styles.dashboardList} style={{ width: '100%', maxWidth: 520, margin: '0 auto' }}>
-          {filteredUpcomingMatches.map((match, idx) => {
-            let opponent = '';
-            let formattedDate = '';
-            if (match.type === 'scheduled') {
-              if (match.player1 && match.player2) {
-                if (match.player1.trim().toLowerCase() === fullName.trim().toLowerCase()) {
-                  opponent = match.player2;
-                } else {
-                  opponent = match.player1;
-                }
-              }
-              if (match.date) {
-                const parts = match.date.split('/');
-                if (parts.length === 3) {
-                  const [month, day, year] = parts;
-                  const dateObj = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
-                  if (!isNaN(dateObj.getTime())) {
-                    formattedDate = formatDateMMDDYYYY(match.date);
-                  } else {
-                    formattedDate = '[Invalid Date]';
-                  }
-                } else {
-                  formattedDate = '[Invalid Date]';
-                }
-              } else {
-                formattedDate = '[No Date]';
-              }
-            } else {
-              if (match.senderName && match.receiverName) {
-                if (match.senderName.trim().toLowerCase() === fullName.trim().toLowerCase()) {
-                  opponent = match.receiverName;
-                } else {
-                  opponent = match.senderName;
-                }
-              }
-              if (match.date) {
-                const parts = match.date.split('-');
-                if (parts.length === 3) {
-                  const [year, month, day] = parts;
-                  const dateObj = new Date(`${year}-${month}-${day}`);
-                  if (!isNaN(dateObj.getTime())) {
-                    formattedDate = formatDateMMDDYYYY(match.date);
-                  } else {
-                    formattedDate = '[Invalid Date]';
-                  }
-                } else {
-                  formattedDate = '[Invalid Date]';
-                }
-              } else {
-                formattedDate = '[No Date]';
-              }
-            }
-            const isCompleted = match.completed === true;
-            const actuallyCompleted = !!match.completed;
-                         return (
-               <li key={match._id || idx} className={styles.matchCard} style={{
-                 padding: '0.8rem 1rem', 
-                 fontSize: '0.98em', 
-                 marginBottom: 12,
-                 background: 'rgba(255, 255, 255, 0.05)',
-                 borderRadius: '8px',
-                 border: '1px solid rgba(255, 255, 255, 0.1)',
-                 transition: 'all 0.2s ease'
-               }}>
-                 <div className={styles.matchCardContentWrapper}>
-                  <button
-                    className={styles.matchCardButton}
-                    onClick={() => handleProposalClick(match)}
-                    type="button"
-                    style={{padding: 0, margin: 0, minHeight: 0, fontSize: '0.98em', display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none'}}
-                  >
-                    <span className={styles.matchCardOpponentLabel} style={{fontSize: '1em', marginRight: 4}}>VS:</span>
-                    <span className={styles.matchCardOpponentName} style={{fontSize: '1em', marginRight: 8}}>{opponent || '[Unknown Opponent]'}</span>
-                    <span className={styles.matchCardDetail} style={{fontSize: '0.97em', marginRight: 8}}>{formattedDate}</span>
-                    <span className={styles.matchCardDetail} style={{fontSize: '0.97em'}}>{match.location || '[No Location]'}</span>
-                  </button>
-                  {!actuallyCompleted && (
-                    <LoadingButton
-                      className={styles.dashboardBtn + ' ' + styles.matchCardDoneBtn}
-                      loading={completingMatchId === match._id}
-                      loadingText="Completing..."
-                      style={{ 
-                        marginLeft: 0, 
-                        minWidth: 70, 
-                        padding: '4px 8px', 
-                        fontSize: '0.75em', 
-                        height: 28, 
-                        lineHeight: '20px', 
-                        marginTop: 6,
-                        opacity: 0.18,
-                        filter: 'blur(0.5px) grayscale(0.2)',
-                        transition: 'opacity 0.22s, filter 0.22s, background 0.22s'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (completingMatchId !== match._id) {
-                          e.target.style.opacity = '1';
-                          e.target.style.filter = 'none';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (completingMatchId !== match._id) {
-                          e.target.style.opacity = '0.18';
-                          e.target.style.filter = 'blur(0.5px) grayscale(0.2)';
-                        }
-                      }}
-                      onClick={() => {
-                        let player1 = '';
-                        let player2 = '';
-                        if (match.type === 'scheduled') {
-                          player1 = match.player1;
-                          player2 = match.player2;
-                        } else {
-                          player1 = match.senderName;
-                          player2 = match.receiverName;
-                        }
-                        setWinnerModalMatch(match);
-                        setWinnerModalPlayers({ player1, player2 });
-                        setWinnerModalOpen(true);
-                      }}
-                      type="button"
-                    >
-                      Complete
-                    </LoadingButton>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-                 <div style={{display: 'flex', justifyContent: 'center', marginTop: 20}}>
-           <button 
-             className={styles.dashboardBtn} 
-             onClick={() => setShowAllMatchesModal(false)}
+         <div style={{
+           flex: 1,
+           minWidth: isMobile ? '100%' : '200px',
+           position: 'relative'
+         }}>
+           <input
+             type="text"
+             placeholder="Search by opponent name..."
+             value={matchesSearchTerm}
+             onChange={(e) => setMatchesSearchTerm(e.target.value)}
              style={{
-               background: 'linear-gradient(135deg, #ff4444, #e74c3c)',
+               width: '100%',
+               padding: '8px 12px 8px 36px',
+               background: 'rgba(0, 0, 0, 0.3)',
                border: '1px solid rgba(255, 255, 255, 0.2)',
                borderRadius: '8px',
-               padding: '10px 24px',
-               fontSize: '1rem',
-               fontWeight: '600',
                color: '#fff',
-               cursor: 'pointer',
-               transition: 'all 0.2s ease',
-               boxShadow: '0 4px 12px rgba(255, 68, 68, 0.3)'
+               fontSize: '0.9rem',
+               outline: 'none',
+               transition: 'all 0.2s ease'
              }}
-             onMouseEnter={(e) => {
-               e.target.style.transform = 'translateY(-1px)';
-               e.target.style.boxShadow = '0 6px 16px rgba(255, 68, 68, 0.4)';
+             onFocus={(e) => {
+               e.target.style.border = '1px solid rgba(255, 255, 255, 0.4)';
+               e.target.style.background = 'rgba(0, 0, 0, 0.5)';
              }}
-             onMouseLeave={(e) => {
-               e.target.style.transform = 'translateY(0)';
-               e.target.style.boxShadow = '0 4px 12px rgba(255, 68, 68, 0.3)';
+             onBlur={(e) => {
+               e.target.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+               e.target.style.background = 'rgba(0, 0, 0, 0.3)';
              }}
-           >
-             Close
-           </button>
+           />
+           <span style={{
+             position: 'absolute',
+             left: '12px',
+             top: '50%',
+             transform: 'translateY(-50%)',
+             color: '#888',
+             fontSize: '0.9rem'
+           }}>
+             🔍
+           </span>
          </div>
-      </div>
-    </div>
-  );
+         
+         <select
+           value={matchesStatusFilter}
+           onChange={(e) => setMatchesStatusFilter(e.target.value)}
+           style={{
+             padding: '8px 12px',
+             background: 'rgba(0, 0, 0, 0.3)',
+             border: '1px solid rgba(255, 255, 255, 0.2)',
+             borderRadius: '8px',
+             color: '#fff',
+             fontSize: '0.9rem',
+             outline: 'none',
+             cursor: 'pointer',
+             minWidth: isMobile ? '100%' : '120px'
+           }}
+           onFocus={(e) => {
+             e.target.style.border = '1px solid rgba(255, 255, 255, 0.4)';
+           }}
+           onBlur={(e) => {
+             e.target.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+           }}
+         >
+           <option value="all">All Matches</option>
+           <option value="upcoming">Upcoming</option>
+           <option value="completed">Completed</option>
+           <option value="pending">Pending</option>
+         </select>
+         
+         <select
+           value={matchesSortBy}
+           onChange={(e) => setMatchesSortBy(e.target.value)}
+           style={{
+             padding: '8px 12px',
+             background: 'rgba(0, 0, 0, 0.3)',
+             border: '1px solid rgba(255, 255, 255, 0.2)',
+             borderRadius: '8px',
+             color: '#fff',
+             fontSize: '0.9rem',
+             outline: 'none',
+             cursor: 'pointer',
+             minWidth: isMobile ? '100%' : '100px'
+           }}
+           onFocus={(e) => {
+             e.target.style.border = '1px solid rgba(255, 255, 255, 0.4)';
+           }}
+           onBlur={(e) => {
+             e.target.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+           }}
+         >
+           <option value="date">Sort by Date</option>
+           <option value="opponent">Sort by Opponent</option>
+           <option value="status">Sort by Status</option>
+         </select>
+       </div>
+
+       {/* Content */}
+       <div style={{
+         flex: 1,
+         overflowY: 'auto',
+         maxHeight: '50vh'
+       }}>
+         {filteredUpcomingMatches.length === 0 ? (
+           <div style={{
+             textAlign: 'center',
+             padding: '40px 20px',
+             color: '#888',
+             fontSize: '1.1rem'
+           }}>
+             <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📅</div>
+             <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>No matches found</div>
+             <div style={{ fontSize: '0.9rem' }}>You don't have any upcoming matches scheduled.</div>
+           </div>
+         ) : (
+           <div style={{
+             display: 'grid',
+             gap: '12px',
+             gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))'
+           }}>
+             {filteredUpcomingMatches.map((match, idx) => {
+               let opponent = '';
+               let formattedDate = '';
+               let matchStatus = 'upcoming';
+               
+               // Handle new Match model structure
+               if (match.player1Id && match.player2Id) {
+                 if (match.player1Id.trim().toLowerCase() === fullName.trim().toLowerCase()) {
+                   opponent = match.player2Id;
+                 } else {
+                   opponent = match.player1Id;
+                 }
+                 
+                 // Use scheduledDate for new Match model
+                 if (match.scheduledDate) {
+                   const dateObj = new Date(match.scheduledDate);
+                   if (!isNaN(dateObj.getTime())) {
+                     formattedDate = formatDateMMDDYYYY(dateObj.toISOString().split('T')[0]);
+                   } else {
+                     formattedDate = '[Invalid Date]';
+                   }
+                 } else {
+                   formattedDate = '[No Date]';
+                 }
+               } else {
+                 // Fallback for old proposal structure
+                 if (match.senderName && match.receiverName) {
+                   if (match.senderName.trim().toLowerCase() === fullName.trim().toLowerCase()) {
+                     opponent = match.receiverName;
+                   } else {
+                     opponent = match.senderName;
+                   }
+                 }
+                 if (match.date) {
+                   const parts = match.date.split('-');
+                   if (parts.length === 3) {
+                     const [year, month, day] = parts;
+                     const dateObj = new Date(`${year}-${month}-${day}`);
+                     if (!isNaN(dateObj.getTime())) {
+                       formattedDate = formatDateMMDDYYYY(match.date);
+                     } else {
+                       formattedDate = '[Invalid Date]';
+                     }
+                   } else {
+                     formattedDate = '[Invalid Date]';
+                   }
+                 } else {
+                   formattedDate = '[No Date]';
+                 }
+               }
+               
+               const isCompleted = match.status === 'completed';
+               const actuallyCompleted = match.status === 'completed';
+               
+               if (actuallyCompleted) matchStatus = 'completed';
+               else if (match.status === 'pending') matchStatus = 'pending';
+               
+               const getStatusColor = (status) => {
+                 switch (status) {
+                   case 'completed': return '#10b981';
+                   case 'pending': return '#f59e0b';
+                   default: return 'var(--accent-red)';
+                 }
+               };
+               
+               const getStatusIcon = (status) => {
+                 switch (status) {
+                   case 'completed': return '✅';
+                   case 'pending': return '⏳';
+                   default: return '📅';
+                 }
+               };
+               
+                               return (
+                 <div key={match._id || idx} style={{
+                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)',
+                   borderRadius: '12px',
+                   border: '1px solid rgba(255, 255, 255, 0.15)',
+                   padding: '20px',
+                   transition: 'all 0.3s ease',
+                   position: 'relative',
+                   overflow: 'hidden'
+                 }}
+                 onMouseEnter={(e) => {
+                   e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%)';
+                   e.currentTarget.style.border = '1px solid rgba(229, 62, 62, 0.3)';
+                   e.currentTarget.style.transform = 'translateY(-2px)';
+                   e.currentTarget.style.boxShadow = '0 8px 24px rgba(229, 62, 62, 0.2)';
+                 }}
+                 onMouseLeave={(e) => {
+                   e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)';
+                   e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.15)';
+                   e.currentTarget.style.transform = 'translateY(0)';
+                   e.currentTarget.style.boxShadow = 'none';
+                 }}
+                 >
+                   {/* Status Badge */}
+                   <div style={{
+                     position: 'absolute',
+                     top: '16px',
+                     right: '16px',
+                     background: getStatusColor(matchStatus),
+                     color: '#fff',
+                     padding: '6px 12px',
+                     borderRadius: '16px',
+                     fontSize: '0.8rem',
+                     fontWeight: '600',
+                     display: 'flex',
+                     alignItems: 'center',
+                     gap: '6px',
+                     boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                   }}>
+                     {getStatusIcon(matchStatus)} {matchStatus}
+                   </div>
+                   
+                   {/* Match Header */}
+                   <div style={{
+                     textAlign: 'center',
+                     marginBottom: '16px',
+                     paddingRight: '100px' // Make room for status badge
+                   }}>
+                     <div style={{
+                       fontSize: '1.2rem',
+                       fontWeight: '700',
+                       color: '#fff',
+                       textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                       display: 'flex',
+                       alignItems: 'center',
+                       justifyContent: 'center',
+                       gap: '12px',
+                       flexWrap: 'wrap'
+                     }}>
+                       <span>{playerName} {playerLastName}</span>
+                       <span style={{
+                         color: 'var(--accent-red)',
+                         fontSize: '1rem',
+                         fontWeight: '600'
+                       }}>
+                         VS
+                       </span>
+                       <span>{opponent || '[Unknown Opponent]'}</span>
+                     </div>
+                   </div>
+                   
+                   {/* Match Details */}
+                   <div style={{
+                     display: 'flex',
+                     justifyContent: 'center',
+                     gap: '24px',
+                     marginBottom: '20px',
+                     fontSize: '0.9rem',
+                     color: '#ccc'
+                   }}>
+                     <div style={{
+                       display: 'flex',
+                       alignItems: 'center',
+                       gap: '6px',
+                       background: 'rgba(255, 255, 255, 0.1)',
+                       padding: '8px 12px',
+                       borderRadius: '8px'
+                     }}>
+                       📅 {formattedDate}
+                     </div>
+                     {match.location && (
+                       <div style={{
+                         display: 'flex',
+                         alignItems: 'center',
+                         gap: '6px',
+                         background: 'rgba(255, 255, 255, 0.1)',
+                         padding: '8px 12px',
+                         borderRadius: '8px'
+                       }}>
+                         📍 {match.location}
+                       </div>
+                     )}
+                   </div>
+                   
+                   {/* Action Buttons */}
+                   <div style={{
+                     display: 'flex',
+                     gap: '12px',
+                     justifyContent: 'center'
+                   }}>
+                     <button
+                       onClick={() => handleProposalClick(match)}
+                       style={{
+                         padding: '12px 24px',
+                         background: 'linear-gradient(135deg, var(--accent-red), var(--accent-red-dark))',
+                         border: 'none',
+                         borderRadius: '8px',
+                         color: '#fff',
+                         fontSize: '0.9rem',
+                         fontWeight: '600',
+                         cursor: 'pointer',
+                         transition: 'all 0.2s ease',
+                         boxShadow: '0 2px 8px rgba(229, 62, 62, 0.3)',
+                         minWidth: '120px'
+                       }}
+                       onMouseEnter={(e) => {
+                         e.target.style.transform = 'translateY(-1px)';
+                         e.target.style.boxShadow = '0 4px 16px rgba(229, 62, 62, 0.5)';
+                       }}
+                       onMouseLeave={(e) => {
+                         e.target.style.transform = 'translateY(0)';
+                         e.target.style.boxShadow = '0 2px 8px rgba(229, 62, 62, 0.3)';
+                       }}
+                     >
+                       📋 View Details
+                     </button>
+                     
+                     {!actuallyCompleted && (
+                       <LoadingButton
+                         className={styles.dashboardBtn + ' ' + styles.matchCardDoneBtn}
+                         loading={completingMatchId === match._id}
+                         loadingText="Completing..."
+                         style={{ 
+                           padding: '12px 24px',
+                           fontSize: '0.9rem',
+                           fontWeight: '600',
+                           background: 'linear-gradient(135deg, #6c757d, #5a6268)',
+                           border: 'none',
+                           borderRadius: '8px',
+                           color: '#fff',
+                           cursor: 'pointer',
+                           transition: 'all 0.2s ease',
+                           minWidth: '120px',
+                           boxShadow: '0 2px 8px rgba(108, 117, 125, 0.3)'
+                         }}
+                         onMouseEnter={(e) => {
+                           if (completingMatchId !== match._id) {
+                             e.target.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                             e.target.style.transform = 'translateY(-1px)';
+                             e.target.style.boxShadow = '0 4px 16px rgba(16, 185, 129, 0.5)';
+                           }
+                         }}
+                         onMouseLeave={(e) => {
+                           if (completingMatchId !== match._id) {
+                             e.target.style.background = 'linear-gradient(135deg, #6c757d, #5a6268)';
+                             e.target.style.transform = 'translateY(0)';
+                             e.target.style.boxShadow = '0 2px 8px rgba(108, 117, 125, 0.3)';
+                           }
+                         }}
+                         onClick={() => {
+                           let player1 = '';
+                           let player2 = '';
+                           
+                           // Handle new Match model structure
+                           if (match.player1Id && match.player2Id) {
+                             player1 = match.player1Id;
+                             player2 = match.player2Id;
+                           } else {
+                             // Fallback for old proposal structure
+                             if (match.type === 'scheduled') {
+                               player1 = match.player1;
+                               player2 = match.player2;
+                             } else {
+                               player1 = match.senderName;
+                               player2 = match.receiverName;
+                             }
+                           }
+                           
+                           setWinnerModalMatch(match);
+                           setWinnerModalPlayers({ player1, player2 });
+                           setWinnerModalOpen(true);
+                         }}
+                         type="button"
+                                               >
+                          ✅ Mark as Complete
+                        </LoadingButton>
+                     )}
+                   </div>
+                 </div>
+               );
+             })}
+           </div>
+         )}
+       </div>
+       
+       {/* Footer */}
+       <div style={{
+         padding: '16px 0 0',
+         borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+         marginTop: '16px',
+         textAlign: 'center'
+       }}>
+         <div style={{
+           fontSize: '0.9rem',
+           color: '#888'
+         }}>
+           Showing {filteredUpcomingMatches.length} match{filteredUpcomingMatches.length !== 1 ? 'es' : ''}
+         </div>
+       </div>
+     </Modal>
+   );
 
   // Determine required matches based on phase
   const requiredMatches = effectivePhase === "challenge" ? 4 : 6;
 
-  // Count both confirmed and completed matches as 'scheduled'
-  const scheduledOrCompletedMatches = [
-    ...scheduledConfirmedMatches.filter(match =>
-      match.status === "confirmed" &&
-      Array.isArray(match.divisions) && match.divisions.includes(selectedDivision) &&
-      ([match.senderName?.trim().toLowerCase(), match.receiverName?.trim().toLowerCase()].includes(fullName.toLowerCase()))
-    ),
-    ...completedMatches.filter(match =>
-      Array.isArray(match.divisions) && match.divisions.includes(selectedDivision) &&
-      ([match.senderName?.trim().toLowerCase(), match.receiverName?.trim().toLowerCase()].includes(fullName.toLowerCase()))
-    )
-  ];
+       // Count both confirmed and completed matches as 'scheduled'
+     const scheduledOrCompletedMatches = [
+       ...scheduledConfirmedMatches.filter(match =>
+         match.division === selectedDivision &&
+         ([match.player1Id?.trim().toLowerCase(), match.player2Id?.trim().toLowerCase()].includes(fullName.toLowerCase()))
+       ),
+       ...completedMatches.filter(match =>
+         match.division === selectedDivision &&
+         ([match.player1Id?.trim().toLowerCase(), match.player2Id?.trim().toLowerCase()].includes(fullName.toLowerCase()))
+       )
+     ];
 
   // Remove duplicates (in case a match is both confirmed and completed)
   const uniqueScheduledOrCompleted = Array.from(new Set(scheduledOrCompletedMatches.map(m => m._id))).map(id =>
@@ -1058,6 +1528,13 @@ export default function Dashboard({
   const matchesToScheduleCount = Math.max(0, requiredMatches - matchesScheduledCount);
 
   const [showCompletedModal, setShowCompletedModal] = useState(false);
+  
+  // Smart Match state variables
+  const [showSmartMatchmakingModal, setShowSmartMatchmakingModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [allPlayers, setAllPlayers] = useState([]);
+  const [selectedOpponentForSmartMatch, setSelectedOpponentForSmartMatch] = useState(null);
+  const [smartMatchMode, setSmartMatchMode] = useState(false);
 
   // Logical proposal counters based on who needs to act
   const proposalsWaitingForYou = [
@@ -1087,35 +1564,20 @@ export default function Dashboard({
             pointerEvents: "auto"
           }}
         >
-          <OpponentsModal
-            open={showOpponents}
-            onClose={() => setShowOpponents(false)}
-            opponents={opponentsToSchedule}
-            onOpponentClick={handleOpponentClick}
-            phase={effectivePhase}
-          />
+                     <OpponentsModal
+             open={showOpponents}
+             onClose={() => setShowOpponents(false)}
+             opponents={opponentsToSchedule}
+             onOpponentClick={handleOpponentClick}
+             phase={effectivePhase}
+             selectedCalendarDate={selectedCalendarDate}
+             smartMatchMode={smartMatchMode}
+             allPlayers={allPlayers}
+           />
         </div>,
         document.body
       )
     : null;
-
-  // Check if we're on a mobile device - improved for iframe compatibility
-  const isMobile = (() => {
-    // First try viewport width (works better in iframes)
-    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
-      return true;
-    }
-    // Fallback to user agent detection
-    if (typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-      return true;
-    }
-    // Additional check for iframe context
-    if (typeof window !== 'undefined' && window.self !== window.top) {
-      // We're in an iframe, be more conservative with mobile detection
-      return window.innerWidth <= 768 || window.innerHeight <= 600;
-    }
-    return false;
-  })();
 
   return (
     <div className={styles.dashboardBg} style={{ position: 'relative' }}>
@@ -1138,45 +1600,42 @@ export default function Dashboard({
             This is for testing purposes only.
           </div>
           
-          {/* 10-Ball Tutorial Link - Admin Only */}
-          {userPin === "777777" && (
-            <div style={{ 
-              marginBottom: isMobile ? 12 : 16,
-              textAlign: 'center'
-            }}>
-              <button
-                onClick={() => window.location.hash = '#/tenball-tutorial'}
-                style={{
-                  background: 'linear-gradient(45deg, #4CAF50, #8BC34A)',
-                  border: 'none',
-                  color: 'white',
-                  padding: isMobile ? '10px 16px' : '12px 20px',
-                  borderRadius: '25px',
-                  cursor: 'pointer',
-                  fontSize: isMobile ? '0.9rem' : '1rem',
-                  fontWeight: 'bold',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 15px rgba(76, 175, 80, 0.3)'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 6px 20px rgba(76, 175, 80, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 4px 15px rgba(76, 175, 80, 0.3)';
-                }}
-              >
-                <img src={tenBall} alt="10-Ball" style={{ width: '20px', height: '20px', marginRight: '8px', display: 'inline-block', verticalAlign: 'text-bottom' }} />
-                Play 10-Ball Tutorial & Learn Official CSI Rules
-              </button>
-            </div>
-          )}
+
+          
+                      {/* 10-Ball Tutorial Link - Admin Only */}
+            {userPin === "777777" && (
+              <div style={{ 
+                marginBottom: isMobile ? 12 : 16,
+                textAlign: 'center'
+              }}>
+                <button
+                  onClick={() => window.location.hash = '#/tenball-tutorial'}
+                  style={{
+                    background: 'linear-gradient(45deg, #4CAF50, #8BC34A)',
+                    border: 'none',
+                    color: 'white',
+                    padding: isMobile ? '10px 16px' : '12px 20px',
+                    borderRadius: '25px',
+                    cursor: 'pointer',
+                    fontSize: isMobile ? '0.9rem' : '1rem',
+                    fontWeight: 'bold',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 15px rgba(76, 175, 80, 0.3)'
+                  }}
+                >
+                  <img src={tenBall} alt="10-Ball" style={{ width: '20px', height: '20px', marginRight: '8px', display: 'inline-block', verticalAlign: 'text-bottom' }} />
+                  Play 10-Ball Tutorial & Learn Official CSI Rules
+                </button>
+              </div>
+            )}
           
 
           
           {!isMobile && <br />}
-                     {/* --- Division Selector --- */}
+          
+
+          
+          {/* --- Division Selector --- */}
            {divisions.length > 0 && (
              <div style={{ 
                marginBottom: isMobile ? 8 : 16,
@@ -1212,32 +1671,7 @@ export default function Dashboard({
                      <span style={{ fontWeight: 600 }}>{divisions[0]}</span>
                    )}
                  </label>
-                 {!isMobile && (
-                   <span style={{ 
-                     fontSize: "0.9em", 
-                     padding: "4px 8px", 
-                     borderRadius: "4px", 
-                     backgroundColor: effectivePhase === "challenge" ? "#e53e3e" : "#28a745",
-                     color: "white",
-                     fontWeight: "600"
-                   }}>
-                     Phase {effectivePhase === "challenge" ? "2" : effectivePhase === "scheduled" ? "1" : "Complete"}
-                   </span>
-                 )}
                </div>
-                               {isMobile && (
-                  <span style={{ 
-                    fontSize: "0.8em", 
-                    padding: "3px 6px", 
-                    borderRadius: "4px", 
-                    backgroundColor: effectivePhase === "challenge" ? "#e53e3e" : "#28a745",
-                    color: "white",
-                    fontWeight: "600",
-                    alignSelf: 'center'
-                  }}>
-                    Phase {effectivePhase === "challenge" ? "2" : effectivePhase === "scheduled" ? "1" : "Complete"}
-                  </span>
-                )}
              </div>
            )}
 
@@ -1248,80 +1682,106 @@ export default function Dashboard({
           {/* --- Phase 2 Challenge Tracker --- */}
           {/* Phase 2 tracker will be positioned as overlay on pool table */}
 
-          {/* --- Upcoming Matches Section --- */}
-          <section className={`${styles.dashboardSection} ${styles.dashboardSectionBox} ${styles.matchesSection}`}
-            style={{
-              position: "relative",
-              overflow: "visible",
-              backgroundColor: "rgba(0, 0, 0, .5)",
-              minHeight: isMobile ? "120px" : "370px",
-              marginBottom: isMobile ? '16px' : '36px',
-              paddingBottom: isMobile ? '20px' : '20px',
-            }}
-          >
-            {/* PoolSimulation as background and matches list overlayed on table */}
-            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-              <div className={styles.poolTableContainer} style={{ 
-                marginBottom: isMobile ? '12px' : '24px', 
-                position: 'relative',
-                width: '100%',
-                maxWidth: isMobile ? '98%' : '600px'
-              }}>
+                     {/* --- Upcoming Matches Section --- */}
+           <section className={`${styles.dashboardSection} ${styles.dashboardSectionBox} ${styles.matchesSection}`}
+             style={{
+               position: "relative",
+               overflow: "visible",
+               backgroundColor: "rgba(0, 0, 0, .5)",
+               minHeight: isMobile ? "650px" : "570px",
+               marginBottom: isMobile ? '16px' : '36px',
+               paddingBottom: isMobile ? '20px' : '20px',
+             }}
+           >
+             
+             {/* PoolSimulation as background and matches list overlayed on table */}
+             <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                                               <div className={styles.poolTableContainer} style={{ 
+                   marginBottom: isMobile ? '12px' : '24px', 
+                   position: 'relative',
+                   width: '100%',
+                   maxWidth: isMobile ? '98%' : '600px',
+                   height: isMobile ? '400px' : 'auto',
+                   display: 'flex',
+                   justifyContent: 'center',
+                   alignItems: 'center'
+                 }}>
                 
                                  {/* Phase 1 Tracker positioned over the simulation */}
-                 {effectivePhase === 'scheduled' && seasonData && (
-                   <div style={{
-                     position: 'absolute',
-                     top: isMobile ? '25px' : '35px',
-                     left: '50%',
-                     transform: 'translateX(-50%)',
-                     zIndex: 10,
-                     width: isMobile ? '95%' : '75%',
-                     maxWidth: isMobile ? '400px' : '500px',
-                     height: isMobile ? '100px' : '200px'
-                   }}>
-                    <Phase1Tracker
-                      currentPhase={effectivePhase}
-                      seasonData={seasonData}
-                      completedMatches={completedMatches}
-                      totalRequiredMatches={totalRequiredMatches}
-                      playerName={playerName}
-                      playerLastName={playerLastName}
-                      selectedDivision={selectedDivision}
-                      onOpenOpponentsModal={() => setShowOpponents(true)}
-                      onOpenCompletedMatchesModal={() => setShowCompletedModal(true)}
-                      onOpenStandingsModal={() => setShowStandings(true)}
-                      onOpenAllMatchesModal={() => setShowAllMatchesModal(true)}
-                      pendingCount={pendingCount}
-                      sentCount={sentCount}
-                      onOpenProposalListModal={() => setShowProposalListModal(true)}
-                      onOpenSentProposalListModal={() => setShowSentProposalListModal(true)}
-                      upcomingMatches={filteredUpcomingMatches}
-                      onMatchClick={handleProposalClick}
-                      isMobile={isMobile}
-                    />
+                                   {effectivePhase === 'scheduled' && seasonData && (
+                    <div style={{
+                      position: 'absolute',
+                      top: isMobile ? '50px' : '35px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      zIndex: 10,
+                      width: isMobile ? '95%' : '90%',
+                      maxWidth: isMobile ? '500px' : '1200px',
+                      height: isMobile ? '150px' : '200px'
+                    }}>
+                    <ErrorBoundary>
+                      <Phase1Tracker
+                        currentPhase={effectivePhase}
+                        seasonData={seasonData}
+                        completedMatches={completedMatches}
+                        totalRequiredMatches={totalRequiredMatches}
+                        playerName={playerName}
+                        playerLastName={playerLastName}
+                        selectedDivision={selectedDivision}
+                        onOpenOpponentsModal={(selectedDate) => {
+                          setSelectedCalendarDate(selectedDate);
+                          // If no date is provided (progress bar click), use smart match mode
+                          if (!selectedDate) {
+                            setSmartMatchMode(true);
+                          } else {
+                            setSmartMatchMode(false);
+                          }
+                          setShowOpponents(true);
+                        }}
+                        onOpenCompletedMatchesModal={() => setShowCompletedModal(true)}
+                        onOpenStandingsModal={() => setShowStandings(true)}
+                        onOpenAllMatchesModal={() => setShowAllMatchesModal(true)}
+                        pendingCount={pendingCount}
+                        sentCount={sentCount}
+                        onOpenProposalListModal={() => setShowProposalListModal(true)}
+                        onOpenSentProposalListModal={() => setShowSentProposalListModal(true)}
+                        upcomingMatches={filteredUpcomingMatches}
+                        onMatchClick={handleProposalClick}
+                        isMobile={isMobile}
+                        onOpenMessageCenter={(type) => {
+                          setChatType(type);
+                          setShowChatModal(true);
+                        }}
+                        currentUser={currentUser}
+                        allPlayers={allPlayers}
+                        onSmartMatchClick={handleSmartMatchClick}
+                      />
+                    </ErrorBoundary>
                   </div>
                 )}
 
                                  {/* Phase 2 Tracker positioned over the simulation */}
-                 {effectivePhase === 'challenge' && (
-                   <div style={{
-                     position: 'absolute',
-                     top: isMobile ? '25px' : '35px',
-                     left: '50%',
-                     transform: 'translateX(-50%)',
-                     zIndex: 10,
-                     width: isMobile ? '95%' : '75%',
-                     maxWidth: isMobile ? '400px' : '500px',
-                     height: isMobile ? '100px' : '200px'
-                   }}>
+                                   {effectivePhase === 'challenge' && (
+                    <div style={{
+                      position: 'absolute',
+                      top: isMobile ? '50px' : '35px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      zIndex: 10,
+                      width: isMobile ? '95%' : '90%',
+                      maxWidth: isMobile ? '500px' : '1200px',
+                      height: isMobile ? '150px' : '200px'
+                    }}>
                                          <Phase2Tracker
                        playerName={playerName}
                        playerLastName={playerLastName}
                        selectedDivision={selectedDivision}
                        phase={effectivePhase}
                        isMobile={isMobile}
-                       onOpenOpponentsModal={() => setShowOpponents(true)}
+                       onOpenOpponentsModal={(selectedDate) => {
+                         setSelectedCalendarDate(selectedDate);
+                         setShowOpponents(true);
+                       }}
                        onOpenCompletedMatchesModal={() => setShowCompletedModal(true)}
                                         onOpenStandingsModal={() => setShowStandings(true)}
                  onOpenDefenseChallengersModal={() => setShowDefenseChallengers(true)}
@@ -1334,35 +1794,41 @@ export default function Dashboard({
                  upcomingMatches={filteredUpcomingMatches}
                  onMatchClick={handleProposalClick}
                  seasonData={seasonData}
+                 completedMatches={completedMatches}
+                 standings={standings}
                      />
                   </div>
                  )}
-                {isMobile ? (
-                  <div
-                    className={styles.simulationContainer}
-                    ref={simulationRef}
-                    style={{
-                      width: '100%',
-                      height: '140px',
-                      position: 'relative'
-                    }}
-                  >
-                    <PoolSimulation />
-                  </div>
-                ) : (
-                  <ResponsiveWrapper aspectWidth={600} aspectHeight={300}>
-                    <div
-                      className={styles.simulationContainer}
-                      ref={simulationRef}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        position: 'relative'
-                      }}
-                    >
-                      <PoolSimulation />
-                    </div>
-                  </ResponsiveWrapper>
+                                                  {isMobile ? (
+                   <div
+                     className={styles.simulationContainer}
+                     ref={simulationRef}
+                     style={{
+                       width: '100% !important',
+                       height: '400px !important',
+                       position: 'relative',
+                       minWidth: '0 !important',
+                       maxWidth: '100% !important',
+                       minHeight: '400px !important',
+                       maxHeight: '400px !important'
+                     }}
+                   >
+                     <PoolSimulation isRotated={true} />
+                   </div>
+                 ) : (
+                                     <ResponsiveWrapper aspectWidth={600} aspectHeight={300}>
+                     <div
+                       className={styles.simulationContainer}
+                       ref={simulationRef}
+                       style={{
+                         width: '100%',
+                         height: '100%',
+                         position: 'relative'
+                       }}
+                     >
+                       <PoolSimulation />
+                     </div>
+                   </ResponsiveWrapper>
                 )}
                 {/* OpponentsModal portal overlay (not inside simulationContainer) */}
                 {opponentsModalPortal}
@@ -1373,61 +1839,13 @@ export default function Dashboard({
           </section>
 
           
-               {/* News & Updates Section with Chat/Standings Buttons */}
-        <section className={`${styles.dashboardSection} ${styles.dashboardSectionBox}`}>
-          
-          <div className={styles.newsUpdatesHeader}>
-            <button
-              className={styles.dashboardBtn}
-              onClick={() => setShowChatModal(true)}
-              type="button"
-              style={{ position: 'relative' }}
-            >
-              💬 Direct Messages
-              {unreadMessages > 0 && (
-                <span style={{
-                  position: 'absolute',
-                  top: '-8px',
-                  right: '-8px',
-                  background: '#e53e3e',
-                  color: '#fff',
-                  borderRadius: '50%',
-                  width: '20px',
-                  height: '20px',
-                  fontSize: '0.75em',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 'bold'
-                }}>
-                  {unreadMessages > 99 ? '99+' : unreadMessages}
-                </span>
-              )}
-            </button>
-            <button
-              className={styles.dashboardBtn}
-              onClick={() => navigate('/chat')}
-              type="button"
-              style={{ 
-                background: '#4ecdc4',
-                borderColor: '#4ecdc4',
-                color: '#fff'
-              }}
-            >
-              🚀 League Chat
-            </button>
-            <h2 className={styles.dashboardSectionTitle}>
-              News & Updates
-            </h2>
-            <button
-              className={styles.dashboardBtn}
-              type="button"
-              onClick={() => setShowStandings(true)}
-            >
-              📊 View Standings
-            </button>
+        
 
-          </div>
+        {/* News & Updates Section */}
+        <section className={`${styles.dashboardSection} ${styles.dashboardSectionBox} ${styles.newsUpdatesSection}`}>
+          <h2 className={styles.dashboardSectionTitle}>
+            News & Updates
+          </h2>
           {loadingNotes ? (
             <SkeletonLoader lines={3} height="16px" />
           ) : (
@@ -1482,6 +1900,20 @@ export default function Dashboard({
             >
               Clear All Notes
             </button>
+          )}
+          
+          {noteError && (
+            <div style={{
+              marginTop: 10,
+              padding: '10px',
+              background: '#ffebee',
+              color: '#c62828',
+              border: '1px solid #ffcdd2',
+              borderRadius: '4px',
+              fontSize: '0.9em'
+            }}>
+              Error: {noteError}
+            </div>
           )}
         </section>
 
@@ -1859,67 +2291,78 @@ export default function Dashboard({
 
     {allMatchesModal}
 
-    {/* Chat Modal */}
-    {showChatModal && (
-      <div className={styles.modalOverlay} style={{zIndex: 99999}}>
-        <div style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '95vw',
-          height: '95vh',
-          maxWidth: '1400px',
-          maxHeight: '900px',
-          background: '#181818',
-          borderRadius: '12px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '12px 16px',
-            borderBottom: '1px solid #333',
-            background: '#222',
-            borderRadius: '12px 12px 0 0'
-          }}>
-            <h2 style={{margin: 0, color: '#fff', fontSize: '1.2em'}}>League Chat</h2>
-            <button
-              onClick={() => setShowChatModal(false)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#fff',
-                fontSize: '24px',
-                cursor: 'pointer',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseOver={(e) => e.target.style.background = '#444'}
-              onMouseOut={(e) => e.target.style.background = 'none'}
-              type="button"
-            >
-              ×
-            </button>
-          </div>
-          <div style={{flex: 1, overflow: 'hidden', position: 'relative'}}>
-            <DirectMessagingModal
-              userName={`${playerName} ${playerLastName}`}
-              userEmail={senderEmail}
-              userPin={userPin}
-              selectedDivision={selectedDivision}
-              opponentEmails={opponentEmails}
-              onClose={() => setShowChatModal(false)}
-            />
-          </div>
-        </div>
-      </div>
-    )}
+         {/* Chat Modal */}
+     {showChatModal && (
+       <div className={styles.modalOverlay} style={{zIndex: 99999}}>
+         <div style={{
+           position: 'fixed',
+           top: '50%',
+           left: '50%',
+           transform: 'translate(-50%, -50%)',
+           width: '95vw',
+           height: '95vh',
+           maxWidth: '1400px',
+           maxHeight: '900px',
+           background: '#181818',
+           borderRadius: '12px',
+           boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+           display: 'flex',
+           flexDirection: 'column',
+           overflow: 'hidden'
+         }}>
+           <div style={{
+             display: 'flex',
+             justifyContent: 'space-between',
+             alignItems: 'center',
+             padding: '12px 16px',
+             borderBottom: '1px solid #333',
+             background: '#222',
+             borderRadius: '12px 12px 0 0'
+           }}>
+                           <h2 style={{margin: 0, color: '#ffffff', fontSize: '1.2em'}}>
+                {chatType === 'league' ? 'League Chat' : 'Direct Messages'}
+              </h2>
+             <button
+               onClick={() => setShowChatModal(false)}
+               style={{
+                 background: 'none',
+                 border: 'none',
+                 color: '#fff',
+                 fontSize: '24px',
+                 cursor: 'pointer',
+                 padding: '4px 8px',
+                 borderRadius: '4px',
+                 transition: 'background-color 0.2s'
+               }}
+               onMouseOver={(e) => e.target.style.background = '#444'}
+               onMouseOut={(e) => e.target.style.background = 'none'}
+               type="button"
+             >
+               ×
+             </button>
+           </div>
+           <div style={{flex: 1, overflow: 'hidden', position: 'relative'}}>
+             {chatType === 'league' ? (
+               <MatchChat
+                 userName={`${playerName} ${playerLastName}`}
+                 userEmail={senderEmail}
+                 userPin={userPin}
+                 onClose={() => setShowChatModal(false)}
+               />
+             ) : (
+               <DirectMessagingModal
+                 userName={`${playerName} ${playerLastName}`}
+                 userEmail={senderEmail}
+                 userPin={userPin}
+                 selectedDivision={selectedDivision}
+                 opponentEmails={opponentEmails}
+                 onClose={() => setShowChatModal(false)}
+               />
+             )}
+           </div>
+         </div>
+       </div>
+     )}
 
     {showCompletedModal && (
       <ProposalListModal
@@ -1968,11 +2411,32 @@ export default function Dashboard({
         setWinnerModalOpen(false);
         setCompletingMatchId(winnerModalMatch._id);
         try {
-          await proposalService.markCompleted(winnerModalMatch._id, winner);
+          // First, try to find the corresponding match for this proposal
+          const matches = await fetch(`${BACKEND_URL}/api/matches?proposalId=${winnerModalMatch._id}`);
+          const matchesData = await matches.json();
+          
+          if (matchesData.length > 0) {
+            // Use the new match completion system
+            const matchId = matchesData[0]._id;
+            await fetch(`${BACKEND_URL}/api/matches/${matchId}/complete`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                winner, 
+                score: 'TBD',
+                notes: `Completed by ${playerName} ${playerLastName}` 
+              })
+            });
+          } else {
+            // Fallback to old system if no match found
+            await proposalService.markCompleted(winnerModalMatch._id, winner);
+          }
+          
           markMatchCompleted({ ...winnerModalMatch, winner });
           refetchMatches();
           refetchProposals();
         } catch (err) {
+          console.error('Error completing match:', err);
           alert('Failed to mark as completed.');
         }
         setCompletingMatchId(null);
@@ -2000,6 +2464,24 @@ export default function Dashboard({
         refetchMatches();
       }}
     />
+
+         {/* Smart Match Modals */}
+          <SmartMatchmakingModal
+       isOpen={showSmartMatchmakingModal}
+       onClose={() => setShowSmartMatchmakingModal(false)}
+       player1={currentUser}
+       player2={selectedOpponentForSmartMatch}
+       upcomingMatches={filteredUpcomingMatches}
+       isMobile={isMobile}
+       selectedDivision={selectedDivision}
+       phase={effectivePhase}
+       senderName={`${playerName} ${playerLastName}`}
+       senderEmail={senderEmail}
+       onProposalComplete={() => {
+         refetchMatches();
+         refetchProposals();
+       }}
+     />
   </div>
 );
 }

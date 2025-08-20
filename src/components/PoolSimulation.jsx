@@ -127,7 +127,8 @@ function getPocketOpening(pocket, target) {
   };
 }
 
-export default function PoolSimulation() {
+export default function PoolSimulation({ isRotated = false }) {
+  console.log('PoolSimulation isRotated:', isRotated);
   const containerRef = useRef(null);
   const tableImgRef = useRef(null);
   const ballRefs = useRef({
@@ -722,7 +723,12 @@ export default function PoolSimulation() {
           pointerEvents: "none",
           opacity: 1,
           filter: 'opacity(1) contrast(1.3) brightness(1.25) saturate(1.1)',
-          boxShadow: 'inset 0 0 30px rgba(0,0,0,0.3)'
+          boxShadow: 'inset 0 0 30px rgba(0,0,0,0.3)',
+          transform: isRotated ? 'rotate(90deg)' : 'none',
+          transformOrigin: 'center center'
+        }}
+        onLoad={() => {
+          console.log('Table image loaded, isRotated:', isRotated, 'transform:', isRotated ? 'rotate(90deg)' : 'none');
         }}
       />
       {/* Centered Words, scaled */}
@@ -750,7 +756,7 @@ export default function PoolSimulation() {
             top: "50%",
             width: "30.5%",
             height: "auto",
-            transform: "translate(-50%, -50%)",
+            transform: isRotated ? "translate(-50%, -50%) rotate(-90deg)" : "translate(-50%, -50%)",
             objectFit: "contain",
             zIndex: 2,
             opacity: 0.25,
@@ -780,6 +786,8 @@ export default function PoolSimulation() {
               pointerEvents: "none",
               filter: 'opacity(1) contrast(1.3) brightness(1.2) saturate(1.1) drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
               borderRadius: "50%",
+              transform: isRotated ? 'rotate(-90deg)' : 'none',
+              transformOrigin: 'center center'
             }}
           />
           {/* Ball highlight */}

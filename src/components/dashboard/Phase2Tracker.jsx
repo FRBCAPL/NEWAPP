@@ -3,6 +3,7 @@ import { challengeService } from '../../services/challengeService';
 import { format } from 'date-fns';
 import styles from './dashboard.module.css';
 import Phase2RulesModal from '../modal/Phase2RulesModal';
+import Phase1ResultsModal from '../modal/Phase1ResultsModal';
 
 export default function Phase2Tracker({ 
   playerName, 
@@ -24,7 +25,10 @@ export default function Phase2Tracker({
   upcomingMatches = [],
   onMatchClick,
   // Add season data for deadline tracking
-  seasonData
+  seasonData,
+  // Add Phase 1 data for stats display
+  completedMatches = [],
+  standings = []
 }) {
   const [stats, setStats] = useState(null);
   const [limits, setLimits] = useState(null);
@@ -32,8 +36,85 @@ export default function Phase2Tracker({
   const [error, setError] = useState(null);
   const [isExpanded, setIsExpanded] = useState(true);
   const [showRulesModal, setShowRulesModal] = useState(false);
+  const [showPhase1ResultsModal, setShowPhase1ResultsModal] = useState(false);
+  const [phase1Stats, setPhase1Stats] = useState(null);
 
   const fullPlayerName = `${playerName} ${playerLastName}`;
+
+  // Calculate Phase 1 stats (win/loss record and final position)
+  const calculatePhase1Stats = () => {
+    let wins = 0;
+    let losses = 0;
+
+    // Calculate wins/losses from completed matches
+    if (completedMatches && completedMatches.length > 0) {
+      completedMatches.forEach(match => {
+        if (match.winner === fullPlayerName) {
+          wins++;
+        } else {
+          losses++;
+        }
+      });
+    }
+
+    const winRate = completedMatches && completedMatches.length > 0 ? Math.round((wins / (wins + losses)) * 100) : 0;
+    
+    // Get actual standings position
+    const getPlayerPosition = (standings, playerName) => {
+      if (!standings || standings.length === 0) {
+        return null;
+      }
+      
+      const normalizedPlayerName = playerName.toLowerCase().trim();
+      const playerEntry = standings.find(entry => 
+        entry.name.toLowerCase().trim() === normalizedPlayerName
+      );
+      
+      return playerEntry ? parseInt(playerEntry.rank) : null;
+    };
+
+    const getOrdinalSuffix = (num) => {
+      const j = num % 10;
+      const k = num % 100;
+      if (j === 1 && k !== 11) return 'st';
+      if (j === 2 && k !== 12) return 'nd';
+      if (j === 3 && k !== 13) return 'rd';
+      return 'th';
+    };
+
+    const actualPosition = getPlayerPosition(standings, fullPlayerName);
+    let positionDisplay = 'N/A';
+    
+    if (actualPosition !== null) {
+      positionDisplay = `${actualPosition}${getOrdinalSuffix(actualPosition)}`;
+    } else if (completedMatches && completedMatches.length >= 1) {
+      // Fallback to estimated position if not in standings but has completed matches
+      if (winRate >= 80) positionDisplay = '1st-3rd';
+      else if (winRate >= 60) positionDisplay = '4th-6th';
+      else if (winRate >= 40) positionDisplay = '7th-9th';
+      else positionDisplay = '10th+';
+    }
+
+    const stats = {
+      wins,
+      losses,
+      winRate,
+      position: positionDisplay,
+      totalMatches: completedMatches ? completedMatches.length : 0
+    };
+    
+    console.log('Phase2Tracker - Calculated Phase 1 stats:', stats);
+    setPhase1Stats(stats);
+  };
+
+  // Calculate Phase 1 stats when component mounts or data changes
+  useEffect(() => {
+    console.log('Phase2Tracker - Calculating Phase 1 stats:');
+    console.log('  completedMatches:', completedMatches);
+    console.log('  standings:', standings);
+    console.log('  fullPlayerName:', fullPlayerName);
+    calculatePhase1Stats();
+  }, [completedMatches, standings, fullPlayerName]);
 
   // Calculate Phase 2 deadline status
   const getPhase2DeadlineStatus = () => {
@@ -173,7 +254,8 @@ export default function Phase2Tracker({
   }
 
   // Calculate total matches (challenges + defenses) for 2-4 goal
-  const totalMatches = stats.totalChallengeMatches + stats.requiredDefenses;
+  // FIXED: Calculate total matches as challenges issued + defenses required
+  const totalMatches = stats.matchesAsChallenger + stats.requiredDefenses;
   const minRequiredMatches = 2;
   const maxAllowedMatches = 4;
   const remainingMatches = maxAllowedMatches - totalMatches;
@@ -274,21 +356,22 @@ export default function Phase2Tracker({
   
   return (
     <div style={{
-      background: `linear-gradient(135deg, rgba(42, 42, 42, 0.7), rgba(26, 26, 26, 0.8))`,
-      border: `2px solid ${primaryColor}`,
-      borderRadius: isMobile ? '8px' : '12px',
-      padding: isMobile ? '1px' : '18px',
+      background: `linear-gradient(135deg, rgba(20, 20, 20, 0.85), rgba(10, 10, 10, 0.9))`,
+      border: `3px solid ${primaryColor}`,
+      borderRadius: isMobile ? '12px' : '16px',
+      padding: isMobile ? '8px' : '20px',
       margin: isMobile ? '-15px 0 0 0' : '16px 0',
-      boxShadow: '0 6px 20px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2)',
+      boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)`,
       cursor: 'pointer',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: isExpanded ? 'flex-start' : 'flex-start',
-      backdropFilter: 'blur(2px)',
-      overflow: isMobile ? 'auto' : 'hidden',
+      backdropFilter: 'blur(8px)',
+      overflow: isMobile ? 'auto' : (isExpanded ? 'auto' : 'hidden'),
       maxHeight: isMobile ? 'none' : '35vh',
-             height: isMobile ? (isExpanded ? '200px' : '40px') : (isExpanded ? '450px' : '160px'),
-      transition: 'height 0.3s ease, max-height 0.3s ease'
+      height: isMobile ? (isExpanded ? '200px' : '40px') : (isExpanded ? '400px' : '160px'),
+      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+      position: 'relative'
     }}
     onClick={() => setIsExpanded(!isExpanded)}
     >
@@ -296,7 +379,11 @@ export default function Phase2Tracker({
        <div style={{
          position: 'relative',
          textAlign: 'center',
-         marginBottom: isMobile ? '0px' : '8px'
+         marginBottom: isMobile ? '0px' : '8px',
+         padding: isMobile ? '4px' : '8px',
+         borderRadius: '8px',
+         background: 'rgba(255,255,255,0.05)',
+         border: '1px solid rgba(255,255,255,0.1)'
        }}>
                            <div style={{
             position: 'relative',
@@ -305,46 +392,108 @@ export default function Phase2Tracker({
             justifyContent: 'center',
             width: '100%'
           }}>
-            {/* Rules Button - Positioned absolutely on the right */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowRulesModal(true);
-              }}
-              style={{
-                position: 'absolute',
-                right: 0,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'linear-gradient(135deg, #ff4444, #cc3333)',
-                border: '2px solid #ffffff',
-                color: '#ffffff',
-                fontSize: isMobile ? '0.5rem' : '0.8rem',
-                fontWeight: 'bold',
-                padding: isMobile ? '4px 8px' : '6px 12px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                zIndex: 10
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = 'linear-gradient(135deg, #ff6666, #dd4444)';
-                e.target.style.transform = 'translateY(-50%) scale(1.1)';
-                e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'linear-gradient(135deg, #ff4444, #cc3333)';
-                e.target.style.transform = 'translateY(-50%) scale(1)';
-                e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-              }}
-            >
-              ⚔️ Rules
-            </button>
+                         {/* Phase 1 Results Button - Positioned absolutely on the left */}
+             <button
+               onClick={(e) => {
+                 e.stopPropagation();
+                 setShowPhase1ResultsModal(true);
+               }}
+               style={{
+                 position: 'absolute',
+                 left: 0,
+                 top: '50%',
+                 transform: 'translateY(-50%)',
+                 background: 'rgba(255,255,255,0.08)',
+                 border: '1px solid rgba(255,255,255,0.15)',
+                 borderRadius: '6px',
+                 color: '#ffffff',
+                 fontSize: isMobile ? '0.5rem' : '0.8rem',
+                 fontWeight: 'bold',
+                 padding: isMobile ? '4px 8px' : '6px 12px',
+                 cursor: 'pointer',
+                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                 display: 'flex',
+                 alignItems: 'center',
+                 gap: '4px',
+                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                 zIndex: 10,
+                 boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+               }}
+               onMouseEnter={(e) => {
+                 e.target.style.background = 'linear-gradient(135deg, rgba(255, 68, 68, 0.2), rgba(255, 68, 68, 0.3))';
+                 e.target.style.color = '#ff4444';
+                 e.target.style.transform = 'translateY(-50%) scale(1.05)';
+                 e.target.style.boxShadow = '0 4px 16px rgba(255, 68, 68, 0.3), 0 2px 8px rgba(0,0,0,0.2)';
+                 e.target.style.border = '1px solid rgba(255, 68, 68, 0.5)';
+               }}
+               onMouseLeave={(e) => {
+                 e.target.style.background = 'rgba(255,255,255,0.08)';
+                 e.target.style.color = '#ffffff';
+                 e.target.style.transform = 'translateY(-50%) scale(1)';
+                 e.target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+                 e.target.style.border = '1px solid rgba(255,255,255,0.15)';
+               }}
+                            >
+                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                   <div>
+                     📊 Phase 1 Results
+                     {phase1Stats && (
+                       <span style={{ fontSize: isMobile ? '0.4rem' : '0.7rem', opacity: 0.8 }}>
+                         ({phase1Stats.wins}-{phase1Stats.losses} • {phase1Stats.position})
+                       </span>
+                     )}
+                   </div>
+                   <div style={{ 
+                     fontSize: isMobile ? '0.3rem' : '0.6rem', 
+                     opacity: 0.7, 
+                     fontStyle: 'italic',
+                     marginTop: '2px'
+                   }}>
+                     click to view
+                   </div>
+                 </div>
+               </button>
+
+             {/* Rules Button - Positioned absolutely on the right */}
+             <button
+               onClick={(e) => {
+                 e.stopPropagation();
+                 setShowRulesModal(true);
+               }}
+               style={{
+                 position: 'absolute',
+                 right: 0,
+                 top: '50%',
+                 transform: 'translateY(-50%)',
+                 background: 'linear-gradient(135deg, #ff4444, #cc3333)',
+                 border: '2px solid #ffffff',
+                 color: '#ffffff',
+                 fontSize: isMobile ? '0.5rem' : '0.8rem',
+                 fontWeight: 'bold',
+                 padding: isMobile ? '4px 8px' : '6px 12px',
+                 borderRadius: '6px',
+                 cursor: 'pointer',
+                 transition: 'all 0.3s ease',
+                 display: 'flex',
+                 alignItems: 'center',
+                 gap: '4px',
+                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                 boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                 zIndex: 10
+               }}
+               onMouseEnter={(e) => {
+                 e.target.style.background = 'linear-gradient(135deg, #ff6666, #dd4444)';
+                 e.target.style.transform = 'translateY(-50%) scale(1.1)';
+                 e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
+               }}
+               onMouseLeave={(e) => {
+                 e.target.style.background = 'linear-gradient(135deg, #ff4444, #cc3333)';
+                 e.target.style.transform = 'translateY(-50%) scale(1)';
+                 e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+               }}
+                           >
+                ⚔️ Phase 2 Rules
+              </button>
             
             {/* Centered Title */}
             <h3 style={{
@@ -600,8 +749,10 @@ export default function Phase2Tracker({
             </div>
           </div>
 
-           {/* NEW: Dynamic Challenge Limits Section - Smart Layout */}
-           {limits.dynamicLimits && (
+                     
+
+          {/* NEW: Dynamic Challenge Limits Section - Smart Layout */}
+          {limits.dynamicLimits && (
              <div style={{
                padding: isMobile ? '0.4rem' : '0.6rem',
                background: 'rgba(255, 193, 7, 0.1)',
@@ -877,15 +1028,27 @@ export default function Phase2Tracker({
               <div>📈 Need {minRequiredMatches - totalMatches} more match{minRequiredMatches - totalMatches !== 1 ? 'es' : ''} to meet minimum (2-4 total)</div>
             )}
           </div>
+
+
                  </>
        )}
        
-       {/* Phase 2 Rules Modal */}
-       <Phase2RulesModal
-         isOpen={showRulesModal}
-         onClose={() => setShowRulesModal(false)}
-         isMobile={isMobile}
-       />
+               {/* Phase 2 Rules Modal */}
+        <Phase2RulesModal
+          isOpen={showRulesModal}
+          onClose={() => setShowRulesModal(false)}
+          isMobile={isMobile}
+        />
+
+        {/* Phase 1 Results Modal */}
+        <Phase1ResultsModal
+          isOpen={showPhase1ResultsModal}
+          onClose={() => setShowPhase1ResultsModal(false)}
+          phase1Stats={phase1Stats}
+          playerName={playerName}
+          playerLastName={playerLastName}
+          isMobile={isMobile}
+        />
      </div>
    );
  } 

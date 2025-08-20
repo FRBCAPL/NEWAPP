@@ -1,30 +1,54 @@
 import React from "react";
 import DraggableModal from "./DraggableModal";
+import { parseAvailability } from "../../utils/parseAvailability";
 
-export default function OpponentsModal({ open, onClose, opponents, onOpponentClick, phase }) {
+export default function OpponentsModal({ open, onClose, opponents, onOpponentClick, phase, selectedCalendarDate, smartMatchMode = false, allPlayers = [] }) {
   if (!open) return null;
+
+  // Filter opponents based on selected calendar date if provided
+  const filteredOpponents = selectedCalendarDate ? opponents.filter(opponent => {
+    // The opponent object has structure: { match, player, opponentName }
+    // Availability is stored in opponent.player.availability and is already parsed
+    if (!opponent.player || !opponent.player.availability) return false;
+    
+    // Get the day of the week for the selected date
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const selectedDay = dayNames[selectedCalendarDate.getDay()];
+    
+    // The availability is already parsed, so we can use it directly
+    const availability = opponent.player.availability;
+    
+    // Check if the opponent is available on the selected day
+    return availability[selectedDay] && availability[selectedDay].length > 0;
+  }) : opponents;
 
   return (
     <DraggableModal
       open={open}
       onClose={onClose}
-      title={`🎱 Select Opponent - ${phase === "scheduled" || phase === "offseason" ? "Phase 1" : "Phase 2"}`}
+             title={smartMatchMode 
+         ? `🧠 Smart Match - Select Opponent${selectedCalendarDate ? ` (${selectedCalendarDate.toLocaleDateString()})` : ''}`
+         : `🎱 Select Opponent - ${phase === "scheduled" || phase === "offseason" ? "Phase 1" : "Phase 2"}${selectedCalendarDate ? ` (${selectedCalendarDate.toLocaleDateString()})` : ''}`
+       }
       maxWidth="500px"
     >
       <div style={{
         maxHeight: "60vh",
         overflowY: "auto"
       }}>
-        {opponents.length === 0 ? (
+        {filteredOpponents.length === 0 ? (
           <p style={{ color: "#888", textAlign: "center", fontStyle: "italic" }}>
-            No opponents available for scheduling at this time.
+            {selectedCalendarDate 
+              ? `No opponents available for ${selectedCalendarDate.toLocaleDateString()} (${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][selectedCalendarDate.getDay()]}).`
+              : "No opponents available for scheduling at this time."
+            }
           </p>
         ) : (
           <div style={{
             display: "grid",
             gap: "8px"
           }}>
-            {opponents.map((opponent, index) => (
+            {filteredOpponents.map((opponent, index) => (
               <button
                 key={
                   (opponent.player && opponent.player.email) || 
@@ -61,9 +85,9 @@ export default function OpponentsModal({ open, onClose, opponents, onOpponentCli
                   e.target.style.boxShadow = "none";
                 }}
               >
-                {opponent.player && opponent.player.name
-                  ? opponent.player.name
-                  : opponent.opponentName}
+                                 {opponent.player && opponent.player.name
+                   ? opponent.player.name
+                   : opponent.opponentName}
               </button>
             ))}
           </div>

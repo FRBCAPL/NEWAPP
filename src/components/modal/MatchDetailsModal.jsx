@@ -101,7 +101,9 @@ export default function MatchDetailsModal({ open, onClose, match, onCompleted, u
   const [winnerModalOpen, setWinnerModalOpen] = useState(false);
   const [winnerModalPlayers, setWinnerModalPlayers] = useState({ player1: '', player2: '' });
   const [localMatch, setLocalMatch] = useState(match);
-  useEffect(() => { setLocalMatch(match); }, [match]);
+  useEffect(() => { 
+    setLocalMatch(match); 
+  }, [match]);
 
   // Replace handleMarkCompleted with modal logic
   const handleOpenWinnerModal = () => {

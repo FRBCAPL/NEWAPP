@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import styles from './AdminDashboard.module.css';
 import userSearchStyles from './AdminUserSearch.module.css';
 import UnenteredMatchesModal from "./UnenteredMatchesModal";
+import MatchManager from "./MatchManager";
 import { FaSyncAlt, FaCheckCircle, FaExclamationCircle, FaUsers, FaCalendarAlt, FaChartBar } from 'react-icons/fa';
 import { BACKEND_URL } from '../../config.js';
 const apiKey = import.meta.env.VITE_STREAM_API_KEY;
@@ -347,14 +348,10 @@ function UpdateStandingsButton({ backendUrl }) {
   );
 }
 
-// --- Admin Match Manager ---
+// --- Admin Match Manager (New System) ---
 function AdminMatchManager({ backendUrl }) {
   const [divisions, setDivisions] = useState([]);
   const [selectedDivision, setSelectedDivision] = useState("");
-  const [scheduled, setScheduled] = useState([]);
-  const [completed, setCompleted] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
   const loadDivisions = async () => {
     try {
@@ -370,166 +367,27 @@ function AdminMatchManager({ backendUrl }) {
     }
   };
 
-  const loadMatches = async () => {
-    if (!selectedDivision) return;
-    setLoading(true);
-    setMessage("");
-    try {
-      const [schedRes, compRes] = await Promise.all([
-        fetch(`${backendUrl}/api/proposals/admin/list?division=${encodeURIComponent(selectedDivision)}&status=confirmed&completed=false`),
-        fetch(`${backendUrl}/api/proposals/admin/list?division=${encodeURIComponent(selectedDivision)}&status=confirmed&completed=true`)
-      ]);
-      const schedData = await schedRes.json();
-      const compData = await compRes.json();
-      setScheduled((schedData.proposals || []).slice(0, 200));
-      setCompleted((compData.proposals || []).slice(0, 200));
-    } catch (err) {
-      setMessage(`Failed to load matches: ${err.message}`);
-      setScheduled([]);
-      setCompleted([]);
-    }
-    setLoading(false);
-  };
-
   useEffect(() => { loadDivisions(); }, [backendUrl]);
-  useEffect(() => { loadMatches(); }, [selectedDivision]);
-
-  const confirmAction = (text) => window.confirm(text);
-  const promptText = (text, defVal = "") => window.prompt(text, defVal || "");
-
-  const markCompleted = async (id) => {
-    const winner = promptText("Enter winner name (exactly as in schedule/standings):");
-    if (winner === null) return;
-    try {
-      const res = await fetch(`${backendUrl}/api/proposals/admin/${id}/completed`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed: true, winner })
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to mark completed');
-      setMessage('✅ Marked as completed');
-      loadMatches();
-    } catch (err) {
-      setMessage('❌ ' + err.message);
-    }
-  };
-
-  const uncomplete = async (id) => {
-    try {
-      const res = await fetch(`${backendUrl}/api/proposals/admin/${id}/completed`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed: false })
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to un-complete');
-      setMessage('✅ Marked as not completed');
-      loadMatches();
-    } catch (err) {
-      setMessage('❌ ' + err.message);
-    }
-  };
-
-  const deleteMatch = async (id) => {
-    if (!confirmAction('Delete this match/proposal? This cannot be undone.')) return;
-    try {
-      const res = await fetch(`${backendUrl}/api/proposals/admin/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to delete');
-      setMessage('✅ Deleted');
-      loadMatches();
-    } catch (err) {
-      setMessage('❌ ' + err.message);
-    }
-  };
-
-  const editWinner = async (id, currentWinner) => {
-    const winner = promptText('Set winner to:', currentWinner || '');
-    if (winner === null) return;
-    try {
-      const res = await fetch(`${backendUrl}/api/proposals/admin/${id}/completed`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed: true, winner })
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to update winner');
-      setMessage('✅ Winner updated');
-      loadMatches();
-    } catch (err) {
-      setMessage('❌ ' + err.message);
-    }
-  };
 
   return (
     <div style={{ width: '100%' }}>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-        <h3 style={{ margin: 0 }}>Match Manager</h3>
-        <select value={selectedDivision} onChange={e => setSelectedDivision(e.target.value)}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16 }}>
+        <h3 style={{ margin: 0 }}>Match Manager (New System)</h3>
+        <select 
+          value={selectedDivision} 
+          onChange={e => setSelectedDivision(e.target.value)}
+          style={{ padding: '4px 8px', borderRadius: '4px' }}
+        >
           {divisions.map(d => (<option key={d} value={d}>{d}</option>))}
         </select>
-        <button onClick={loadMatches} disabled={loading}>{loading ? 'Loading...' : 'Refresh'}</button>
       </div>
-      {message && <div style={{ marginBottom: 8 }}>{message}</div>}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <div style={{ border: '1px solid #ddd', borderRadius: 6, padding: 8 }}>
-          <h4>Scheduled (Confirmed, Not Completed)</h4>
-          {scheduled.length === 0 ? <div style={{ color: '#888' }}>None</div> : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={{ textAlign: 'left' }}>When</th>
-                  <th style={{ textAlign: 'left' }}>Match</th>
-                  <th style={{ textAlign: 'left' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {scheduled.map(p => (
-                  <tr key={p._id}>
-                    <td>{p.date || ''} {p.time || ''} @ {p.location || ''}</td>
-                    <td>{p.senderName} vs {p.receiverName}</td>
-                    <td style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => markCompleted(p._id)}>Mark Completed</button>
-                      <button onClick={() => deleteMatch(p._id)} style={{ color: '#b00020' }}>Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-        <div style={{ border: '1px solid #ddd', borderRadius: 6, padding: 8 }}>
-          <h4>Completed</h4>
-          {completed.length === 0 ? <div style={{ color: '#888' }}>None</div> : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={{ textAlign: 'left' }}>When</th>
-                  <th style={{ textAlign: 'left' }}>Match</th>
-                  <th style={{ textAlign: 'left' }}>Winner</th>
-                  <th style={{ textAlign: 'left' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {completed.map(p => (
-                  <tr key={p._id}>
-                    <td>{p.date || ''} {p.time || ''} @ {p.location || ''}</td>
-                    <td>{p.senderName} vs {p.receiverName}</td>
-                    <td>{p.winner || '-'}</td>
-                    <td style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => editWinner(p._id, p.winner)}>Edit Winner</button>
-                      <button onClick={() => uncomplete(p._id)}>Un-complete</button>
-                      <button onClick={() => deleteMatch(p._id)} style={{ color: '#b00020' }}>Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
+      
+      {selectedDivision && (
+        <MatchManager 
+          division={selectedDivision} 
+          isAdmin={true} 
+        />
+      )}
     </div>
   );
 }

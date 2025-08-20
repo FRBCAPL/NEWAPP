@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { matchService } from '../services/matchService';
+import { getMatchesByStatus, getPlayerMatches } from '../services/matchService';
+import { proposalService } from '../services/proposalService';
 
 export const useMatches = (playerName, division, phase) => {
   const [scheduledConfirmedMatches, setScheduledConfirmedMatches] = useState([]);
@@ -10,19 +11,147 @@ export const useMatches = (playerName, division, phase) => {
   const fetchMatches = async () => {
     try {
       setLoading(true);
-      const allMatches = await matchService.getAllMatches(playerName, division, phase);
       
-      // Use only the top-level 'completed' field - handle both false and undefined
-      const scheduled = allMatches.filter(match => match.status === 'confirmed' && (match.completed === false || match.completed === undefined));
-      const completed = allMatches.filter(match => match.status === 'confirmed' && match.completed === true);
+      // Use the new match system endpoints
+      const [scheduledMatches, completedMatchesData] = await Promise.all([
+        getMatchesByStatus(division, 'scheduled'),
+        getMatchesByStatus(division, 'completed')
+      ]);
       
-      // Sort by date
-      scheduled.sort((a, b) => getMatchDateTime(a) - getMatchDateTime(b));
-      completed.sort((a, b) => getMatchDateTime(a) - getMatchDateTime(b));
-      setScheduledConfirmedMatches(scheduled);
-      setCompletedMatches(completed);
+             // Filter matches for the current player and map them to expected format
+       const playerScheduled = scheduledMatches.filter(match => 
+         match.player1Id === playerName || match.player2Id === playerName
+       ).map(match => {
+         // Map Match object fields to what MatchDetailsModal expects
+         const isCurrentUserPlayer1 = match.player1Id === playerName;
+         const currentUser = isCurrentUserPlayer1 ? match.player1Id : match.player2Id;
+         const opponent = isCurrentUserPlayer1 ? match.player2Id : match.player1Id;
+         
+         // Convert scheduledDate to date and time strings
+         const scheduledDate = new Date(match.scheduledDate);
+         const dateStr = scheduledDate.toISOString().split('T')[0]; // YYYY-MM-DD
+         const timeStr = scheduledDate.toLocaleTimeString('en-US', { 
+           hour: 'numeric', 
+           minute: '2-digit',
+           hour12: true 
+         }); // h:mm AM/PM
+         
+         return {
+           ...match,
+           // Map to expected field names
+           player: currentUser,
+           opponent: opponent,
+           senderName: match.player1Id,
+           receiverName: match.player2Id,
+           date: dateStr,
+           time: timeStr,
+           // Add missing fields with defaults
+           gameType: match.gameType || '8 ball',
+           raceLength: match.raceLength || 5,
+           type: 'scheduled'
+         };
+       });
+       
+       const playerCompleted = completedMatchesData.filter(match => 
+         match.player1Id === playerName || match.player2Id === playerName
+       ).map(match => {
+         // Map completed matches similarly
+         const isCurrentUserPlayer1 = match.player1Id === playerName;
+         const currentUser = isCurrentUserPlayer1 ? match.player1Id : match.player2Id;
+         const opponent = isCurrentUserPlayer1 ? match.player2Id : match.player1Id;
+         
+         const scheduledDate = new Date(match.scheduledDate);
+         const dateStr = scheduledDate.toISOString().split('T')[0];
+         const timeStr = scheduledDate.toLocaleTimeString('en-US', { 
+           hour: 'numeric', 
+           minute: '2-digit',
+           hour12: true 
+         });
+         
+         return {
+           ...match,
+           player: currentUser,
+           opponent: opponent,
+           senderName: match.player1Id,
+           receiverName: match.player2Id,
+           date: dateStr,
+           time: timeStr,
+           gameType: match.gameType || '8 ball',
+           raceLength: match.raceLength || 5,
+           type: 'completed'
+         };
+       });
+      
+      // Also fetch confirmed proposals for this player
+      let confirmedProposals = [];
+      try {
+        // Get proposals where this player is the receiver and status is confirmed
+        const pendingProposals = await proposalService.getPendingProposals(playerName, division);
+        const sentProposals = await proposalService.getSentProposals(playerName, division);
+        
+        // Filter for confirmed proposals
+        const allProposals = [...pendingProposals, ...sentProposals];
+        confirmedProposals = allProposals.filter(proposal => 
+          proposal.status === 'confirmed' && 
+          (proposal.senderName === playerName || proposal.receiverName === playerName)
+        );
+        
+        // Convert confirmed proposals to match-like objects for display
+        const confirmedProposalMatches = confirmedProposals.map(proposal => {
+          // Determine which player is the current user and which is the opponent
+          const isCurrentUserSender = proposal.senderName === playerName;
+          const currentUser = isCurrentUserSender ? proposal.senderName : proposal.receiverName;
+          const opponent = isCurrentUserSender ? proposal.receiverName : proposal.senderName;
+          
+          return {
+            _id: proposal._id,
+            type: 'proposal',
+            status: 'confirmed',
+            // Map fields to match the expected structure in MatchDetailsModal
+            player1Id: proposal.senderName,
+            player2Id: proposal.receiverName,
+            // For MatchDetailsModal - these are the key fields it looks for
+            // player should be the current user, opponent should be the other player
+            player: currentUser,
+            opponent: opponent,
+            senderName: proposal.senderName,
+            receiverName: proposal.receiverName,
+            // Date handling - ensure consistency with All Upcoming Matches modal
+            scheduledDate: proposal.date ? new Date(proposal.date) : new Date(),
+            date: proposal.date,                // For MatchDetailsModal
+            time: proposal.time,                // For MatchDetailsModal
+            location: proposal.location,        // For MatchDetailsModal
+            message: proposal.message,
+            gameType: proposal.gameType,
+            raceLength: proposal.raceLength,
+            // Additional fields that might be needed
+            completed: proposal.completed || false,
+            winner: proposal.winner || null
+          };
+        });
+        
+        // Combine scheduled matches with confirmed proposals
+        const allScheduledMatches = [...playerScheduled, ...confirmedProposalMatches];
+        
+        // Sort by date
+        allScheduledMatches.sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
+        playerCompleted.sort((a, b) => new Date(b.completedDate) - new Date(a.completedDate));
+        
+        setScheduledConfirmedMatches(allScheduledMatches);
+        setCompletedMatches(playerCompleted);
+      } catch (proposalError) {
+        console.warn('Error fetching confirmed proposals:', proposalError);
+        // Fallback to just scheduled matches if proposal fetch fails
+        playerScheduled.sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
+        playerCompleted.sort((a, b) => new Date(b.completedDate) - new Date(a.completedDate));
+        
+        setScheduledConfirmedMatches(playerScheduled);
+        setCompletedMatches(playerCompleted);
+      }
+      
       setError(null);
     } catch (err) {
+      console.error('Error fetching matches:', err);
       setError(err.message);
       setScheduledConfirmedMatches([]);
       setCompletedMatches([]);
@@ -31,32 +160,7 @@ export const useMatches = (playerName, division, phase) => {
     }
   };
 
-  // Helper function for date sorting
-  const getMatchDateTime = (match) => {
-    if (match.date && match.time) {
-      const parts = match.date.split("-");
-      if (parts.length === 3) {
-        const year = parts[0];
-        const month = parts[1];
-        const day = parts[2];
-        const isoDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-        let timeStr = match.time.trim().toUpperCase();
-        let timeParts = timeStr.split(' ');
-        let timePart = timeParts[0];
-        let ampm = timeParts[1];
-        let hourMinute = timePart.split(':');
-        let hour = parseInt(hourMinute[0], 10);
-        let minute = parseInt(hourMinute[1], 10);
-        if (ampm === "PM" && hour < 12) hour += 12;
-        if (ampm === "AM" && hour === 12) hour = 0;
-        const hourStr = hour.toString().padStart(2, '0');
-        const minuteStr = (minute || 0).toString().padStart(2, '0');
-        const time24 = `${hourStr}:${minuteStr}`;
-        return new Date(`${isoDate}T${time24}:00`);
-      }
-    }
-    return new Date(0);
-  };
+
 
   useEffect(() => {
     if (playerName && division) {

@@ -2,6 +2,48 @@ import React, { useState, useEffect } from 'react';
 import { format, differenceInDays, differenceInHours, isAfter, isBefore } from 'date-fns';
 import { seasonService } from '../../services/seasonService.js';
 import { BACKEND_URL } from '../../config.js';
+import Phase1RulesModal from '../modal/Phase1RulesModal';
+import Phase1TrackerSkeleton from '../Phase1TrackerSkeleton';
+
+// Utility function to format date as MM-DD-YYYY (same as Dashboard)
+function formatDateMMDDYYYY(dateStr) {
+  if (!dateStr) return 'N/A';
+  
+  // Handle YYYY-MM-DD format
+  if (dateStr.includes('-') && dateStr.length === 10) {
+    const [year, month, day] = dateStr.split('-');
+    // Use the original date values without timezone conversion
+    return `${month}-${day}-${year}`;
+  }
+  
+  // Handle different date formats
+  let date;
+  if (dateStr.includes('-')) {
+    // Already in YYYY-MM-DD format
+    date = new Date(dateStr);
+  } else if (dateStr.includes('/')) {
+    // Handle M/D/YYYY or MM/DD/YYYY format
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const [month, day, year] = parts;
+      date = new Date(year, month - 1, day);
+    } else {
+      return dateStr; // Return as-is if can't parse
+    }
+  } else {
+    return dateStr; // Return as-is if unknown format
+  }
+  
+  if (isNaN(date.getTime())) {
+    return dateStr; // Return original if invalid date
+  }
+  
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  
+  return `${month}-${day}-${year}`;
+}
 
   const Phase1Tracker = ({ 
     currentPhase, 
@@ -21,8 +63,37 @@ import { BACKEND_URL } from '../../config.js';
     onOpenSentProposalListModal,
     upcomingMatches,
     onMatchClick,
-    isMobile
+    isMobile,
+    onOpenMessageCenter,
+    currentUser,
+    allPlayers,
+    onSmartMatchClick
   }) => {
+    // Data validation
+    const validateProps = () => {
+      if (!playerName || !playerLastName) {
+        console.warn('Phase1Tracker: Missing player name information');
+        return false;
+      }
+      if (!selectedDivision) {
+        console.warn('Phase1Tracker: Missing selected division');
+        return false;
+      }
+      if (!completedMatches || !Array.isArray(completedMatches)) {
+        console.warn('Phase1Tracker: Invalid completedMatches prop');
+        return false;
+      }
+      if (typeof totalRequiredMatches !== 'number' || totalRequiredMatches <= 0) {
+        console.warn('Phase1Tracker: Invalid totalRequiredMatches prop');
+        return false;
+      }
+      return true;
+    };
+
+    // Validate props on component mount
+    useEffect(() => {
+      validateProps();
+    }, [playerName, playerLastName, selectedDivision, completedMatches, totalRequiredMatches]);
   const [timeLeft, setTimeLeft] = useState(null);
   const [deadlineStatus, setDeadlineStatus] = useState('normal');
   const [standingsImpact, setStandingsImpact] = useState(null);
@@ -31,6 +102,10 @@ import { BACKEND_URL } from '../../config.js';
   const [loadingStandings, setLoadingStandings] = useState(false);
   const [phase1EndDate, setPhase1EndDate] = useState(null);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(null);
+  const [showPhase1Rules, setShowPhase1Rules] = useState(false);
 
   useEffect(() => {
     if (!selectedDivision || currentPhase !== 'scheduled') {
@@ -272,8 +347,9 @@ import { BACKEND_URL } from '../../config.js';
     return 'th';
   };
 
-  if (!timeLeft || !standingsImpact || currentPhase !== 'scheduled') {
-    return null;
+  // Show skeleton while loading
+  if (loadingStandings || !timeLeft || !standingsImpact || currentPhase !== 'scheduled') {
+    return <Phase1TrackerSkeleton isMobile={isMobile} />;
   }
 
   const getPrimaryColor = () => {
@@ -281,7 +357,7 @@ import { BACKEND_URL } from '../../config.js';
     if (deadlineStatus === 'critical') return '#ff6b6b';   // Lighter red
     if (deadlineStatus === 'urgent') return '#ff8800';     // Keep orange
     if (deadlineStatus === 'warning') return '#ffaa00';    // Keep yellow
-    return '#ff4444';                                      // Red instead of green
+    return '#4CAF50';                                      // Green for Phase 1
   };
 
 
@@ -310,255 +386,648 @@ import { BACKEND_URL } from '../../config.js';
 
   const primaryColor = getPrimaryColor();
   
-     return (
-           <div style={{
-        background: `linear-gradient(135deg, rgba(42, 42, 42, 0.7), rgba(26, 26, 26, 0.8))`,
-        border: `2px solid ${primaryColor}`,
-        borderRadius: isMobile ? '8px' : '12px',
-        padding: isMobile ? '1px' : '18px',
-                 margin: isMobile ? '-15px 0 0 0' : '16px 0',
-        boxShadow: '0 6px 20px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2)',
-        cursor: 'pointer',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: isExpanded ? 'flex-start' : 'flex-start',
-        backdropFilter: 'blur(2px)',
-        overflow: isMobile ? 'auto' : 'hidden',
-        maxHeight: isMobile ? 'none' : '35vh',
-                                                                       height: isMobile ? (isExpanded ? '180px' : '40px') : (isExpanded ? '400px' : '160px'),
-        transition: 'height 0.3s ease, max-height 0.3s ease'
-      }}
-    onClick={() => setIsExpanded(!isExpanded)}
+           return (
+            <div style={{
+                  background: `linear-gradient(135deg, rgba(0, 0, 0, 0.85), rgba(20, 20, 20, 0.9), rgba(0, 0, 0, 0.85))`,
+                  border: `2px solid rgba(255, 255, 255, 0.2)`,
+                  borderRadius: isMobile ? '16px' : '20px',
+                  padding: isMobile ? '12px' : '20px',
+          margin: isMobile ? '-15px 0 0 0' : '13px auto',
+          width: isMobile ? '100%' : '98%',
+          maxWidth: isMobile ? 'none' : '1600px',
+                  boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 4px 16px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.1)`,
+         cursor: 'pointer',
+         display: 'flex',
+         flexDirection: 'column',
+         justifyContent: isExpanded ? 'flex-start' : 'flex-start',
+                  backdropFilter: 'blur(8px)',
+         overflow: isMobile ? 'auto' : 'hidden',
+                  maxHeight: isMobile ? 'none' : '35vh',
+          height: isMobile ? (isExpanded ? '350px' : '60px') : (isExpanded ? '400px' : '160px'),
+         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+         position: 'relative'
+       }}
+         onClick={() => setIsExpanded(!isExpanded)}
+     onKeyDown={(e) => {
+       if (e.key === 'Enter' || e.key === ' ') {
+         e.preventDefault();
+         setIsExpanded(!isExpanded);
+       }
+     }}
+     role="button"
+     tabIndex="0"
+     aria-label={isExpanded ? "Collapse Phase 1 tracker" : "Expand Phase 1 tracker"}
     >
              {/* Header */}
                <div style={{
           position: 'relative',
           textAlign: 'center',
-          marginBottom: isMobile ? '0px' : '12px'
+                              marginBottom: isMobile ? '0px' : '4px',
+           padding: isMobile ? '6px' : '8px',
+          borderRadius: '12px',
+                                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(20, 20, 20, 0.8))',
+           border: '1px solid rgba(255,255,255,0.15)',
+           boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)'
         }}>
-                                         <h3 style={{
-              margin: 0,
-              color: '#ffffff',
-              fontSize: isMobile ? '0.4rem' : '1.1rem',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: isMobile ? '2px' : '6px',
-              flexWrap: 'wrap',
-              textShadow: '1px 1px 3px rgba(0,0,0,0.9)'
-            }}>
-             {deadlineStatus === 'critical' && '🚨'}
-             {deadlineStatus === 'urgent' && '⚠️'}
-             {deadlineStatus === 'warning' && '⚠️'}
-             {deadlineStatus === 'passed' && '⏰'}
-             {deadlineStatus === 'normal' && '📅'}
-                           <span style={{ fontSize: isMobile ? '0.6rem' : '1.1rem' }}>
-               Phase 1
-             </span>
-           </h3>
+                                                                                                                                                                                               <h3 style={{
+                  margin: 0,
+                  color: '#ffffff',
+                  fontSize: isMobile ? '0.8rem' : '1.1rem',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: isMobile ? '4px' : '6px',
+                  flexWrap: 'wrap',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                  letterSpacing: '0.5px',
+                  minHeight: isMobile ? '2.5rem' : '3rem'
+                }}>
+                    {/* Center - Status indicators and Phase 1 text */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: isMobile ? '2px' : '6px'
+                    }}>
+                      {deadlineStatus === 'critical' && '🚨'}
+                      {deadlineStatus === 'urgent' && '⚠️'}
+                      {deadlineStatus === 'warning' && '⚠️'}
+                      {deadlineStatus === 'passed' && '⏰'}
+                      {deadlineStatus === 'normal' && ''}
+                    </div>
+                    
+                    {/* Phase 1 Controls - Smart Match, Phase Indicator, Rules */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: isMobile ? '4px' : '8px',
+                      marginTop: isMobile ? '4px' : '6px'
+                    }}>
+                      {/* Smart Match Button - Left */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log('Smart match button clicked in Phase1Tracker');
+                          console.log('onSmartMatchClick function:', onSmartMatchClick);
+                          if (onSmartMatchClick) {
+                            console.log('Calling onSmartMatchClick');
+                            onSmartMatchClick();
+                          } else {
+                            console.log('onSmartMatchClick is not defined');
+                          }
+                        }}
+                        aria-label="Open smart match making"
+                        role="button"
+                        tabIndex="0"
+                        style={{
+                          background: 'linear-gradient(135deg, #9b59b6, #8e44ad, #7d3c98)',
+                          border: '2px solid rgba(255,255,255,0.8)',
+                          color: '#ffffff',
+                          fontSize: isMobile ? '0.5rem' : '0.8rem',
+                          fontWeight: 'bold',
+                          padding: isMobile ? '6px 10px' : '8px 14px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                          boxShadow: '0 4px 12px rgba(155, 89, 182, 0.4), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 10px rgba(155, 89, 182, 0.2)',
+                          zIndex: 10
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = 'linear-gradient(135deg, #a569bd, #9b59b6, #8e44ad)';
+                          e.target.style.transform = 'scale(1.05) translateY(-2px)';
+                          e.target.style.boxShadow = '0 6px 16px rgba(155, 89, 182, 0.6), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 15px rgba(155, 89, 182, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = 'linear-gradient(135deg, #9b59b6, #8e44ad, #7d3c98)';
+                          e.target.style.transform = 'scale(1) translateY(0)';
+                          e.target.style.boxShadow = '0 4px 12px rgba(155, 89, 182, 0.4), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 10px rgba(155, 89, 182, 0.2)';
+                        }}
+                      >
+                        🧠 SMART MATCH
+                      </button>
+                      
+                      {/* Phase 1 Indicator - Center */}
+                      <span style={{ 
+                        fontSize: isMobile ? '0.9rem' : '1.1rem',
+                        background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd, ${primaryColor})`,
+                        padding: isMobile ? '4px 8px' : '6px 12px',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2), 0 0 10px rgba(255,255,255,0.1)',
+                        border: '1px solid rgba(255,255,255,0.3)',
+                        textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                        fontWeight: 'bold'
+                      }}>
+                        Phase 1
+                      </span>
+                      
+                      {/* Rules Button - Right */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowPhase1Rules(true);
+                        }}
+                        aria-label="Open Phase 1 rules and information"
+                        role="button"
+                        tabIndex="0"
+                                                 style={{
+                           background: 'linear-gradient(135deg, #ff4444, #cc3333, #aa2222)',
+                           border: '2px solid rgba(255,255,255,0.8)',
+                           color: '#ffffff',
+                           fontSize: isMobile ? '0.5rem' : '0.8rem',
+                           fontWeight: 'bold',
+                           padding: isMobile ? '6px 10px' : '8px 14px',
+                           borderRadius: '8px',
+                           cursor: 'pointer',
+                           transition: 'all 0.3s ease',
+                           display: 'flex',
+                           alignItems: 'center',
+                           gap: '4px',
+                           textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                           boxShadow: '0 4px 12px rgba(255, 68, 68, 0.4), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 10px rgba(255, 68, 68, 0.2)',
+                           zIndex: 10
+                         }}
+                                                 onMouseEnter={(e) => {
+                           e.target.style.background = 'linear-gradient(135deg, #ff6666, #dd4444, #cc3333)';
+                           e.target.style.transform = 'scale(1.05) translateY(-2px)';
+                           e.target.style.boxShadow = '0 6px 16px rgba(255, 68, 68, 0.6), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 15px rgba(255, 68, 68, 0.3)';
+                         }}
+                         onMouseLeave={(e) => {
+                           e.target.style.background = 'linear-gradient(135deg, #ff4444, #cc3333, #aa2222)';
+                           e.target.style.transform = 'scale(1) translateY(0)';
+                           e.target.style.boxShadow = '0 4px 12px rgba(255, 68, 68, 0.4), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 10px rgba(255, 68, 68, 0.2)';
+                         }}
+                      >
+                        ⚔️ RULES
+                      </button>
+                    </div>
+                 </h3>
           
-                     {/* Status Message - ends in XX days */}
-           {!isMobile && (
-             <div style={{
-               color: '#ffffff',
-               fontSize: isMobile ? '0.6rem' : '0.95rem',
-               lineHeight: isMobile ? '1.1' : '1.1',
-               marginTop: isMobile ? '2px' : '4px',
-               marginBottom: isMobile ? '0px' : '8px',
-               textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-               fontWeight: '500'
-             }}>
+                                           {/* Status Message - ends in XX days */}
+                                                 <div style={{
+                  color: '#ffffff',
+                  fontSize: isMobile ? '0.7rem' : '0.95rem',
+                  lineHeight: isMobile ? '1.1' : '1.1',
+                                 marginTop: isMobile ? '2px' : '2px',
+                  marginBottom: isMobile ? '2px' : '4px',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
                {getStatusMessage()}
-             </div>
-           )}
+               </div>
            
-           {/* Completion counter */}
-           {!isMobile && (
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 {/* Calendar Icon - positioned to align with completion counter */}
+                                                                                                                                           <div style={{
+                                               position: isMobile ? 'relative' : 'absolute',
+                        left: isMobile ? 'auto' : '15%',
+                        top: isMobile ? 'auto' : '50%',
+                        transform: isMobile ? 'none' : 'translate(-50%, -50%)',
+                         cursor: 'pointer',
+                         fontSize: isMobile ? '2.5rem' : '3.2rem',
+                         transition: 'all 0.3s ease',
+                                                   display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          minHeight: isMobile ? '90px' : '140px',
+                         lineHeight: 1,
+                          background: 'linear-gradient(135deg, rgba(0, 255, 0, 0.25), rgba(0, 200, 0, 0.2), rgba(0, 150, 0, 0.15))',
+                           border: '2px solid rgba(0, 255, 0, 0.6)',
+                         padding: isMobile ? '4px' : '6px',
+                         borderRadius: isMobile ? '12px' : '18px',
+                         zIndex: 1,
+                                                                          boxShadow: '0 6px 20px rgba(0, 255, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 20px rgba(0, 255, 0, 0.2)',
+                         minWidth: isMobile ? '70px' : '100px',
+                         minHeight: isMobile ? '90px' : '140px',
+                        backdropFilter: 'blur(8px)',
+                        margin: isMobile ? '8px auto' : '0'
+                      }}
+                                                               onClick={(e) => {
+                                  e.stopPropagation();
+                                  setIsExpanded(true); // Expand the tracker when opening calendar
+                                  setShowCalendar(true);
+                                }}
+                                aria-label="Open calendar to schedule matches by date"
+                                role="button"
+                                tabIndex="0"
+               onMouseEnter={(e) => {
+                 e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.1)';
+                                   e.currentTarget.style.background = 'rgba(0, 255, 0, 0.25)';
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 255, 0, 0.5)';
+                  e.currentTarget.style.border = '2px solid rgba(0, 255, 0, 0.6)';
+               }}
+               onMouseLeave={(e) => {
+                 e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)';
+                                   e.currentTarget.style.background = 'rgba(0, 255, 0, 0.15)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+                  e.currentTarget.style.border = '1px solid rgba(0, 255, 0, 0.4)';
+               }}
+                              >
+                                                                                                                                                                                                                                                 <div style={{ 
+                                                                                       fontSize: isMobile ? '0.5rem' : '0.7rem',
+                                           color: '#ffffff',
+                                           fontWeight: 'bold',
+                                           textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                                           marginBottom: isMobile ? '10px' : '14px',
+                                           textAlign: 'center'
+                                          }}>
+                                            Today's Date
+                                          </div>
+                                                                                                                             <div style={{ 
+                                             display: 'flex', 
+                                             flexDirection: 'column', 
+                                             alignItems: 'center',
+                                             justifyContent: 'center',
+                                             flex: 1
+                                           }}>
+                                             <div style={{ fontSize: isMobile ? '0.8rem' : '1.2rem' }}>
+                                               {(() => {
+                                                 const today = new Date();
+                                                 const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                                                 return dayNames[today.getDay()];
+                                               })()}
+                                             </div>
+                                             <div style={{ fontSize: isMobile ? '1.2rem' : '2rem' }}>
+                                               {(() => {
+                                                 const today = new Date();
+                                                 const month = String(today.getMonth() + 1).padStart(2, '0');
+                                                 const day = String(today.getDate()).padStart(2, '0');
+                                                 const year = String(today.getFullYear()).slice(-2);
+                                                 return `${month}/${day}/${year}`;
+                                               })()}
+                                             </div>
+                                           </div>
+                                                                                   <div style={{ 
+                                                   fontSize: isMobile ? '0.3rem' : '0.65rem', 
+                         color: '#ffffff', 
+                         fontWeight: 'bold',
+                         textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
+                         marginTop: 'auto',
+                         textAlign: 'center',
+                         whiteSpace: 'nowrap',
+                         background: 'rgba(0, 0, 0, 0.7)',
+                         padding: isMobile ? '1px 2px' : '2px 4px',
+                         borderRadius: '4px',
+                         border: '1px solid rgba(255, 255, 255, 0.3)'
+                                             }}>
+                          {isMobile ? 'Schedule' : 'Click to Schedule Match by Date'}
+                        </div>
+                 </div>
+
+                                                                                                                                                                                                             {/* Proposals Section - positioned on the right side */}
+                                                                      <div 
+                     style={{
+                       position: isMobile ? 'relative' : 'absolute',
+                       right: isMobile ? 'auto' : '15%',
+                       top: isMobile ? 'auto' : '50%',
+                       transform: isMobile ? 'none' : 'translate(50%, -50%)',
+                       transition: 'all 0.3s ease',
+                       display: 'flex',
+                       flexDirection: 'column',
+                       alignItems: 'center',
+                       justifyContent: 'center',
+                       lineHeight: 1,
+                       background: 'linear-gradient(135deg, rgba(52, 152, 219, 0.25), rgba(41, 128, 185, 0.2), rgba(30, 100, 150, 0.15))',
+                                              border: '2px solid rgba(52, 152, 219, 0.6)',
+                                               padding: isMobile ? '3px' : '5px',
+                       borderRadius: isMobile ? '10px' : '16px',
+                        zIndex: 1,
+                                                                       boxShadow: '0 6px 20px rgba(52, 152, 219, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 20px rgba(52, 152, 219, 0.2)',
+                                                 minWidth: isMobile ? '70px' : '100px',
+                          minHeight: isMobile ? '90px' : '140px',
+                       backdropFilter: 'blur(8px)',
+                       margin: isMobile ? '8px auto' : '0'
+                     }}
+                    title="Proposal management - view pending and sent proposals"
+                                 onMouseEnter={(e) => {
+                   e.currentTarget.style.background = 'linear-gradient(135deg, rgba(52, 152, 219, 0.3), rgba(41, 128, 185, 0.25))';
+                   e.currentTarget.style.boxShadow = '0 6px 20px rgba(52, 152, 219, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
+                   e.currentTarget.style.border = '2px solid rgba(52, 152, 219, 0.7)';
+                   e.currentTarget.style.transform = 'translate(50%, -50%) scale(1.02)';
+                 }}
+                 onMouseLeave={(e) => {
+                   e.currentTarget.style.background = 'linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(41, 128, 185, 0.15))';
+                   e.currentTarget.style.boxShadow = '0 4px 16px rgba(52, 152, 219, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
+                   e.currentTarget.style.border = '2px solid rgba(52, 152, 219, 0.5)';
+                   e.currentTarget.style.transform = 'translate(50%, -50%) scale(1)';
+                 }}
+                >
+                  <div style={{ 
+                    fontSize: isMobile ? '0.6rem' : '0.85rem',
+                    color: '#ffffff', 
+                    fontWeight: 'bold',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
+                    marginBottom: isMobile ? '4px' : '8px',
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    📋 Proposals
+                  </div>
+                  
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: isMobile ? '3px' : '6px',
+                    justifyContent: 'center',
+                    width: '100%'
+                  }}>
+                                                                                   <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onOpenProposalListModal) onOpenProposalListModal();
+                        }}
+                                               style={{
+                          background: 'linear-gradient(135deg, #d35400 0%, #e67e22 50%, #f39c12 100%)',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: isMobile ? '3px 4px' : '6px 8px',
+                          fontSize: isMobile ? '0.5rem' : '0.75rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 6px rgba(211, 84, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          width: '100%',
+                          textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = 'linear-gradient(135deg, #e67e22 0%, #f39c12 50%, #f1c40f 100%)';
+                          e.target.style.transform = 'translateY(-2px) scale(1.02)';
+                          e.target.style.boxShadow = '0 4px 12px rgba(211, 84, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(0, 0, 0, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = 'linear-gradient(135deg, #d35400 0%, #e67e22 50%, #f39c12 100%)';
+                          e.target.style.transform = 'translateY(0) scale(1)';
+                          e.target.style.boxShadow = '0 2px 6px rgba(211, 84, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.2)';
+                        }}
+                      >
+                        📥 {pendingCount} waiting for you
+                      </button>
+                                                                                   <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onOpenSentProposalListModal) onOpenSentProposalListModal();
+                        }}
+                                               style={{
+                          background: 'linear-gradient(135deg, #1e8449 0%, #27ae60 50%, #2ecc71 100%)',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: isMobile ? '3px 4px' : '6px 8px',
+                          fontSize: isMobile ? '0.5rem' : '0.75rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 6px rgba(30, 132, 73, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          width: '100%',
+                          textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = 'linear-gradient(135deg, #27ae60 0%, #2ecc71 50%, #58d68d 100%)';
+                          e.target.style.transform = 'translateY(-2px) scale(1.02)';
+                          e.target.style.boxShadow = '0 4px 12px rgba(30, 132, 73, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(0, 0, 0, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = 'linear-gradient(135deg, #1e8449 0%, #27ae60 50%, #2ecc71 100%)';
+                          e.target.style.transform = 'translateY(0) scale(1)';
+                          e.target.style.boxShadow = '0 2px 6px rgba(30, 132, 73, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.2)';
+                        }}
+                      >
+                        📤 {sentCount} waiting for opponents
+                      </button>
+                  </div>
+                </div>
+            
+                         {/* Completion counter */}
              <div style={{
-               color: '#ffffff',
-               fontSize: isMobile ? '0.55rem' : '0.95rem',
-               fontWeight: 'bold',
-               marginTop: isMobile ? '2px' : '4px',
-               marginBottom: isMobile ? '0px' : '8px',
-               textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-               lineHeight: isMobile ? '1.1' : '1.1'
-             }}>
-               {completedMatches.length}/{totalRequiredMatches} Matches Complete
-             </div>
-           )}
+                 color: '#ffffff',
+                 fontSize: isMobile ? '0.75rem' : '0.95rem',
+                 fontWeight: 'bold',
+                 marginTop: isMobile ? '4px' : '2px',
+                 marginBottom: isMobile ? '2px' : '4px',
+                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                 lineHeight: isMobile ? '1.1' : '1.1',
+                 textAlign: isMobile ? 'center' : 'center'
+               }}>
+                 {completedMatches.length}/{totalRequiredMatches} Matches Complete
+               </div>
            
                                    {/* Remaining matches counter */}
-            {!isMobile && (
-              <div style={{
+            <div style={{
                 color: '#ffffff',
-                fontSize: isMobile ? '0.55rem' : '0.95rem',
+                fontSize: isMobile ? '0.75rem' : '0.95rem',
                 fontWeight: 'bold',
-                marginTop: isMobile ? '2px' : '4px',
-                marginBottom: isMobile ? '0px' : '4px',
-                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                lineHeight: isMobile ? '1.1' : '1.1'
-              }}>
-                {totalRequiredMatches - completedMatches.length} to Schedule
+                               marginTop: isMobile ? '2px' : '2px',
+               marginBottom: isMobile ? '4px' : '2px',
+               textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+               lineHeight: isMobile ? '1.1' : '1.1',
+               textAlign: isMobile ? 'center' : 'center'
+             }}>
+               {totalRequiredMatches - completedMatches.length} to Schedule
               </div>
-            )}
            
-           {/* Removed the absolutely positioned Show Stats text */}
-         </div>
-
-       {/* Show Stats Button - 4th line */}
+                       {/* Removed the absolutely positioned Show Stats text */}
+            
+            {/* Show Stats Button - integrated into header */}
+            <div style={{
+              textAlign: 'center',
+              marginTop: isMobile ? '2px' : '4px'
+            }}>
               <div style={{
-          textAlign: 'center',
-          marginBottom: isMobile ? '0px' : '4px'
-        }}>
-                  <div style={{
-                         fontSize: isMobile ? '0.5rem' : '0.9rem',
-            color: '#ffffff',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-                         padding: isMobile ? '1px 3px' : '4px 8px',
-            borderRadius: '6px',
-            display: 'inline-block',
-            transition: 'background-color 0.2s ease',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-          }}
-                 onMouseEnter={(e) => e.target.style.backgroundColor = `${primaryColor}20`}
-         onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-         >
-                       {isExpanded ? 'Hide Stats ▲' : 'Show Stats ▼'}
-         </div>
-      </div>
+                fontSize: isMobile ? '0.5rem' : '0.9rem',
+                color: '#ffffff',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                padding: isMobile ? '1px 3px' : '4px 8px',
+                borderRadius: '6px',
+                display: 'inline-block',
+                transition: 'background-color 0.2s ease',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+              }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = `${primaryColor}20`}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+              >
+                {isExpanded ? 'Hide Stats ▲' : 'Show Stats ▼'}
+              </div>
+            </div>
+          </div>
 
       {/* Expanded Content */}
       {isExpanded && (
         <>
-                     {/* Compact Stats Row */}
-                       <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-                             marginBottom: isMobile ? '0px' : '12px',
-                             gap: isMobile ? '0px' : '8px'
-            }}>
-                                      {/* Progress Section */}
-              <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onOpenOpponentsModal) onOpenOpponentsModal();
-                }}
-                                                                   style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    padding: isMobile ? '1px' : '4px',
-                    borderRadius: '6px',
-                   cursor: 'pointer',
-                   transition: 'all 0.2s ease',
-                   border: '1px solid rgba(255,255,255,0.1)',
-                   flex: 1,
-                   textAlign: 'center'
-                 }}
+                                                                                       {/* Compact Stats Row */}
+                         <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'stretch',
+                           marginBottom: isMobile ? '8px' : '4px',
+             gap: isMobile ? '6px' : '12px',
+                padding: isMobile ? '6px' : '8px',
+                borderRadius: '8px',
+                                              background: 'rgba(0, 0, 0, 0.5)',
+                 border: '1px solid rgba(255,255,255,0.15)',
+                 boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+              }}>
+                                                                                                                                                           {/* Progress Section */}
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onOpenOpponentsModal) onOpenOpponentsModal();
+                  }}
+                                                                     style={{
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      padding: isMobile ? '6px' : '8px',
+                      borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                    flex: 1,
+                    textAlign: 'center',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    minHeight: isMobile ? '70px' : '80px'
+                  }}
                onMouseEnter={(e) => {
-                 e.currentTarget.style.background = '#4CAF50';
-                 e.currentTarget.style.transform = 'translateY(-1px)';
-                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(76, 175, 80, 0.4)';
-                 e.currentTarget.style.border = '1px solid #4CAF50';
+                 e.currentTarget.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.3))';
+                 e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                 e.currentTarget.style.boxShadow = '0 4px 16px rgba(76, 175, 80, 0.3), 0 2px 8px rgba(0,0,0,0.2)';
+                 e.currentTarget.style.border = '1px solid rgba(76, 175, 80, 0.5)';
                }}
                onMouseLeave={(e) => {
-                 e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                 e.currentTarget.style.transform = 'translateY(0)';
+                 e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
                  e.currentTarget.style.boxShadow = 'none';
-                 e.currentTarget.style.border = '1px solid rgba(255,255,255,0.1)';
+                 e.currentTarget.style.border = '1px solid rgba(255,255,255,0.15)';
                }}
              >
-                                                               <div style={{
-                   fontSize: isMobile ? '0.35rem' : '0.8rem',
-                   fontWeight: 'bold',
-                   color: '#e0e0e0',
-                                      marginBottom: isMobile ? '2px' : '2px'
+                                                                                                                               <div style={{
+                    fontSize: isMobile ? '0.6rem' : '0.8rem',
+                    fontWeight: 'bold',
+                    color: '#e0e0e0',
+                                       marginBottom: isMobile ? '4px' : '2px'
+                   }}>
+                     Progress
+                   </div>
+                                   <div style={{
+                    fontSize: isMobile ? '0.7rem' : '0.9rem',
+                    color: '#ffffff',
+                    fontWeight: 'bold',
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                                       marginBottom: isMobile ? '3px' : '1px'
                   }}>
-                    Progress
-                  </div>
-                 <div style={{
-                   fontSize: isMobile ? '0.4rem' : '0.9rem',
-                   color: '#ffffff',
-                   fontWeight: 'bold',
-                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                   marginBottom: isMobile ? '1px' : '4px'
-                }}>
-                  {completedMatches.length}/{totalRequiredMatches}
-                </div>
+                    {completedMatches.length}/{totalRequiredMatches}
+                 </div>
                                {/* Progress Bar */}
                                  <div style={{
                    width: '100%',
-                   height: isMobile ? '2px' : '4px',
-                   background: 'rgba(255,255,255,0.2)',
-                   borderRadius: '2px',
+                   height: isMobile ? '3px' : '6px',
+                   background: 'rgba(255,255,255,0.15)',
+                   borderRadius: '3px',
                    overflow: 'hidden',
-                   marginBottom: isMobile ? '1px' : '2px'
+                   marginBottom: isMobile ? '1px' : '1px',
+                   boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)'
                  }}>
                    <div style={{
                      width: `${getProgressPercentage()}%`,
                      height: '100%',
-                     background: `linear-gradient(90deg, #4CAF50, #45a049)`,
-                     borderRadius: '2px',
-                     transition: 'width 0.3s ease'
-                   }} />
+                     background: `linear-gradient(90deg, #4CAF50, #45a049, #4CAF50)`,
+                     borderRadius: '3px',
+                     transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                     boxShadow: '0 0 8px rgba(76, 175, 80, 0.5)',
+                     position: 'relative'
+                   }}>
+                     <div style={{
+                       position: 'absolute',
+                       top: 0,
+                       left: 0,
+                       right: 0,
+                       bottom: 0,
+                       background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+                       animation: 'shimmer 2s infinite'
+                     }} />
+                   </div>
                  </div>
-                                   <div style={{
-                    fontSize: isMobile ? '0.4rem' : '0.75rem',
-                    color: '#e0e0e0',
-                    fontStyle: 'italic',
-                    textAlign: 'center',
-                    fontWeight: '500'
-                  }}>
-                    click to schedule
-                  </div>
+                                                                       <div style={{
+                     fontSize: isMobile ? '0.55rem' : '0.75rem',
+                     color: '#e0e0e0',
+                     fontStyle: 'italic',
+                     textAlign: 'center',
+                     fontWeight: '500'
+                                      }}>
+                      click to see opponents
+                    </div>
              </div>
 
-                         {/* Record Section */}
-             <div
-               onClick={(e) => {
-                 e.stopPropagation();
-                 if (onOpenCompletedMatchesModal) onOpenCompletedMatchesModal();
-               }}
-               style={{
-                 background: 'rgba(255,255,255,0.1)',
-                 padding: isMobile ? '1px' : '8px',
-                 borderRadius: '4px',
-                 cursor: 'pointer',
-                 transition: 'all 0.2s ease',
-                 border: '1px solid rgba(255,255,255,0.1)',
-                 flex: 1,
-                 textAlign: 'center'
-               }}
+             
+
+                                                   {/* Record Section */}
+                             <div
+                 onClick={(e) => {
+                   e.stopPropagation();
+                   if (onOpenCompletedMatchesModal) onOpenCompletedMatchesModal();
+                 }}
+                 style={{
+                   background: 'rgba(0, 0, 0, 0.4)',
+                   padding: isMobile ? '4px' : '8px',
+                   borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                  flex: 1,
+                  textAlign: 'center',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: '80px'
+                }}
                onMouseEnter={(e) => {
-                 e.currentTarget.style.background = '#2196F3';
-                 e.currentTarget.style.transform = 'translateY(-1px)';
-                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(33, 150, 243, 0.4)';
-                 e.currentTarget.style.border = '1px solid #2196F3';
+                 e.currentTarget.style.background = 'linear-gradient(135deg, rgba(33, 150, 243, 0.2), rgba(33, 150, 243, 0.3))';
+                 e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                 e.currentTarget.style.boxShadow = '0 4px 16px rgba(33, 150, 243, 0.3), 0 2px 8px rgba(0,0,0,0.2)';
+                 e.currentTarget.style.border = '1px solid rgba(33, 150, 243, 0.5)';
                }}
                onMouseLeave={(e) => {
-                 e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                 e.currentTarget.style.transform = 'translateY(0)';
+                 e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
                  e.currentTarget.style.boxShadow = 'none';
-                 e.currentTarget.style.border = '1px solid rgba(255,255,255,0.1)';
+                 e.currentTarget.style.border = '1px solid rgba(255,255,255,0.15)';
                }}
              >
                                <div style={{
                   fontSize: isMobile ? '0.35rem' : '0.8rem',
                   fontWeight: 'bold',
                   color: '#e0e0e0',
-                                   marginBottom: isMobile ? '1px' : '2px'
-                }}>
-                  Record
+                                                    marginBottom: isMobile ? '1px' : '1px'
+               }}>
+                 Record
                 </div>
                                <div style={{
                   fontSize: isMobile ? '0.5rem' : '0.9rem',
                   color: '#ffffff',
                   fontWeight: 'bold',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                  marginBottom: isMobile ? '1px' : '2px'
-                }}>
-                  {playerStats?.wins || 0}-{playerStats?.losses || 0} ({playerStats?.winRate || 0}%)
+                                   marginBottom: isMobile ? '1px' : '1px'
+                 }}>
+                   {playerStats?.wins || 0}-{playerStats?.losses || 0} ({playerStats?.winRate || 0}%)
                 </div>
                                 <div style={{
                  fontSize: isMobile ? '0.4rem' : '0.75rem',
@@ -571,40 +1040,47 @@ import { BACKEND_URL } from '../../config.js';
                  </div>
              </div>
 
-            {/* Position Section */}
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onOpenStandingsModal) onOpenStandingsModal();
-              }}
-              style={{
-                background: 'rgba(255,255,255,0.1)',
-                padding: isMobile ? '1px' : '8px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                border: '1px solid rgba(255,255,255,0.1)',
-                flex: 1,
-                textAlign: 'center'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#FF9800';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(255, 152, 0, 0.4)';
-                e.currentTarget.style.border = '1px solid #FF9800';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                e.currentTarget.style.transform = 'translateY(0)';
+                         {/* Position Section */}
+                           <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onOpenStandingsModal) onOpenStandingsModal();
+                }}
+                style={{
+                  background: 'rgba(0, 0, 0, 0.4)',
+                  padding: isMobile ? '4px' : '8px',
+                  borderRadius: '8px',
+                 cursor: 'pointer',
+                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                 border: '1px solid rgba(255,255,255,0.2)',
+                 boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                 flex: 1,
+                 textAlign: 'center',
+                 position: 'relative',
+                 overflow: 'hidden',
+                 display: 'flex',
+                 flexDirection: 'column',
+                 justifyContent: 'space-between',
+                 minHeight: '80px'
+               }}
+                             onMouseEnter={(e) => {
+                 e.currentTarget.style.background = 'linear-gradient(135deg, rgba(156, 39, 176, 0.2), rgba(156, 39, 176, 0.3))';
+                 e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                 e.currentTarget.style.boxShadow = '0 4px 16px rgba(156, 39, 176, 0.3), 0 2px 8px rgba(0,0,0,0.2)';
+                 e.currentTarget.style.border = '1px solid rgba(156, 39, 176, 0.5)';
+               }}
+                             onMouseLeave={(e) => {
+                 e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)';
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
                 e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.border = '1px solid rgba(255,255,255,0.1)';
+                e.currentTarget.style.border = '1px solid rgba(255,255,255,0.15)';
               }}
             >
                                                          <div style={{
                  fontSize: isMobile ? '0.35rem' : '0.8rem',
                  fontWeight: 'bold',
                  color: '#e0e0e0',
-                 marginBottom: isMobile ? '1px' : '2px'
+                 marginBottom: isMobile ? '1px' : '1px'
                }}>
                  Position
                </div>
@@ -613,9 +1089,9 @@ import { BACKEND_URL } from '../../config.js';
                 color: '#ffffff',
                 fontWeight: 'bold',
                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                marginBottom: isMobile ? '1px' : '2px'
-              }}>
-                {loadingStandings ? '...' : (playerStats?.position || 'N/A')}
+                                 marginBottom: isMobile ? '1px' : '1px'
+               }}>
+                 {loadingStandings ? '...' : (playerStats?.position || 'N/A')}
               </div>
                <div style={{
                  fontSize: isMobile ? '0.4rem' : '0.75rem',
@@ -629,145 +1105,159 @@ import { BACKEND_URL } from '../../config.js';
             </div>
           </div>
 
-                                                                                       {/* Compact Proposals & Matches Row */}
-                         <div style={{
-                display: 'flex',
-                               gap: isMobile ? '1px' : '8px',
-                                                                                                                         marginBottom: isMobile ? '1px' : '12px'
-              }}>
-                                                     {/* Proposals Section */}
-                                                                                                                                                                                   <div style={{
-                      flex: '0 0 calc(33.333% - 5.33px)',
-                      background: 'rgba(0,0,0,0.3)',
-                      borderRadius: '4px',
-                                       padding: isMobile ? '2px' : '10px',
-                      border: '1px solid rgba(255,255,255,0.1)'
-                    }}>
-                                                               <div style={{
-                   fontSize: isMobile ? '0.3rem' : '0.8rem',
-                   color: '#fff',
-                   fontWeight: 'bold',
-                   marginBottom: isMobile ? '1px' : '4px',
-                   textAlign: 'center'
+                                                                                                                                                                                                                                                                                                                                                               {/* Compact Matches Row */}
+                                                     <div style={{
+                   display: 'flex',
+                                                                   gap: isMobile ? '8px' : '12px',
+                                                                                                                            marginBottom: isMobile ? '4px' : '4px'
                  }}>
-                   📋 Proposals
-                 </div>
-                                                                                                                                                                                               <div style={{
-                     display: 'flex',
-                     flexDirection: 'column',
-                     gap: isMobile ? '4px' : '8px',
-                     justifyContent: 'center'
-                   }}>
-                                       <button
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  {/* Message Center Section */}
+                                                                         <div style={{
+                                       flex: isMobile ? '0 0 140px' : '0 0 200px',
+                                       background: 'rgba(0, 0, 0, 0.4)',
+                                       borderRadius: '8px',
+                                       padding: isMobile ? '4px' : '4px',
+                                       border: '1px solid rgba(255,255,255,0.2)',
+                                       boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                                       display: 'flex',
+                                       flexDirection: 'column',
+                                       gap: isMobile ? '4px' : '4px'
+                                     }}>
+                                                                                                                                                             <div style={{
+                                           fontSize: isMobile ? '0.5rem' : '0.9rem',
+                                           color: '#ffffff',
+                                           fontWeight: 'bold',
+                                           textAlign: 'center',
+                                           textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                                           marginBottom: isMobile ? '2px' : '2px'
+                                         }}>
+                                           📨 {isMobile ? 'Messages' : 'Message Center'}
+                                         </div>
+                                      
+                                                                                                                       <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              if (onOpenMessageCenter) onOpenMessageCenter('direct');
+                                            }}
+                                                                                         style={{
+                                               background: 'linear-gradient(135deg, #ff4444 0%, #cc3333 50%, #aa2222 100%)',
+                                               color: '#ffffff',
+                                               border: 'none',
+                                               borderRadius: '6px',
+                                               padding: isMobile ? '4px 6px' : '4px 6px',
+                                               fontSize: isMobile ? '0.6rem' : '0.7rem',
+                                               fontWeight: '600',
+                                               cursor: 'pointer',
+                                               boxShadow: '0 2px 6px rgba(255, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
+                                               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                               width: '100%',
+                                               textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+                                               position: 'relative',
+                                               overflow: 'hidden'
+                                             }}
+                                                                                         onMouseEnter={(e) => {
+                                               e.target.style.background = 'linear-gradient(135deg, #cc3333 0%, #aa2222 50%, #881111 100%)';
+                                               e.target.style.transform = 'translateY(-2px) scale(1.02)';
+                                               e.target.style.boxShadow = '0 4px 12px rgba(255, 68, 68, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(0, 0, 0, 0.3)';
+                                             }}
+                                             onMouseLeave={(e) => {
+                                               e.target.style.background = 'linear-gradient(135deg, #ff4444 0%, #cc3333 50%, #aa2222 100%)';
+                                               e.target.style.transform = 'translateY(0) scale(1)';
+                                               e.target.style.boxShadow = '0 2px 6px rgba(255, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.2)';
+                                             }}
+                                                                              >
+                                            💬 {isMobile ? 'DM' : 'Direct Messages'}
+                                          </button>
+                                       
+                                                                               <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (onOpenMessageCenter) onOpenMessageCenter('league');
+                                          }}
+                                         style={{
+                                           background: 'linear-gradient(135deg, #00bcd4 0%, #0097a7 50%, #00695c 100%)',
+                                           color: '#ffffff',
+                                           border: 'none',
+                                           borderRadius: '6px',
+                                           padding: isMobile ? '4px 6px' : '4px 6px',
+                                           fontSize: isMobile ? '0.6rem' : '0.7rem',
+                                           fontWeight: '600',
+                                           cursor: 'pointer',
+                                           boxShadow: '0 2px 6px rgba(0, 188, 212, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
+                                           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                           width: '100%',
+                                           textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+                                           position: 'relative',
+                                           overflow: 'hidden'
+                                         }}
+                                         onMouseEnter={(e) => {
+                                           e.target.style.background = 'linear-gradient(135deg, #0097a7 0%, #00695c 50%, #004d40 100%)';
+                                           e.target.style.transform = 'translateY(-2px) scale(1.02)';
+                                           e.target.style.boxShadow = '0 4px 12px rgba(0, 188, 212, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(0, 0, 0, 0.3)';
+                                         }}
+                                         onMouseLeave={(e) => {
+                                           e.target.style.background = 'linear-gradient(135deg, #00bcd4 0%, #0097a7 50%, #00695c 100%)';
+                                           e.target.style.transform = 'translateY(0) scale(1)';
+                                           e.target.style.boxShadow = '0 2px 6px rgba(0, 188, 212, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.2)';
+                                         }}
+                                                                               >
+                                           🚀 {isMobile ? 'Chat' : 'League Chat'}
+                                         </button>
+                                      
+                                      
+                                    </div>
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   {/* Upcoming Matches Section */}
+                                   <div 
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (onOpenProposalListModal) onOpenProposalListModal();
+                        if (onOpenAllMatchesModal) onOpenAllMatchesModal();
                       }}
-                                          style={{
-                         background: '#f0ad4e',
-                         color: '#222',
-                         border: '1px solid #d32f2f',
-                         borderRadius: '4px',
-                         padding: isMobile ? '1px 3px' : '6px 10px',
-                         fontSize: isMobile ? '0.45rem' : '0.85rem',
-                         fontWeight: '600',
-                         cursor: 'pointer',
-                         boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                         transition: 'all 0.2s ease',
-                         width: '100%'
-                       }}
-                     onMouseEnter={(e) => {
-                       e.target.style.background = '#e09b3d';
-                       e.target.style.transform = 'translateY(-1px)';
+                                       style={{
+                                               flex: '1',
+                         background: 'rgba(0, 0, 0, 0.4)',
+                        borderRadius: '8px',
+                                                                    padding: isMobile ? '4px' : '4px',
+                                                 border: '1px solid rgba(255,255,255,0.2)',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                       cursor: 'pointer',
+                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                      }}
-                     onMouseLeave={(e) => {
-                       e.target.style.background = '#f0ad4e';
-                       e.target.style.transform = 'translateY(0)';
-                     }}
-                                    >
-                                             📥 {pendingCount} waiting for you
-                    </button>
-                                         <button
-                       onClick={(e) => {
-                         e.stopPropagation();
-                         if (onOpenSentProposalListModal) onOpenSentProposalListModal();
-                       }}
-                                            style={{
-                          background: '#00aa85',
-                          color: '#fff',
-                          border: '1px solid #f10',
-                          borderRadius: '4px',
-                                                  padding: isMobile ? '1px 3px' : '6px 10px',
-                           fontSize: isMobile ? '0.45rem' : '0.85rem',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                          transition: 'all 0.2s ease',
-                          width: '100%'
-                        }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = '#009973';
-                        e.target.style.transform = 'translateY(-1px)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = '#00aa85';
-                        e.target.style.transform = 'translateY(0)';
-                      }}
-                     >
-                                             📤 {sentCount} waiting for opponents
-                   </button>
-                 </div>
-             </div>
-
-                                                                                                                                                                                                               {/* Upcoming Matches Section */}
-                                <div 
-                   onClick={(e) => {
-                     e.stopPropagation();
-                     if (onOpenAllMatchesModal) onOpenAllMatchesModal();
-                   }}
-                                    style={{
-                     flex: '0 0 calc(66.667% - 2.67px)',
-                     background: 'rgba(0,0,0,0.3)',
-                     borderRadius: '4px',
-                                          padding: isMobile ? '0px' : '6px',
-                     border: '1px solid rgba(255,255,255,0.1)',
-                     cursor: 'pointer',
-                     transition: 'all 0.2s ease'
-                   }}
                  onMouseEnter={(e) => {
                    e.currentTarget.style.background = 'rgba(0,0,0,0.5)';
-                   e.currentTarget.style.border = '1px solid rgba(255,255,255,0.2)';
+                   e.currentTarget.style.border = '1px solid rgba(255,255,255,0.25)';
                  }}
                  onMouseLeave={(e) => {
-                   e.currentTarget.style.background = 'rgba(0,0,0,0.3)';
-                   e.currentTarget.style.border = '1px solid rgba(255,255,255,0.1)';
+                   e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)';
+                   e.currentTarget.style.border = '1px solid rgba(255,255,255,0.15)';
                  }}
                >
-                                                                                                                                                                     <div style={{
-                                            fontSize: isMobile ? '0.4rem' : '1.1rem',
-                       color: '#fff',
-                       fontWeight: 'bold',
-                       marginBottom: '0px',
-                       textAlign: 'center',
-                       cursor: 'pointer',
-                       textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                       letterSpacing: '0.5px'
-                                          }}>
-                                              🎯 Upcoming Confirmed Matches
-                      </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <div style={{
+                                              fontSize: isMobile ? '0.6rem' : '1.1rem',
+                         color: '#ff4444',
+                         fontWeight: 'bold',
+                         marginBottom: '0px',
+                         textAlign: 'center',
+                         cursor: 'pointer',
+                         textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                         letterSpacing: '0.5px'
+                                            }}>
+                                                🎯 Upcoming Matches
+                        </div>
                                          {/* Click for details instruction */}
-                                                                                                                                                                    <div style={{
-                                             fontSize: isMobile ? '0.3rem' : '0.75rem',
-                                             color: '#e0e0e0',
-                                             textAlign: 'center',
-                                             fontStyle: 'italic',
-                                             fontWeight: '500',
-                                             marginTop: '0px',
-                                             marginBottom: '0px',
-                                             padding: '0px'
-                                           }}>
-                                           click match for details
-                                         </div>
+                                                                                                                                                                                                                                                                                                                                         <div style={{
+                                              fontSize: isMobile ? '0.45rem' : '0.75rem',
+                                              color: '#e0e0e0',
+                                              textAlign: 'center',
+                                              fontStyle: 'italic',
+                                              fontWeight: '500',
+                                              marginTop: '0px',
+                                              marginBottom: '0px',
+                                              padding: '0px'
+                                            }}>
+                                            click for match details
+                                          </div>
                                                                                                                                  {/* Upcoming Matches List */}
                                  {(() => {
                                    // Use actual upcomingMatches data
@@ -778,7 +1268,7 @@ import { BACKEND_URL } from '../../config.js';
                                        display: 'flex',
                                        flexDirection: 'column',
                                        gap: '1px',
-                                       marginTop: isMobile ? '2px' : '4px'
+                                       marginTop: isMobile ? '1px' : '2px'
                                      }}>
                                       {/* Show up to 3 matches */}
                                       {displayMatches.slice(0, 3).map((match, index) => (
@@ -790,15 +1280,15 @@ import { BACKEND_URL } from '../../config.js';
                             onMatchClick(match);
                           }
                         }}
-                                                                                                   style={{
-                            fontSize: isMobile ? '0.35rem' : '0.8rem',
+                                                                                                                                                                                                       style={{
+                            fontSize: isMobile ? '0.5rem' : '0.8rem',
                             color: '#ccc',
                             textAlign: 'center',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
                             cursor: 'pointer',
-                            padding: isMobile ? '0px 0px' : '2px 3px',
+                            padding: isMobile ? '1px 2px' : '2px 3px',
                             borderRadius: '2px',
                             transition: 'all 0.2s ease'
                           }}
@@ -815,58 +1305,33 @@ import { BACKEND_URL } from '../../config.js';
                           let opponent = '';
                           let dateStr = '';
                           
-                          if (match.type === 'scheduled') {
-                            if (match.player1 && match.player2) {
-                              opponent = match.player1.trim().toLowerCase() === `${playerName} ${playerLastName}`.trim().toLowerCase() ? 
-                                match.player2 : match.player1;
-                            }
-                            // Handle scheduled match dates - could be in MM/DD/YYYY or YYYY-MM-DD format
-                            if (match.date) {
-                              let dateObj;
-                              if (match.date.includes('/')) {
-                                // MM/DD/YYYY format
-                                const parts = match.date.split('/');
-                                if (parts.length === 3) {
-                                  const [month, day, year] = parts;
-                                  // Create date using local timezone to avoid shifts
-                                  dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                                }
-                              } else if (match.date.includes('-')) {
-                                // YYYY-MM-DD format - use local timezone
-                                const [year, month, day] = match.date.split('-');
-                                dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                              }
-                              
-                              if (dateObj && !isNaN(dateObj.getTime())) {
-                                dateStr = format(dateObj, isMobile ? 'MMM d' : 'MMM d');
-                              }
-                            }
-                          } else {
-                            if (match.senderName && match.receiverName) {
-                              opponent = match.senderName.trim().toLowerCase() === `${playerName} ${playerLastName}`.trim().toLowerCase() ? 
-                                match.receiverName : match.senderName;
-                            }
-                            // Handle proposal match dates - typically YYYY-MM-DD format
-                            if (match.date) {
-                              let dateObj;
-                              if (match.date.includes('-')) {
-                                // YYYY-MM-DD format - use local timezone
-                                const [year, month, day] = match.date.split('-');
-                                dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                              } else if (match.date.includes('/')) {
-                                // MM/DD/YYYY format
-                                const parts = match.date.split('/');
-                                if (parts.length === 3) {
-                                  const [month, day, year] = parts;
-                                  dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                                }
-                              }
-                              
-                              if (dateObj && !isNaN(dateObj.getTime())) {
-                                dateStr = format(dateObj, isMobile ? 'MMM d' : 'MMM d');
-                              }
-                            }
-                          }
+                                                     // Handle both scheduled matches and confirmed proposals
+                           if (match.type === 'proposal' || match.status === 'confirmed') {
+                             // This is a confirmed proposal
+                             if (match.senderName && match.receiverName) {
+                               opponent = match.senderName.trim().toLowerCase() === `${playerName} ${playerLastName}`.trim().toLowerCase() ? 
+                                 match.receiverName : match.senderName;
+                             }
+                             // Handle proposal match dates - use same format as All Upcoming Matches modal
+                             if (match.date) {
+                               dateStr = formatDateMMDDYYYY(match.date);
+                             }
+                           } else {
+                             // This is a scheduled match
+                             if (match.player1Id && match.player2Id) {
+                               opponent = match.player1Id.trim().toLowerCase() === `${playerName} ${playerLastName}`.trim().toLowerCase() ? 
+                                 match.player2Id : match.player1Id;
+                             }
+                             // Handle scheduled match dates - use same format as All Upcoming Matches modal
+                             if (match.scheduledDate) {
+                               const dateObj = new Date(match.scheduledDate);
+                               if (!isNaN(dateObj.getTime())) {
+                                 dateStr = formatDateMMDDYYYY(dateObj.toISOString().split('T')[0]);
+                               }
+                             } else if (match.date) {
+                               dateStr = formatDateMMDDYYYY(match.date);
+                             }
+                           }
                           
                           if (!opponent) return 'No matches';
                           
@@ -905,8 +1370,524 @@ import { BACKEND_URL } from '../../config.js';
         </>
       )}
 
-    </div>
-  );
+      {/* Calendar Modal */}
+      {showCalendar && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            backdropFilter: 'blur(4px)'
+          }}
+          onClick={() => setShowCalendar(false)}
+        >
+          <div 
+            style={{
+              background: `rgba(0, 0, 0, 0.75)`,
+              border: `1px solid rgba(255, 255, 255, 0.3)`,
+              borderRadius: isMobile ? '12px' : '16px',
+              padding: isMobile ? '6px' : '16px',
+              width: isMobile ? '100%' : '90%',
+              maxWidth: isMobile ? 'none' : '1200px',
+              boxShadow: `0 4px 16px rgba(0,0,0,0.3)`,
+              backdropFilter: 'blur(4px)',
+              maxHeight: isMobile ? 'none' : '35vh',
+              height: isMobile ? '200px' : '400px',
+              overflow: 'auto'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+                         <div style={{
+               position: 'relative',
+               textAlign: 'center',
+               marginBottom: isMobile ? '0px' : '4px',
+               padding: isMobile ? '2px' : '4px',
+               borderRadius: '8px',
+               background: 'rgba(0, 0, 0, 0.6)',
+               border: '1px solid rgba(255,255,255,0.2)',
+               boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+             }}>
+               <h3 style={{
+                 margin: 0,
+                 color: '#ffffff',
+                 fontSize: isMobile ? '0.4rem' : '1.1rem',
+                 fontWeight: 'bold',
+                 display: 'flex',
+                 alignItems: 'center',
+                 justifyContent: 'space-between',
+                 textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                 letterSpacing: '0.5px'
+               }}>
+                 <div style={{ flex: 1 }}></div>
+                 <span style={{ 
+                   fontSize: isMobile ? '0.6rem' : '1.1rem',
+                   background: `linear-gradient(45deg, #4CAF50, #4CAF50dd)`,
+                   padding: isMobile ? '1px 4px' : '2px 8px',
+                   borderRadius: '6px',
+                   boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                 }}>
+                   Phase 1 Calendar
+                 </span>
+                 <button
+                   onClick={() => setShowCalendar(false)}
+                   style={{
+                     background: 'none',
+                     border: 'none',
+                     color: '#ffffff',
+                     fontSize: isMobile ? '0.8rem' : '1.2rem',
+                     cursor: 'pointer',
+                     padding: '0',
+                     width: isMobile ? '20px' : '30px',
+                     height: isMobile ? '20px' : '30px',
+                     display: 'flex',
+                     alignItems: 'center',
+                     justifyContent: 'center',
+                     flex: 1,
+                     justifyContent: 'flex-end'
+                   }}
+                 >
+                   ×
+                 </button>
+               </h3>
+             </div>
+             
+                           {/* Instructions */}
+              <div style={{
+                background: 'rgba(76, 175, 80, 0.1)',
+                border: '1px solid rgba(76, 175, 80, 0.3)',
+                borderRadius: '8px',
+                padding: isMobile ? '6px' : '10px',
+                marginBottom: isMobile ? '4px' : '8px',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  fontSize: isMobile ? '0.45rem' : '0.85rem',
+                  color: '#ffffff',
+                  fontWeight: 'bold',
+                  marginBottom: isMobile ? '3px' : '5px',
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                }}>
+                  📅 Click any date to see opponents available for that day
+                </div>
+                <div style={{
+                  fontSize: isMobile ? '0.4rem' : '0.75rem',
+                  color: '#cccccc',
+                  fontStyle: 'italic',
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                }}>
+                  💡 Or click the Progress meter on the home screen to see all available opponents
+                </div>
+              </div>
+            
+                                                   <CalendarGrid 
+                phase1EndDate={phase1EndDate}
+                isMobile={isMobile}
+                currentMonth={currentCalendarMonth}
+                onMonthChange={setCurrentCalendarMonth}
+                onOpenOpponentsModal={onOpenOpponentsModal}
+                upcomingMatches={upcomingMatches}
+                playerName={playerName}
+                playerLastName={playerLastName}
+                onMatchClick={onMatchClick}
+                onDateSelect={(selectedDate) => {
+                   setSelectedCalendarDate(selectedDate);
+                   // Don't close the calendar when opening opponents modal
+                   if (onOpenOpponentsModal) {
+                     onOpenOpponentsModal(selectedDate);
+                   }
+                 }}
+              />
+          </div>
+        </div>
+             )}
+
+       {/* Phase 1 Rules Modal */}
+       <Phase1RulesModal 
+         isOpen={showPhase1Rules}
+         onClose={() => setShowPhase1Rules(false)}
+         isMobile={isMobile}
+       />
+
+     </div>
+   );
+ };
+
+// Calendar Grid Component
+const CalendarGrid = ({ phase1EndDate, isMobile, currentMonth, onMonthChange, onOpenOpponentsModal, upcomingMatches, playerName, playerLastName, onDateSelect, onMatchClick }) => {
+  const today = new Date();
+  const currentMonthIndex = currentMonth.getMonth();
+  const currentYear = currentMonth.getFullYear();
+  
+  // Get first day of month and number of days
+  const firstDay = new Date(currentYear, currentMonthIndex, 1);
+  const lastDay = new Date(currentYear, currentMonthIndex + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startDayOfWeek = firstDay.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  
+  // Create calendar grid
+  const calendarDays = [];
+  
+  // Add empty cells for days before the first day of the month
+  for (let i = 0; i < startDayOfWeek; i++) {
+    calendarDays.push(null);
+  }
+  
+  // Add all days of the month
+  for (let day = 1; day <= daysInMonth; day++) {
+    calendarDays.push(day);
+  }
+  
+  const isPhase1EndDate = (day) => {
+    if (!phase1EndDate || !day) return false;
+    return day === phase1EndDate.getDate() && 
+           currentMonthIndex === phase1EndDate.getMonth() && 
+           currentYear === phase1EndDate.getFullYear();
+  };
+  
+  const isToday = (day) => {
+    return day === today.getDate() && 
+           currentMonthIndex === today.getMonth() && 
+           currentYear === today.getFullYear();
+  };
+  
+  const isPast = (day) => {
+    return day && day < today.getDate() && 
+           currentMonthIndex === today.getMonth() && 
+           currentYear === today.getFullYear();
+  };
+  
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  const goToPreviousMonth = () => {
+    const newMonth = new Date(currentYear, currentMonthIndex - 1, 1);
+    onMonthChange(newMonth);
+  };
+  
+  const goToNextMonth = () => {
+    const newMonth = new Date(currentYear, currentMonthIndex + 1, 1);
+    onMonthChange(newMonth);
+  };
+
+  // Function to get matches for a specific date
+  const getMatchesForDate = (day) => {
+    if (!day || !upcomingMatches) return [];
+    
+    const targetDate = new Date(currentYear, currentMonthIndex, day);
+    const targetDateStr = targetDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    return upcomingMatches.filter(match => {
+      let matchDate = null;
+      
+      // Handle different match date formats
+      if (match.scheduledDate) {
+        // New Match model
+        const dateObj = new Date(match.scheduledDate);
+        if (!isNaN(dateObj.getTime())) {
+          matchDate = dateObj.toISOString().split('T')[0];
+        }
+      } else if (match.date) {
+        // Old proposal format - convert to YYYY-MM-DD
+        const parts = match.date.split('-');
+        if (parts.length === 3) {
+          const [month, day, year] = parts;
+          matchDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+      }
+      
+      return matchDate === targetDateStr;
+    });
+  };
+
+  // Function to check if a date has confirmed matches
+  const hasConfirmedMatches = (day) => {
+    return getMatchesForDate(day).length > 0;
+  };
+  
+  return (
+    <div style={{ color: '#ffffff' }}>
+      {/* Month Navigation */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: isMobile ? '2px' : '4px'
+      }}>
+        <button
+          onClick={goToPreviousMonth}
+          style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            color: '#ffffff',
+            fontSize: isMobile ? '0.6rem' : '0.8rem',
+            cursor: 'pointer',
+            padding: isMobile ? '2px 4px' : '4px 8px',
+            borderRadius: '4px',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
+          onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.1)'}
+        >
+          ←
+        </button>
+                 <div style={{
+           textAlign: 'center',
+           fontSize: isMobile ? '0.7rem' : '1rem',
+           fontWeight: 'bold',
+           textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+         }}>
+           {monthNames[currentMonthIndex]} {currentYear}
+         </div>
+        <button
+          onClick={goToNextMonth}
+          style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            color: '#ffffff',
+            fontSize: isMobile ? '0.6rem' : '0.8rem',
+            cursor: 'pointer',
+            padding: isMobile ? '2px 4px' : '4px 8px',
+            borderRadius: '4px',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
+          onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.1)'}
+        >
+          →
+        </button>
+      </div>
+      
+      {/* Day headers */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(7, 1fr)',
+        gap: '0px',
+        marginBottom: isMobile ? '1px' : '2px'
+      }}>
+        {dayNames.map(day => (
+                     <div key={day} style={{
+             textAlign: 'center',
+             fontSize: isMobile ? '0.5rem' : '0.7rem',
+             fontWeight: 'bold',
+             color: '#cccccc',
+             padding: isMobile ? '0px' : '1px',
+             textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+           }}>
+             {day}
+           </div>
+        ))}
+      </div>
+      
+      {/* Calendar grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(7, 1fr)',
+        gap: '0px'
+      }}>
+               {calendarDays.map((day, index) => (
+          <div
+            key={index}
+                                                   onClick={() => {
+                if (day && !hasConfirmedMatches(day) && onDateSelect) {
+                  // Only open opponents modal for empty dates
+                  const selectedDate = new Date(currentYear, currentMonthIndex, day);
+                  onDateSelect(selectedDate);
+                }
+              }}
+                           title={hasConfirmedMatches(day) ? 
+                getMatchesForDate(day).map(match => {
+                  let opponent = '';
+                  if (match.player1Id && match.player2Id) {
+                    opponent = match.player1Id.trim().toLowerCase() === `${playerName} ${playerLastName}`.trim().toLowerCase() ? 
+                      match.player2Id : match.player1Id;
+                  } else if (match.senderName && match.receiverName) {
+                    opponent = match.senderName.trim().toLowerCase() === `${playerName} ${playerLastName}`.trim().toLowerCase() ? 
+                      match.receiverName : match.senderName;
+                  }
+                  return `Click to view match details vs ${opponent}`;
+                }).join(', ') : 
+                'Click to schedule match'
+              }
+                         style={{
+               aspectRatio: '1',
+               display: 'flex',
+               alignItems: 'flex-start',
+               justifyContent: 'flex-end',
+               fontSize: isMobile ? '0.6rem' : '0.8rem',
+               fontWeight: 'bold',
+               borderRadius: '1px',
+               cursor: day ? 'pointer' : 'default',
+                                            background: day ? (
+                 isPhase1EndDate(day) ? '#e74c3c' :
+                 isPast(day) ? 'rgba(255,255,255,0.1)' :
+                 'transparent'
+               ) : 'transparent',
+               border: day ? (
+                 isPhase1EndDate(day) ? '1px solid #c0392b' :
+                 isToday(day) ? '2px solid #4CAF50' :
+                 '1px solid rgba(255,255,255,0.1)'
+               ) : 'none',
+              color: day ? (
+                isPhase1EndDate(day) ? '#ffffff' :
+                isToday(day) ? '#ffffff' :
+                isPast(day) ? '#888888' :
+                '#ffffff'
+              ) : 'transparent',
+               transition: 'all 0.2s ease',
+               padding: '2px'
+             }}
+            onMouseEnter={(e) => {
+              if (day) {
+                e.target.style.transform = 'scale(1.05)';
+                e.target.style.boxShadow = '0 2px 8px rgba(255,255,255,0.2)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (day) {
+                e.target.style.transform = 'scale(1)';
+                e.target.style.boxShadow = 'none';
+              }
+            }}
+          >
+                         <div style={{
+               display: 'flex',
+               flexDirection: 'column',
+               alignItems: 'stretch',
+               justifyContent: 'space-between',
+               width: '100%',
+               height: '100%',
+               position: 'relative'
+             }}>
+               <span style={{
+                 position: 'absolute',
+                 top: '2px',
+                 right: '2px',
+                 fontSize: isMobile ? '0.5rem' : '0.7rem',
+                 fontWeight: 'bold',
+                 color: 'inherit'
+               }}>{day || ''}</span>
+              {hasConfirmedMatches(day) && (
+                                 <div style={{
+                   fontSize: isMobile ? '0.4rem' : '0.5rem',
+                   color: '#4CAF50',
+                   fontWeight: 'bold',
+                   textAlign: 'center',
+                   cursor: 'pointer',
+                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                   marginTop: '12px',
+                   padding: '1px',
+                   borderRadius: '2px',
+                   transition: 'all 0.2s ease'
+                 }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(76, 175, 80, 0.2)';
+                  e.target.style.transform = 'scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'transparent';
+                  e.target.style.transform = 'scale(1)';
+                }}
+                                 onClick={(e) => {
+                   e.stopPropagation();
+                   const matches = getMatchesForDate(day);
+                   if (matches.length > 0) {
+                     // Open match details modal for the first match
+                     const match = matches[0];
+                     if (onMatchClick) {
+                       onMatchClick(match);
+                     }
+                   }
+                 }}>
+                  {(() => {
+                    const matches = getMatchesForDate(day);
+                    if (matches.length > 0) {
+                      const match = matches[0]; // Show first match
+                      let opponent = '';
+                      if (match.player1Id && match.player2Id) {
+                        opponent = match.player1Id.trim().toLowerCase() === `${playerName} ${playerLastName}`.trim().toLowerCase() ? 
+                          match.player2Id : match.player1Id;
+                      } else if (match.senderName && match.receiverName) {
+                        opponent = match.senderName.trim().toLowerCase() === `${playerName} ${playerLastName}`.trim().toLowerCase() ? 
+                          match.receiverName : match.senderName;
+                      }
+                                                                    // Show full name (first and last)
+                        return opponent;
+                    }
+                    return '';
+                  })()}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+     </div>
+     
+     {/* Legend */}
+     <div style={{
+       marginTop: isMobile ? '2px' : '4px',
+       fontSize: isMobile ? '0.5rem' : '0.7rem',
+       display: 'flex',
+       flexDirection: 'column',
+       gap: '1px'
+     }}>
+                               <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '2px' : '4px' }}>
+           <div style={{
+             width: isMobile ? '6px' : '8px',
+             height: isMobile ? '6px' : '8px',
+             background: 'transparent',
+             border: '1px solid #4CAF50',
+             borderRadius: '1px'
+           }}></div>
+           <span>Today (outline)</span>
+         </div>
+       {phase1EndDate && (
+         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '2px' : '4px' }}>
+           <div style={{
+             width: isMobile ? '6px' : '8px',
+             height: isMobile ? '6px' : '8px',
+             background: '#e74c3c',
+             border: '1px solid #c0392b',
+             borderRadius: '1px'
+           }}></div>
+           <span>Phase 1 Deadline</span>
+         </div>
+       )}
+                                                               <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '2px' : '4px' }}>
+            <div style={{
+              width: isMobile ? '6px' : '8px',
+              height: isMobile ? '6px' : '8px',
+              background: 'transparent',
+              border: '1px solid #4CAF50',
+              borderRadius: '50%',
+              position: 'relative'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '2px',
+                height: '2px',
+                background: '#4CAF50',
+                borderRadius: '50%'
+              }}></div>
+            </div>
+            <span>Click scheduled opponent for match details</span>
+          </div>
+     </div>
+   </div>
+ );
 };
 
 export default Phase1Tracker; 

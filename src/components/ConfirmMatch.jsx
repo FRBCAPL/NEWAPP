@@ -77,6 +77,7 @@ export default function ConfirmMatch() {
   const proposalNote = searchParams.get('note');
   const gameType = searchParams.get('gameType');
   const raceLength = searchParams.get('raceLength');
+  const proposalId = searchParams.get('proposalId');
 
   const handleConfirm = () => {
     console.log("CONFIRM BUTTON CLICKED");
@@ -119,10 +120,32 @@ Good luck and have fun!`;
     sendConfirmationEmail(params);
 
     // Update proposal status to confirmed
-    // Note: This component should receive a proposalId parameter to update the correct proposal
-    // For now, we'll just show the confirmation modal
-    console.log("Match confirmed - proposal status should be updated");
-    setShowModal(true);
+    if (proposalId) {
+      fetch(`${BACKEND_URL}/api/proposals/${proposalId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'confirmed',
+          note: userNote
+        }),
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to confirm proposal');
+        }
+        console.log("Proposal confirmed successfully");
+        setShowModal(true);
+      })
+      .catch(error => {
+        console.error("Error confirming proposal:", error);
+        alert("Failed to confirm proposal: " + error.message);
+      });
+    } else {
+      console.log("No proposalId provided - showing confirmation modal");
+      setShowModal(true);
+    }
   };
 
   return (
@@ -133,7 +156,7 @@ Good luck and have fun!`;
         </h1>
         <p className={styles.confirmMatchNotice}>
           You are about to confirm this match. <br />
-          Your opponent will be notified by email!
+          Your opponent will be notified by email and the match will be added to your app calendar!
         </p>
 
         <div className={styles.confirmMatchDetails}>
@@ -200,7 +223,7 @@ Good luck and have fun!`;
 
         <ConfirmationModal
           open={showModal}
-          message="Match confirmed! The opponent has been notified."
+          message="Match confirmed! The opponent has been notified and the match has been added to your app calendar."
           proposalNote={proposalNote}
           confirmationNote={userNote}
           gameType={gameType}

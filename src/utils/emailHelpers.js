@@ -13,7 +13,8 @@ export function sendProposalEmail({
   location,
   note,        // <-- Use 'note' for proposal emails!
   gameType,
-  raceLength
+  raceLength,
+  proposalId
 }) {
   // SAFETY CHECK
   if (!to_email || to_email === "undefined") {
@@ -36,7 +37,8 @@ export function sendProposalEmail({
     note,               // <-- Use 'note' here
     proposerEmail: from_email,
     gameType,
-    raceLength
+    raceLength,
+    proposalId
   };
   const queryString = Object.entries(matchDetails)
     .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)

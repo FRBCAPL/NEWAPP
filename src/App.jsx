@@ -25,7 +25,7 @@ function AppHeader() {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      padding: "1rem 0",
+      padding: "0.5rem 0",
       position: "fixed",
       top: 0,
       left: 0,
@@ -133,7 +133,7 @@ function App() {
       <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
         <FloatingLogos />
         <AppHeader />
-        <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "calc(100vh - 80px)", paddingTop: "80px" }}>
+        <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "calc(100vh - 80px)", paddingTop: "0px" }}>
           <Routes>
             <Route
               path="/admin"
