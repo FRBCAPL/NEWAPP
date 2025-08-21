@@ -1675,6 +1675,76 @@ export default function Dashboard({
              </div>
            )}
 
+                     {/* --- Your Availability Section --- */}
+           {currentUser && currentUser.availability && (
+             <div style={{
+               marginBottom: isMobile ? 12 : 16,
+               padding: isMobile ? '12px' : '16px',
+               background: 'rgba(255, 255, 255, 0.05)',
+               border: '1px solid rgba(255, 255, 255, 0.1)',
+               borderRadius: '8px'
+             }}>
+               <div style={{
+                 fontSize: isMobile ? '0.9rem' : '1.1rem',
+                 fontWeight: 'bold',
+                 color: '#ffffff',
+                 marginBottom: isMobile ? '8px' : '12px',
+                 textAlign: 'center'
+               }}>
+                 📅 Your Current Availability
+               </div>
+               
+               <div style={{
+                 display: 'grid',
+                 gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+                 gap: isMobile ? '6px' : '8px',
+                 fontSize: isMobile ? '0.75rem' : '0.85rem'
+               }}>
+                 {Object.entries(currentUser.availability).map(([day, slots]) => (
+                   <div key={day} style={{
+                     background: 'rgba(255, 255, 255, 0.05)',
+                     padding: isMobile ? '6px 8px' : '8px 10px',
+                     borderRadius: '6px',
+                     border: '1px solid rgba(255, 255, 255, 0.1)',
+                     textAlign: 'center'
+                   }}>
+                     <div style={{
+                       fontWeight: 'bold',
+                       color: '#ffffff',
+                       marginBottom: '4px',
+                       fontSize: isMobile ? '0.7rem' : '0.8rem'
+                     }}>
+                       {day}
+                     </div>
+                     {slots && slots.length > 0 ? (
+                       <div style={{ color: '#cccccc', fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                         {slots.map((slot, index) => (
+                           <div key={index} style={{ marginBottom: '2px' }}>
+                             {slot}
+                           </div>
+                         ))}
+                       </div>
+                     ) : (
+                       <div style={{ color: '#888', fontStyle: 'italic', fontSize: isMobile ? '0.65rem' : '0.75rem' }}>
+                         No times set
+                       </div>
+                     )}
+                   </div>
+                 ))}
+               </div>
+               
+               <div style={{
+                 marginTop: isMobile ? '8px' : '12px',
+                 textAlign: 'center',
+                 fontSize: isMobile ? '0.7rem' : '0.8rem',
+                 color: '#888',
+                 fontStyle: 'italic'
+               }}>
+                 💡 Coming soon: Edit your availability directly in the app
+               </div>
+             </div>
+           )}
+
 
 
 

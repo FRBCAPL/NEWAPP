@@ -391,7 +391,7 @@ function formatDateMMDDYYYY(dateStr) {
                   background: `linear-gradient(135deg, rgba(0, 0, 0, 0.85), rgba(20, 20, 20, 0.9), rgba(0, 0, 0, 0.85))`,
                   border: `2px solid rgba(255, 255, 255, 0.2)`,
                   borderRadius: isMobile ? '16px' : '20px',
-                  padding: isMobile ? '12px' : '20px',
+                  padding: isMobile ? '8px 12px 12px 12px' : '12px 20px 20px 20px',
           margin: isMobile ? '-15px 0 0 0' : '13px auto',
           width: isMobile ? '100%' : '98%',
           maxWidth: isMobile ? 'none' : '1600px',
@@ -465,52 +465,52 @@ function formatDateMMDDYYYY(dateStr) {
                       gap: isMobile ? '4px' : '8px',
                       marginTop: isMobile ? '4px' : '6px'
                     }}>
-                      {/* Smart Match Button - Left */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          console.log('Smart match button clicked in Phase1Tracker');
-                          console.log('onSmartMatchClick function:', onSmartMatchClick);
-                          if (onSmartMatchClick) {
-                            console.log('Calling onSmartMatchClick');
-                            onSmartMatchClick();
-                          } else {
-                            console.log('onSmartMatchClick is not defined');
-                          }
-                        }}
-                        aria-label="Open smart match making"
-                        role="button"
-                        tabIndex="0"
-                        style={{
-                          background: 'linear-gradient(135deg, #9b59b6, #8e44ad, #7d3c98)',
-                          border: '2px solid rgba(255,255,255,0.8)',
-                          color: '#ffffff',
-                          fontSize: isMobile ? '0.5rem' : '0.8rem',
-                          fontWeight: 'bold',
-                          padding: isMobile ? '6px 10px' : '8px 14px',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                          boxShadow: '0 4px 12px rgba(155, 89, 182, 0.4), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 10px rgba(155, 89, 182, 0.2)',
-                          zIndex: 10
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.background = 'linear-gradient(135deg, #a569bd, #9b59b6, #8e44ad)';
-                          e.target.style.transform = 'scale(1.05) translateY(-2px)';
-                          e.target.style.boxShadow = '0 6px 16px rgba(155, 89, 182, 0.6), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 15px rgba(155, 89, 182, 0.3)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.background = 'linear-gradient(135deg, #9b59b6, #8e44ad, #7d3c98)';
-                          e.target.style.transform = 'scale(1) translateY(0)';
-                          e.target.style.boxShadow = '0 4px 12px rgba(155, 89, 182, 0.4), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 10px rgba(155, 89, 182, 0.2)';
-                        }}
-                      >
-                        🧠 SMART MATCH
-                      </button>
+                                             {/* Smart Match Button - Left */}
+                       <button
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           console.log('Smart match button clicked in Phase1Tracker');
+                           console.log('onSmartMatchClick function:', onSmartMatchClick);
+                           if (onSmartMatchClick) {
+                             console.log('Calling onSmartMatchClick');
+                             onSmartMatchClick();
+                           } else {
+                             console.log('onSmartMatchClick is not defined');
+                           }
+                         }}
+                         aria-label="Open smart match making"
+                         role="button"
+                         tabIndex="0"
+                                                   style={{
+                            background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.3), rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1))',
+                            border: '1px solid rgba(255, 193, 7, 0.4)',
+                            color: '#ffffff',
+                            fontSize: isMobile ? '0.5rem' : '0.8rem',
+                            fontWeight: 'bold',
+                            padding: isMobile ? '6px 10px' : '8px 14px',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                            boxShadow: '0 2px 8px rgba(255, 193, 7, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
+                            zIndex: 10
+                          }}
+                                                   onMouseEnter={(e) => {
+                            e.target.style.background = 'linear-gradient(135deg, rgba(255, 193, 7, 0.4), rgba(255, 193, 7, 0.3), rgba(255, 193, 7, 0.2))';
+                            e.target.style.transform = 'scale(1.02) translateY(-1px)';
+                            e.target.style.boxShadow = '0 4px 12px rgba(255, 193, 7, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.background = 'linear-gradient(135deg, rgba(255, 193, 7, 0.3), rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1))';
+                            e.target.style.transform = 'scale(1) translateY(0)';
+                            e.target.style.boxShadow = '0 2px 8px rgba(255, 193, 7, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)';
+                          }}
+                       >
+                         🧠 SMART MATCH
+                       </button>
                       
                       {/* Phase 1 Indicator - Center */}
                       <span style={{ 
@@ -526,45 +526,45 @@ function formatDateMMDDYYYY(dateStr) {
                         Phase 1
                       </span>
                       
-                      {/* Rules Button - Right */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowPhase1Rules(true);
-                        }}
-                        aria-label="Open Phase 1 rules and information"
-                        role="button"
-                        tabIndex="0"
-                                                 style={{
-                           background: 'linear-gradient(135deg, #ff4444, #cc3333, #aa2222)',
-                           border: '2px solid rgba(255,255,255,0.8)',
-                           color: '#ffffff',
-                           fontSize: isMobile ? '0.5rem' : '0.8rem',
-                           fontWeight: 'bold',
-                           padding: isMobile ? '6px 10px' : '8px 14px',
-                           borderRadius: '8px',
-                           cursor: 'pointer',
-                           transition: 'all 0.3s ease',
-                           display: 'flex',
-                           alignItems: 'center',
-                           gap: '4px',
-                           textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                           boxShadow: '0 4px 12px rgba(255, 68, 68, 0.4), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 10px rgba(255, 68, 68, 0.2)',
-                           zIndex: 10
+                                             {/* Rules Button - Right */}
+                       <button
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           setShowPhase1Rules(true);
                          }}
-                                                 onMouseEnter={(e) => {
-                           e.target.style.background = 'linear-gradient(135deg, #ff6666, #dd4444, #cc3333)';
-                           e.target.style.transform = 'scale(1.05) translateY(-2px)';
-                           e.target.style.boxShadow = '0 6px 16px rgba(255, 68, 68, 0.6), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 15px rgba(255, 68, 68, 0.3)';
-                         }}
-                         onMouseLeave={(e) => {
-                           e.target.style.background = 'linear-gradient(135deg, #ff4444, #cc3333, #aa2222)';
-                           e.target.style.transform = 'scale(1) translateY(0)';
-                           e.target.style.boxShadow = '0 4px 12px rgba(255, 68, 68, 0.4), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 10px rgba(255, 68, 68, 0.2)';
-                         }}
-                      >
-                        ⚔️ RULES
-                      </button>
+                         aria-label="Open Phase 1 rules and information"
+                         role="button"
+                         tabIndex="0"
+                                                  style={{
+                            background: 'linear-gradient(135deg, rgba(255, 68, 68, 0.3), rgba(255, 68, 68, 0.2), rgba(255, 68, 68, 0.1))',
+                            border: '1px solid rgba(255, 68, 68, 0.4)',
+                            color: '#ffffff',
+                            fontSize: isMobile ? '0.5rem' : '0.8rem',
+                            fontWeight: 'bold',
+                            padding: isMobile ? '6px 10px' : '8px 14px',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                            boxShadow: '0 2px 8px rgba(255, 68, 68, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
+                            zIndex: 10
+                          }}
+                                                  onMouseEnter={(e) => {
+                            e.target.style.background = 'linear-gradient(135deg, rgba(255, 68, 68, 0.4), rgba(255, 68, 68, 0.3), rgba(255, 68, 68, 0.2))';
+                            e.target.style.transform = 'scale(1.02) translateY(-1px)';
+                            e.target.style.boxShadow = '0 4px 12px rgba(255, 68, 68, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.background = 'linear-gradient(135deg, rgba(255, 68, 68, 0.3), rgba(255, 68, 68, 0.2), rgba(255, 68, 68, 0.1))';
+                            e.target.style.transform = 'scale(1) translateY(0)';
+                            e.target.style.boxShadow = '0 2px 8px rgba(255, 68, 68, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)';
+                          }}
+                       >
+                         ⚔️ RULES
+                       </button>
                     </div>
                  </h3>
           
@@ -599,12 +599,12 @@ function formatDateMMDDYYYY(dateStr) {
                           justifyContent: 'space-between',
                           minHeight: isMobile ? '90px' : '140px',
                          lineHeight: 1,
-                          background: 'linear-gradient(135deg, rgba(0, 255, 0, 0.25), rgba(0, 200, 0, 0.2), rgba(0, 150, 0, 0.15))',
-                           border: '2px solid rgba(0, 255, 0, 0.6)',
-                         padding: isMobile ? '4px' : '6px',
-                         borderRadius: isMobile ? '12px' : '18px',
-                         zIndex: 1,
-                                                                          boxShadow: '0 6px 20px rgba(0, 255, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 20px rgba(0, 255, 0, 0.2)',
+                                                     background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05))',
+                            border: '1px solid rgba(76, 175, 80, 0.3)',
+                          padding: isMobile ? '4px' : '6px',
+                          borderRadius: isMobile ? '12px' : '18px',
+                          zIndex: 1,
+                                                                           boxShadow: '0 2px 8px rgba(76, 175, 80, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
                          minWidth: isMobile ? '70px' : '100px',
                          minHeight: isMobile ? '90px' : '140px',
                         backdropFilter: 'blur(8px)',
@@ -618,18 +618,18 @@ function formatDateMMDDYYYY(dateStr) {
                                 aria-label="Open calendar to schedule matches by date"
                                 role="button"
                                 tabIndex="0"
-               onMouseEnter={(e) => {
-                 e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.1)';
-                                   e.currentTarget.style.background = 'rgba(0, 255, 0, 0.25)';
-                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 255, 0, 0.5)';
-                  e.currentTarget.style.border = '2px solid rgba(0, 255, 0, 0.6)';
-               }}
-               onMouseLeave={(e) => {
-                 e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)';
-                                   e.currentTarget.style.background = 'rgba(0, 255, 0, 0.15)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
-                  e.currentTarget.style.border = '1px solid rgba(0, 255, 0, 0.4)';
-               }}
+                               onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.05)';
+                                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.25), rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.15))';
+                   e.currentTarget.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
+                   e.currentTarget.style.border = '1px solid rgba(76, 175, 80, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)';
+                                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05))';
+                   e.currentTarget.style.boxShadow = '0 2px 8px rgba(76, 175, 80, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)';
+                   e.currentTarget.style.border = '1px solid rgba(76, 175, 80, 0.3)';
+                }}
                               >
                                                                                                                                                                                                                                                  <div style={{ 
                                                                                        fontSize: isMobile ? '0.5rem' : '0.7rem',
@@ -695,30 +695,30 @@ function formatDateMMDDYYYY(dateStr) {
                        alignItems: 'center',
                        justifyContent: 'center',
                        lineHeight: 1,
-                       background: 'linear-gradient(135deg, rgba(52, 152, 219, 0.25), rgba(41, 128, 185, 0.2), rgba(30, 100, 150, 0.15))',
-                                              border: '2px solid rgba(52, 152, 219, 0.6)',
-                                               padding: isMobile ? '3px' : '5px',
-                       borderRadius: isMobile ? '10px' : '16px',
-                        zIndex: 1,
-                                                                       boxShadow: '0 6px 20px rgba(52, 152, 219, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 20px rgba(52, 152, 219, 0.2)',
+                                               background: 'linear-gradient(135deg, rgba(52, 152, 219, 0.15), rgba(52, 152, 219, 0.1), rgba(52, 152, 219, 0.05))',
+                                               border: '1px solid rgba(52, 152, 219, 0.3)',
+                                                padding: isMobile ? '3px' : '5px',
+                        borderRadius: isMobile ? '10px' : '16px',
+                         zIndex: 1,
+                                                                        boxShadow: '0 2px 8px rgba(52, 152, 219, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
                                                  minWidth: isMobile ? '70px' : '100px',
                           minHeight: isMobile ? '90px' : '140px',
                        backdropFilter: 'blur(8px)',
                        margin: isMobile ? '8px auto' : '0'
                      }}
                     title="Proposal management - view pending and sent proposals"
-                                 onMouseEnter={(e) => {
-                   e.currentTarget.style.background = 'linear-gradient(135deg, rgba(52, 152, 219, 0.3), rgba(41, 128, 185, 0.25))';
-                   e.currentTarget.style.boxShadow = '0 6px 20px rgba(52, 152, 219, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
-                   e.currentTarget.style.border = '2px solid rgba(52, 152, 219, 0.7)';
-                   e.currentTarget.style.transform = 'translate(50%, -50%) scale(1.02)';
-                 }}
-                 onMouseLeave={(e) => {
-                   e.currentTarget.style.background = 'linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(41, 128, 185, 0.15))';
-                   e.currentTarget.style.boxShadow = '0 4px 16px rgba(52, 152, 219, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
-                   e.currentTarget.style.border = '2px solid rgba(52, 152, 219, 0.5)';
-                   e.currentTarget.style.transform = 'translate(50%, -50%) scale(1)';
-                 }}
+                                                                   onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(52, 152, 219, 0.25), rgba(52, 152, 219, 0.2), rgba(52, 152, 219, 0.15))';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(52, 152, 219, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
+                    e.currentTarget.style.border = '1px solid rgba(52, 152, 219, 0.5)';
+                    e.currentTarget.style.transform = 'translate(50%, -50%) scale(1.02)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(52, 152, 219, 0.15), rgba(52, 152, 219, 0.1), rgba(52, 152, 219, 0.05))';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(52, 152, 219, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)';
+                    e.currentTarget.style.border = '1px solid rgba(52, 152, 219, 0.3)';
+                    e.currentTarget.style.transform = 'translate(50%, -50%) scale(1)';
+                  }}
                 >
                   <div style={{ 
                     fontSize: isMobile ? '0.6rem' : '0.85rem',
@@ -745,31 +745,31 @@ function formatDateMMDDYYYY(dateStr) {
                           if (onOpenProposalListModal) onOpenProposalListModal();
                         }}
                                                style={{
-                          background: 'linear-gradient(135deg, #d35400 0%, #e67e22 50%, #f39c12 100%)',
+                          background: 'rgba(255, 255, 255, 0.1)',
                           color: '#ffffff',
-                          border: 'none',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
                           borderRadius: '6px',
                           padding: isMobile ? '3px 4px' : '6px 8px',
                           fontSize: isMobile ? '0.5rem' : '0.75rem',
                           fontWeight: '600',
                           cursor: 'pointer',
-                          boxShadow: '0 2px 6px rgba(211, 84, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
                           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                           width: '100%',
                           textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
                           position: 'relative',
                           overflow: 'hidden'
                         }}
-                        onMouseEnter={(e) => {
-                          e.target.style.background = 'linear-gradient(135deg, #e67e22 0%, #f39c12 50%, #f1c40f 100%)';
-                          e.target.style.transform = 'translateY(-2px) scale(1.02)';
-                          e.target.style.boxShadow = '0 4px 12px rgba(211, 84, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(0, 0, 0, 0.3)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.background = 'linear-gradient(135deg, #d35400 0%, #e67e22 50%, #f39c12 100%)';
-                          e.target.style.transform = 'translateY(0) scale(1)';
-                          e.target.style.boxShadow = '0 2px 6px rgba(211, 84, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.2)';
-                        }}
+                                                 onMouseEnter={(e) => {
+                           e.target.style.background = 'linear-gradient(135deg, rgba(52, 152, 219, 0.3), rgba(52, 152, 219, 0.25), rgba(52, 152, 219, 0.2))';
+                           e.target.style.transform = 'translateY(-1px) scale(1.01)';
+                           e.target.style.boxShadow = '0 4px 12px rgba(52, 152, 219, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)';
+                         }}
+                         onMouseLeave={(e) => {
+                           e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                           e.target.style.transform = 'translateY(0) scale(1)';
+                           e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+                         }}
                       >
                         📥 {pendingCount} waiting for you
                       </button>
@@ -779,31 +779,31 @@ function formatDateMMDDYYYY(dateStr) {
                           if (onOpenSentProposalListModal) onOpenSentProposalListModal();
                         }}
                                                style={{
-                          background: 'linear-gradient(135deg, #1e8449 0%, #27ae60 50%, #2ecc71 100%)',
+                          background: 'rgba(255, 255, 255, 0.1)',
                           color: '#ffffff',
-                          border: 'none',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
                           borderRadius: '6px',
                           padding: isMobile ? '3px 4px' : '6px 8px',
                           fontSize: isMobile ? '0.5rem' : '0.75rem',
                           fontWeight: '600',
                           cursor: 'pointer',
-                          boxShadow: '0 2px 6px rgba(30, 132, 73, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
                           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                           width: '100%',
                           textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
                           position: 'relative',
                           overflow: 'hidden'
                         }}
-                        onMouseEnter={(e) => {
-                          e.target.style.background = 'linear-gradient(135deg, #27ae60 0%, #2ecc71 50%, #58d68d 100%)';
-                          e.target.style.transform = 'translateY(-2px) scale(1.02)';
-                          e.target.style.boxShadow = '0 4px 12px rgba(30, 132, 73, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(0, 0, 0, 0.3)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.background = 'linear-gradient(135deg, #1e8449 0%, #27ae60 50%, #2ecc71 100%)';
-                          e.target.style.transform = 'translateY(0) scale(1)';
-                          e.target.style.boxShadow = '0 2px 6px rgba(30, 132, 73, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.2)';
-                        }}
+                                                 onMouseEnter={(e) => {
+                           e.target.style.background = 'linear-gradient(135deg, rgba(52, 152, 219, 0.3), rgba(52, 152, 219, 0.25), rgba(52, 152, 219, 0.2))';
+                           e.target.style.transform = 'translateY(-1px) scale(1.01)';
+                           e.target.style.boxShadow = '0 4px 12px rgba(52, 152, 219, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)';
+                         }}
+                         onMouseLeave={(e) => {
+                           e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                           e.target.style.transform = 'translateY(0) scale(1)';
+                           e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+                         }}
                       >
                         📤 {sentCount} waiting for opponents
                       </button>

@@ -25,7 +25,7 @@ function AppHeader() {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      padding: "0.5rem 0",
+      padding: "0.25rem 0 0.5rem 0",
       position: "fixed",
       top: 0,
       left: 0,
