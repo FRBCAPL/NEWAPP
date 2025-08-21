@@ -599,8 +599,8 @@ function formatDateMMDDYYYY(dateStr) {
                           justifyContent: 'space-between',
                           minHeight: isMobile ? '90px' : '140px',
                          lineHeight: 1,
-                                                     background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05))',
-                            border: '1px solid rgba(76, 175, 80, 0.3)',
+                                                     background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.35), rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.25))',
+                            border: '1px solid rgba(76, 175, 80, 0.7)',
                           padding: isMobile ? '4px' : '6px',
                           borderRadius: isMobile ? '12px' : '18px',
                           zIndex: 1,
@@ -618,18 +618,18 @@ function formatDateMMDDYYYY(dateStr) {
                                 aria-label="Open calendar to schedule matches by date"
                                 role="button"
                                 tabIndex="0"
-                               onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.05)';
-                                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.25), rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.15))';
-                   e.currentTarget.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)';
-                   e.currentTarget.style.border = '1px solid rgba(76, 175, 80, 0.5)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)';
-                                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05))';
-                   e.currentTarget.style.boxShadow = '0 2px 8px rgba(76, 175, 80, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)';
-                   e.currentTarget.style.border = '1px solid rgba(76, 175, 80, 0.3)';
-                }}
+                                                onMouseEnter={(e) => {
+                   e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.05)';
+                                     e.currentTarget.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.45), rgba(76, 175, 80, 0.4), rgba(76, 175, 80, 0.35))';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.5), inset 0 1px 0 rgba(255,255,255,0.2)';
+                    e.currentTarget.style.border = '1px solid rgba(76, 175, 80, 0.8)';
+                 }}
+                 onMouseLeave={(e) => {
+                   e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)';
+                                     e.currentTarget.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.35), rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.25))';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(76, 175, 80, 0.4), inset 0 1px 0 rgba(255,255,255,0.1)';
+                    e.currentTarget.style.border = '1px solid rgba(76, 175, 80, 0.7)';
+                 }}
                               >
                                                                                                                                                                                                                                                  <div style={{ 
                                                                                        fontSize: isMobile ? '0.5rem' : '0.7rem',
@@ -1224,14 +1224,18 @@ function formatDateMMDDYYYY(dateStr) {
                        cursor: 'pointer',
                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                      }}
-                 onMouseEnter={(e) => {
-                   e.currentTarget.style.background = 'rgba(0,0,0,0.5)';
-                   e.currentTarget.style.border = '1px solid rgba(255,255,255,0.25)';
-                 }}
-                 onMouseLeave={(e) => {
-                   e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)';
-                   e.currentTarget.style.border = '1px solid rgba(255,255,255,0.15)';
-                 }}
+                                   onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 68, 68, 0.15), rgba(255, 68, 68, 0.1), rgba(255, 68, 68, 0.05))';
+                    e.currentTarget.style.border = '1px solid rgba(255, 68, 68, 0.4)';
+                    e.currentTarget.style.transform = 'translateY(-1px) scale(1.01)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 68, 68, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)';
+                    e.currentTarget.style.border = '1px solid rgba(255,255,255,0.15)';
+                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+                  }}
                >
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <div style={{
                                               fontSize: isMobile ? '0.6rem' : '1.1rem',
