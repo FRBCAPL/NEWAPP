@@ -43,7 +43,11 @@ export function sendProposalEmail({
   const queryString = Object.entries(matchDetails)
     .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
     .join('&');
-  const confirmLink = `https://frbcapl.github.io/NEWAPP/#/confirm-match?${queryString}`;
+  
+  // Always use production URL for email links
+  const baseUrl = "https://newapp-1-ic1v.onrender.com";
+  const confirmLink = `${baseUrl}/#/confirm-match?${queryString}`;
+  const counterProposeLink = `${baseUrl}/#/confirm-match?${queryString}`;
 
   return emailjs.send(
     'service_l5q2047',
@@ -60,6 +64,7 @@ export function sendProposalEmail({
       gameType,
       raceLength,
       confirm_link: confirmLink,
+      counter_propose_link: counterProposeLink,
     },
     'g6vqrOs_Jb6LL1VCZ'
   );

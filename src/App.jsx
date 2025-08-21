@@ -145,12 +145,12 @@ function App() {
                 )
               }
             />
+            <Route path="/confirm-match" element={<ConfirmMatch />} />
             <Route
               path="*"
               element={
                 <main className="main-app-content">
                   <Routes>
-                    <Route path="/confirm-match" element={<ConfirmMatch />} />
                     <Route
                       path="/chat"
                       element={
