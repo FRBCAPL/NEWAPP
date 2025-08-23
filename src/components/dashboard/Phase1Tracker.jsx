@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { format, differenceInDays, differenceInHours, isAfter, isBefore } from 'date-fns';
 import { seasonService } from '../../services/seasonService.js';
 import { BACKEND_URL } from '../../config.js';
-import Phase1RulesModal from '../modal/Phase1RulesModal';
+
 import Phase1TrackerSkeleton from '../Phase1TrackerSkeleton';
 
 // Utility function to format date as MM-DD-YYYY (same as Dashboard)
@@ -67,7 +67,17 @@ function formatDateMMDDYYYY(dateStr) {
     onOpenMessageCenter,
     currentUser,
     allPlayers,
-    onSmartMatchClick
+    onSmartMatchClick,
+    // Phase1 modal state and handlers
+    showPhase1Rules,
+    setShowPhase1Rules,
+    showPhase1Overview,
+    setShowPhase1Overview,
+    // Phase1 data state setters
+    setPlayerStats,
+    setTimeLeft,
+    setDeadlineStatus,
+    setPhase1EndDate
   }) => {
     // Data validation
     const validateProps = () => {
@@ -94,21 +104,23 @@ function formatDateMMDDYYYY(dateStr) {
     useEffect(() => {
       validateProps();
     }, [playerName, playerLastName, selectedDivision, completedMatches, totalRequiredMatches]);
-  const [timeLeft, setTimeLeft] = useState(null);
-  const [deadlineStatus, setDeadlineStatus] = useState('normal');
   const [standingsImpact, setStandingsImpact] = useState(null);
-  const [playerStats, setPlayerStats] = useState(null);
   const [standings, setStandings] = useState([]);
   const [loadingStandings, setLoadingStandings] = useState(false);
-  const [phase1EndDate, setPhase1EndDate] = useState(null);
   const [isExpanded, setIsExpanded] = useState(true);
   const [showCalendar, setShowCalendar] = useState(false);
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(null);
-  const [showPhase1Rules, setShowPhase1Rules] = useState(false);
+  
+  // Local state for data that needs to be managed here
+  const [localTimeLeft, setLocalTimeLeft] = useState(null);
+  const [localDeadlineStatus, setLocalDeadlineStatus] = useState('normal');
+  const [localPhase1EndDate, setLocalPhase1EndDate] = useState(null);
+  const [localPlayerStats, setLocalPlayerStats] = useState(null);
 
   useEffect(() => {
     if (!selectedDivision || currentPhase !== 'scheduled') {
+      setLocalTimeLeft(null);
       setTimeLeft(null);
       return;
     }
@@ -164,30 +176,40 @@ function formatDateMMDDYYYY(dateStr) {
          const phase1EndDate = new Date(phase1EndMatch.date);
          phase1EndDate.setHours(23, 59, 59, 999); // End of day
          
-         // Store the date for display
-         setPhase1EndDate(phase1EndDate);
-         
-         const now = new Date();
-        
-        if (isAfter(now, phase1EndDate)) {
-          setTimeLeft({ days: 0, hours: 0, passed: true });
-          setDeadlineStatus('passed');
-        } else {
-          const daysLeft = differenceInDays(phase1EndDate, now);
-          const hoursLeft = differenceInHours(phase1EndDate, now) % 24;
+                   // Store the date for display
+          setLocalPhase1EndDate(phase1EndDate);
+          setPhase1EndDate(phase1EndDate);
           
-          setTimeLeft({ days: daysLeft, hours: hoursLeft, passed: false });
+          const now = new Date();
           
-          if (daysLeft <= 0 && hoursLeft <= 24) {
-            setDeadlineStatus('critical');
-          } else if (daysLeft <= 2) {
-            setDeadlineStatus('urgent');
-          } else if (daysLeft <= 7) {
-            setDeadlineStatus('warning');
-          } else {
-            setDeadlineStatus('normal');
-          }
-        }
+         if (isAfter(now, phase1EndDate)) {
+           const timeLeftData = { days: 0, hours: 0, passed: true };
+           setLocalTimeLeft(timeLeftData);
+           setTimeLeft(timeLeftData);
+           setLocalDeadlineStatus('passed');
+           setDeadlineStatus('passed');
+         } else {
+           const daysLeft = differenceInDays(phase1EndDate, now);
+           const hoursLeft = differenceInHours(phase1EndDate, now) % 24;
+           
+           const timeLeftData = { days: daysLeft, hours: hoursLeft, passed: false };
+           setLocalTimeLeft(timeLeftData);
+           setTimeLeft(timeLeftData);
+           
+           if (daysLeft <= 0 && hoursLeft <= 24) {
+             setLocalDeadlineStatus('critical');
+             setDeadlineStatus('critical');
+           } else if (daysLeft <= 2) {
+             setLocalDeadlineStatus('urgent');
+             setDeadlineStatus('urgent');
+           } else if (daysLeft <= 7) {
+             setLocalDeadlineStatus('warning');
+             setDeadlineStatus('warning');
+           } else {
+             setLocalDeadlineStatus('normal');
+             setDeadlineStatus('normal');
+           }
+         }
       } catch (error) {
         console.error('Error calculating Phase 1 deadline from schedule:', error);
       }
@@ -328,13 +350,15 @@ function formatDateMMDDYYYY(dateStr) {
       else positionDisplay = '10th+';
     }
 
-    setPlayerStats({
-      wins,
-      losses,
-      winRate,
-      position: positionDisplay,
-      actualPosition
-    });
+         const playerStatsData = {
+       wins,
+       losses,
+       winRate,
+       position: positionDisplay,
+       actualPosition
+     };
+     setLocalPlayerStats(playerStatsData);
+     setPlayerStats(playerStatsData);
   };
 
   // Helper function to get ordinal suffix (1st, 2nd, 3rd, etc.)
@@ -348,35 +372,35 @@ function formatDateMMDDYYYY(dateStr) {
   };
 
   // Show skeleton while loading
-  if (loadingStandings || !timeLeft || !standingsImpact || currentPhase !== 'scheduled') {
+  if (loadingStandings || !localTimeLeft || !standingsImpact || currentPhase !== 'scheduled') {
     return <Phase1TrackerSkeleton isMobile={isMobile} />;
   }
 
   const getPrimaryColor = () => {
-    if (deadlineStatus === 'passed') return '#e74c3c';      // Lighter dark red
-    if (deadlineStatus === 'critical') return '#ff6b6b';   // Lighter red
-    if (deadlineStatus === 'urgent') return '#ff8800';     // Keep orange
-    if (deadlineStatus === 'warning') return '#ffaa00';    // Keep yellow
+    if (localDeadlineStatus === 'passed') return '#e74c3c';      // Lighter dark red
+    if (localDeadlineStatus === 'critical') return '#ff6b6b';   // Lighter red
+    if (localDeadlineStatus === 'urgent') return '#ff8800';     // Keep orange
+    if (localDeadlineStatus === 'warning') return '#ffaa00';    // Keep yellow
     return '#4CAF50';                                      // Green for Phase 1
   };
 
 
 
   const getStatusMessage = () => {
-    if (deadlineStatus === 'passed') {
+    if (localDeadlineStatus === 'passed') {
       return '⚠️ DEADLINE PASSED!';
-    } else if (deadlineStatus === 'critical') {
-      const endDate = phase1EndDate ? format(phase1EndDate, isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
-      return `🚨 CRITICAL: ENDS in ${timeLeft.hours} hours! (${endDate})`;
-    } else if (deadlineStatus === 'urgent') {
-      const endDate = phase1EndDate ? format(phase1EndDate, isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
-      return `⚠️ URGENT: ENDS in ${timeLeft.days} days! (${endDate})`;
-    } else if (deadlineStatus === 'warning') {
-      const endDate = phase1EndDate ? format(phase1EndDate, isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
-      return `⚠️ WARNING: ENDS in ${timeLeft.days} days. (${endDate})`;
+    } else if (localDeadlineStatus === 'critical') {
+      const endDate = localPhase1EndDate ? format(localPhase1EndDate, isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
+      return `🚨 CRITICAL: ENDS in ${localTimeLeft.hours} hours! (${endDate})`;
+    } else if (localDeadlineStatus === 'urgent') {
+      const endDate = localPhase1EndDate ? format(localPhase1EndDate, isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
+      return `⚠️ URGENT: ENDS in ${localTimeLeft.days} days! (${endDate})`;
+    } else if (localDeadlineStatus === 'warning') {
+      const endDate = localPhase1EndDate ? format(localPhase1EndDate, isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
+      return `⚠️ WARNING: ENDS in ${localTimeLeft.days} days. (${endDate})`;
     } else {
-      const endDate = phase1EndDate ? format(phase1EndDate, isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
-      return `ENDS in ${timeLeft.days} days. (${endDate})`;
+      const endDate = localPhase1EndDate ? format(localPhase1EndDate, isMobile ? 'MMM d' : 'MMM d, yyyy') : '';
+      return `ENDS in ${localTimeLeft.days} days. (${endDate})`;
     }
   };
 
@@ -419,16 +443,16 @@ function formatDateMMDDYYYY(dateStr) {
      aria-label={isExpanded ? "Collapse Phase 1 tracker" : "Expand Phase 1 tracker"}
     >
              {/* Header */}
-               <div style={{
-          position: 'relative',
-          textAlign: 'center',
-                              marginBottom: isMobile ? '0px' : '4px',
-           padding: isMobile ? '6px' : '8px',
-          borderRadius: '12px',
-                                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(20, 20, 20, 0.8))',
-           border: '1px solid rgba(255,255,255,0.15)',
-           boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)'
-        }}>
+                                                               <div style={{
+            position: 'relative',
+            textAlign: 'center',
+                                marginBottom: isMobile ? '0px' : '4px',
+             padding: isMobile ? '2px' : '4px',
+            borderRadius: '12px',
+                                  background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(20, 20, 20, 0.8))',
+             border: '1px solid rgba(255,255,255,0.15)',
+             boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)'
+          }}>
                                                                                                                                                                                                <h3 style={{
                   margin: 0,
                   color: '#ffffff',
@@ -444,26 +468,25 @@ function formatDateMMDDYYYY(dateStr) {
                   minHeight: isMobile ? '2.5rem' : '3rem'
                 }}>
                     {/* Center - Status indicators and Phase 1 text */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: isMobile ? '2px' : '6px'
-                    }}>
-                      {deadlineStatus === 'critical' && '🚨'}
-                      {deadlineStatus === 'urgent' && '⚠️'}
-                      {deadlineStatus === 'warning' && '⚠️'}
-                      {deadlineStatus === 'passed' && '⏰'}
-                      {deadlineStatus === 'normal' && ''}
-                    </div>
+                                         <div style={{
+                       display: 'flex',
+                       alignItems: 'center',
+                       justifyContent: 'center',
+                       gap: isMobile ? '2px' : '6px'
+                     }}>
+                       {localDeadlineStatus === 'critical' && '🚨'}
+                       {localDeadlineStatus === 'urgent' && '⚠️'}
+                       {localDeadlineStatus === 'warning' && '⚠️'}
+                       {localDeadlineStatus === 'passed' && '⏰'}
+                       {localDeadlineStatus === 'normal' && ''}
+                     </div>
                     
                     {/* Phase 1 Controls - Smart Match, Phase Indicator, Rules */}
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: isMobile ? '4px' : '8px',
-                      marginTop: isMobile ? '4px' : '6px'
+                      gap: isMobile ? '4px' : '8px'
                     }}>
                                              {/* Smart Match Button - Left */}
                        <button
@@ -481,23 +504,23 @@ function formatDateMMDDYYYY(dateStr) {
                          aria-label="Open smart match making"
                          role="button"
                          tabIndex="0"
-                                                   style={{
-                            background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.3), rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1))',
-                            border: '1px solid rgba(255, 193, 7, 0.4)',
-                            color: '#ffffff',
-                            fontSize: isMobile ? '0.5rem' : '0.8rem',
-                            fontWeight: 'bold',
-                            padding: isMobile ? '6px 10px' : '8px 14px',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                            boxShadow: '0 2px 8px rgba(255, 193, 7, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
-                            zIndex: 10
-                          }}
+                                                                                                       style={{
+                             background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.3), rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1))',
+                             border: '1px solid rgba(255, 193, 7, 0.4)',
+                             color: '#ffffff',
+                             fontSize: isMobile ? '0.5rem' : '0.8rem',
+                             fontWeight: 'bold',
+                             padding: isMobile ? '8px 12px' : '10px 16px',
+                             borderRadius: '8px',
+                             cursor: 'pointer',
+                             transition: 'all 0.3s ease',
+                             display: 'flex',
+                             alignItems: 'center',
+                             gap: '4px',
+                             textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                             boxShadow: '0 2px 8px rgba(255, 193, 7, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
+                             zIndex: 10
+                           }}
                                                    onMouseEnter={(e) => {
                             e.target.style.background = 'linear-gradient(135deg, rgba(255, 193, 7, 0.4), rgba(255, 193, 7, 0.3), rgba(255, 193, 7, 0.2))';
                             e.target.style.transform = 'scale(1.02) translateY(-1px)';
@@ -512,19 +535,39 @@ function formatDateMMDDYYYY(dateStr) {
                          🧠 SMART MATCH
                        </button>
                       
-                      {/* Phase 1 Indicator - Center */}
-                      <span style={{ 
-                        fontSize: isMobile ? '0.9rem' : '1.1rem',
-                        background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd, ${primaryColor})`,
-                        padding: isMobile ? '4px 8px' : '6px 12px',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2), 0 0 10px rgba(255,255,255,0.1)',
-                        border: '1px solid rgba(255,255,255,0.3)',
-                        textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                        fontWeight: 'bold'
-                      }}>
-                        Phase 1
-                      </span>
+                                                                    {/* Phase 1 Indicator - Center */}
+                                               <span 
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           setShowPhase1Overview(true);
+                         }}
+                         style={{ 
+                           fontSize: isMobile ? '0.5rem' : '0.8rem',
+                           background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd, ${primaryColor})`,
+                           padding: isMobile ? '8px 12px' : '10px 16px',
+                           borderRadius: '8px',
+                           boxShadow: '0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2), 0 0 10px rgba(255,255,255,0.1)',
+                           border: '1px solid rgba(255,255,255,0.3)',
+                           textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                           fontWeight: 'bold',
+                           cursor: 'pointer',
+                           transition: 'all 0.3s ease'
+                                                  }}
+                         onMouseEnter={(e) => {
+                           e.target.style.transform = 'scale(1.02) translateY(-1px)';
+                           e.target.style.boxShadow = '0 6px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 15px rgba(255,255,255,0.2)';
+                         }}
+                         onMouseLeave={(e) => {
+                           e.target.style.transform = 'scale(1) translateY(0)';
+                           e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2), 0 0 10px rgba(255,255,255,0.1)';
+                         }}
+                         title="Click to view Phase 1 overview"
+                         role="button"
+                         tabIndex="0"
+                         aria-label="Open Phase 1 overview"
+                                                  >
+                           PHASE 1
+                         </span>
                       
                                              {/* Rules Button - Right */}
                        <button
@@ -535,23 +578,23 @@ function formatDateMMDDYYYY(dateStr) {
                          aria-label="Open Phase 1 rules and information"
                          role="button"
                          tabIndex="0"
-                                                  style={{
-                            background: 'linear-gradient(135deg, rgba(255, 68, 68, 0.3), rgba(255, 68, 68, 0.2), rgba(255, 68, 68, 0.1))',
-                            border: '1px solid rgba(255, 68, 68, 0.4)',
-                            color: '#ffffff',
-                            fontSize: isMobile ? '0.5rem' : '0.8rem',
-                            fontWeight: 'bold',
-                            padding: isMobile ? '6px 10px' : '8px 14px',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                            boxShadow: '0 2px 8px rgba(255, 68, 68, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
-                            zIndex: 10
-                          }}
+                                                                                                     style={{
+                             background: 'linear-gradient(135deg, rgba(255, 68, 68, 0.3), rgba(255, 68, 68, 0.2), rgba(255, 68, 68, 0.1))',
+                             border: '1px solid rgba(255, 68, 68, 0.4)',
+                             color: '#ffffff',
+                             fontSize: isMobile ? '0.5rem' : '0.8rem',
+                             fontWeight: 'bold',
+                             padding: isMobile ? '8px 12px' : '10px 16px',
+                             borderRadius: '8px',
+                             cursor: 'pointer',
+                             transition: 'all 0.3s ease',
+                             display: 'flex',
+                             alignItems: 'center',
+                             gap: '4px',
+                             textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                             boxShadow: '0 2px 8px rgba(255, 68, 68, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
+                             zIndex: 10
+                           }}
                                                   onMouseEnter={(e) => {
                             e.target.style.background = 'linear-gradient(135deg, rgba(255, 68, 68, 0.4), rgba(255, 68, 68, 0.3), rgba(255, 68, 68, 0.2))';
                             e.target.style.transform = 'scale(1.02) translateY(-1px)';
@@ -1027,7 +1070,7 @@ function formatDateMMDDYYYY(dateStr) {
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
                                    marginBottom: isMobile ? '1px' : '1px'
                  }}>
-                   {playerStats?.wins || 0}-{playerStats?.losses || 0} ({playerStats?.winRate || 0}%)
+                                       {localPlayerStats?.wins || 0}-{localPlayerStats?.losses || 0} ({localPlayerStats?.winRate || 0}%)
                 </div>
                                 <div style={{
                  fontSize: isMobile ? '0.4rem' : '0.75rem',
@@ -1091,7 +1134,7 @@ function formatDateMMDDYYYY(dateStr) {
                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
                                  marginBottom: isMobile ? '1px' : '1px'
                }}>
-                 {loadingStandings ? '...' : (playerStats?.position || 'N/A')}
+                                   {loadingStandings ? '...' : (localPlayerStats?.position || 'N/A')}
               </div>
                <div style={{
                  fontSize: isMobile ? '0.4rem' : '0.75rem',
@@ -1490,8 +1533,8 @@ function formatDateMMDDYYYY(dateStr) {
                 </div>
               </div>
             
-                                                   <CalendarGrid 
-                phase1EndDate={phase1EndDate}
+                                                                                                       <CalendarGrid 
+                 phase1EndDate={localPhase1EndDate}
                 isMobile={isMobile}
                 currentMonth={currentCalendarMonth}
                 onMonthChange={setCurrentCalendarMonth}
@@ -1512,16 +1555,9 @@ function formatDateMMDDYYYY(dateStr) {
         </div>
              )}
 
-       {/* Phase 1 Rules Modal */}
-       <Phase1RulesModal 
-         isOpen={showPhase1Rules}
-         onClose={() => setShowPhase1Rules(false)}
-         isMobile={isMobile}
-       />
-
-     </div>
-   );
- };
+      </div>
+    );
+  };
 
 // Calendar Grid Component
 const CalendarGrid = ({ phase1EndDate, isMobile, currentMonth, onMonthChange, onOpenOpponentsModal, upcomingMatches, playerName, playerLastName, onDateSelect, onMatchClick }) => {

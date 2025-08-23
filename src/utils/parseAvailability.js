@@ -11,8 +11,9 @@ export function parseAvailability(str) {
     Thursday: "Thu",
     Friday: "Fri",
     Saturday: "Sat",
+    Sunday: "Sun",
   };
-  const result = { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [] };
+  const result = { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: [] };
   if (!str) return result;
   str.split(/\r?\n/).forEach(line => {
     const match = line.match(/Day:\s*(\w+),\s*Available From:\s*([\w:]+),\s*Available Until:\s*([\w: ]+)/i);

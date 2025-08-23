@@ -1,23 +1,17 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import Highlight from "../Highlight";
-import fetchSheetData from "../../utils/fetchSheetData";
 import PlayerAvailabilityModal from "./PlayerAvailabilityModal";
 import MatchProposalModal from "./MatchProposalModal";
 import DraggableModal from "./DraggableModal";
 import styles from "./PlayerSearch.module.css";
-
-// --- Google Sheet details (safe for public read-only use) ---
-const sheetID = "1tvMgMHsRwQxsR6lMNlSnztmwpK7fhZeNEyqjTqmRFRc";
-const pinSheetName = "BCAPL SIGNUP";
+import { BACKEND_URL } from '../../config.js';
 
 // Division-specific standings URLs (same as Dashboard)
 const STANDINGS_URLS = {
   "FRBCAPL TEST": "https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=b345a437-3415-4765-b19a-b2f7014f2cfa",
   "Singles Test": "https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=9058a0cc-3231-4118-bd91-b305006fe578"
 };
-
-import { BACKEND_URL } from '../../config.js';
 
 // --- Utility: Normalize time string for display ---
 function normalizeTime(str) {
@@ -39,8 +33,9 @@ function parseAvailability(str) {
     Thursday: "Thu",
     Friday: "Fri",
     Saturday: "Sat",
+    Sunday: "Sun",
   };
-  const result = { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [] };
+  const result = { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: [] };
   if (!str) return result;
   str.split(/\r?\n/).forEach(line => {
     const match = line.match(/Day:\s*(\w+),\s*Available From:\s*([\w:]+),\s*Available Until:\s*([\w: ]+)/i);
@@ -231,7 +226,7 @@ export default function PlayerSearch({
     // Removed all console.log statements for production
   }, [players]);
 
-  // --- Load players from Google Sheet and standings ---
+  // --- Load players from MongoDB and standings ---
   useEffect(() => {
     let isMounted = true;
     async function loadData() {
@@ -245,37 +240,40 @@ export default function PlayerSearch({
           // Removed all console.log statements for production
         }
 
-        // Load players from Google Sheet
-        const rows = await fetchSheetData(sheetID, `${pinSheetName}!A1:L1000`);
-        if (!rows || rows.length === 0) {
+        // Load players from MongoDB
+        const response = await fetch(`${BACKEND_URL}/api/users/search?approved=true`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch players from database');
+        }
+        
+        const data = await response.json();
+        if (!data.users || data.users.length === 0) {
           if (isMounted) {
             setPlayers([]);
-            // Removed all console.log statements for production
           }
           setLoading(false);
           return;
         }
         
-        let playerList = rows
-          .slice(1)
-          .map(row => ({
-            firstName: row[0] || "",
-            lastName: row[1] || "",
-            email: row[2] || "",
-            phone: row[3] || "",
-            locations: row[8] || "",
-            availability: parseAvailability(row[7] || ""),
-            pin: row[11] || "",
-            preferredContacts: (row[10] || "")
-              .split(/\r?\n/)
-              .map(method => method.trim().toLowerCase())
-              .filter(Boolean),
+        let playerList = data.users
+          .map(user => ({
+            firstName: user.firstName || "",
+            lastName: user.lastName || "",
+            email: user.email || "",
+            phone: user.phone || "",
+            locations: user.locations || "",
+            availability: user.availability || { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: [] },
+            pin: user.pin || "",
+            preferredContacts: user.preferredContacts || [],
+            division: user.division || "",
+            divisions: user.divisions || []
           }))
           .filter(
             p =>
               p.email &&
               p.firstName &&
               p.lastName &&
+              p.isApproved &&
               `${p.firstName} ${p.lastName}`.toLowerCase() !== excludeName?.toLowerCase()
           );
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { userService } from '../../services/userService';
 import { seasonService } from '../../services/seasonService';
-import fetchSheetData from '../../utils/fetchSheetData';
 import { parseAvailability } from '../../utils/parseAvailability';
 import OpponentsModal from './OpponentsModal';
 import PlayerSearch from './PlayerSearch';
@@ -9,9 +8,6 @@ import PlayerAvailabilityModal from './PlayerAvailabilityModal';
 import MatchProposalModal from './MatchProposalModal';
 import DraggableModal from './DraggableModal';
 import { BACKEND_URL } from '../../config.js';
-
-const sheetID = "1tvMgMHsRwQxsR6lMNlSnztmwpK7fhZeNEyqjTqmRFRc";
-const pinSheetName = "BCAPL SIGNUP";
 
 export default function DivisionSelectorModal({ 
   userName, 
@@ -78,8 +74,8 @@ export default function DivisionSelectorModal({
       const scheduleData = await scheduleResponse.json();
       setScheduledMatches(scheduleData);
       
-      // Fetch players data with cache-busting
-      const playersResponse = await fetch(`${BACKEND_URL}/api/users?t=${timestamp}`, {
+      // Fetch players data from MongoDB
+      const playersResponse = await fetch(`${BACKEND_URL}/api/users/search?approved=true&division=${encodeURIComponent(division)}`, {
         method: 'GET',
         headers: {
           'Cache-Control': 'no-cache',
@@ -88,7 +84,7 @@ export default function DivisionSelectorModal({
       });
       if (!playersResponse.ok) throw new Error("Players not found");
       const playersData = await playersResponse.json();
-      setPlayers(playersData);
+      setPlayers(playersData.users || []);
       
     } catch (error) {
       console.error('Failed to load schedule data:', error);
@@ -194,34 +190,25 @@ export default function DivisionSelectorModal({
     if (fromChat) {
       // From chat: fetch detailed player data and open availability modal
       try {
-        const rows = await fetchSheetData(sheetID, `${pinSheetName}!A1:L1000`);
-        const sheetData = rows
-          .slice(1)
-          .map(row => ({
-            firstName: row[0] || "",
-            lastName: row[1] || "",
-            email: row[2] || "",
-            phone: row[3] || "",
-            locations: row[8] || "",
-            availability: row[7] || "",
-            pin: row[11] || "",
-            preferredContacts: (row[10] || "")
-              .split(/\r?\n/)
-              .map(method => method.trim().toLowerCase())
-              .filter(Boolean),
-          }))
-          .filter(p => p.email && p.firstName && p.lastName);
+        const response = await fetch(`${BACKEND_URL}/api/users/search?approved=true`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch players from database');
+        }
         
-        const detailedPlayer = sheetData.find(
+        const data = await response.json();
+        const detailedPlayer = data.users.find(
           p => `${p.firstName} ${p.lastName}`.trim().toLowerCase() === opponentName.trim().toLowerCase()
         );
         
         if (detailedPlayer) {
-          // Parse availability data
-          const parsedAvailability = parseAvailability(detailedPlayer.availability);
+          // Parse availability data if it's a string, otherwise use as-is
+          const availability = typeof detailedPlayer.availability === 'string' 
+            ? parseAvailability(detailedPlayer.availability)
+            : detailedPlayer.availability;
+          
           const playerWithAvailability = {
             ...detailedPlayer,
-            availability: parsedAvailability
+            availability: availability
           };
           setSelectedOpponent(playerWithAvailability);
         } else {

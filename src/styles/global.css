@@ -516,6 +516,12 @@ body, html {
   100% { background-position: 0% 50%; }
 }
 
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
 .app-header-title {
   font-family: 'Caveat', 'Montserrat', Arial, sans-serif;
   font-weight: 700;

@@ -1,825 +1,1042 @@
-:root {
-  --accent-red: #b80000;
-  --accent-red-light: #e53e3e;
-  --background-dark: #18181b;
-  --background-panel: #222;
-  --background-light: #232326;
-  --text-primary: #fff;
-  --text-secondary: #ffeaea;
-}
+/* ============================================================================
+   ADMIN DASHBOARD STYLES
+   ============================================================================ */
 
 .adminDashboardRoot {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  background: var(--background-dark);
   min-height: 100vh;
-  height: 100vh;
-  width: 100vw;
-  max-width: 100vw;
-  margin: 0;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  overflow-x: hidden;
-  align-items: center;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Navigation Header */
 .adminDashboardNav {
   display: flex;
-  gap: 1rem;
-  background: var(--background-panel);
-  color: var(--text-primary);
-  padding: 1rem 2rem;
+  justify-content: space-between;
   align-items: center;
-  border-bottom: 2px solid var(--accent-red);
+  padding: 1rem 2rem;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.navLeft, .navRight {
+  display: flex;
+  gap: 1rem;
 }
 
 .adminDashboardNav button {
-  background: var(--accent-red);
-  color: var(--text-primary);
-  border: none;
-  border-radius: 6px;
-  padding: 0.5em 1.2em;
-  font-weight: 600;
-  cursor: pointer;
-  margin-right: 0.5rem;
-  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
-  box-shadow: 0 2px 6px #0002;
-}
-.adminDashboardNav button:hover {
-  background: var(--accent-red-light);
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
-  box-shadow: 0 4px 18px var(--accent-red-light);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
 }
 
-.admin-app-content {
-  width: 100vw !important;
-  height: 100vh !important;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  background: #222 !important;
+.adminDashboardNav button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
 }
 
+/* Main Content Area */
 .adminDashboardMainColumn {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  width: 100%;
-  max-width: 1100px;
-  margin: 2rem auto;
-  box-sizing: border-box;
-  align-items: flex-start;
-  padding: 0 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
-.adminControlsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1.2rem;
-  width: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
-  box-sizing: border-box;
+/* Banner Styles */
+.banner {
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: slideIn 0.3s ease;
 }
 
-.adminControlsGrid > .adminSection {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  overflow-x: visible;
+.banner.success {
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  color: #064e3b;
+  border: 1px solid #22c55e;
 }
 
-.adminRowWrapper {
+.banner.error {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  color: #7f1d1d;
+  border: 1px solid #ef4444;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Section Navigation */
+.sectionNavigation {
   display: flex;
   gap: 0.5rem;
-  width: 100%;
-  max-width: 100vw;
-  min-width: 0;
-  box-sizing: border-box;
+  margin-bottom: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.5rem;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
 }
 
-.adminButtonStack {
+.sectionButton {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sectionButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.sectionButton.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Section Content */
+.sectionContent {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Overview Section */
+.overviewSection {
+  text-align: center;
+}
+
+.overviewSection h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.overviewSection p {
+  font-size: 1.1rem;
+  color: #cbd5e1;
+  margin-bottom: 3rem;
+}
+
+.quickActions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.quickActionButton {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  color: #fff;
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  padding: 2rem 1.5rem;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+  font-weight: 600;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  min-width: 120px;
-  max-width: 150px;
-  flex-shrink: 0;
+  align-items: center;
+  gap: 1rem;
+  backdrop-filter: blur(10px);
 }
 
-.adminSectionRow {
+.quickActionButton:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+  border-color: rgba(59, 130, 246, 0.6);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+.quickActionButton svg {
+  font-size: 2rem;
+  color: #3b82f6;
+}
+
+/* ============================================================================
+   WORKFLOW COMPONENTS
+   ============================================================================ */
+
+.workflowContainer {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.workflowHeader {
   display: flex;
-  gap: 0.3rem;
-  flex: 1;
-  min-width: 0;
-  max-width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
 }
 
-.adminSection {
-  flex: 1;
-  min-width: 0;
-  max-width: 100%;
-  padding: 0.3rem;
-  margin: 0;
-  box-sizing: border-box;
+.workflowHeader h3 {
+  font-size: 1.8rem;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.workflowProgress {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.workflowSteps {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
   overflow-x: auto;
-  background: var(--background-panel);
+  padding-bottom: 1rem;
+}
+
+.workflowStepIndicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 12px;
+  min-width: 200px;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.workflowStepIndicator.pending {
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+}
+
+.workflowStepIndicator.active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: #fff;
+}
+
+.workflowStepIndicator.completed {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%);
+  border-color: rgba(34, 197, 94, 0.5);
+  color: #fff;
+}
+
+.stepNumber {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.workflowStepIndicator.pending .stepNumber {
+  background: #475569;
+  color: #cbd5e1;
+}
+
+.workflowStepIndicator.active .stepNumber {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.workflowStepIndicator.completed .stepNumber {
+  background: #22c55e;
+  color: #fff;
+}
+
+.stepInfo {
+  flex: 1;
+}
+
+.stepTitle {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.stepDescription {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.workflowContent {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.workflowStep {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.stepInstructions {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border-left: 4px solid #3b82f6;
+}
+
+.instructionItem {
+  margin-bottom: 0.75rem;
+  padding-left: 1rem;
+  position: relative;
+  line-height: 1.6;
+}
+
+.instructionItem:last-child {
+  margin-bottom: 0;
+}
+
+.instructionItem::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: #3b82f6;
+  font-weight: bold;
+}
+
+.stepActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.workflowButton {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.5rem;
   border-radius: 8px;
-  border: 1px solid var(--border-color);
-}
-
-.adminSection h3,
-.adminSection label,
-.adminSection th,
-.adminSection td {
-  font-size: 0.9em;
-  margin: 0.1em 0;
-  padding: 0.2em 0.3em;
-  box-sizing: border-box;
-  max-width: 100%;
-  min-width: 0;
-  word-break: break-word;
-}
-
-.adminSection input,
-.adminSection select,
-.adminSection button {
-  font-size: 0.9em;
-  padding: 0.2em 0.4em;
-  margin: 0.1em 0;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-.adminSection table {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  overflow-x: auto;
-  display: block;
-  table-layout: auto;
-  word-break: break-word;
-  font-size: 0.85em;
-}
-
-.adminActionButton {
-  font-size: 0.9em;
-  padding: 0.3em 0.6em;
-  min-width: 60px;
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.adminChatWrapper {
-  width: 100%;
-  margin-top: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
   display: flex;
-  flex-direction: row;
-  gap: 1.2rem;
-  align-items: flex-start;
-  max-width: 100vw;
-  overflow-x: hidden;
-  box-sizing: border-box;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
 }
 
-.adminChannelList, .adminChannelMessages {
-  flex: 1 1 0;
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow-x: visible;
+.workflowButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-.adminToolbar {
+.workflowButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.divisionForm {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  width: 100%;
+  margin-bottom: 1.5rem;
 }
 
-.adminChannelList h3 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
-  color: var(--accent-red-light);
-  letter-spacing: 1px;
+.workflowInput {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
 }
 
-.adminChannelListItem {
+.workflowInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.workflowInput::placeholder {
+  color: #94a3b8;
+}
+
+.workflowNote {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
   display: flex;
   align-items: center;
-  padding: 0.5em 0.3em;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.15s;
-  color: var(--text-primary);
-}
-.selected, .adminChannelListItem:hover {
-  background: #2d2323;
+  gap: 0.5rem;
 }
 
-.adminDeleteChannelBtn {
-  background: var(--accent-red-light);
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  padding: 0.18em 0.6em;
-  margin-right: 0.8em;
-  cursor: pointer;
-  font-size: 0.98em;
-  transition: background 0.16s;
-}
-.adminDeleteChannelBtn:hover {
-  background: #ff2a2a;
-}
-
-.adminChannelName {
-  flex: 1;
+.workflowResult {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #86efac;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
   font-weight: 600;
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: 1.04em;
-  letter-spacing: 0.5px;
+  margin-top: 1rem;
 }
 
-.adminChannelMessages h3 {
-  margin-top: 0;
-  color: var(--accent-red-light);
-  font-size: 1.1rem;
-  letter-spacing: 1px;
-}
-
-.adminMessageItem {
+/* Data Sync Tools */
+.dataSyncTools {
   display: flex;
-  align-items: center;
-  border-bottom: 1px solid #333;
-  padding: 0.7em 0;
-  font-size: 1rem;
-  color: var(--text-primary);
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
 }
-.adminMessageItem b {
-  margin-right: 0.6em;
-  color: var(--accent-red-light);
-}
-.adminDeleteMessageBtn {
-  background: var(--accent-red-light);
+
+.syncButton {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #fff;
   border: none;
-  border-radius: 4px;
-  padding: 0.18em 0.6em;
-  margin-left: 1em;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 0.98em;
-  transition: background 0.16s;
-}
-.adminDeleteMessageBtn:hover {
-  background: #ff2a2a;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.adminCard {
-  background: var(--background-panel);
-  border-radius: 10px;
-  box-shadow: 0 1px 8px #b8000022;
-  border: 1px solid var(--accent-red);
-  padding: 1rem 0.8rem 0.8rem 0.8rem;
-  margin-bottom: 0;
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
+.syncButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.syncButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.syncResult {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #86efac;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* ============================================================================
+   PLAYER MANAGEMENT
+   ============================================================================ */
+
+.playerManagementContainer {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.tabHeader {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.5rem;
+  border-radius: 12px;
+}
+
+.tabButton {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tabButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tabButton.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-color: #3b82f6;
+}
+
+.tabContent {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.approvalSection {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.loadingMessage {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  padding: 2rem;
+}
+
+.emptyState {
+  text-align: center;
+  color: #22c55e;
+  font-size: 1.1rem;
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.registrationList {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 1.5rem;
 }
 
-.adminCardTitle {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--accent-red-light);
-  margin-bottom: 0.4rem;
-  letter-spacing: 0.2px;
-  text-shadow: 0 1px 4px #b8000022;
+.registrationCard {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
 }
 
-/* For scrollable content areas within cards */
-.scrollableCardContent {
-  max-height: 320px;
-  overflow-y: auto;
-  padding-right: 4px;
+.registrationCard:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.adminCardActions {
+.registrationHeader {
   display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.registrationNumber {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.registrationHeader h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.registrationDetails {
+  margin-bottom: 1.5rem;
+}
+
+.registrationDetails p {
+  margin: 0.5rem 0;
+  color: #cbd5e1;
+}
+
+.registrationDetails strong {
+  color: #fff;
+}
+
+.registrationActions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 0.7rem;
+}
+
+.divisionSelect {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  min-width: 150px;
+}
+
+.divisionSelect:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.divisionSelect option {
+  background: #1a1a2e;
+  color: #fff;
+  padding: 0.5rem;
+}
+
+.approveButton {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.approveButton:hover {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  transform: translateY(-1px);
+}
+
+.rejectButton {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.rejectButton:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+}
+
+/* User Search */
+.userSearchContainer {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.searchForm {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.searchInput {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.searchInput::placeholder {
+  color: #94a3b8;
+}
+
+.searchButton {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.searchButton:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  transform: translateY(-2px);
+}
+
+.searchResults {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.userCard {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.userCard:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+.userInfo h4 {
+  margin: 0 0 0.5rem 0;
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+.userName {
+  font-size: 1.3rem !important;
+  font-weight: bold !important;
+  color: #3b82f6 !important;
+  margin-bottom: 0.75rem !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.userEmail {
+  color: #94a3b8 !important;
+  font-size: 0.95rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.userContactInfo {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border-left: 3px solid #3b82f6;
+}
+
+.userPhone, .userTextNumber {
+  color: #cbd5e1 !important;
+  font-size: 0.9rem !important;
+  margin: 0.25rem 0 !important;
+}
+
+.userDetails {
+  margin-bottom: 1rem;
+}
+
+.userDetails p {
+  margin: 0.5rem 0;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+}
+
+.userDetails strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.userAvailability {
+  margin-top: 0.75rem;
+}
+
+.availabilityGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.availabilityDay {
+  background: rgba(59, 130, 246, 0.1);
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.dayLabel {
+  font-weight: 600;
+  color: #3b82f6;
+  margin-right: 0.5rem;
+}
+
+.timeSlots {
+  color: #cbd5e1;
+  font-size: 0.85rem;
+}
+
+.userInfo p {
+  margin: 0.25rem 0;
+  color: #cbd5e1;
+}
+
+.userActions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.addButton {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.addButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  transform: translateY(-1px);
+}
+
+.addButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.removeButton {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.removeButton:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+}
+
+/* ============================================================================
+   MATCH MANAGEMENT
+   ============================================================================ */
+
+.matchManagementContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.sectionHeader h3 {
+  font-size: 1.8rem;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+/* ============================================================================
+   SYSTEM STATUS
+   ============================================================================ */
+
+.systemStatusContainer {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+}
+
+.statNumber {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #3b82f6;
   margin-bottom: 0.5rem;
 }
 
-/* --- Tab Styles for Admin Dashboard --- */
-.tabButton {
-  background: #222;
+.statLabel {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.systemActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.systemButton {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: #fff;
-  border: 1px solid #444;
-  border-radius: 5px;
-  margin-right: 8px;
-  padding: 8px 16px;
-  font-weight: bold;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
-.tabButton:hover {
-  background: #444;
-  color: #ffd700;
-}
-.activeTab {
-  background: #ffd700 !important;
-  color: #222 !important;
-  border: 2px solid #ffd700;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-/* ===============================
-   ADMIN DASHBOARD MOBILE OPTIMIZATIONS
-   =============================== */
-
-/* Large tablets and small desktops */
-@media (max-width: 1024px) {
-  .adminDashboardRoot {
-    padding: 12px;
-  }
-  
-  .adminDashboardMainColumn {
-    max-width: 100%;
-  }
-  
-  .adminCard {
-    padding: 16px;
-    margin-bottom: 16px;
-    border-radius: 12px;
-  }
-  
-  .adminCardTitle {
-    font-size: 1.2rem;
-    margin-bottom: 12px;
-  }
-  
-  .adminActionButton {
-    padding: 10px 16px;
-    font-size: 0.9rem;
-    min-height: 44px;
-  }
+.systemButton:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-/* Tablets and large phones */
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
 @media (max-width: 768px) {
-  .adminDashboardRoot {
-    padding: 8px;
-  }
-  
-  .adminDashboardNav {
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px;
-    border-radius: 8px;
-  }
-  
-  .adminDashboardNav button {
-    width: 100%;
-    padding: 12px 16px;
-    font-size: 0.9rem;
-    min-height: 44px;
-    border-radius: 8px;
-  }
-  
   .adminDashboardMainColumn {
-    gap: 12px;
+    padding: 1rem;
   }
   
-  .adminCard {
-    padding: 12px;
-    margin-bottom: 12px;
-    border-radius: 10px;
+  .sectionNavigation {
+    flex-direction: column;
+    gap: 0.25rem;
   }
   
-  .adminCardTitle {
-    font-size: 1.1rem;
-    margin-bottom: 10px;
-    padding: 8px 0;
-  }
-  
-  .adminActionButton {
-    padding: 8px 12px;
-    font-size: 0.85rem;
-    min-height: 42px;
-    border-radius: 6px;
+  .sectionButton {
     width: 100%;
-    margin-bottom: 8px;
+    justify-content: center;
   }
   
-  .scrollableCardContent {
-    max-height: 400px;
-    overflow-y: auto;
-    padding: 8px;
-  }
-  
-  /* Admin Match Manager mobile optimizations */
-  .adminMatchManager {
-    width: 100%;
-  }
-  
-  .adminMatchManager h3 {
-    font-size: 1rem;
-    margin-bottom: 8px;
-  }
-  
-  .adminMatchManager select {
-    padding: 8px;
-    font-size: 0.9rem;
-    border-radius: 6px;
-    min-height: 40px;
-  }
-  
-  .adminMatchManager button {
-    padding: 6px 10px;
-    font-size: 0.8rem;
-    min-height: 36px;
-    border-radius: 4px;
-  }
-  
-  .adminMatchManager table {
-    font-size: 0.8rem;
-  }
-  
-  .adminMatchManager th,
-  .adminMatchManager td {
-    padding: 6px 4px;
-  }
-  
-  /* Grid layout for match manager */
-  .adminMatchManager .matchGrid {
+  .quickActions {
     grid-template-columns: 1fr;
-    gap: 12px;
   }
   
-  .adminMatchManager .matchSection {
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 8px;
-  }
-  
-  .adminMatchManager .matchSection h4 {
-    font-size: 0.9rem;
-    margin-bottom: 6px;
-  }
-  
-  .adminMatchManager .matchActions {
-    display: flex;
+  .workflowSteps {
     flex-direction: column;
-    gap: 4px;
   }
   
-  .adminMatchManager .matchActions button {
+  .workflowStepIndicator {
+    min-width: auto;
+  }
+  
+  .registrationActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .userActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .systemActions {
+    flex-direction: column;
+  }
+  
+  .adminDashboardNav {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .navLeft, .navRight {
     width: 100%;
-    margin: 0;
-    padding: 4px 6px;
-    font-size: 0.75rem;
+    justify-content: center;
   }
 }
 
-/* Small phones */
 @media (max-width: 480px) {
-  .adminDashboardRoot {
-    padding: 4px;
+  .statsGrid {
+    grid-template-columns: 1fr;
   }
   
-  .adminDashboardNav {
-    padding: 8px;
-    gap: 6px;
-  }
-  
-  .adminDashboardNav button {
-    padding: 10px 12px;
-    font-size: 0.85rem;
-    min-height: 40px;
-  }
-  
-  .adminDashboardMainColumn {
-    gap: 8px;
-  }
-  
-  .adminCard {
-    padding: 8px;
-    margin-bottom: 8px;
-    border-radius: 8px;
-  }
-  
-  .adminCardTitle {
-    font-size: 1rem;
-    margin-bottom: 8px;
-    padding: 6px 0;
-  }
-  
-  .adminActionButton {
-    padding: 6px 10px;
-    font-size: 0.8rem;
-    min-height: 38px;
-    border-radius: 4px;
-    margin-bottom: 6px;
-  }
-  
-  .scrollableCardContent {
-    max-height: 300px;
-    padding: 6px;
-  }
-  
-  /* Admin Match Manager small phone optimizations */
-  .adminMatchManager h3 {
-    font-size: 0.9rem;
-    margin-bottom: 6px;
-  }
-  
-  .adminMatchManager select {
-    padding: 6px;
-    font-size: 0.85rem;
-    min-height: 36px;
-  }
-  
-  .adminMatchManager button {
-    padding: 4px 8px;
-    font-size: 0.75rem;
-    min-height: 32px;
-  }
-  
-  .adminMatchManager table {
-    font-size: 0.75rem;
-  }
-  
-  .adminMatchManager th,
-  .adminMatchManager td {
-    padding: 4px 2px;
-  }
-  
-  .adminMatchManager .matchGrid {
-    gap: 8px;
-  }
-  
-  .adminMatchManager .matchSection {
-    padding: 6px;
-  }
-  
-  .adminMatchManager .matchSection h4 {
-    font-size: 0.85rem;
-    margin-bottom: 4px;
-  }
-  
-  .adminMatchManager .matchActions button {
-    padding: 3px 4px;
-    font-size: 0.7rem;
-  }
-  
-  /* Improve form layouts on small screens */
-  .adminForm {
-    display: flex;
+  .workflowHeader {
     flex-direction: column;
-    gap: 8px;
+    gap: 1rem;
+    text-align: center;
   }
   
-  .adminForm input,
-  .adminForm select,
-  .adminForm textarea {
-    padding: 8px;
-    font-size: 0.9rem;
-    border-radius: 4px;
-    min-height: 40px;
-  }
-  
-  .adminForm button {
-    padding: 10px;
-    font-size: 0.9rem;
-    min-height: 44px;
-    border-radius: 6px;
-  }
-}
-
-/* Extra small phones */
-@media (max-width: 360px) {
-  .adminDashboardRoot {
-    padding: 2px;
-  }
-  
-  .adminDashboardNav {
-    padding: 6px;
-    gap: 4px;
-  }
-  
-  .adminDashboardNav button {
-    padding: 8px 10px;
-    font-size: 0.8rem;
-    min-height: 36px;
-  }
-  
-  .adminCard {
-    padding: 6px;
-    margin-bottom: 6px;
-    border-radius: 6px;
-  }
-  
-  .adminCardTitle {
-    font-size: 0.9rem;
-    margin-bottom: 6px;
-    padding: 4px 0;
-  }
-  
-  .adminActionButton {
-    padding: 4px 8px;
-    font-size: 0.75rem;
-    min-height: 34px;
-    border-radius: 3px;
-    margin-bottom: 4px;
-  }
-  
-  .scrollableCardContent {
-    max-height: 250px;
-    padding: 4px;
-  }
-  
-  /* Admin Match Manager extra small optimizations */
-  .adminMatchManager h3 {
-    font-size: 0.85rem;
-    margin-bottom: 4px;
-  }
-  
-  .adminMatchManager select {
-    padding: 4px;
-    font-size: 0.8rem;
-    min-height: 32px;
-  }
-  
-  .adminMatchManager button {
-    padding: 3px 6px;
-    font-size: 0.7rem;
-    min-height: 28px;
-  }
-  
-  .adminMatchManager table {
-    font-size: 0.7rem;
-  }
-  
-  .adminMatchManager th,
-  .adminMatchManager td {
-    padding: 2px 1px;
-  }
-  
-  .adminMatchManager .matchGrid {
-    gap: 6px;
-  }
-  
-  .adminMatchManager .matchSection {
-    padding: 4px;
-  }
-  
-  .adminMatchManager .matchSection h4 {
-    font-size: 0.8rem;
-    margin-bottom: 3px;
-  }
-  
-  .adminMatchManager .matchActions button {
-    padding: 2px 3px;
-    font-size: 0.65rem;
-  }
-}
-
-/* Landscape orientation on mobile */
-@media (max-width: 768px) and (orientation: landscape) {
-  .adminDashboardRoot {
-    padding: 6px;
-  }
-  
-  .adminDashboardNav {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  
-  .adminDashboardNav button {
-    width: auto;
-    flex: 1;
-    min-width: 120px;
-  }
-  
-  .adminDashboardMainColumn {
-    gap: 10px;
-  }
-  
-  .adminCard {
-    padding: 10px;
-    margin-bottom: 10px;
-  }
-  
-  .adminActionButton {
-    width: auto;
-    margin-right: 8px;
-    margin-bottom: 6px;
-  }
-  
-  /* Admin Match Manager landscape optimizations */
-  .adminMatchManager .matchGrid {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  
-  .adminMatchManager .matchActions {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 3px;
-  }
-  
-  .adminMatchManager .matchActions button {
-    width: auto;
-    flex: 1;
-    min-width: 80px;
-  }
-}
-
-/* Touch device optimizations */
-@media (hover: none) and (pointer: coarse) {
-  .adminActionButton {
-    min-height: 44px;
-    padding: 10px 16px;
-  }
-  
-  .adminDashboardNav button {
-    min-height: 44px;
-    padding: 12px 16px;
-  }
-  
-  .adminMatchManager button {
-    min-height: 40px;
-    padding: 8px 12px;
-  }
-  
-  .adminMatchManager select {
-    min-height: 44px;
-    padding: 10px;
-  }
-  
-  /* Remove hover effects on touch devices */
-  .adminActionButton:hover {
-    transform: none;
-  }
-  
-  .adminDashboardNav button:hover {
-    transform: none;
-  }
-}
-
-/* High DPI displays */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .adminCard {
-    border-width: 0.5px;
-  }
-  
-  .adminActionButton {
-    border-width: 0.5px;
-  }
-}
-
-/* Reduce motion for accessibility */
-@media (prefers-reduced-motion: reduce) {
-  .adminActionButton {
-    transition: none;
-  }
-  
-  .adminActionButton:hover {
-    transform: none;
-  }
-  
-  .adminDashboardNav button {
-    transition: none;
-  }
-  
-  .adminDashboardNav button:hover {
-    transform: none;
-  }
-}
-
-/* Dark mode optimizations */
-@media (prefers-color-scheme: dark) {
-  .adminCard {
-    background: rgba(24,24,27,0.9);
-    border-color: rgba(255,255,255,0.1);
-  }
-  
-  .adminActionButton {
-    background: rgba(35,35,42,0.8);
-    border-color: rgba(255,255,255,0.2);
-  }
-  
-  .adminDashboardNav {
-    background: rgba(24,24,27,0.8);
-    border-color: rgba(255,255,255,0.1);
+  .sectionHeader {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
   }
 }

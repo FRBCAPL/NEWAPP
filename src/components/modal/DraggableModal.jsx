@@ -87,7 +87,7 @@ export default function DraggableModal({
           border: "2px solid #e53e3e",
           borderRadius: window.innerWidth <= 400 ? "0" : "1.2rem",
           boxShadow: "0 0 32px #e53e3e, 0 0 40px rgba(0,0,0,0.85)",
-          width: window.innerWidth <= 400 ? "100vw" : (maxWidth === "90vw" ? "90vw" : "auto"),
+          width: window.innerWidth <= 400 ? "100vw" : maxWidth,
           maxWidth: window.innerWidth <= 400 ? "100vw" : maxWidth,
           minWidth: 0,
           margin: window.innerWidth <= 400 ? "0" : "0 auto",

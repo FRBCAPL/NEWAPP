@@ -1,13 +1,10 @@
 import React, { useState } from "react";
-import fetchSheetData from "../../utils/fetchSheetData";
 import styles from "./PinLogin.module.css";
 import ResponsiveWrapper from "../ResponsiveWrapper";
 import PoolSimulation from "../PoolSimulation";
 import TenBallTutorial from "../TenBallTutorial";
-
-// --- Google Sheet config ---
-const sheetID = "1tvMgMHsRwQxsR6lMNlSnztmwpK7fhZeNEyqjTqmRFRc";
-const pinSheetName = "BCAPL SIGNUP";
+import PlayerRegistrationModal from "./PlayerRegistrationModal";
+import { BACKEND_URL } from '../../config.js';
 
 /**
  * Login - Login form for email OR PIN authentication
@@ -19,8 +16,9 @@ export default function Login({ onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [showGame, setShowGame] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showRegistration, setShowRegistration] = useState(false);
 
-  // --- Verify Email or PIN against Google Sheet ---
+  // --- Verify Email or PIN against MongoDB ---
   const verifyInput = async () => {
     if (!input) {
       setMessage("Please enter your email or PIN.");
@@ -29,20 +27,25 @@ export default function Login({ onSuccess }) {
     setMessage("");
     setLoading(true);
     try {
-      const rows = await fetchSheetData(sheetID, `${pinSheetName}!A1:L1000`);
-      const dataRows = rows.slice(1); // skip header
-      // Find by email (case-insensitive) or PIN (exact)
-      const match = dataRows.find(row =>
-        (row[2] || "").trim().toLowerCase() === input.trim().toLowerCase() ||
-        (row[11] || "").trim() === input.trim()
-      );
+      const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          identifier: input.trim() // Can be email or PIN
+        })
+      });
+
+      const data = await response.json();
       setLoading(false);
-      if (match) {
+
+      if (data.success) {
         setMessage("");
         // Pass name, email, and PIN to parent
-        onSuccess(`${match[0] || ""} ${match[1] || ""}`.trim(), match[2] || "", match[11] || "");
+        onSuccess(`${data.user.firstName} ${data.user.lastName}`.trim(), data.user.email, data.user.pin);
       } else {
-        setMessage("No user found with that email or PIN. Please try again or contact frbcapl@gmail.com for help.");
+        setMessage(data.message || "No user found with that email or PIN. Please try again or contact frbcapl@gmail.com for help.");
       }
     } catch (error) {
       setLoading(false);
@@ -93,15 +96,34 @@ export default function Login({ onSuccess }) {
   return (
     <div className={styles.pinLoginBg}>
       <div className={styles.pinLoginFrame}>
-        <a
-          href="https://frusapl.com/frbcapl-singles#3a534cc1-c4ac-4c04-8d7a-a0fe9ddfaca4"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={styles.signupBtn}
-          style={{ marginBottom: "1.5rem" }}
-        >
-          Sign Up for Beta Test
-        </a>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: "1.5rem", justifyContent: 'center' }}>
+          <a
+            href="https://frusapl.com/frbcapl-singles#3a534cc1-c4ac-4c04-8d7a-a0fe9ddfaca4"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.signupBtn}
+          >
+            Sign Up for Beta Test
+          </a>
+          <button
+            onClick={() => setShowRegistration(true)}
+            className={styles.signupBtn}
+            style={{ 
+              background: '#4CAF50',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '12px 20px',
+              borderRadius: '6px',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              textDecoration: 'none',
+              display: 'inline-block'
+            }}
+          >
+            Register New Player
+          </button>
+        </div>
         
 
         <div className={styles.simulationContainer}>
@@ -165,6 +187,21 @@ export default function Login({ onSuccess }) {
           )}
         </div>
       </div>
+      
+      {/* Player Registration Modal */}
+      <PlayerRegistrationModal
+        isOpen={showRegistration}
+        onClose={() => setShowRegistration(false)}
+        onSuccess={(userData) => {
+          console.log('New player registered:', userData);
+          setShowRegistration(false);
+          // Optionally auto-login the new user
+          if (userData && userData.email) {
+            onSuccess(`${userData.firstName} ${userData.lastName}`, userData.email, userData.pin);
+          }
+        }}
+        isMobile={window.innerWidth <= 768}
+      />
     </div>
   );
 }

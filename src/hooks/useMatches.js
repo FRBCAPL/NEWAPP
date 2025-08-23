@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getMatchesByStatus, getPlayerMatches } from '../services/matchService';
 import { proposalService } from '../services/proposalService';
 
@@ -7,10 +7,25 @@ export const useMatches = (playerName, division, phase) => {
   const [completedMatches, setCompletedMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastUpdate, setLastUpdate] = useState(null);
+  
+  // Refs for tracking
+  const intervalRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
-  const fetchMatches = async () => {
+  const fetchMatches = useCallback(async (isPolling = false) => {
+    // Cancel previous request if it's still pending
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
+    
     try {
-      setLoading(true);
+      if (!isPolling) {
+        setLoading(true);
+      }
       
       // Use the new match system endpoints
       const [scheduledMatches, completedMatchesData] = await Promise.all([
@@ -137,36 +152,85 @@ export const useMatches = (playerName, division, phase) => {
         allScheduledMatches.sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
         playerCompleted.sort((a, b) => new Date(b.completedDate) - new Date(a.completedDate));
         
-        setScheduledConfirmedMatches(allScheduledMatches);
-        setCompletedMatches(playerCompleted);
+        // Only update if the request wasn't aborted
+        if (!abortControllerRef.current.signal.aborted) {
+          setScheduledConfirmedMatches(allScheduledMatches);
+          setCompletedMatches(playerCompleted);
+          setError(null);
+          setLastUpdate(new Date());
+        }
       } catch (proposalError) {
         console.warn('Error fetching confirmed proposals:', proposalError);
         // Fallback to just scheduled matches if proposal fetch fails
-        playerScheduled.sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
-        playerCompleted.sort((a, b) => new Date(b.completedDate) - new Date(a.completedDate));
-        
-        setScheduledConfirmedMatches(playerScheduled);
-        setCompletedMatches(playerCompleted);
+        if (!abortControllerRef.current.signal.aborted) {
+          playerScheduled.sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
+          playerCompleted.sort((a, b) => new Date(b.completedDate) - new Date(a.completedDate));
+          
+          setScheduledConfirmedMatches(playerScheduled);
+          setCompletedMatches(playerCompleted);
+          setLastUpdate(new Date());
+        }
       }
-      
-      setError(null);
     } catch (err) {
+      if (err.name === 'AbortError') {
+        return; // Request was cancelled, don't update state
+      }
       console.error('Error fetching matches:', err);
       setError(err.message);
-      setScheduledConfirmedMatches([]);
-      setCompletedMatches([]);
+      if (!isPolling) {
+        setScheduledConfirmedMatches([]);
+        setCompletedMatches([]);
+      }
     } finally {
-      setLoading(false);
-    }
-  };
-
-
-
-  useEffect(() => {
-    if (playerName && division) {
-      fetchMatches();
+      if (!abortControllerRef.current.signal.aborted) {
+        setLoading(false);
+      }
     }
   }, [playerName, division, phase]);
+
+
+
+  // Start polling when component mounts or dependencies change
+  useEffect(() => {
+    if (playerName && division) {
+      // Initial fetch
+      fetchMatches();
+      
+      // Set up polling every 30 seconds
+      intervalRef.current = setInterval(() => {
+        fetchMatches(true); // true = isPolling
+      }, 30000); // 30 seconds
+      
+      // Cleanup function
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+      };
+    }
+  }, [playerName, division, phase, fetchMatches]);
+
+  // Enhanced refetch function that can be called manually
+  const refetch = useCallback(() => {
+    fetchMatches();
+  }, [fetchMatches]);
+
+  // Function to immediately update local state when a match is created/updated
+  const updateMatchLocally = useCallback((newMatch, action = 'add') => {
+    if (action === 'add') {
+      setScheduledConfirmedMatches(prev => [newMatch, ...prev]);
+    } else if (action === 'update') {
+      setScheduledConfirmedMatches(prev => prev.map(m => m._id === newMatch._id ? newMatch : m));
+      setCompletedMatches(prev => prev.map(m => m._id === newMatch._id ? newMatch : m));
+    } else if (action === 'remove') {
+      setScheduledConfirmedMatches(prev => prev.filter(m => m._id !== newMatch._id));
+      setCompletedMatches(prev => prev.filter(m => m._id !== newMatch._id));
+    }
+    setLastUpdate(new Date());
+  }, []);
 
   return {
     matches: scheduledConfirmedMatches,
@@ -174,7 +238,9 @@ export const useMatches = (playerName, division, phase) => {
     scheduledConfirmedMatches, // for legacy
     loading,
     error,
-    refetch: fetchMatches,
+    lastUpdate,
+    refetch,
+    updateMatchLocally,
     markMatchCompleted: (matchToComplete) => {
       // Immediately update local state when a match is marked as completed
       setScheduledConfirmedMatches(prev => prev.filter(match => match._id !== matchToComplete._id));
@@ -182,12 +248,14 @@ export const useMatches = (playerName, division, phase) => {
         const completedMatch = { ...matchToComplete, completed: true };
         return [...prev, completedMatch];
       });
+      setLastUpdate(new Date());
     },
     updateCompletedMatch: (updatedMatch) => {
       // Update a completed match (e.g., when winner is edited)
       setCompletedMatches(prev => prev.map(match => 
         match._id === updatedMatch._id ? updatedMatch : match
       ));
+      setLastUpdate(new Date());
     }
   };
 }; 

@@ -13,7 +13,7 @@ export const smartMatchmakingService = {
       } else if (typeof player1Availability === 'object' && player1Availability !== null) {
         p1Avail = player1Availability;
       } else {
-        p1Avail = { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [] };
+        p1Avail = { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: [] };
       }
       console.log('Smart Match Debug - Parsed P1 availability:', p1Avail);
       
@@ -26,13 +26,13 @@ export const smartMatchmakingService = {
       } else if (typeof player2Availability === 'object' && player2Availability !== null) {
         p2Avail = player2Availability;
       } else {
-        p2Avail = { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [] };
+        p2Avail = { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: [] };
       }
       console.log('Smart Match Debug - Parsed P2 availability:', p2Avail);
       
       const overlapping = {};
       
-      ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+      ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(day => {
         overlapping[day] = [];
         
         if (p1Avail[day] && p2Avail[day]) {
@@ -54,7 +54,7 @@ export const smartMatchmakingService = {
     } catch (error) {
       console.error('Error parsing availability:', error);
       // Return empty overlapping slots if parsing fails
-      return { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [] };
+      return { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: [] };
     }
   },
 
@@ -299,7 +299,8 @@ Day: Saturday, Available From: 2:00 PM, Available Until: 8:00 PM`;
       'Wed': 'Wednesday',
       'Thu': 'Thursday',
       'Fri': 'Friday',
-      'Sat': 'Saturday'
+      'Sat': 'Saturday',
+      'Sun': 'Sunday'
     };
     
     return {

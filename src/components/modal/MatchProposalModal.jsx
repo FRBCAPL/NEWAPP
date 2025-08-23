@@ -283,6 +283,28 @@ export default function MatchProposalModal({
 
         // Show confirmation
         setShowConfirmation(true);
+        
+        // Pass the created proposal back to parent for immediate UI update
+        if (onProposalComplete) {
+          const createdProposal = {
+            _id: data.proposalId,
+            senderEmail,
+            senderName,
+            receiverEmail: player.email,
+            receiverName: player.firstName ? `${player.firstName} ${player.lastName}` : player.name,
+            date: formatDateYYYYMMDD(date),
+            time: startTime,
+            location,
+            message,
+            gameType,
+            raceLength,
+            phase,
+            divisions: [selectedDivision],
+            status: 'pending',
+            createdAt: new Date()
+          };
+          onProposalComplete(createdProposal);
+        }
       })
       .catch((err) => {
         console.error("Failed to send proposal:", err);

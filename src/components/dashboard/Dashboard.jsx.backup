@@ -15,6 +15,7 @@ import OpponentsModal from "../modal/OpponentsModal";
 import PlayerAvailabilityModal from "../modal/PlayerAvailabilityModal";
 import MatchProposalModal from "../modal/MatchProposalModal";
 import PlayerSearch from "../modal/PlayerSearch";
+import fetchSheetData from "../../utils/fetchSheetData";
 import ProposalDetailsModal from './ProposalDetailsModal';
 import EditProposalModal from './EditProposalModal';
 import LoadingSpinner, { LoadingButton, SkeletonLoader } from "../LoadingSpinner";
@@ -52,7 +53,8 @@ import { format } from 'date-fns';
 import { BACKEND_URL } from '../../config.js';
 import { useNavigate } from 'react-router-dom';
 
-
+const sheetID = "1tvMgMHsRwQxsR6lMNlSnztmwpK7fhZeNEyqjTqmRFRc";
+const pinSheetName = "BCAPL SIGNUP";
 const STANDINGS_URLS = {
   "FRBCAPL TEST": "https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=b345a437-3415-4765-b19a-b2f7014f2cfa",
   "Singles Test": "https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=9058a0cc-3231-4118-bd91-b305006fe578"
@@ -127,7 +129,7 @@ function AdminSyncButton({ backendUrl, onSyncComplete }) {
         disabled={loading}
         type="button"
       >
-        {loading ? "Syncing..." : "Sync Users from Database"}
+        {loading ? "Syncing..." : "Sync Users from Google Sheet"}
       </button>
       {result && <div style={{ marginTop: 8 }}>{result}</div>}
     </div>
@@ -597,29 +599,25 @@ export default function Dashboard({
     let isMounted = true;
     async function loadPlayers() {
       try {
-        const response = await fetch(`${BACKEND_URL}/api/users/search?approved=true`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch players from database');
-        }
-        
-        const data = await response.json();
-        if (!data.users || data.users.length === 0) {
+        const rows = await fetchSheetData(sheetID, `${pinSheetName}!A1:L1000`);
+        if (!rows || rows.length === 0) {
           if (isMounted) setPlayers([]);
           return;
         }
-        
-        const playerList = data.users
-          .map(user => ({
-            firstName: user.firstName || "",
-            lastName: user.lastName || "",
-            email: user.email || "",
-            phone: user.phone || "",
-            locations: user.locations || "",
-            availability: user.availability || { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [], Sat: [], Sun: [] },
-            pin: user.pin || "",
-            preferredContacts: user.preferredContacts || [],
-            division: user.division || "",
-            divisions: user.divisions || []
+        const playerList = rows
+          .slice(1)
+          .map(row => ({
+            firstName: row[0] || "",
+            lastName: row[1] || "",
+            email: row[2] || "",
+            phone: row[3] || "",
+            locations: row[8] || "",
+            availability: parseAvailability(row[7] || ""),
+            pin: row[11] || "",
+            preferredContacts: (row[10] || "")
+              .split(/\r?\n/)
+              .map(method => method.trim().toLowerCase())
+              .filter(Boolean),
           }))
           .filter(
             p =>
@@ -640,7 +638,6 @@ export default function Dashboard({
           }
         }
       } catch (err) {
-        console.error('Error loading players:', err);
         if (isMounted) {
           setPlayers([]);
           setAllPlayers([]);
@@ -3122,9 +3119,7 @@ export default function Dashboard({
              </div>
            ) : (
              <div style={{ display: 'grid', gap: '15px' }}>
-               {pendingRegistrations
-                 .sort((a, b) => new Date(a.registrationDate) - new Date(b.registrationDate))
-                 .map((registration, index) => (
+               {pendingRegistrations.map((registration) => (
                  <div
                    key={registration._id}
                    style={{
@@ -3136,23 +3131,9 @@ export default function Dashboard({
                  >
                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                      <div>
-                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
-                         <span style={{ 
-                           background: '#e53e3e', 
-                           color: 'white', 
-                           padding: '4px 8px', 
-                           borderRadius: '12px', 
-                           fontSize: '12px', 
-                           fontWeight: 'bold',
-                           minWidth: '20px',
-                           textAlign: 'center'
-                         }}>
-                           #{index + 1}
-                         </span>
-                         <h4 style={{ color: '#e53e3e', margin: '0' }}>
-                           {registration.firstName} {registration.lastName}
-                         </h4>
-                       </div>
+                       <h4 style={{ color: '#e53e3e', margin: '0 0 5px 0' }}>
+                         {registration.firstName} {registration.lastName}
+                       </h4>
                        <p style={{ color: '#ccc', margin: '0 0 5px 0' }}>
                          {registration.email} • {registration.phone}
                        </p>
@@ -3185,7 +3166,9 @@ export default function Dashboard({
                            <option value="">Select Division</option>
                            <option value="FRBCAPL TEST">FRBCAPL TEST</option>
                            <option value="Singles Test">Singles Test</option>
-                           <option value="Waiting List">Waiting List</option>
+                           <option value="Division A">Division A</option>
+                           <option value="Division B">Division B</option>
+                           <option value="Division C">Division C</option>
                          </select>
                        </div>
                        
@@ -3295,7 +3278,6 @@ export default function Dashboard({
                            <strong>{day}:</strong> {slots.length > 0 ? slots.join(', ') : 'None'}
                          </div>
                        ))}
-                     </div>
                      </div>
                    </div>
                    
