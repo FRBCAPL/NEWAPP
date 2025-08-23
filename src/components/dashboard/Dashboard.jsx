@@ -1602,11 +1602,25 @@ export default function Dashboard({
           margin: isMobile ? '6px' : '16px'
         }}>
                      <div style={{ textAlign: 'center', marginBottom: isMobile ? '8px' : '16px' }}>
-             <h1 className={styles.dashboardTitle} style={{ 
-               fontSize: isMobile ? '1.6rem' : '2rem',
-               textAlign: 'center',
-               margin: 0
-             }}>
+             <h1 
+               className={styles.dashboardTitle} 
+               style={{ 
+                 fontSize: isMobile ? '1.6rem' : '2rem',
+                 textAlign: 'center',
+                 margin: 0,
+                 cursor: 'pointer',
+                 transition: 'all 0.2s ease'
+               }}
+               onClick={() => setShowUserProfileModal(true)}
+               onMouseEnter={(e) => {
+                 e.target.style.color = '#e53e3e';
+                 e.target.style.textShadow = '0 0 8px rgba(229, 62, 62, 0.5)';
+               }}
+               onMouseLeave={(e) => {
+                 e.target.style.color = '';
+                 e.target.style.textShadow = '';
+               }}
+             >
                Welcome,
                <span className={styles.dashboardUserName} style={{ fontSize: isMobile ? '1.4rem' : '1.8rem' }}>
                  {playerName} {playerLastName}
@@ -1636,36 +1650,38 @@ export default function Dashboard({
              </div>
              
              {/* Profile Button */}
-             {currentUser && (
-               <button
-                 onClick={() => setShowUserProfileModal(true)}
-                 style={{
-                   background: 'linear-gradient(135deg, #4CAF50, #45a049)',
-                   color: '#fff',
-                   border: 'none',
-                   borderRadius: '6px',
-                   padding: isMobile ? '6px 12px' : '8px 16px',
-                   fontSize: isMobile ? '0.7rem' : '0.8rem',
-                   fontWeight: '600',
-                   cursor: 'pointer',
-                   transition: 'all 0.2s ease',
-                   boxShadow: '0 2px 8px rgba(76, 175, 80, 0.3)',
-                   marginTop: isMobile ? '4px' : '8px'
-                 }}
-                 onMouseEnter={(e) => {
-                   e.target.style.background = 'linear-gradient(135deg, #45a049, #3d8b40)';
-                   e.target.style.transform = 'translateY(-1px)';
-                   e.target.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.4)';
-                 }}
-                 onMouseLeave={(e) => {
-                   e.target.style.background = 'linear-gradient(135deg, #4CAF50, #45a049)';
-                   e.target.style.transform = 'translateY(0)';
-                   e.target.style.boxShadow = '0 2px 8px rgba(76, 175, 80, 0.3)';
-                 }}
-               >
-                 👤 View Profile
-               </button>
-             )}
+             <button
+               onClick={() => setShowUserProfileModal(true)}
+               style={{
+                 background: 'linear-gradient(135deg, #e53e3e, #c53030)',
+                 color: '#fff',
+                 border: 'none',
+                 borderRadius: '8px',
+                 padding: isMobile ? '8px 16px' : '10px 20px',
+                 fontSize: isMobile ? '0.8rem' : '0.9rem',
+                 fontWeight: '600',
+                 cursor: 'pointer',
+                 transition: 'all 0.2s ease',
+                 boxShadow: '0 2px 8px rgba(229, 62, 62, 0.3)',
+                 marginTop: isMobile ? '6px' : '10px',
+                 display: 'flex',
+                 alignItems: 'center',
+                 justifyContent: 'center',
+                 gap: '6px'
+               }}
+               onMouseEnter={(e) => {
+                 e.target.style.background = 'linear-gradient(135deg, #c53030, #a52a2a)';
+                 e.target.style.transform = 'translateY(-1px)';
+                 e.target.style.boxShadow = '0 4px 12px rgba(229, 62, 62, 0.4)';
+               }}
+               onMouseLeave={(e) => {
+                 e.target.style.background = 'linear-gradient(135deg, #e53e3e, #c53030)';
+                 e.target.style.transform = 'translateY(0)';
+                 e.target.style.boxShadow = '0 2px 8px rgba(229, 62, 62, 0.3)';
+               }}
+             >
+               👤 Profile
+             </button>
            </div>
           <div className={styles.announcement} style={{ fontSize: isMobile ? '0.75rem' : '1rem', marginBottom: isMobile ? '8px' : '16px' }}>
             <p>This is the BETA version. </p>Matches that are created, scheduled, and confirmed will NOT be played.<br />
@@ -2670,7 +2686,7 @@ export default function Dashboard({
      />
 
      {/* User Profile Modal */}
-     {showUserProfileModal && currentUser && (
+     {showUserProfileModal && (
        <div
          className="modal-overlay"
          style={{
@@ -2825,14 +2841,27 @@ export default function Dashboard({
                    📝 Basic Information
                  </div>
                <div style={{ color: '#cccccc', lineHeight: '1.3', fontSize: isMobile ? '0.8rem' : '0.85rem' }}>
-                 <div style={{ marginBottom: '2px' }}><strong>Name:</strong> {currentUser.firstName} {currentUser.lastName}</div>
-                 <div style={{ marginBottom: '2px' }}><strong>Email:</strong> {currentUser.email || 'Not provided'}</div>
-                 <div><strong>Phone:</strong> {currentUser.phone || 'Not provided'}</div>
+                 <div style={{ marginBottom: '2px' }}><strong>Name:</strong> {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : `${playerName} ${playerLastName}`}</div>
+                 <div style={{ marginBottom: '2px' }}><strong>Email:</strong> {currentUser ? (currentUser.email || 'Not provided') : (senderEmail || 'Not provided')}</div>
+                 <div><strong>Phone:</strong> {currentUser ? (currentUser.phone || 'Not provided') : 'Not provided'}</div>
+                 {!currentUser && (
+                   <div style={{ 
+                     marginTop: '8px', 
+                     padding: '6px 10px', 
+                     background: 'rgba(255, 193, 7, 0.1)', 
+                     border: '1px solid rgba(255, 193, 7, 0.3)', 
+                     borderRadius: '4px',
+                     fontSize: isMobile ? '0.7rem' : '0.75rem',
+                     color: '#ffc107'
+                   }}>
+                     ⚠️ Some profile details may not be fully loaded yet
+                   </div>
+                 )}
                </div>
              </div>
 
                             {/* Contact Preferences */}
-               {currentUser.preferredContacts && currentUser.preferredContacts.length > 0 && (
+               {currentUser && currentUser.preferredContacts && currentUser.preferredContacts.length > 0 && (
                  <div style={{
                    background: 'rgba(255, 255, 255, 0.05)',
                    padding: isMobile ? '5px 7px' : '7px 9px',
@@ -2858,7 +2887,7 @@ export default function Dashboard({
              )}
 
                             {/* Locations */}
-               {currentUser.locations && (
+               {currentUser && currentUser.locations && (
                  <div style={{
                    background: 'rgba(255, 255, 255, 0.05)',
                    padding: isMobile ? '5px 7px' : '7px 9px',
@@ -2918,7 +2947,7 @@ export default function Dashboard({
              )}
 
                             {/* Availability */}
-               {currentUser.availability && (
+               {currentUser && currentUser.availability && (
                  <div style={{
                    background: 'rgba(255, 255, 255, 0.05)',
                    padding: isMobile ? '5px 7px' : '7px 9px',

@@ -9,6 +9,7 @@ import GoogleSheetsBackupConfig from "./GoogleSheetsBackupConfig.jsx";
 import LocationManagement from "./LocationManagement.jsx";
 import PaymentConfiguration from "./PaymentConfiguration.jsx";
 import PaymentTracker from "./PaymentTracker.jsx";
+import LeagueManagement from "./LeagueManagement.jsx";
 import { 
   FaSyncAlt, 
   FaCheckCircle, 
@@ -1021,6 +1022,9 @@ export default function AdminDashboard() {
              case 'payment-tracker':
         return <PaymentTracker />;
       
+             case 'league-management':
+        return <LeagueManagement />;
+      
       default:
         return null;
     }
@@ -1108,6 +1112,12 @@ export default function AdminDashboard() {
              onClick={() => setActiveSection('payment-tracker')}
            >
              💰 Payment Tracker
+           </button>
+           <button 
+             className={`${styles.sectionButton} ${activeSection === 'league-management' ? styles.active : ''}`}
+             onClick={() => setActiveSection('league-management')}
+           >
+             📅 League Management
            </button>
         </div>
 
