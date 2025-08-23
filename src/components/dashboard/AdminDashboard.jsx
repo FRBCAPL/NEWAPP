@@ -47,7 +47,10 @@ function DivisionCreationWorkflow({ backendUrl, onComplete }) {
     description: '',
     scheduleUrl: '',
     standingsUrl: '',
-    seasonStart: ''
+    seasonStart: '',
+    phase1Weeks: 6,
+    phase2Weeks: 4,
+    totalWeeks: 10
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
@@ -61,8 +64,8 @@ function DivisionCreationWorkflow({ backendUrl, onComplete }) {
         "1. Log into CSI LMS at https://lms.fargorate.com",
         "2. Navigate to League Management",
         "3. Create a new division with your desired name",
-        "4. Note down the division ID and league ID",
-        "5. Set up the division settings and rules"
+        "4. Set up the division settings and rules",
+        "5. Make sure the division is active and ready for players"
       ],
       completed: false
     },
@@ -70,18 +73,32 @@ function DivisionCreationWorkflow({ backendUrl, onComplete }) {
       id: 2,
       title: "Get Division URLs",
       description: "Copy the schedule and standings URLs from CSI LMS",
-      instructions: [
-        "1. In CSI LMS, go to the division you just created",
-        "2. Find the 'Schedule' or 'Matches' section",
-        "3. Copy the URL for the schedule page",
-        "4. Find the 'Standings' or 'Rankings' section", 
-        "5. Copy the URL for the standings page",
-        "6. Both URLs should look like: https://lms.fargorate.com/PublicReport/LeagueReports?..."
-      ],
+             instructions: [
+         "1. In CSI LMS, go to the division you just created",
+         "2. Click on the 'Reports' link in the navigation",
+         "3. Click the 'Schedule' button",
+         "4. Copy the URL from the schedule report page",
+         "5. Click the 'Teams' button",
+         "6. Copy the URL from the teams report page",
+         "7. Both URLs should look like: https://lms.fargorate.com/PublicReport/LeagueReports?..."
+       ],
       completed: false
     },
     {
       id: 3,
+      title: "Configure Phase Settings",
+      description: "Set up the division's phase structure and session dates",
+      instructions: [
+        "1. Set the total number of weeks for the session",
+        "2. Configure how many weeks Phase 1 should last",
+        "3. Phase 2 weeks will be calculated automatically",
+        "4. Set the session start date",
+        "5. Review the calculated phase dates"
+      ],
+      completed: false
+    },
+    {
+      id: 4,
       title: "Add Division to App",
       description: "Create the division in your app with the URLs",
       instructions: [
@@ -89,13 +106,12 @@ function DivisionCreationWorkflow({ backendUrl, onComplete }) {
         "2. Add a description (optional)",
         "3. Paste the schedule URL from CSI LMS",
         "4. Paste the standings URL from CSI LMS", 
-        "5. Set the season start date",
-        "6. Click 'Create Division'"
+        "5. Click 'Create Division'"
       ],
       completed: false
     },
     {
-      id: 4,
+      id: 5,
       title: "Test Data Sync",
       description: "Verify the division is working correctly",
       instructions: [
@@ -117,6 +133,7 @@ function DivisionCreationWorkflow({ backendUrl, onComplete }) {
     setResult('');
     
     try {
+      // First create the division
       const res = await fetch(`${backendUrl}/api/seasons`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -132,8 +149,38 @@ function DivisionCreationWorkflow({ backendUrl, onComplete }) {
       
       const data = await res.json();
       if (res.ok) {
-        setResult("✅ Division created successfully!");
-        setCurrentStep(4);
+        // Then save the phase configuration
+        try {
+          const divisionRes = await fetch(`${backendUrl}/admin/divisions`);
+          if (divisionRes.ok) {
+            const divisions = await divisionRes.json();
+            const newDivision = divisions.find(d => d.name === divisionData.name);
+            
+            if (newDivision) {
+              await fetch(`${backendUrl}/api/division-config/${newDivision._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  phase1Weeks: divisionData.phase1Weeks,
+                  phase2Weeks: divisionData.phase2Weeks,
+                  totalWeeks: divisionData.totalWeeks,
+                  currentSession: {
+                    name: `${divisionData.name} Session`,
+                    startDate: divisionData.seasonStart,
+                    endDate: null,
+                    isActive: true
+                  }
+                })
+              });
+            }
+          }
+        } catch (configError) {
+          console.error('Error saving phase configuration:', configError);
+          // Don't fail the whole operation if phase config fails
+        }
+        
+        setResult("✅ Division created successfully with phase configuration!");
+        setCurrentStep(5);
         if (onComplete) onComplete();
       } else {
         setResult("❌ " + (data.error || "Failed to create division."));
@@ -199,6 +246,161 @@ function DivisionCreationWorkflow({ backendUrl, onComplete }) {
               ))}
             </div>
             <div className={styles.divisionForm}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '15px' }}>
+                <div>
+                  <label style={{ color: '#fff', display: 'block', marginBottom: '5px', fontSize: '14px' }}>Total Weeks</label>
+                  <input
+                    type="number"
+                    value={divisionData.totalWeeks}
+                    onChange={(e) => {
+                      const totalWeeks = Number(e.target.value);
+                      const phase1Weeks = divisionData.phase1Weeks;
+                      const phase2Weeks = Math.max(1, totalWeeks - phase1Weeks);
+                      
+                      handleInputChange('totalWeeks', totalWeeks);
+                      handleInputChange('phase2Weeks', phase2Weeks);
+                    }}
+                    className={styles.workflowInput}
+                    min="2"
+                    max="40"
+                  />
+                </div>
+                <div>
+                  <label style={{ color: '#fff', display: 'block', marginBottom: '5px', fontSize: '14px' }}>Phase 1 Weeks</label>
+                  <input
+                    type="number"
+                    value={divisionData.phase1Weeks}
+                    onChange={(e) => {
+                      const phase1Weeks = Number(e.target.value);
+                      handleInputChange('phase1Weeks', phase1Weeks);
+                      // Auto-calculate Phase 2 if Total Weeks is set
+                      if (divisionData.totalWeeks) {
+                        const phase2Weeks = Math.max(1, divisionData.totalWeeks - phase1Weeks);
+                        handleInputChange('phase2Weeks', phase2Weeks);
+                      }
+                    }}
+                    className={styles.workflowInput}
+                    min="1"
+                    max="20"
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '15px' }}>
+                <div>
+                  <label style={{ color: '#fff', display: 'block', marginBottom: '5px', fontSize: '14px' }}>Phase 2 Weeks</label>
+                  <input
+                    type="number"
+                    value={divisionData.phase2Weeks}
+                    onChange={(e) => {
+                      const phase2Weeks = Number(e.target.value);
+                      handleInputChange('phase2Weeks', phase2Weeks);
+                      // Auto-calculate Total Weeks
+                      const totalWeeks = divisionData.phase1Weeks + phase2Weeks;
+                      handleInputChange('totalWeeks', totalWeeks);
+                    }}
+                    className={styles.workflowInput}
+                    min="1"
+                    max="20"
+                  />
+                </div>
+                <div>
+                  <label style={{ color: '#fff', display: 'block', marginBottom: '5px', fontSize: '14px' }}>Session Start Date</label>
+                  <input
+                    type="date"
+                    value={divisionData.seasonStart}
+                    onChange={(e) => handleInputChange('seasonStart', e.target.value)}
+                    className={styles.workflowInput}
+                  />
+                </div>
+              </div>
+              
+              {/* Phase Date Calculator */}
+              {divisionData.seasonStart && (
+                <div style={{ 
+                  marginTop: '15px', 
+                  padding: '15px', 
+                  background: 'rgba(76, 175, 80, 0.1)', 
+                  borderRadius: '6px',
+                  border: '1px solid #4CAF50'
+                }}>
+                  <div style={{ color: '#4CAF50', fontSize: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                      <FaInfoCircle />
+                      <strong>Calculated Session Dates:</strong>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '10px' }}>
+                      <div>
+                        <strong>Phase 1:</strong><br />
+                        {(() => {
+                          const startDate = new Date(divisionData.seasonStart);
+                          return startDate.toLocaleDateString('en-US', { 
+                            month: '2-digit', 
+                            day: '2-digit', 
+                            year: 'numeric'
+                          });
+                        })()} to {(() => {
+                          const startDate = new Date(divisionData.seasonStart);
+                          const phase1End = new Date(startDate);
+                          phase1End.setDate(startDate.getDate() + (divisionData.phase1Weeks * 6) - 1);
+                          return phase1End.toLocaleDateString('en-US', { 
+                            month: '2-digit', 
+                            day: '2-digit', 
+                            year: 'numeric'
+                          });
+                        })()}
+                      </div>
+                      <div>
+                        <strong>Phase 2:</strong><br />
+                        {(() => {
+                          const startDate = new Date(divisionData.seasonStart);
+                          const phase2Start = new Date(startDate);
+                          phase2Start.setDate(startDate.getDate() + (divisionData.phase1Weeks * 6));
+                          return phase2Start.toLocaleDateString('en-US', { 
+                            month: '2-digit', 
+                            day: '2-digit', 
+                            year: 'numeric'
+                          });
+                        })()} to {(() => {
+                          const startDate = new Date(divisionData.seasonStart);
+                          const sessionEnd = new Date(startDate);
+                          sessionEnd.setDate(startDate.getDate() + (divisionData.phase1Weeks * 6) + (divisionData.phase2Weeks * 6) - 1);
+                          return sessionEnd.toLocaleDateString('en-US', { 
+                            month: '2-digit', 
+                            day: '2-digit', 
+                            year: 'numeric'
+                          });
+                        })()}
+                      </div>
+                    </div>
+                    <div style={{ marginTop: '10px', fontSize: '12px', opacity: 0.8 }}>
+                      Total Session Length: {divisionData.totalWeeks} weeks ({divisionData.phase1Weeks} weeks Phase 1 + {divisionData.phase2Weeks} weeks Phase 2)
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <button 
+                className={styles.workflowButton}
+                onClick={() => setCurrentStep(4)}
+                disabled={!divisionData.seasonStart}
+              >
+                <FaArrowRight /> Continue to Division Setup
+              </button>
+            </div>
+          </div>
+        );
+      
+      case 4:
+        return (
+          <div className={styles.workflowStep}>
+            <div className={styles.stepInstructions}>
+              {steps[3].instructions.map((instruction, index) => (
+                <div key={index} className={styles.instructionItem}>
+                  {instruction}
+                </div>
+              ))}
+            </div>
+            <div className={styles.divisionForm}>
               <input
                 type="text"
                 placeholder="Division Name (exactly as in CSI LMS)"
@@ -227,20 +429,10 @@ function DivisionCreationWorkflow({ backendUrl, onComplete }) {
                 onChange={(e) => handleInputChange('standingsUrl', e.target.value)}
                 className={styles.workflowInput}
               />
-              <input
-                type="date"
-                placeholder="Season Start Date"
-                value={divisionData.seasonStart}
-                onChange={(e) => handleInputChange('seasonStart', e.target.value)}
-                className={styles.workflowInput}
-              />
-              <div className={styles.workflowNote}>
-                <FaInfoCircle /> Phase 1: 6 weeks • Phase 2: 4 weeks • Season: 10 weeks total (auto-calculated)
-              </div>
               <button 
                 className={styles.workflowButton}
                 onClick={handleCreateDivision}
-                disabled={loading || !divisionData.name || !divisionData.scheduleUrl || !divisionData.standingsUrl || !divisionData.seasonStart}
+                disabled={loading || !divisionData.name || !divisionData.scheduleUrl || !divisionData.standingsUrl}
               >
                 {loading ? 'Creating...' : 'Create Division'}
               </button>
@@ -249,11 +441,11 @@ function DivisionCreationWorkflow({ backendUrl, onComplete }) {
           </div>
         );
       
-      case 4:
+      case 5:
         return (
           <div className={styles.workflowStep}>
             <div className={styles.stepInstructions}>
-              {steps[3].instructions.map((instruction, index) => (
+              {steps[4].instructions.map((instruction, index) => (
                 <div key={index} className={styles.instructionItem}>
                   {instruction}
                 </div>
@@ -265,7 +457,7 @@ function DivisionCreationWorkflow({ backendUrl, onComplete }) {
                 className={styles.workflowButton}
                 onClick={() => {
                   setCurrentStep(1);
-                  setDivisionData({ name: '', description: '', scheduleUrl: '', standingsUrl: '', seasonStart: '' });
+                  setDivisionData({ name: '', description: '', scheduleUrl: '', standingsUrl: '', seasonStart: '', phase1Weeks: 6, phase2Weeks: 4, totalWeeks: 10 });
                   setResult('');
                 }}
               >
