@@ -564,6 +564,17 @@ body, html {
   display: block !important;
 }
 
+.platform-admin-app-content {
+  max-width: 100vw !important;
+  width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: block !important;
+  overflow-x: auto;
+}
+
 img, svg {
   max-width: 100%;
   height: auto;

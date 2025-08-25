@@ -25,10 +25,12 @@ import MatchChat from '../chat/MatchChat';
 import WinnerSelectModal from '../modal/WinnerSelectModal';
 import Phase1Tracker from './Phase1Tracker.jsx';
 import Phase2Tracker from './Phase2Tracker.jsx';
+import CalendarModal from './CalendarModal';
 import MatchValidationModal from './MatchValidationModal';
 import ErrorBoundary from '../ErrorBoundary';
 import Phase1RulesModal from '../modal/Phase1RulesModal';
 import Phase1OverviewModal from '../modal/Phase1OverviewModal';
+import UserProfileModal from '../modal/UserProfileModal';
 
 import SmartMatchmakingModal from '../modal/SmartMatchmakingModal';
 import PlayerRegistrationModal from '../modal/PlayerRegistrationModal';
@@ -222,6 +224,7 @@ export default function Dashboard({
   onLogout,
   onScheduleMatch,
   senderEmail,
+  onGoToPlatformAdmin,
 }) {
   // State for user data
   const [divisions, setDivisions] = useState([]);
@@ -296,6 +299,13 @@ export default function Dashboard({
     updateCompletedMatch 
   } = useMatches(fullName, selectedDivision, effectivePhase);
 
+  // Check if user is super admin
+  const isSuperAdmin = () => {
+    const superAdminEmails = ['frbcapl@gmail.com', 'sslampro@gmail.com'];
+    const superAdminPin = '777777';
+    return superAdminEmails.includes(senderEmail.toLowerCase()) && userPin === superAdminPin;
+  };
+
   // Auto-updating hooks for other data
   const {
     seasonData,
@@ -366,9 +376,6 @@ export default function Dashboard({
   
   // User profile modal state
   const [showUserProfileModal, setShowUserProfileModal] = useState(false);
-  const [profileModalDrag, setProfileModalDrag] = useState({ x: 0, y: 0 });
-  const [profileModalDragging, setProfileModalDragging] = useState(false);
-  const profileModalDragStart = useRef({ x: 0, y: 0 });
 
   // Registration modal state
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
@@ -379,6 +386,7 @@ export default function Dashboard({
   // Phase1 modal state
   const [showPhase1Rules, setShowPhase1Rules] = useState(false);
   const [showPhase1Overview, setShowPhase1Overview] = useState(false);
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
 
   // Phase1 data state (needed for modals)
   const [playerStats, setPlayerStats] = useState(null);
@@ -462,49 +470,7 @@ export default function Dashboard({
 
   // Auto-updating data is now handled by custom hooks
 
-  // Profile modal drag handlers
-  const onProfileModalMouseDown = (e) => {
-    setProfileModalDragging(true);
-    profileModalDragStart.current = {
-      x: e.clientX - profileModalDrag.x,
-      y: e.clientY - profileModalDrag.y,
-    };
-    document.body.style.userSelect = "none";
-  };
 
-  const onProfileModalMouseMove = (e) => {
-    if (!profileModalDragging) return;
-    setProfileModalDrag({
-      x: e.clientX - profileModalDragStart.current.x,
-      y: e.clientY - profileModalDragStart.current.y,
-    });
-  };
-
-  const onProfileModalMouseUp = () => {
-    setProfileModalDragging(false);
-    document.body.style.userSelect = "";
-  };
-
-  useEffect(() => {
-    if (profileModalDragging) {
-      window.addEventListener("mousemove", onProfileModalMouseMove);
-      window.addEventListener("mouseup", onProfileModalMouseUp);
-    } else {
-      window.removeEventListener("mousemove", onProfileModalMouseMove);
-      window.removeEventListener("mouseup", onProfileModalMouseUp);
-    }
-    return () => {
-      window.removeEventListener("mousemove", onProfileModalMouseMove);
-      window.removeEventListener("mouseup", onProfileModalMouseUp);
-    };
-  }, [profileModalDragging]);
-
-  // Reset profile modal position when it opens
-  useEffect(() => {
-    if (showUserProfileModal) {
-      setProfileModalDrag({ x: 0, y: 0 });
-    }
-  }, [showUserProfileModal]);
 
   // Fetch unread messages count
   useEffect(() => {
@@ -1550,6 +1516,8 @@ export default function Dashboard({
   ];
 
   // Portal overlay for OpponentsModal
+  console.log('🎯 Dashboard: showOpponents state:', showOpponents);
+  console.log('🎯 Dashboard: simulationRef.current:', !!simulationRef.current);
   const opponentsModalPortal = showOpponents && simulationRef.current
     ? ReactDOM.createPortal(
         <div
@@ -1799,18 +1767,20 @@ export default function Dashboard({
                    alignItems: 'center'
                  }}>
                 
-                                 {/* Phase 1 Tracker positioned over the simulation */}
-                                   {effectivePhase === 'scheduled' && seasonData && (
-                    <div style={{
-                      position: 'absolute',
-                      top: isMobile ? '50px' : '35px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      zIndex: 10,
-                      width: isMobile ? '95%' : '90%',
-                      maxWidth: isMobile ? '500px' : '1200px',
-                      height: isMobile ? '150px' : '200px'
-                    }}>
+                                                 {/* Phase 1 Tracker positioned over the simulation */}
+                  {effectivePhase === 'scheduled' && seasonData && (
+                   <div style={{
+                     position: 'absolute',
+                     top: isMobile ? '50px' : '35px',
+                     left: '0',
+                     right: '0',
+                     margin: '0 auto',
+                     zIndex: 100,
+                     width: isMobile ? '95%' : '90%',
+                     maxWidth: isMobile ? '500px' : '1200px',
+                     height: isMobile ? '150px' : '200px',
+                     pointerEvents: 'auto'
+                   }}>
                     <ErrorBoundary>
                       <Phase1Tracker
                         currentPhase={effectivePhase}
@@ -1821,13 +1791,17 @@ export default function Dashboard({
                         playerLastName={playerLastName}
                         selectedDivision={selectedDivision}
                         onOpenOpponentsModal={(selectedDate) => {
+                          console.log('🎯 Dashboard: onOpenOpponentsModal called with date:', selectedDate);
                           setSelectedCalendarDate(selectedDate);
                           // If no date is provided (progress bar click), use smart match mode
                           if (!selectedDate) {
+                            console.log('🎯 Dashboard: Setting smart match mode to true');
                             setSmartMatchMode(true);
                           } else {
+                            console.log('🎯 Dashboard: Setting smart match mode to false');
                             setSmartMatchMode(false);
                           }
+                          console.log('🎯 Dashboard: Setting showOpponents to true');
                           setShowOpponents(true);
                         }}
                         onOpenCompletedMatchesModal={() => setShowCompletedModal(true)}
@@ -1857,23 +1831,26 @@ export default function Dashboard({
                         setTimeLeft={setTimeLeft}
                         setDeadlineStatus={setDeadlineStatus}
                         setPhase1EndDate={setPhase1EndDate}
+                        // Calendar modal handler
+                        onOpenCalendar={() => setShowCalendarModal(true)}
                       />
                     </ErrorBoundary>
                   </div>
                 )}
 
-                                 {/* Phase 2 Tracker positioned over the simulation */}
-                                   {effectivePhase === 'challenge' && (
-                    <div style={{
-                      position: 'absolute',
-                      top: isMobile ? '50px' : '35px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      zIndex: 10,
-                      width: isMobile ? '95%' : '90%',
-                      maxWidth: isMobile ? '500px' : '1200px',
-                      height: isMobile ? '150px' : '200px'
-                    }}>
+                                                 {/* Phase 2 Tracker positioned over the simulation */}
+                  {effectivePhase === 'challenge' && (
+                   <div style={{
+                     position: 'absolute',
+                     top: isMobile ? '50px' : '35px',
+                     left: '0',
+                     right: '0',
+                     margin: '0 auto',
+                     zIndex: 10,
+                     width: isMobile ? '95%' : '90%',
+                     maxWidth: isMobile ? '500px' : '1200px',
+                     height: isMobile ? '150px' : '200px'
+                   }}>
                                          <Phase2Tracker
                        playerName={playerName}
                        playerLastName={playerLastName}
@@ -1902,21 +1879,22 @@ export default function Dashboard({
                   </div>
                  )}
                                                   {isMobile ? (
-                   <div
-                     className={styles.simulationContainer}
-                     ref={simulationRef}
-                     style={{
-                       width: '100% !important',
-                       height: '400px !important',
-                       position: 'relative',
-                       minWidth: '0 !important',
-                       maxWidth: '100% !important',
-                       minHeight: '400px !important',
-                       maxHeight: '400px !important'
-                     }}
-                   >
-                     <PoolSimulation isRotated={true} />
-                   </div>
+                                     <div
+                    className={styles.simulationContainer}
+                    ref={simulationRef}
+                    style={{
+                      width: '100% !important',
+                      height: '400px !important',
+                      position: 'relative',
+                      minWidth: '0 !important',
+                      maxWidth: '100% !important',
+                      minHeight: '400px !important',
+                      maxHeight: '400px !important',
+                      pointerEvents: effectivePhase === 'scheduled' ? 'none' : 'auto'
+                    }}
+                  >
+                    <PoolSimulation isRotated={true} />
+                  </div>
                  ) : (
                                      <ResponsiveWrapper aspectWidth={600} aspectHeight={300}>
                      <div
@@ -1925,7 +1903,8 @@ export default function Dashboard({
                        style={{
                          width: '100%',
                          height: '100%',
-                         position: 'relative'
+                         position: 'relative',
+                         pointerEvents: effectivePhase === 'scheduled' ? 'none' : 'auto'
                        }}
                      >
                        <PoolSimulation />
@@ -2136,6 +2115,16 @@ export default function Dashboard({
             >
               Admin
             </button>
+            {isSuperAdmin() && onGoToPlatformAdmin && (
+              <button
+                className={styles.dashboardAdminBtn}
+                onClick={onGoToPlatformAdmin}
+                type="button"
+                style={{ background: "#8B4513" }}
+              >
+                Platform Admin
+              </button>
+            )}
            
             <button
               className={styles.dashboardAdminBtn}
@@ -2685,416 +2674,28 @@ export default function Dashboard({
        }}
      />
 
-     {/* User Profile Modal */}
-     {showUserProfileModal && (
-       <div
-         className="modal-overlay"
-         style={{
-           position: "fixed",
-           top: 0,
-           left: 0,
-           right: 0,
-           bottom: 0,
-           background: "rgba(0,0,0,0.7)",
-           display: "flex",
-           alignItems: "center",
-           justifyContent: "center",
-           zIndex: 1000,
-           backdropFilter: "blur(3px)",
-           WebkitBackdropFilter: "blur(3px)"
-         }}
-       >
-                   <div
-            className="draggable-modal"
-            style={{
-              transform: `translate(${profileModalDrag.x}px, ${profileModalDrag.y}px)`,
-              cursor: profileModalDragging ? "grabbing" : "default",
-              background: "linear-gradient(120deg, #232323 80%, #2a0909 100%)",
-              color: "#fff",
-              border: "2px solid #e53e3e",
-              borderRadius: window.innerWidth <= 400 ? "0" : "1rem",
-              boxShadow: "0 0 32px #e53e3e, 0 0 40px rgba(0,0,0,0.85)",
-              width: window.innerWidth <= 400 ? "95vw" : "auto",
-              maxWidth: window.innerWidth <= 400 ? "95vw" : "350px",
-              minWidth: 0,
-              margin: window.innerWidth <= 400 ? "0" : "0 auto",
-              left: 0,
-              right: 0,
-              animation: "modalBounceIn 0.5s cubic-bezier(.21,1.02,.73,1.01)",
-              padding: 0,
-              position: "relative",
-              fontFamily: "inherit",
-              boxSizing: "border-box",
-              textAlign: "center",
-              maxHeight: "80vh",
-              overflowY: "auto"
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Draggable header */}
-            <div
-              className="modal-header"
-              onMouseDown={onProfileModalMouseDown}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                background: "#e53e3e",
-                padding: "0.8rem 1rem 0.6rem 1rem",
-                borderTopLeftRadius: "1rem",
-                borderTopRightRadius: "1rem",
-                position: "relative",
-                cursor: "grab",
-                userSelect: "none",
-                gap: "0.8rem"
-              }}
-            >
-              <span 
-                className="modal-accent-bar"
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  width: "100%",
-                  height: "4px",
-                  background: "linear-gradient(90deg, #fff0 0%, #e53e3e 60%, #fff0 100%)",
-                  borderTopLeftRadius: "1rem",
-                  borderTopRightRadius: "1rem",
-                  pointerEvents: "none"
-                }}
-              ></span>
-              <h2 
-                className="modal-title"
-                style={{
-                  margin: 0,
-                  fontSize: window.innerWidth <= 500 ? "0.9rem" : "1rem",
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  letterSpacing: "0.02em",
-                  color: "#fff",
-                  textShadow: "0 1px 12px #000a",
-                  zIndex: 2,
-                  flex: 1,
-                  wordBreak: "break-word",
-                  minWidth: 0
-                }}
-              >
-                👤 Profile Information
-              </h2>
-              <button 
-                className="modal-close-btn"
-                onClick={() => setShowUserProfileModal(false)} 
-                aria-label="Close"
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#fff",
-                  fontSize: "1.3em",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  zIndex: 10,
-                  lineHeight: 1,
-                  transition: "color 0.2s, transform 0.2s",
-                  padding: 0,
-                  marginLeft: "0.3rem"
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.color = "#ffd6d6";
-                  e.target.style.transform = "scale(1.2) rotate(10deg)";
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.color = "#fff";
-                  e.target.style.transform = "scale(1) rotate(0deg)";
-                }}
-              >
-                &times;
-              </button>
-            </div>
-
-            {/* Modal content */}
-            <div 
-              className="modal-content"
-              style={{
-                padding: window.innerWidth <= 500 ? "0.5rem 0.7rem 0.3rem 0.7rem" : "0.7rem 0.9rem 0.5rem 0.9rem",
-                overflowY: "auto",
-                maxHeight: "calc(80vh - 60px)"
-              }}
-            >
-
-           <div style={{
-             display: 'grid',
-             gap: isMobile ? '5px' : '6px'
-           }}>
-             {/* Basic Info */}
-             <div style={{
-               background: 'rgba(255, 255, 255, 0.05)',
-               padding: isMobile ? '5px 7px' : '7px 9px',
-               borderRadius: '6px',
-               border: '1px solid rgba(255, 255, 255, 0.1)'
-             }}>
-                                <div style={{
-                   fontWeight: 'bold',
-                   color: '#ffffff',
-                   marginBottom: '3px',
-                   fontSize: isMobile ? '0.85rem' : '0.9rem'
-                 }}>
-                   📝 Basic Information
-                 </div>
-               <div style={{ color: '#cccccc', lineHeight: '1.3', fontSize: isMobile ? '0.8rem' : '0.85rem' }}>
-                 <div style={{ marginBottom: '2px' }}><strong>Name:</strong> {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : `${playerName} ${playerLastName}`}</div>
-                 <div style={{ marginBottom: '2px' }}><strong>Email:</strong> {currentUser ? (currentUser.email || 'Not provided') : (senderEmail || 'Not provided')}</div>
-                 <div><strong>Phone:</strong> {currentUser ? (currentUser.phone || 'Not provided') : 'Not provided'}</div>
-                 {!currentUser && (
-                   <div style={{ 
-                     marginTop: '8px', 
-                     padding: '6px 10px', 
-                     background: 'rgba(255, 193, 7, 0.1)', 
-                     border: '1px solid rgba(255, 193, 7, 0.3)', 
-                     borderRadius: '4px',
-                     fontSize: isMobile ? '0.7rem' : '0.75rem',
-                     color: '#ffc107'
-                   }}>
-                     ⚠️ Some profile details may not be fully loaded yet
-                   </div>
-                 )}
-               </div>
-             </div>
-
-                            {/* Contact Preferences */}
-               {currentUser && currentUser.preferredContacts && currentUser.preferredContacts.length > 0 && (
-                 <div style={{
-                   background: 'rgba(255, 255, 255, 0.05)',
-                   padding: isMobile ? '5px 7px' : '7px 9px',
-                   borderRadius: '6px',
-                   border: '1px solid rgba(255, 255, 255, 0.1)'
-                 }}>
-                                    <div style={{
-                     fontWeight: 'bold',
-                     color: '#ffffff',
-                     marginBottom: '3px',
-                     fontSize: isMobile ? '0.85rem' : '0.9rem'
-                   }}>
-                     📞 Preferred Contact Methods
-                   </div>
-                 <div style={{ color: '#cccccc', lineHeight: '1.3', fontSize: isMobile ? '0.8rem' : '0.85rem' }}>
-                   {currentUser.preferredContacts.map((method, index) => (
-                     <div key={index} style={{ marginBottom: '2px' }}>
-                       • {method.charAt(0).toUpperCase() + method.slice(1)}
-                     </div>
-                   ))}
-                 </div>
-               </div>
-             )}
-
-                            {/* Locations */}
-               {currentUser && currentUser.locations && (
-                 <div style={{
-                   background: 'rgba(255, 255, 255, 0.05)',
-                   padding: isMobile ? '5px 7px' : '7px 9px',
-                   borderRadius: '6px',
-                   border: '1px solid rgba(255, 255, 255, 0.1)'
-                 }}>
-                                    <div style={{
-                     fontWeight: 'bold',
-                     color: '#ffffff',
-                     marginBottom: '3px',
-                     fontSize: isMobile ? '0.85rem' : '0.9rem'
-                   }}>
-                     📍 Preferred Locations
-                   </div>
-                 <div style={{ color: '#cccccc', lineHeight: '1.3', fontSize: isMobile ? '0.8rem' : '0.85rem' }}>
-                   {currentUser.locations ? (
-                     <div style={{
-                       display: 'flex',
-                       flexWrap: 'wrap',
-                       gap: '6px',
-                       alignItems: 'center'
-                     }}>
-                       {currentUser.locations.split(/\r?\n/).filter(Boolean).map((location, index) => (
-                         <div key={index} style={{
-                           display: 'flex',
-                           alignItems: 'center',
-                           gap: '4px'
-                         }}>
-                           <span style={{
-                             background: 'rgba(255, 255, 255, 0.1)',
-                             color: '#ffffff',
-                             padding: '3px 8px',
-                             borderRadius: '12px',
-                             fontSize: isMobile ? '0.7rem' : '0.75rem',
-                             fontWeight: '500',
-                             border: '1px solid rgba(255, 255, 255, 0.2)',
-                             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)'
-                           }}>
-                             {location.trim()}
-                           </span>
-                           {index < currentUser.locations.split(/\r?\n/).filter(Boolean).length - 1 && (
-                             <span style={{
-                               color: '#666',
-                               fontSize: isMobile ? '0.6rem' : '0.65rem'
-                             }}>
-                               •
-                             </span>
-                           )}
-                         </div>
-                       ))}
-                     </div>
-                   ) : (
-                     'Not specified'
-                   )}
-                 </div>
-               </div>
-             )}
-
-                            {/* Availability */}
-               {currentUser && currentUser.availability && (
-                 <div style={{
-                   background: 'rgba(255, 255, 255, 0.05)',
-                   padding: isMobile ? '5px 7px' : '7px 9px',
-                   borderRadius: '6px',
-                   border: '1px solid rgba(255, 255, 255, 0.1)'
-                 }}>
-                                    <div style={{
-                     fontWeight: 'bold',
-                     color: '#ffffff',
-                     marginBottom: '3px',
-                     fontSize: isMobile ? '0.85rem' : '0.9rem'
-                   }}>
-                     📅 Availability
-                   </div>
-                 <div style={{
-                   display: 'grid',
-                   gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
-                   gap: isMobile ? '5px' : '6px',
-                   fontSize: isMobile ? '0.75rem' : '0.8rem'
-                 }}>
-                   {Object.entries(currentUser.availability).map(([day, slots]) => (
-                     <div key={day} style={{
-                       background: 'rgba(255, 255, 255, 0.08)',
-                       padding: isMobile ? '5px 7px' : '7px 9px',
-                       borderRadius: '4px',
-                       border: '1px solid rgba(255, 255, 255, 0.15)',
-                       textAlign: 'center'
-                     }}>
-                       <div style={{
-                         fontWeight: 'bold',
-                         color: '#ffffff',
-                         marginBottom: '2px',
-                         fontSize: isMobile ? '0.75rem' : '0.8rem'
-                       }}>
-                         {day}
-                       </div>
-                       {slots && slots.length > 0 ? (
-                         <div style={{ color: '#cccccc', fontSize: isMobile ? '0.7rem' : '0.75rem' }}>
-                           {slots.map((slot, index) => (
-                             <div key={index} style={{ marginBottom: '1px' }}>
-                               {slot}
-                             </div>
-                           ))}
-                         </div>
-                       ) : (
-                         <div style={{ color: '#888', fontStyle: 'italic', fontSize: isMobile ? '0.7rem' : '0.75rem' }}>
-                           No times
-                         </div>
-                       )}
-                     </div>
-                   ))}
-                 </div>
-               </div>
-             )}
-
-                            {/* Divisions */}
-               <div style={{
-                 background: 'rgba(255, 255, 255, 0.05)',
-                 padding: isMobile ? '5px 7px' : '7px 9px',
-                 borderRadius: '6px',
-                 border: '1px solid rgba(255, 255, 255, 0.1)'
-               }}>
-                                <div style={{
-                   fontWeight: 'bold',
-                   color: '#ffffff',
-                   marginBottom: '3px',
-                   fontSize: isMobile ? '0.85rem' : '0.9rem'
-                 }}>
-                   🏆 Divisions
-                 </div>
-               <div style={{ color: '#cccccc', lineHeight: '1.3', fontSize: isMobile ? '0.8rem' : '0.85rem' }}>
-                 {divisions.length > 0 ? divisions.join(', ') : 'No divisions assigned'}
-               </div>
-             </div>
-
-                                                        {/* Edit Profile and Close Buttons */}
-               <div style={{
-                 marginTop: isMobile ? '5px' : '6px',
-                 textAlign: 'center',
-                 display: 'flex',
-                 gap: '8px',
-                 justifyContent: 'center'
-               }}>
-               <button
-                 style={{
-                   background: 'linear-gradient(135deg, #4CAF50, #45a049)',
-                   color: '#fff',
-                   border: 'none',
-                   borderRadius: '6px',
-                   padding: isMobile ? '7px 14px' : '9px 18px',
-                   fontSize: isMobile ? '0.85rem' : '0.95rem',
-                   fontWeight: '600',
-                   cursor: 'pointer',
-                   transition: 'all 0.2s ease',
-                   boxShadow: '0 2px 8px rgba(76, 175, 80, 0.3)'
-                 }}
-                 onMouseEnter={(e) => {
-                   e.target.style.background = 'linear-gradient(135deg, #45a049, #3d8b40)';
-                   e.target.style.transform = 'translateY(-1px)';
-                   e.target.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.4)';
-                 }}
-                 onMouseLeave={(e) => {
-                   e.target.style.background = 'linear-gradient(135deg, #4CAF50, #45a049)';
-                   e.target.style.transform = 'translateY(0)';
-                   e.target.style.boxShadow = '0 2px 8px rgba(76, 175, 80, 0.3)';
-                 }}
-                 onClick={() => {
-                   // TODO: Implement edit profile functionality
-                   alert('Edit profile functionality coming soon!');
-                 }}
-               >
-                 ✏️ Edit Profile
-               </button>
-               
-               <button
-                 style={{
-                   background: 'linear-gradient(135deg, #6c757d, #5a6268)',
-                   color: '#fff',
-                   border: 'none',
-                   borderRadius: '6px',
-                   padding: isMobile ? '7px 14px' : '9px 18px',
-                   fontSize: isMobile ? '0.85rem' : '0.95rem',
-                   fontWeight: '600',
-                   cursor: 'pointer',
-                   transition: 'all 0.2s ease',
-                   boxShadow: '0 2px 8px rgba(108, 117, 125, 0.3)'
-                 }}
-                 onMouseEnter={(e) => {
-                   e.target.style.background = 'linear-gradient(135deg, #5a6268, #495057)';
-                   e.target.style.transform = 'translateY(-1px)';
-                   e.target.style.boxShadow = '0 4px 12px rgba(108, 117, 125, 0.4)';
-                 }}
-                 onMouseLeave={(e) => {
-                   e.target.style.background = 'linear-gradient(135deg, #6c757d, #5a6268)';
-                   e.target.style.transform = 'translateY(0)';
-                   e.target.style.boxShadow = '0 2px 8px rgba(108, 117, 125, 0.3)';
-                 }}
-                 onClick={() => setShowUserProfileModal(false)}
-               >
-                 ❌ Close
-               </button>
-             </div>
-             </div>
-           </div>
-         </div>
-       </div>
-     )}
+     {/* User Profile Modal - Using the proper component */}
+     <UserProfileModal
+       isOpen={showUserProfileModal}
+       onClose={() => setShowUserProfileModal(false)}
+       currentUser={currentUser}
+       isMobile={isMobile}
+       onUserUpdate={(updatedUser) => {
+         setCurrentUser(updatedUser);
+       }}
+       availableLocations={[
+         'Legends Brews & Cues',
+         'Antiques',
+         'Rac m',
+         'Westside Billiards',
+         'Bijou Billiards',
+         'Crooked Cue',
+         'Back on the Boulevard',
+         'Main Street Tavern',
+         'Murray Street Darts',
+         'My House'
+       ]}
+     />
 
      {/* Phase1 Rules Modal */}
      <Phase1RulesModal
@@ -3340,6 +2941,35 @@ export default function Dashboard({
          </div>
        </Modal>
      )}
+
+     {/* Calendar Modal */}
+     <CalendarModal
+       isOpen={showCalendarModal}
+       onClose={() => setShowCalendarModal(false)}
+       isMobile={isMobile}
+       phase1EndDate={phase1EndDate}
+       upcomingMatches={filteredUpcomingMatches}
+       playerName={playerName}
+       playerLastName={playerLastName}
+       onOpenOpponentsModal={(selectedDate) => {
+         console.log('🎯 Dashboard: Calendar modal calling onOpenOpponentsModal with date:', selectedDate);
+         setSelectedCalendarDate(selectedDate);
+         // If no date is provided (progress bar click), use smart match mode
+         if (!selectedDate) {
+           console.log('🎯 Dashboard: Setting smart match mode to true');
+           setSmartMatchMode(true);
+         } else {
+           console.log('🎯 Dashboard: Setting smart match mode to false');
+           setSmartMatchMode(false);
+         }
+         console.log('🎯 Dashboard: Setting showOpponents to true');
+         setShowOpponents(true);
+         // Close the calendar modal when opening opponents
+         setShowCalendarModal(false);
+       }}
+       onMatchClick={handleProposalClick}
+       onSmartMatchClick={handleSmartMatchClick}
+     />
    </div>
  );
 }

@@ -6,10 +6,12 @@ import ConfirmMatch from "./components/ConfirmMatch";
 import Dashboard from "./components/dashboard/Dashboard";
 import MatchChat from "./components/chat/MatchChat";
 import AdminDashboard from "./components/dashboard/AdminDashboard";
+import PlatformAdminDashboard from "./components/PlatformAdminDashboard";
 import PinLogin from "./components/modal/PinLogin";
 import FloatingLogos from './components/FloatingLogos';
 import TenBallTutorial from './components/TenBallTutorial';
 import SimplePoolGame from './components/tenball/SimplePoolGame';
+import MobileTestPage from './components/MobileTestPage';
 import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
 import csiLogo from "./assets/csi_logo.png";
@@ -26,10 +28,7 @@ function AppHeader() {
       alignItems: "center",
       justifyContent: "center",
       padding: "0.25rem 0 0.5rem 0",
-      position: "fixed",
-      top: 0,
-      left: 0,
-      zIndex: 1000,
+      position: "static",
       background: "rgba(0,0,0,0.8)",
       backdropFilter: "blur(6px)",
       boxShadow: "0 4px 20px rgba(0,0,0,0.5)"
@@ -65,6 +64,7 @@ function MainApp({
           onLogout={handleLogout}
           userPin={userPin}
           onGoToAdmin={() => navigate("/admin")}
+          onGoToPlatformAdmin={() => navigate("/platform-admin")}
         />
       )}
     </main>
@@ -113,6 +113,15 @@ function App() {
     localStorage.setItem("isAuthenticated", "true");
   };
 
+  // --- Check if user is super admin ---
+  const isSuperAdmin = () => {
+    // Check if user has super admin credentials
+    const superAdminEmails = ['frbcapl@gmail.com', 'sslampro@gmail.com'];
+    const superAdminPin = '777777';
+    
+    return superAdminEmails.includes(userEmail.toLowerCase()) && userPin === superAdminPin;
+  };
+
   // --- Logout handler ---
   const handleLogout = () => {
     setUserFirstName("");
@@ -133,13 +142,25 @@ function App() {
       <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
         <FloatingLogos />
         <AppHeader />
-        <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "calc(100vh - 80px)", paddingTop: "0px" }}>
+        <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "0px" }}>
           <Routes>
             <Route
               path="/admin"
               element={
                 isAuthenticated && userPin === "777777" ? (
                   <div className="admin-app-content"><AdminDashboard /></div>
+                ) : (
+                  <Navigate to="/" />
+                )
+              }
+            />
+            <Route
+              path="/platform-admin"
+              element={
+                isAuthenticated && isSuperAdmin() ? (
+                  <div className="platform-admin-app-content">
+                    <PlatformAdminDashboard />
+                  </div>
                 ) : (
                   <Navigate to="/" />
                 )
@@ -175,6 +196,10 @@ function App() {
                       element={<TenBallTutorial />}
                     />
                     <Route
+                      path="/mobile-test"
+                      element={<MobileTestPage />}
+                    />
+                    <Route
                       path="/dashboard"
                       element={
                         isAuthenticated ? (
@@ -187,6 +212,7 @@ function App() {
                             onLogout={handleLogout}
                             userPin={userPin}
                             onGoToAdmin={() => {}}
+                            onGoToPlatformAdmin={() => navigate("/platform-admin")}
                           />
                         ) : (
                           <Navigate to="/" />

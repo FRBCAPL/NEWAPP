@@ -45,40 +45,42 @@ function formatDateMMDDYYYY(dateStr) {
   return `${month}-${day}-${year}`;
 }
 
-  const Phase1Tracker = ({ 
-    currentPhase, 
-    seasonData, 
-    completedMatches, 
-    totalRequiredMatches,
-    playerName,
-    playerLastName,
-    selectedDivision,
-    onOpenOpponentsModal,
-    onOpenCompletedMatchesModal,
-    onOpenStandingsModal,
-    onOpenAllMatchesModal,
-    pendingCount,
-    sentCount,
-    onOpenProposalListModal,
-    onOpenSentProposalListModal,
-    upcomingMatches,
-    onMatchClick,
-    isMobile,
-    onOpenMessageCenter,
-    currentUser,
-    allPlayers,
-    onSmartMatchClick,
-    // Phase1 modal state and handlers
-    showPhase1Rules,
-    setShowPhase1Rules,
-    showPhase1Overview,
-    setShowPhase1Overview,
-    // Phase1 data state setters
-    setPlayerStats,
-    setTimeLeft,
-    setDeadlineStatus,
-    setPhase1EndDate
-  }) => {
+     const Phase1Tracker = ({ 
+     currentPhase, 
+     seasonData, 
+     completedMatches, 
+     totalRequiredMatches,
+     playerName,
+     playerLastName,
+     selectedDivision,
+     onOpenOpponentsModal,
+     onOpenCompletedMatchesModal,
+     onOpenStandingsModal,
+     onOpenAllMatchesModal,
+     pendingCount,
+     sentCount,
+     onOpenProposalListModal,
+     onOpenSentProposalListModal,
+     upcomingMatches,
+     onMatchClick,
+     isMobile,
+     onOpenMessageCenter,
+     currentUser,
+     allPlayers,
+     onSmartMatchClick,
+     // Phase1 modal state and handlers
+     showPhase1Rules,
+     setShowPhase1Rules,
+     showPhase1Overview,
+     setShowPhase1Overview,
+     // Phase1 data state setters
+     setPlayerStats,
+     setTimeLeft,
+     setDeadlineStatus,
+     setPhase1EndDate,
+     // Calendar modal handler
+     onOpenCalendar
+   }) => {
     // Data validation
     const validateProps = () => {
       if (!playerName || !playerLastName) {
@@ -108,7 +110,7 @@ function formatDateMMDDYYYY(dateStr) {
   const [standings, setStandings] = useState([]);
   const [loadingStandings, setLoadingStandings] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
-  const [showCalendar, setShowCalendar] = useState(false);
+  // Remove local calendar state - will be managed by parent
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(null);
   
@@ -420,28 +422,21 @@ function formatDateMMDDYYYY(dateStr) {
           width: isMobile ? '100%' : '98%',
           maxWidth: isMobile ? 'none' : '1600px',
                   boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 4px 16px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.1)`,
-         cursor: 'pointer',
-         display: 'flex',
-         flexDirection: 'column',
-         justifyContent: isExpanded ? 'flex-start' : 'flex-start',
-                  backdropFilter: 'blur(8px)',
-         overflow: isMobile ? 'auto' : 'hidden',
-                  maxHeight: isMobile ? 'none' : '35vh',
-          height: isMobile ? (isExpanded ? '350px' : '60px') : (isExpanded ? '400px' : '160px'),
-         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-         position: 'relative'
-       }}
-         onClick={() => setIsExpanded(!isExpanded)}
-     onKeyDown={(e) => {
-       if (e.key === 'Enter' || e.key === ' ') {
-         e.preventDefault();
-         setIsExpanded(!isExpanded);
-       }
-     }}
-     role="button"
-     tabIndex="0"
-     aria-label={isExpanded ? "Collapse Phase 1 tracker" : "Expand Phase 1 tracker"}
-    >
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: isExpanded ? 'flex-start' : 'flex-start',
+                   backdropFilter: 'blur(8px)',
+          overflow: isMobile ? 'auto' : 'hidden',
+                   maxHeight: isMobile ? 'none' : '35vh',
+           height: isMobile ? (isExpanded ? '350px' : '60px') : (isExpanded ? '400px' : '160px'),
+          transition: 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+          position: 'relative',
+          transform: 'none',
+          touchAction: 'none'
+        }}
+               role="presentation"
+        tabIndex="-1"
+     >
              {/* Header */}
                                                                <div style={{
             position: 'relative',
@@ -653,26 +648,15 @@ function formatDateMMDDYYYY(dateStr) {
                         backdropFilter: 'blur(8px)',
                         margin: isMobile ? '8px auto' : '0'
                       }}
-                                                               onClick={(e) => {
-                                  e.stopPropagation();
-                                  setIsExpanded(true); // Expand the tracker when opening calendar
-                                  setShowCalendar(true);
-                                }}
-                                aria-label="Open calendar to schedule matches by date"
-                                role="button"
-                                tabIndex="0"
-                                                onMouseEnter={(e) => {
-                   e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.05)';
-                                     e.currentTarget.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.45), rgba(76, 175, 80, 0.4), rgba(76, 175, 80, 0.35))';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.5), inset 0 1px 0 rgba(255,255,255,0.2)';
-                    e.currentTarget.style.border = '1px solid rgba(76, 175, 80, 0.8)';
-                 }}
-                 onMouseLeave={(e) => {
-                   e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)';
-                                     e.currentTarget.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.35), rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.25))';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(76, 175, 80, 0.4), inset 0 1px 0 rgba(255,255,255,0.1)';
-                    e.currentTarget.style.border = '1px solid rgba(76, 175, 80, 0.7)';
-                 }}
+                                                                                                                                                                                                                                                               onClick={() => {
+                                    setIsExpanded(true); // Expand the tracker when opening calendar
+                                    if (onOpenCalendar) {
+                                      onOpenCalendar();
+                                    }
+                                  }}
+                                 aria-label="Open calendar to schedule matches by date"
+                                 role="button"
+                                 tabIndex="0"
                               >
                                                                                                                                                                                                                                                  <div style={{ 
                                                                                        fontSize: isMobile ? '0.5rem' : '0.7rem',
@@ -884,27 +868,32 @@ function formatDateMMDDYYYY(dateStr) {
                        {/* Removed the absolutely positioned Show Stats text */}
             
             {/* Show Stats Button - integrated into header */}
-            <div style={{
-              textAlign: 'center',
-              marginTop: isMobile ? '2px' : '4px'
-            }}>
-              <div style={{
-                fontSize: isMobile ? '0.5rem' : '0.9rem',
-                color: '#ffffff',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                padding: isMobile ? '1px 3px' : '4px 8px',
-                borderRadius: '6px',
-                display: 'inline-block',
-                transition: 'background-color 0.2s ease',
-                textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-              }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = `${primaryColor}20`}
-                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-              >
-                {isExpanded ? 'Hide Stats ▲' : 'Show Stats ▼'}
-              </div>
-            </div>
+                         <div style={{
+               textAlign: 'center',
+               marginTop: isMobile ? '2px' : '4px'
+             }}>
+                                                            <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsExpanded(!isExpanded);
+                  }}
+                  style={{
+                    fontSize: isMobile ? '0.5rem' : '0.9rem',
+                    color: '#ffffff',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    padding: isMobile ? '1px 3px' : '4px 8px',
+                    borderRadius: '6px',
+                    display: 'inline-block',
+                    transition: 'background-color 0.2s ease',
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                    background: 'transparent',
+                    border: 'none'
+                  }}
+               >
+                 {isExpanded ? 'Hide Stats ▲' : 'Show Stats ▼'}
+               </button>
+             </div>
           </div>
 
       {/* Expanded Content */}
@@ -1417,143 +1406,7 @@ function formatDateMMDDYYYY(dateStr) {
         </>
       )}
 
-      {/* Calendar Modal */}
-      {showCalendar && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            backdropFilter: 'blur(4px)'
-          }}
-          onClick={() => setShowCalendar(false)}
-        >
-          <div 
-            style={{
-              background: `rgba(0, 0, 0, 0.75)`,
-              border: `1px solid rgba(255, 255, 255, 0.3)`,
-              borderRadius: isMobile ? '12px' : '16px',
-              padding: isMobile ? '6px' : '16px',
-              width: isMobile ? '100%' : '90%',
-              maxWidth: isMobile ? 'none' : '1200px',
-              boxShadow: `0 4px 16px rgba(0,0,0,0.3)`,
-              backdropFilter: 'blur(4px)',
-              maxHeight: isMobile ? 'none' : '35vh',
-              height: isMobile ? '200px' : '400px',
-              overflow: 'auto'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-                         <div style={{
-               position: 'relative',
-               textAlign: 'center',
-               marginBottom: isMobile ? '0px' : '4px',
-               padding: isMobile ? '2px' : '4px',
-               borderRadius: '8px',
-               background: 'rgba(0, 0, 0, 0.6)',
-               border: '1px solid rgba(255,255,255,0.2)',
-               boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-             }}>
-               <h3 style={{
-                 margin: 0,
-                 color: '#ffffff',
-                 fontSize: isMobile ? '0.4rem' : '1.1rem',
-                 fontWeight: 'bold',
-                 display: 'flex',
-                 alignItems: 'center',
-                 justifyContent: 'space-between',
-                 textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                 letterSpacing: '0.5px'
-               }}>
-                 <div style={{ flex: 1 }}></div>
-                 <span style={{ 
-                   fontSize: isMobile ? '0.6rem' : '1.1rem',
-                   background: `linear-gradient(45deg, #4CAF50, #4CAF50dd)`,
-                   padding: isMobile ? '1px 4px' : '2px 8px',
-                   borderRadius: '6px',
-                   boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-                 }}>
-                   Phase 1 Calendar
-                 </span>
-                 <button
-                   onClick={() => setShowCalendar(false)}
-                   style={{
-                     background: 'none',
-                     border: 'none',
-                     color: '#ffffff',
-                     fontSize: isMobile ? '0.8rem' : '1.2rem',
-                     cursor: 'pointer',
-                     padding: '0',
-                     width: isMobile ? '20px' : '30px',
-                     height: isMobile ? '20px' : '30px',
-                     display: 'flex',
-                     alignItems: 'center',
-                     justifyContent: 'center',
-                     flex: 1,
-                     justifyContent: 'flex-end'
-                   }}
-                 >
-                   ×
-                 </button>
-               </h3>
-             </div>
-             
-                           {/* Instructions */}
-              <div style={{
-                background: 'rgba(76, 175, 80, 0.1)',
-                border: '1px solid rgba(76, 175, 80, 0.3)',
-                borderRadius: '8px',
-                padding: isMobile ? '6px' : '10px',
-                marginBottom: isMobile ? '4px' : '8px',
-                textAlign: 'center'
-              }}>
-                <div style={{
-                  fontSize: isMobile ? '0.45rem' : '0.85rem',
-                  color: '#ffffff',
-                  fontWeight: 'bold',
-                  marginBottom: isMobile ? '3px' : '5px',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                }}>
-                  📅 Click any date to see opponents available for that day
-                </div>
-                <div style={{
-                  fontSize: isMobile ? '0.4rem' : '0.75rem',
-                  color: '#cccccc',
-                  fontStyle: 'italic',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                }}>
-                  💡 Or click the Progress meter on the home screen to see all available opponents
-                </div>
-              </div>
-            
-                                                                                                       <CalendarGrid 
-                 phase1EndDate={localPhase1EndDate}
-                isMobile={isMobile}
-                currentMonth={currentCalendarMonth}
-                onMonthChange={setCurrentCalendarMonth}
-                onOpenOpponentsModal={onOpenOpponentsModal}
-                upcomingMatches={upcomingMatches}
-                playerName={playerName}
-                playerLastName={playerLastName}
-                onMatchClick={onMatchClick}
-                onDateSelect={(selectedDate) => {
-                   setSelectedCalendarDate(selectedDate);
-                   // Don't close the calendar when opening opponents modal
-                   if (onOpenOpponentsModal) {
-                     onOpenOpponentsModal(selectedDate);
-                   }
-                 }}
-              />
-          </div>
-        </div>
-             )}
+                          {/* Calendar Modal - Removed, will be handled by parent Dashboard */}
 
       </div>
     );
@@ -1681,14 +1534,15 @@ const CalendarGrid = ({ phase1EndDate, isMobile, currentMonth, onMonthChange, on
         >
           ←
         </button>
-                 <div style={{
-           textAlign: 'center',
-           fontSize: isMobile ? '0.7rem' : '1rem',
-           fontWeight: 'bold',
-           textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-         }}>
-           {monthNames[currentMonthIndex]} {currentYear}
-         </div>
+                                   <div style={{
+            textAlign: 'center',
+            fontSize: isMobile ? '0.7rem' : '1rem',
+            fontWeight: 'bold',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+            width: '100%'
+          }}>
+            {monthNames[currentMonthIndex]} {currentYear}
+          </div>
         <button
           onClick={goToNextMonth}
           style={{
@@ -1731,20 +1585,23 @@ const CalendarGrid = ({ phase1EndDate, isMobile, currentMonth, onMonthChange, on
       
       {/* Calendar grid */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(7, 1fr)',
-        gap: '0px'
+                      display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: '0px',
+                             width: isMobile ? '400px' : '700px',
+               height: isMobile ? '280px' : '450px',
+              margin: '0 auto'
       }}>
                {calendarDays.map((day, index) => (
           <div
             key={index}
-                                                   onClick={() => {
-                if (day && !hasConfirmedMatches(day) && onDateSelect) {
-                  // Only open opponents modal for empty dates
-                  const selectedDate = new Date(currentYear, currentMonthIndex, day);
-                  onDateSelect(selectedDate);
-                }
-              }}
+                                                                                                       onClick={() => {
+                 if (day && !hasConfirmedMatches(day) && onDateSelect) {
+                   // Only open opponents modal for empty dates
+                   const selectedDate = new Date(currentYear, currentMonthIndex, day);
+                   onDateSelect(selectedDate);
+                 }
+               }}
                            title={hasConfirmedMatches(day) ? 
                 getMatchesForDate(day).map(match => {
                   let opponent = '';
@@ -1806,69 +1663,103 @@ const CalendarGrid = ({ phase1EndDate, isMobile, currentMonth, onMonthChange, on
                alignItems: 'stretch',
                justifyContent: 'space-between',
                width: '100%',
-               height: '100%',
-               position: 'relative'
+               height: '100%'
              }}>
+               {/* Date number */}
                <span style={{
-                 position: 'absolute',
-                 top: '2px',
-                 right: '2px',
                  fontSize: isMobile ? '0.5rem' : '0.7rem',
                  fontWeight: 'bold',
-                 color: 'inherit'
+                 color: 'inherit',
+                 textAlign: 'right',
+                 padding: '1px'
                }}>{day || ''}</span>
-              {hasConfirmedMatches(day) && (
-                                 <div style={{
-                   fontSize: isMobile ? '0.4rem' : '0.5rem',
-                   color: '#4CAF50',
-                   fontWeight: 'bold',
-                   textAlign: 'center',
-                   cursor: 'pointer',
-                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                   marginTop: '12px',
+               
+               {/* Opponents list - simple stacked display */}
+               {hasConfirmedMatches(day) && (
+                 <div style={{
+                   display: 'flex',
+                   flexDirection: 'column',
+                   gap: '1px',
                    padding: '1px',
-                   borderRadius: '2px',
-                   transition: 'all 0.2s ease'
-                 }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(76, 175, 80, 0.2)';
-                  e.target.style.transform = 'scale(1.1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = 'transparent';
-                  e.target.style.transform = 'scale(1)';
-                }}
-                                 onClick={(e) => {
-                   e.stopPropagation();
-                   const matches = getMatchesForDate(day);
-                   if (matches.length > 0) {
-                     // Open match details modal for the first match
-                     const match = matches[0];
-                     if (onMatchClick) {
-                       onMatchClick(match);
-                     }
-                   }
+                   flex: 1,
+                   justifyContent: 'flex-end'
                  }}>
-                  {(() => {
-                    const matches = getMatchesForDate(day);
-                    if (matches.length > 0) {
-                      const match = matches[0]; // Show first match
-                      let opponent = '';
-                      if (match.player1Id && match.player2Id) {
-                        opponent = match.player1Id.trim().toLowerCase() === `${playerName} ${playerLastName}`.trim().toLowerCase() ? 
-                          match.player2Id : match.player1Id;
-                      } else if (match.senderName && match.receiverName) {
-                        opponent = match.senderName.trim().toLowerCase() === `${playerName} ${playerLastName}`.trim().toLowerCase() ? 
-                          match.receiverName : match.senderName;
-                      }
-                                                                    // Show full name (first and last)
-                        return opponent;
-                    }
-                    return '';
-                  })()}
-                </div>
-              )}
-            </div>
+                   {(() => {
+                     const matches = getMatchesForDate(day);
+                     return matches.slice(0, isMobile ? 2 : 3).map((match, index) => {
+                       let opponent = '';
+                       if (match.player1Id && match.player2Id) {
+                         opponent = match.player1Id.trim().toLowerCase() === `${playerName} ${playerLastName}`.trim().toLowerCase() ? 
+                           match.player2Id : match.player1Id;
+                       } else if (match.senderName && match.receiverName) {
+                         opponent = match.senderName.trim().toLowerCase() === `${playerName} ${playerLastName}`.trim().toLowerCase() ? 
+                           match.receiverName : match.senderName;
+                       }
+                       
+                       // Truncate long names
+                       const displayName = opponent.length > (isMobile ? 6 : 8) ? 
+                         opponent.substring(0, isMobile ? 6 : 8) + '...' : opponent;
+                       
+                       return (
+                         <div
+                           key={match._id || index}
+                           style={{
+                             fontSize: isMobile ? '0.35rem' : '0.45rem',
+                             color: '#4CAF50',
+                             fontWeight: 'bold',
+                             textAlign: 'center',
+                             cursor: 'pointer',
+                             textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                             padding: '1px',
+                             borderRadius: '1px',
+                             background: 'rgba(76, 175, 80, 0.1)',
+                             border: '1px solid rgba(76, 175, 80, 0.3)',
+                             transition: 'all 0.2s ease',
+                             whiteSpace: 'nowrap',
+                             overflow: 'hidden',
+                             textOverflow: 'ellipsis'
+                           }}
+                           onMouseEnter={(e) => {
+                             e.target.style.background = 'rgba(76, 175, 80, 0.3)';
+                             e.target.style.transform = 'scale(1.05)';
+                           }}
+                           onMouseLeave={(e) => {
+                             e.target.style.background = 'rgba(76, 175, 80, 0.1)';
+                             e.target.style.transform = 'scale(1)';
+                           }}
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             if (onMatchClick) {
+                               onMatchClick(match);
+                             }
+                           }}
+                           title={`Click to view match details vs ${opponent}`}
+                         >
+                           {displayName}
+                         </div>
+                       );
+                     });
+                   })()}
+                   {(() => {
+                     const matches = getMatchesForDate(day);
+                     if (matches.length > (isMobile ? 2 : 3)) {
+                       return (
+                         <div style={{
+                           fontSize: isMobile ? '0.3rem' : '0.4rem',
+                           color: '#4CAF50',
+                           textAlign: 'center',
+                           padding: '1px',
+                           fontStyle: 'italic'
+                         }}>
+                           +{matches.length - (isMobile ? 2 : 3)} more
+                         </div>
+                       );
+                     }
+                     return null;
+                   })()}
+                 </div>
+               )}
+             </div>
           </div>
         ))}
      </div>
@@ -1891,18 +1782,18 @@ const CalendarGrid = ({ phase1EndDate, isMobile, currentMonth, onMonthChange, on
            }}></div>
            <span>Today (outline)</span>
          </div>
-       {phase1EndDate && (
-         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '2px' : '4px' }}>
-           <div style={{
-             width: isMobile ? '6px' : '8px',
-             height: isMobile ? '6px' : '8px',
-             background: '#e74c3c',
-             border: '1px solid #c0392b',
-             borderRadius: '1px'
-           }}></div>
-           <span>Phase 1 Deadline</span>
-         </div>
-       )}
+               {phase1EndDate && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '2px' : '4px' }}>
+            <div style={{
+              width: isMobile ? '6px' : '8px',
+              height: isMobile ? '6px' : '8px',
+              background: '#e74c3c',
+              border: '1px solid #c0392b',
+              borderRadius: '1px'
+            }}></div>
+            <span>Phase 1 Deadline ({format(phase1EndDate, 'MMM d, yyyy')})</span>
+          </div>
+        )}
                                                                <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '2px' : '4px' }}>
             <div style={{
               width: isMobile ? '6px' : '8px',

@@ -77,35 +77,50 @@ export default function PlayerAvailabilityModal({
           }}>
             Preferred Locations:
           </h3>
-                     <div style={{ color: "#fff", textAlign: 'center' }}>
+                     <div style={{ 
+                       color: "#fff", 
+                       textAlign: 'center',
+                       maxWidth: '100%',
+                       overflow: 'hidden'
+                     }}>
              {player.locations
                ? (() => {
                   const locArr = player.locations.split(/\r?\n/).filter(Boolean);
-                  const rows = [];
-                  for (let i = 0; i < locArr.length; i += 5) {
-                    rows.push(locArr.slice(i, i + 5));
-                  }
-                  return rows.map((row, rowIdx) => (
-                    <div
-                      key={rowIdx}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        marginBottom: '0.5em',
-                        flexWrap: 'wrap',
-                        gap: '0.2em', // Add gap for spacing
-                      }}
-                    >
-                      {row.map((loc, idx) => (
-                        <span key={loc + idx} style={{ textAlign: 'center' }}>
-                          {loc}
-                          {idx < row.length - 1 && (
-                            <span style={{ color: "#e53e3e", margin: "0 0.3em" }}> • </span>
-                          )}
+                  return (
+                    <div style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '8px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      maxWidth: '100%'
+                    }}>
+                      {locArr.map((loc, idx) => (
+                        <span 
+                          key={loc + idx} 
+                          style={{ 
+                            background: 'rgba(229, 62, 62, 0.2)',
+                            color: '#fff',
+                            padding: '4px 8px',
+                            borderRadius: '12px',
+                            fontSize: '0.85rem',
+                            border: '1px solid rgba(229, 62, 62, 0.3)',
+                            whiteSpace: 'nowrap',
+                            maxWidth: '150px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: 'inline-block'
+                          }}
+                          title={loc}
+                        >
+                          📍 {loc}
                         </span>
                       ))}
                     </div>
-                  ));
+                  );
                                  })()
                : "No locations specified"}
           </div>
