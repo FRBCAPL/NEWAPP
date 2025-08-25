@@ -27,6 +27,7 @@ export default function PaymentTracker() {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showPenaltyModal, setShowPenaltyModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [paymentData, setPaymentData] = useState({
     amount: '',
     paymentType: 'weekly_dues',
@@ -42,32 +43,6 @@ export default function PaymentTracker() {
     date: new Date().toISOString().split('T')[0]
   });
 
-  useEffect(() => {
-    loadPlayers();
-  }, []);
-
-  const loadPlayers = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/users/search?approved=true`);
-      if (response.ok) {
-        const data = await response.json();
-        const playersWithPayments = data.users.map(player => ({
-          ...player,
-          paymentHistory: player.paymentHistory || [],
-          penalties: player.penalties || [],
-          currentBalance: calculateCurrentBalance(player),
-          paymentStatus: getPaymentStatus(player)
-        }));
-        setPlayers(playersWithPayments);
-      }
-    } catch (error) {
-      console.error('Error loading players:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const [feeConfig, setFeeConfig] = useState({
     registrationFee: 30,
     weeklyDues: 10,
@@ -80,8 +55,117 @@ export default function PaymentTracker() {
   });
 
   useEffect(() => {
+    loadPlayers();
     loadFeeConfig();
   }, []);
+
+  const loadPlayers = async () => {
+    setLoading(true);
+    try {
+      console.log('🔄 Loading players...');
+      console.log('🔍 API URL:', `${BACKEND_URL}/api/users/search?approved=true`);
+      const response = await fetch(`${BACKEND_URL}/api/users/search?approved=true&t=${Date.now()}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📊 Loaded players data:', data.users.length, 'players');
+        
+        // Debug: Check raw player data for Beta Test User
+        const rawBetaUser = data.users.find(p => p.firstName === 'Beta' && p.lastName === 'Test User');
+        if (rawBetaUser) {
+          console.log('🔍 Raw Beta Test User data from API:', {
+            id: rawBetaUser._id,
+            firstName: rawBetaUser.firstName,
+            lastName: rawBetaUser.lastName,
+            paymentHistory: rawBetaUser.paymentHistory,
+            paymentHistoryLength: rawBetaUser.paymentHistory ? rawBetaUser.paymentHistory.length : 'undefined'
+          });
+                 } else {
+           console.log('❌ Beta Test User not found in raw data');
+                    console.log('Available users:', data.users.map(u => `${u.firstName} ${u.lastName}`));
+         console.log('🔍 All users with IDs:', data.users.map(u => ({
+           id: u._id,
+           name: `${u.firstName} ${u.lastName}`,
+           email: u.email
+         })));
+         
+         // Debug: Check for users with empty names
+         const usersWithEmptyNames = data.users.filter(u => !u.firstName || !u.lastName || u.firstName.trim() === '' || u.lastName.trim() === '');
+         if (usersWithEmptyNames.length > 0) {
+           console.log('⚠️ Users with empty names found:', usersWithEmptyNames.length);
+           usersWithEmptyNames.forEach((user, index) => {
+             console.log(`   ${index + 1}. ID: ${user._id}`);
+             console.log(`      Email: ${user.email || 'No email'}`);
+             console.log(`      First Name: "${user.firstName || 'EMPTY'}"`);
+             console.log(`      Last Name: "${user.lastName || 'EMPTY'}"`);
+           });
+         }
+         }
+        
+        // Debug: Check if ANY user has payment history
+        const usersWithPayments = data.users.filter(u => u.paymentHistory && u.paymentHistory.length > 0);
+        console.log('🔍 Users with payment history:', usersWithPayments.length);
+        if (usersWithPayments.length > 0) {
+          console.log('🔍 First user with payments:', {
+            name: `${usersWithPayments[0].firstName} ${usersWithPayments[0].lastName}`,
+            paymentHistory: usersWithPayments[0].paymentHistory
+          });
+        }
+        
+                 // Debug: Check for specific user by email
+         const frbcaplUser = data.users.find(u => u.email === 'frbcapl@gmail.com');
+         if (frbcaplUser) {
+           console.log('🔍 Found frbcapl@gmail.com user:', {
+             id: frbcaplUser._id,
+             name: `${frbcaplUser.firstName} ${frbcaplUser.lastName}`,
+             email: frbcaplUser.email,
+             paymentHistory: frbcaplUser.paymentHistory,
+             paymentHistoryLength: frbcaplUser.paymentHistory ? frbcaplUser.paymentHistory.length : 0
+           });
+           console.log('🔍 Full frbcapl user object:', frbcaplUser);
+         console.log('🔍 frbcapl user keys:', Object.keys(frbcaplUser));
+         console.log('🔍 frbcapl paymentHistory field:', frbcaplUser.paymentHistory);
+         console.log('🔍 frbcapl paymentHistory type:', typeof frbcaplUser.paymentHistory);
+         } else {
+           console.log('❌ frbcapl@gmail.com user not found');
+         }
+        
+        const playersWithPayments = data.users
+          .filter(player => player.firstName && player.lastName && player.firstName.trim() && player.lastName.trim()) // Filter out users with empty names
+          .map(player => {
+            const playerWithPayments = {
+              ...player,
+              paymentHistory: player.paymentHistory || [],
+              penalties: player.penalties || []
+            };
+            
+            // Calculate balance and status after ensuring paymentHistory is set
+            playerWithPayments.currentBalance = calculateCurrentBalance(playerWithPayments);
+            playerWithPayments.paymentStatus = getPaymentStatus(playerWithPayments);
+            
+            return playerWithPayments;
+          });
+        
+        // Debug: Check if Beta Test User is in the data
+        const betaUser = playersWithPayments.find(p => p.firstName === 'Beta' && p.lastName === 'Test User');
+        if (betaUser) {
+          console.log('🔍 Beta Test User found in loaded data:');
+          console.log('Payment history length:', betaUser.paymentHistory.length);
+          console.log('Payment history:', betaUser.paymentHistory);
+          console.log('Calculated balance:', betaUser.currentBalance);
+          console.log('Payment status:', betaUser.paymentStatus);
+        }
+        
+        setPlayers(playersWithPayments);
+        console.log('✅ Players loaded and processed');
+      } else {
+        console.error('❌ Failed to load players:', response.status);
+      }
+    } catch (error) {
+      console.error('Error loading players:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadFeeConfig = async () => {
     try {
@@ -107,23 +191,35 @@ export default function PaymentTracker() {
   };
 
   const calculateCurrentBalance = (player) => {
+    // Ensure feeConfig is loaded before calculation
+    if (!feeConfig) {
+      console.warn('feeConfig not loaded yet for balance calculation.');
+      return 0;
+    }
+
     // Calculate what they should have paid
-    const expectedTotal = feeConfig.registrationFee + (feeConfig.weeklyDues * feeConfig.totalWeeks);
+    const expectedTotal = (feeConfig.registrationFee || 0) + ((feeConfig.weeklyDues || 0) * (feeConfig.totalWeeks || 0));
     
     // Calculate what they have paid
     const totalPaid = (player.paymentHistory || []).reduce((sum, payment) => {
-      if (payment.paymentType === 'registration_fee' || payment.paymentType === 'weekly_dues') {
-        return sum + payment.amount;
+      // Count all payment types that reduce the balance
+      if (payment.paymentType === 'registration_fee' || 
+          payment.paymentType === 'weekly_dues' || 
+          payment.paymentType === 'participation_fee' ||
+          payment.paymentType === 'penalty') {
+        return sum + (payment.amount || 0);
       }
       return sum;
     }, 0);
     
     // Calculate penalties owed
     const totalPenalties = (player.penalties || []).reduce((sum, penalty) => {
-      return sum + penalty.amount;
+      return sum + (penalty.amount || 0);
     }, 0);
     
-    return expectedTotal - totalPaid + totalPenalties;
+    const balance = expectedTotal - totalPaid + totalPenalties;
+    console.log(`Balance for ${player.firstName} ${player.lastName}: Expected=${expectedTotal}, Paid=${totalPaid}, Penalties=${totalPenalties}, Balance=${balance}`);
+    return balance;
   };
 
   const getPaymentStatus = (player) => {
@@ -147,13 +243,26 @@ export default function PaymentTracker() {
     if (!selectedPlayer || !paymentData.amount) return;
     
     try {
+      console.log('Adding payment for player:', selectedPlayer._id);
+      console.log('Payment data:', paymentData);
+      
       const response = await fetch(`${BACKEND_URL}/api/users/${selectedPlayer._id}/add-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(paymentData)
       });
       
+      console.log('Response status:', response.status);
+      
       if (response.ok) {
+        const result = await response.json();
+        console.log('Payment added successfully:', result);
+        console.log('🔍 Payment result details:', {
+          success: result.success,
+          message: result.message,
+          payment: result.payment,
+          user: result.user
+        });
         setShowPaymentModal(false);
         setPaymentData({
           amount: '',
@@ -162,10 +271,19 @@ export default function PaymentTracker() {
           notes: '',
           date: new Date().toISOString().split('T')[0]
         });
-        loadPlayers();
+        console.log('🔄 Reloading players after payment...');
+        await loadPlayers();
+        console.log('✅ Players reloaded after payment');
+        alert('Payment added successfully!');
+      } else {
+        const errorData = await response.json();
+        console.error('Payment failed:', errorData);
+        const errorMessage = errorData.message || errorData.error || 'Unknown error';
+        alert(`Error adding payment: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Error adding payment:', error);
+      alert(`Error adding payment: ${error.message}`);
     }
   };
 
@@ -440,7 +558,7 @@ export default function PaymentTracker() {
               <button
                 onClick={() => {
                   setSelectedPlayer(player);
-                  // Show detailed view
+                  setShowDetailsModal(true);
                 }}
                 style={{
                   padding: '8px 12px',
@@ -472,9 +590,11 @@ export default function PaymentTracker() {
           bottom: 0,
           background: 'rgba(0,0,0,0.8)',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'center',
-          zIndex: 1000
+          zIndex: 9999,
+          padding: '20px',
+          overflowY: 'auto'
         }}>
           <div style={{
             background: '#333',
@@ -482,8 +602,9 @@ export default function PaymentTracker() {
             borderRadius: '8px',
             maxWidth: '500px',
             width: '90%',
-            maxHeight: '90vh',
-            overflow: 'auto'
+            maxHeight: '80vh',
+            overflow: 'auto',
+            margin: 'auto'
           }}>
             <h3 style={{ color: '#fff', marginBottom: '20px' }}>
               Add Payment - {selectedPlayer.firstName} {selectedPlayer.lastName}
@@ -494,36 +615,36 @@ export default function PaymentTracker() {
                 <label style={{ color: '#fff', display: 'block', marginBottom: '5px' }}>
                   Payment Type
                 </label>
-                                 <select
-                   value={paymentData.paymentType}
-                   onChange={(e) => {
-                     const type = e.target.value;
-                     let defaultAmount = 0;
-                     if (type === 'registration_fee') defaultAmount = feeConfig.registrationFee;
-                     else if (type === 'weekly_dues') defaultAmount = feeConfig.weeklyDues;
-                     else if (type === 'participation_fee') defaultAmount = feeConfig.registrationFee + (feeConfig.weeklyDues * feeConfig.totalWeeks);
-                     
-                     setPaymentData(prev => ({ 
-                       ...prev, 
-                       paymentType: type,
-                       amount: defaultAmount
-                     }));
-                   }}
-                   style={{
-                     width: '100%',
-                     padding: '8px 12px',
-                     borderRadius: '6px',
-                     border: '1px solid #444',
-                     background: '#222',
-                     color: '#fff'
-                   }}
-                 >
-                   <option value="registration_fee">Registration Fee (${feeConfig.registrationFee})</option>
-                   <option value="weekly_dues">Weekly Dues (${feeConfig.weeklyDues})</option>
-                   <option value="participation_fee">Participation Fee (${feeConfig.registrationFee + (feeConfig.weeklyDues * feeConfig.totalWeeks)})</option>
-                   <option value="penalty">Penalty Payment</option>
-                   <option value="other">Other</option>
-                 </select>
+                <select
+                  value={paymentData.paymentType}
+                  onChange={(e) => {
+                    const type = e.target.value;
+                    let defaultAmount = 0;
+                    if (type === 'registration_fee') defaultAmount = feeConfig.registrationFee;
+                    else if (type === 'weekly_dues') defaultAmount = feeConfig.weeklyDues;
+                    else if (type === 'participation_fee') defaultAmount = feeConfig.registrationFee + (feeConfig.weeklyDues * feeConfig.totalWeeks);
+                    
+                    setPaymentData(prev => ({ 
+                      ...prev, 
+                      paymentType: type,
+                      amount: defaultAmount
+                    }));
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #444',
+                    background: '#222',
+                    color: '#fff'
+                  }}
+                >
+                  <option value="registration_fee">Registration Fee (${feeConfig.registrationFee})</option>
+                  <option value="weekly_dues">Weekly Dues (${feeConfig.weeklyDues})</option>
+                  <option value="participation_fee">Participation Fee (${feeConfig.registrationFee + (feeConfig.weeklyDues * feeConfig.totalWeeks)})</option>
+                  <option value="penalty">Penalty Payment</option>
+                  <option value="other">Other</option>
+                </select>
               </div>
               
               <div>
@@ -654,9 +775,11 @@ export default function PaymentTracker() {
           bottom: 0,
           background: 'rgba(0,0,0,0.8)',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'center',
-          zIndex: 1000
+          zIndex: 9999,
+          padding: '20px',
+          overflowY: 'auto'
         }}>
           <div style={{
             background: '#333',
@@ -664,8 +787,9 @@ export default function PaymentTracker() {
             borderRadius: '8px',
             maxWidth: '500px',
             width: '90%',
-            maxHeight: '90vh',
-            overflow: 'auto'
+            maxHeight: '80vh',
+            overflow: 'auto',
+            margin: 'auto'
           }}>
             <h3 style={{ color: '#fff', marginBottom: '20px' }}>
               Add Penalty - {selectedPlayer.firstName} {selectedPlayer.lastName}
@@ -676,33 +800,33 @@ export default function PaymentTracker() {
                 <label style={{ color: '#fff', display: 'block', marginBottom: '5px' }}>
                   Strike Level
                 </label>
-                                 <select
-                   value={penaltyData.strikeLevel}
-                   onChange={(e) => {
-                     const level = e.target.value;
-                     setPenaltyData(prev => ({ 
-                       ...prev, 
-                       strikeLevel: level,
-                       amount: level === '1' ? feeConfig.penaltyStructure.strike1 :
-                               level === '2' ? feeConfig.penaltyStructure.strike2 :
-                               level === '3' ? feeConfig.penaltyStructure.strike3 : 0
-                     }));
-                   }}
-                   style={{
-                     width: '100%',
-                     padding: '8px 12px',
-                     borderRadius: '6px',
-                     border: '1px solid #444',
-                     background: '#222',
-                     color: '#fff'
-                   }}
-                 >
-                   <option value="1">Strike 1 - ${feeConfig.penaltyStructure.strike1} fine</option>
-                   <option value="2">Strike 2 - ${feeConfig.penaltyStructure.strike2} fine</option>
-                   <option value="3">
-                     Strike 3 - {feeConfig.penaltyStructure.strike3 > 0 ? `$${feeConfig.penaltyStructure.strike3} fine` : 'Removal'}
-                   </option>
-                 </select>
+                <select
+                  value={penaltyData.strikeLevel}
+                  onChange={(e) => {
+                    const level = e.target.value;
+                    setPenaltyData(prev => ({ 
+                      ...prev, 
+                      strikeLevel: level,
+                      amount: level === '1' ? feeConfig.penaltyStructure.strike1 :
+                              level === '2' ? feeConfig.penaltyStructure.strike2 :
+                              level === '3' ? feeConfig.penaltyStructure.strike3 : 0
+                    }));
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #444',
+                    background: '#222',
+                    color: '#fff'
+                  }}
+                >
+                  <option value="1">Strike 1 - ${feeConfig.penaltyStructure.strike1} fine</option>
+                  <option value="2">Strike 2 - ${feeConfig.penaltyStructure.strike2} fine</option>
+                  <option value="3">
+                    Strike 3 - {feeConfig.penaltyStructure.strike3 > 0 ? `$${feeConfig.penaltyStructure.strike3} fine` : 'Removal'}
+                  </option>
+                </select>
               </div>
               
               <div>
@@ -815,6 +939,134 @@ export default function PaymentTracker() {
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Details Modal */}
+      {showDetailsModal && selectedPlayer && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '20px',
+          overflowY: 'auto'
+        }}>
+          <div style={{
+            background: '#333',
+            padding: '20px',
+            borderRadius: '8px',
+            maxWidth: '800px',
+            width: '90%',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            margin: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ color: '#fff', margin: 0 }}>
+                Payment Details - {selectedPlayer.firstName} {selectedPlayer.lastName}
+              </h3>
+              <button
+                onClick={() => setShowDetailsModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#fff',
+                  fontSize: '24px',
+                  cursor: 'pointer'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            {/* Player Info */}
+            <div style={{ marginBottom: '20px', padding: '15px', background: '#222', borderRadius: '6px' }}>
+              <h4 style={{ color: '#fff', marginBottom: '10px' }}>Player Information</h4>
+              <div style={{ color: '#ccc', fontSize: '14px' }}>
+                <div>Email: {selectedPlayer.email}</div>
+                <div>Phone: {selectedPlayer.phone || 'Not provided'}</div>
+                <div>Current Balance: <span style={{ color: selectedPlayer.currentBalance > 0 ? '#f44336' : '#4CAF50', fontWeight: 'bold' }}>
+                  ${selectedPlayer.currentBalance.toFixed(2)}
+                </span></div>
+                <div>Payment Status: <span style={{ color: getStatusColor(selectedPlayer.paymentStatus) }}>
+                  {selectedPlayer.paymentStatus.toUpperCase()}
+                </span></div>
+              </div>
+            </div>
+            
+            {/* Payment History */}
+            <div style={{ marginBottom: '20px' }}>
+              <h4 style={{ color: '#fff', marginBottom: '10px' }}>Payment History</h4>
+              {console.log('🔍 Details Modal - selectedPlayer:', selectedPlayer)}
+              {console.log('🔍 Details Modal - paymentHistory:', selectedPlayer.paymentHistory)}
+              {selectedPlayer.paymentHistory && selectedPlayer.paymentHistory.length > 0 ? (
+                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  {selectedPlayer.paymentHistory.map((payment, index) => (
+                    <div key={index} style={{
+                      padding: '10px',
+                      marginBottom: '8px',
+                      background: '#222',
+                      borderRadius: '4px',
+                      border: '1px solid #444'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ color: '#fff', fontWeight: 'bold' }}>
+                          ${payment.amount} - {payment.paymentType.replace('_', ' ').toUpperCase()}
+                        </div>
+                        <div style={{ color: '#ccc', fontSize: '12px' }}>
+                          {new Date(payment.date || payment.timestamp).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div style={{ color: '#ccc', fontSize: '12px', marginTop: '5px' }}>
+                        Method: {payment.paymentMethod} • {payment.notes && `Notes: ${payment.notes}`}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ color: '#ccc', fontStyle: 'italic' }}>No payment history found.</div>
+              )}
+            </div>
+            
+            {/* Penalties */}
+            <div>
+              <h4 style={{ color: '#fff', marginBottom: '10px' }}>Penalties</h4>
+              {selectedPlayer.penalties && selectedPlayer.penalties.length > 0 ? (
+                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                  {selectedPlayer.penalties.map((penalty, index) => (
+                    <div key={index} style={{
+                      padding: '10px',
+                      marginBottom: '8px',
+                      background: '#222',
+                      borderRadius: '4px',
+                      border: '1px solid #f44336'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ color: '#f44336', fontWeight: 'bold' }}>
+                          ${penalty.amount} - {penalty.reason}
+                        </div>
+                        <div style={{ color: '#ccc', fontSize: '12px' }}>
+                          {new Date(penalty.date || penalty.timestamp).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div style={{ color: '#ccc', fontSize: '12px', marginTop: '5px' }}>
+                        Strike Level: {penalty.strikeLevel} • {penalty.notes && `Notes: ${penalty.notes}`}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ color: '#ccc', fontStyle: 'italic' }}>No penalties found.</div>
+              )}
             </div>
           </div>
         </div>
