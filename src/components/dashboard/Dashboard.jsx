@@ -272,7 +272,7 @@ export default function Dashboard({
   // Check if user is super admin
   const isSuperAdmin = () => {
     const superAdminEmails = ['frbcapl@gmail.com', 'sslampro@gmail.com'];
-    const superAdminPin = '777777';
+    const superAdminPin = import.meta.env.VITE_SUPER_ADMIN_PIN || '777777';
     return superAdminEmails.includes(senderEmail.toLowerCase()) && userPin === superAdminPin;
   };
 
@@ -1017,16 +1017,16 @@ export default function Dashboard({
          setMatchesSortBy('date');
        }}
        title={`🎯 All Upcoming Matches (${filteredUpcomingMatches.length})`}
-       maxWidth="600px"
-       maxHeight="70vh"
+       maxWidth="900px"
+       className="all-matches-modal"
      >
        {/* Search and Filter Bar */}
        <div style={{
          display: 'flex',
-         gap: '12px',
+         gap: '8px',
          flexWrap: isMobile ? 'wrap' : 'nowrap',
          alignItems: 'center',
-         marginBottom: '16px'
+         marginBottom: '8px'
        }}>
          <div style={{
            flex: 1,
@@ -1128,7 +1128,8 @@ export default function Dashboard({
        <div style={{
          flex: 1,
          overflowY: 'auto',
-         maxHeight: '50vh'
+         height: '450px',
+         minHeight: '200px'
        }}>
          {filteredUpcomingMatches.length === 0 ? (
            <div style={{
@@ -1145,7 +1146,8 @@ export default function Dashboard({
            <div style={{
              display: 'grid',
              gap: '12px',
-             gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))'
+             gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))',
+             maxWidth: '100%'
            }}>
              {filteredUpcomingMatches.map((match, idx) => {
                let opponent = '';
@@ -1225,7 +1227,7 @@ export default function Dashboard({
                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)',
                    borderRadius: '12px',
                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                   padding: '20px',
+                   padding: '12px',
                    transition: 'all 0.3s ease',
                    position: 'relative',
                    overflow: 'hidden'
@@ -1265,7 +1267,7 @@ export default function Dashboard({
                    {/* Match Header */}
                    <div style={{
                      textAlign: 'center',
-                     marginBottom: '16px',
+                     marginBottom: '8px',
                      paddingRight: '100px' // Make room for status badge
                    }}>
                      <div style={{
@@ -1295,8 +1297,8 @@ export default function Dashboard({
                    <div style={{
                      display: 'flex',
                      justifyContent: 'center',
-                     gap: '24px',
-                     marginBottom: '20px',
+                     gap: '16px',
+                     marginBottom: '12px',
                      fontSize: '0.9rem',
                      color: '#ccc'
                    }}>
@@ -1327,23 +1329,23 @@ export default function Dashboard({
                    {/* Action Buttons */}
                    <div style={{
                      display: 'flex',
-                     gap: '12px',
+                     gap: '8px',
                      justifyContent: 'center'
                    }}>
                      <button
                        onClick={() => handleProposalClick(match)}
                        style={{
-                         padding: '12px 24px',
+                         padding: '8px 16px',
                          background: 'linear-gradient(135deg, var(--accent-red), var(--accent-red-dark))',
                          border: 'none',
                          borderRadius: '8px',
                          color: '#fff',
-                         fontSize: '0.9rem',
+                         fontSize: '0.85rem',
                          fontWeight: '600',
                          cursor: 'pointer',
                          transition: 'all 0.2s ease',
                          boxShadow: '0 2px 8px rgba(229, 62, 62, 0.3)',
-                         minWidth: '120px'
+                         minWidth: '100px'
                        }}
                        onMouseEnter={(e) => {
                          e.target.style.transform = 'translateY(-1px)';
@@ -1363,8 +1365,8 @@ export default function Dashboard({
                          loading={completingMatchId === match._id}
                          loadingText="Completing..."
                          style={{ 
-                           padding: '12px 24px',
-                           fontSize: '0.9rem',
+                           padding: '8px 16px',
+                           fontSize: '0.85rem',
                            fontWeight: '600',
                            background: 'linear-gradient(135deg, #6c757d, #5a6268)',
                            border: 'none',
@@ -1372,7 +1374,7 @@ export default function Dashboard({
                            color: '#fff',
                            cursor: 'pointer',
                            transition: 'all 0.2s ease',
-                           minWidth: '120px',
+                           minWidth: '100px',
                            boxShadow: '0 2px 8px rgba(108, 117, 125, 0.3)'
                          }}
                          onMouseEnter={(e) => {
@@ -1427,9 +1429,9 @@ export default function Dashboard({
        
        {/* Footer */}
        <div style={{
-         padding: '16px 0 0',
+         padding: '8px 0 0',
          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-         marginTop: '16px',
+         marginTop: '8px',
          textAlign: 'center'
        }}>
          <div style={{
@@ -1441,6 +1443,70 @@ export default function Dashboard({
        </div>
      </Modal>
    );
+
+   {/* Custom styles for all matches modal */}
+   <style jsx>{`
+     .all-matches-modal {
+       max-height: 85vh !important;
+       height: auto !important;
+       margin: 10px auto !important;
+     }
+     
+     .all-matches-modal .modal-content {
+       max-height: 70vh !important;
+       overflow-y: auto !important;
+       padding: 1.2rem 1.5rem !important;
+     }
+     
+     .all-matches-modal .modal-overlay {
+       align-items: flex-start !important;
+       padding-top: 10px !important;
+       padding-bottom: 10px !important;
+     }
+     
+     /* Custom scrollbar for match cards area */
+     .all-matches-modal .modal-content > div:first-of-type {
+       scrollbar-width: thin !important;
+       scrollbar-color: #e53e3e #232323 !important;
+     }
+     
+     .all-matches-modal .modal-content > div:first-of-type::-webkit-scrollbar {
+       width: 8px !important;
+     }
+     
+     .all-matches-modal .modal-content > div:first-of-type::-webkit-scrollbar-track {
+       background: #232323 !important;
+       border-radius: 4px !important;
+     }
+     
+     .all-matches-modal .modal-content > div:first-of-type::-webkit-scrollbar-thumb {
+       background: #e53e3e !important;
+       border-radius: 4px !important;
+     }
+     
+     .all-matches-modal .modal-content > div:first-of-type::-webkit-scrollbar-thumb:hover {
+       background: #ff6b6b !important;
+     }
+     
+     @media (max-width: 768px) {
+       .all-matches-modal {
+         max-height: 90vh !important;
+         width: 95vw !important;
+         max-width: 95vw !important;
+         margin: 5px auto !important;
+       }
+       
+       .all-matches-modal .modal-content {
+         max-height: 75vh !important;
+         padding: 1rem 1rem !important;
+       }
+       
+       .all-matches-modal .modal-overlay {
+         padding-top: 5px !important;
+         padding-bottom: 5px !important;
+       }
+     }
+   `}</style>
 
   // Determine required matches based on phase
   const requiredMatches = effectivePhase === "challenge" ? 4 : 6;
@@ -2132,6 +2198,9 @@ export default function Dashboard({
       refetchProposals={refetchProposals}
       setPendingRegistrations={setPendingRegistrations}
     />
+
+    {/* All Matches Modal */}
+    {allMatchesModal}
    </div>
  );
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import tenBall from '../../../assets/tenball.svg';
+import adminAuthService from '../../../services/adminAuthService.js';
 
 /**
  * DashboardHeader Component
@@ -114,8 +115,8 @@ const DashboardHeader = ({
         This is for testing purposes only.
       </div>
 
-      {/* 10-Ball Tutorial Link - Admin Only */}
-      {userPin === "777777" && (
+             {/* 10-Ball Tutorial Link - Admin Only */}
+               {adminAuthService.getCurrentAdmin() && (
         <div style={{ 
           marginBottom: isMobile ? 12 : 16,
           textAlign: 'center'

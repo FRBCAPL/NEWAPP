@@ -12,6 +12,7 @@ import FloatingLogos from './components/FloatingLogos';
 import TenBallTutorial from './components/TenBallTutorial';
 import SimplePoolGame from './components/tenball/SimplePoolGame';
 import MobileTestPage from './components/MobileTestPage';
+import adminAuthService from './services/adminAuthService.js';
 import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
 import csiLogo from "./assets/csi_logo.png";
@@ -114,13 +115,49 @@ function App() {
   };
 
   // --- Check if user is super admin ---
+  const [isSuperAdminState, setIsSuperAdminState] = useState(false);
+  const [isAdminState, setIsAdminState] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(false);
+
   const isSuperAdmin = () => {
-    // Check if user has super admin credentials
-    const superAdminEmails = ['frbcapl@gmail.com', 'sslampro@gmail.com'];
-    const superAdminPin = '777777';
-    
-    return superAdminEmails.includes(userEmail.toLowerCase()) && userPin === superAdminPin;
+    return isSuperAdminState;
   };
+
+  const isAdmin = () => {
+    return isAdminState;
+  };
+
+  // Check admin status when user logs in
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (isAuthenticated && userEmail && userPin) {
+        setAdminLoading(true);
+        try {
+          // Check if user is a super admin
+          const superAdminResult = await adminAuthService.isSuperAdmin(userEmail, userPin);
+          setIsSuperAdminState(superAdminResult);
+          
+          // Check if user is any type of admin
+          const adminResult = await adminAuthService.isAdmin(userEmail, userPin);
+          setIsAdminState(adminResult);
+          
+          console.log('🔍 Admin Status Check:', {
+            userEmail: userEmail,
+            isSuperAdmin: superAdminResult,
+            isAdmin: adminResult
+          });
+        } catch (error) {
+          console.log('🔍 Admin check failed:', error.message);
+          setIsSuperAdminState(false);
+          setIsAdminState(false);
+        } finally {
+          setAdminLoading(false);
+        }
+      }
+    };
+
+    checkAdminStatus();
+  }, [isAuthenticated, userEmail, userPin]);
 
   // --- Logout handler ---
   const handleLogout = () => {
@@ -139,21 +176,21 @@ function App() {
   // --- Main Router ---
   return (
     <HashRouter>
-      <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
-        <FloatingLogos />
+             <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
+         <FloatingLogos />
         <AppHeader />
         <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "0px" }}>
           <Routes>
-            <Route
-              path="/admin"
-              element={
-                isAuthenticated && userPin === "777777" ? (
-                  <div className="admin-app-content"><AdminDashboard /></div>
-                ) : (
-                  <Navigate to="/" />
-                )
-              }
-            />
+                         <Route
+               path="/admin"
+               element={
+                 isAuthenticated && isAdmin() ? (
+                   <div className="admin-app-content"><AdminDashboard /></div>
+                 ) : (
+                   <Navigate to="/" />
+                 )
+               }
+             />
             <Route
               path="/platform-admin"
               element={

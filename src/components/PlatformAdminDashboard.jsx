@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BACKEND_URL } from '../config.js';
+import adminAuthService from '../services/adminAuthService.js';
 import { 
   FaSpinner, 
   FaCheckCircle, 
@@ -32,13 +33,13 @@ export default function PlatformAdminDashboard() {
   const [operators, setOperators] = useState([]);
   const [admins, setAdmins] = useState([]);
 
-  // Get admin credentials - use super admin credentials for platform admin functions
+  // Get admin credentials from authentication service
   const getAdminCredentials = () => {
-    // For platform admin functions, we need to use the super admin credentials
-    // In a real implementation, you might want to check if the current user has platform admin permissions
-    const email = 'frbcapl@gmail.com'; // Super admin email
-    const pin = '777777'; // Super admin PIN
-    return { email, pin };
+    const currentAdmin = adminAuthService.getCurrentAdmin();
+    if (!currentAdmin) {
+      throw new Error('No authenticated admin found');
+    }
+    return { email: currentAdmin.email, pin: currentAdmin.pin };
   };
 
   // Modal states

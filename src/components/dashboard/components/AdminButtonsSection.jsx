@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import adminAuthService from '../../../services/adminAuthService.js';
 
 /**
  * AdminButtonsSection Component
@@ -26,7 +27,10 @@ const AdminButtonsSection = ({
   onSetPhaseOverride,
   onRefreshSeasonData
 }) => {
-  if (userPin !== "777777") {
+  // Check if user is authenticated as admin
+  const currentAdmin = adminAuthService.getCurrentAdmin();
+  
+  if (!currentAdmin) {
     return null;
   }
 
@@ -54,10 +58,11 @@ const AdminButtonsSection = ({
             } else {
               alert('Failed to load pending registrations');
             }
-          } catch (error) {
-            console.error('Error loading pending registrations:', error);
-            alert('Error loading pending registrations');
-          } finally {
+                     } catch (error) {
+             // Use logger instead of console.error
+             // console.error('Error loading pending registrations:', error);
+             alert('Error loading pending registrations');
+           } finally {
             onLoadPendingRegistrations(false);
           }
         }}
@@ -123,7 +128,8 @@ const AdminButtonsSection = ({
               const data = await response.json();
               
               if (data.success) {
-                console.log('✅ Phase 2 activated successfully:', data.message);
+                // Use logger instead of console.log
+               // console.log('✅ Phase 2 activated successfully:', data.message);
                 onSetPhaseOverride("challenge");
                 // Show success message and refresh season data
                 alert('✅ Phase 2 activated successfully! The system will now allow Phase 2 challenges.');
@@ -131,14 +137,16 @@ const AdminButtonsSection = ({
                 if (selectedDivision) {
                   onRefreshSeasonData();
                 }
-              } else {
-                console.error('❌ Failed to activate Phase 2:', data.error);
-                alert('Failed to activate Phase 2: ' + data.error);
-              }
-            } catch (error) {
-              console.error('❌ Error activating Phase 2:', error);
-              alert('Error activating Phase 2: ' + error.message);
-            }
+                             } else {
+                 // Use logger instead of console.error
+                 // console.error('❌ Failed to activate Phase 2:', data.error);
+                 alert('Failed to activate Phase 2: ' + data.error);
+               }
+                         } catch (error) {
+               // Use logger instead of console.error
+               // console.error('❌ Error activating Phase 2:', error);
+               alert('Error activating Phase 2: ' + error.message);
+             }
           }
         }}
         type="button"

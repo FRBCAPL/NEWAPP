@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { SkeletonLoader } from '../../LoadingSpinner';
+import adminAuthService from '../../../services/adminAuthService.js';
 
 /**
  * NewsUpdatesSection Component
@@ -33,7 +34,7 @@ const NewsUpdatesSection = ({
                 className={styles.dashboardNoteItem}
               >
                 <span style={{ flex: 1 }}>{note.text}</span>
-                {userPin === "777777" && (
+                                 {adminAuthService.getCurrentAdmin() && (
                   <button
                     onClick={() => onDeleteNote(note._id)}
                     style={{
@@ -57,7 +58,7 @@ const NewsUpdatesSection = ({
           )}
         </ul>
       )}
-      {userPin === "777777" && notes.length > 0 && (
+              {adminAuthService.getCurrentAdmin() && notes.length > 0 && (
         <button
           style={{
             marginTop: 10,

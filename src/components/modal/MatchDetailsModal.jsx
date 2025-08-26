@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import styles from './MatchDetailsModal.module.css';
+import adminAuthService from '../../services/adminAuthService.js';
 
 import EightBall from '../../assets/8ball.svg';
 import NineBall from '../../assets/ball9.jpg';
@@ -229,7 +230,7 @@ export default function MatchDetailsModal({ open, onClose, match, onCompleted, u
           {localMatch.winner && (
             <div style={{ color: '#ffd700', fontWeight: 700, marginTop: 6, fontSize: '1em' }}>
               🏆 Winner: {localMatch.winner}
-              {userPin === '777777' && localMatch.winnerChangedByName && (
+                              {adminAuthService.getCurrentAdmin() && localMatch.winnerChangedByName && (
                 <span style={{ color: '#aaa', fontWeight: 400, fontSize: '0.95em', marginLeft: 8 }}>
                   (marked by {localMatch.winnerChangedByName}
                   {localMatch.winnerChangedAt ? ` on ${new Date(localMatch.winnerChangedAt).toLocaleString()}` : ''})

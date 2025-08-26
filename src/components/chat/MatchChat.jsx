@@ -10,7 +10,18 @@ import DivisionSelectorModal from '../modal/DivisionSelectorModal';
 import styles from "./MatchChat.module.css";
 import { BACKEND_URL } from '../../config.js';
 
-const apiKey = import.meta.env.VITE_STREAM_API_KEY;
+// Try multiple ways to access the environment variable
+const apiKey = import.meta.env.VITE_STREAM_API_KEY || 'nbvut8j4y6se';
+console.log('🔑 Stream Chat API Key:', apiKey);
+console.log('🔑 Environment variables:', import.meta.env);
+
+// Debug: Check if API key is valid
+if (!apiKey) {
+  console.error('❌ VITE_STREAM_API_KEY is not set!');
+  console.error('❌ Please check your .env file in the FrontEnd directory');
+} else {
+  console.log('✅ VITE_STREAM_API_KEY is set:', apiKey);
+}
 const API_BASE = BACKEND_URL;
 const GENERAL_CHANNEL_ID = "general";
 const ANNOUNCEMENTS_CHANNEL_ID = "announcements";
@@ -59,8 +70,11 @@ const PinIcon = ({ pinned, onClick }) => (
   </span>
 );
 
-const SectionHeader = ({ children, icon }) => (
-  <div className={styles.sectionHeader}>
+const SectionHeader = ({ children, icon, sectionKey, isCollapsed, onToggle }) => (
+  <div 
+    className={`${styles.sectionHeader} ${isCollapsed ? styles.collapsed : ''}`}
+    onClick={() => onToggle(sectionKey)}
+  >
     {icon && <span style={{ marginRight: '8px' }}>{icon}</span>}
     {children}
   </div>
@@ -84,6 +98,11 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [collapsedSections, setCollapsedSections] = useState({
+    announcements: false, // false = expanded
+    divisions: false,     // false = expanded  
+    gameRooms: false      // false = expanded
+  });
 
   useEffect(() => {
     if (secondsLeft <= 0) {
@@ -100,48 +119,40 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
   useEffect(() => {
     // Use global flag to prevent multiple simultaneous initializations
     if (globalConnectionInProgress) {
-      console.log('Global connection already in progress, skipping...');
       return;
     }
     
     globalConnectionInProgress = true;
+    // Use the API key from the backend instead of the frontend
+    // The frontend API key might not be valid for client-side usage
     let client = StreamChat.getInstance(apiKey);
+    console.log('🔑 Using API key for Stream Chat client:', apiKey);
     let didConnect = false;
     let isMounted = true;
 
     async function init() {
-      console.log('Starting chat initialization...');
-
       try {
         // Check if already connected
         if (client.userID) {
-          console.log('Already connected as:', client.userID);
           try {
             await client.disconnectUser();
-            console.log('Disconnected existing user');
           } catch (disconnectError) {
-            console.log('Disconnect error (ignored):', disconnectError.message);
+            // Ignore disconnect errors
           }
         }
 
         // Add a small delay to ensure disconnect completes
         await new Promise(resolve => setTimeout(resolve, 300));
-        console.log('Delay completed, proceeding with token request...');
         
         const userId = cleanId(userEmail);
-        console.log('Cleaned userId:', userId);
-        console.log('Making token request to:', `${API_BASE}/token`);
         const response = await fetch(`${API_BASE}/token`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),
         });
-        console.log('Token response status:', response.status);
+        
         const { token, userId: actualUserId } = await response.json();
-        console.log('Token received for userId:', actualUserId);
 
-        console.log('Connecting user to Stream Chat...');
-        console.log('Using actualUserId for connection:', actualUserId);
         await client.connectUser(
           {
             id: actualUserId,
@@ -150,38 +161,53 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
           },
           token
         );
-        console.log('User connected successfully!');
+        
         didConnect = true;
         if (!isMounted) return;
 
-        console.log('Setting chat client...');
         setChatClient(client);
 
         // Create or get general channel
-        console.log('Creating general channel...');
         const general = client.channel("messaging", GENERAL_CHANNEL_ID, {
           name: "General Chat",
           description: "General discussion for all players"
         });
-        console.log('General channel object created, now watching...');
-        await general.watch({ limit: 30 });
-        console.log('General channel created and watched');
+        
+        // Try to watch the channel with retry and better error handling
+        let retryCount = 0;
+        let generalLoaded = false;
+        while (retryCount < 3 && !generalLoaded) {
+          try {
+            await general.watch({ limit: 100 }); // Increased limit to load more messages
+            generalLoaded = true;
+            console.log('Successfully loaded general channel with', general.state.messages?.length || 0, 'messages');
+          } catch (error) {
+            retryCount++;
+            console.log(`Retry ${retryCount} for general channel:`, error.message);
+            if (retryCount >= 3) {
+              console.error('Failed to load general channel after 3 retries, but continuing...');
+              // Continue anyway - the channel might still work
+              generalLoaded = true;
+            } else {
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
+        }
 
         // Create or get announcements channel
-        console.log('Creating announcements channel...');
         const announcements = client.channel("messaging", ANNOUNCEMENTS_CHANNEL_ID, {
           name: "📢 Announcements",
           description: "Important announcements and updates"
         });
         try {
-          await announcements.watch({ limit: 30 });
-          console.log('Announcements channel created and watched');
+          await announcements.watch({ limit: 100 });
+          console.log('Successfully loaded announcements channel with', announcements.state.messages?.length || 0, 'messages');
         } catch (error) {
-          console.log('Could not load announcements channel:', error.message);
+          console.error('Error loading announcements channel:', error);
+          // Continue anyway - the channel might still work
         }
 
         // Create division-specific channels
-        console.log('Creating division channels...');
         const divisionChannelsObj = {};
         for (const division of AVAILABLE_DIVISIONS) {
           const divisionId = cleanId(division);
@@ -191,16 +217,17 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
             category: CHANNEL_CATEGORIES.DIVISIONS
           });
           try {
-            await divisionChannel.watch({ limit: 30 });
+            await divisionChannel.watch({ limit: 100 });
             divisionChannelsObj[division] = divisionChannel;
-            console.log(`Division channel created: ${division}`);
+            console.log(`Successfully loaded division channel ${division} with`, divisionChannel.state.messages?.length || 0, 'messages');
           } catch (error) {
-            console.log(`Could not load division channel ${division}:`, error.message);
+            console.error(`Error loading division channel ${division}:`, error);
+            // Continue anyway - the channel might still work
+            divisionChannelsObj[division] = divisionChannel;
           }
         }
 
         // Create game room channels
-        console.log('Creating game room channels...');
         const gameRooms = [];
         for (let i = 1; i <= 5; i++) {
           const gameRoomId = `game-room-${i}`;
@@ -210,40 +237,44 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
             category: CHANNEL_CATEGORIES.GAME_ROOMS
           });
           try {
-            await gameRoom.watch({ limit: 30 });
+            await gameRoom.watch({ limit: 100 });
             gameRooms.push(gameRoom);
-            console.log(`Game room ${i} created`);
+            console.log(`Successfully loaded game room ${i} with`, gameRoom.state.messages?.length || 0, 'messages');
           } catch (error) {
-            console.log(`Could not load game room ${i}:`, error.message);
+            console.error(`Error loading game room ${i}:`, error);
+            // Continue anyway - the channel might still work
+            gameRooms.push(gameRoom);
           }
         }
 
-        console.log('Setting up channel states...');
         if (isMounted) {
+          console.log('Setting channels:', {
+            general: general,
+            announcements: announcements,
+            divisions: Object.keys(divisionChannelsObj),
+            gameRooms: gameRooms.length
+          });
           setGeneralChannel(general);
           setAnnouncementsChannel(announcements);
           setDivisionChannels(divisionChannelsObj);
           setGameRoomChannels(gameRooms);
-          setChannel(general); // Start with general channel
-          console.log('Setting loading to false...');
-          setLoading(false);
-          console.log('Chat initialization complete!');
+          // Ensure user starts in general chat with a small delay to ensure proper state
+          setTimeout(() => {
+            if (isMounted) {
+              console.log('Setting general channel as active');
+              setChannel(general);
+              setLoading(false);
+            }
+          }, 100);
         }
       } catch (error) {
         console.error('Error initializing chat:', error);
-        console.error('Error details:', {
-          message: error.message,
-          stack: error.stack,
-          name: error.name
-        });
         if (isMounted) {
           setLoading(false);
         }
       } finally {
-        // Reset global flag when done
         globalConnectionInProgress = false;
       }
-
     }
 
     init();
@@ -254,10 +285,9 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
         try {
           client.disconnectUser();
         } catch (error) {
-          console.log('Error during cleanup disconnect:', error.message);
+          // Ignore cleanup errors
         }
       }
-      // Reset global flag on cleanup
       globalConnectionInProgress = false;
     };
   }, [userEmail, userName]);
@@ -268,25 +298,22 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
 
   // Load messages when channel changes and listen for new messages
   useEffect(() => {
-    console.log('Channel changed:', channel);
     if (channel) {
+      console.log('Channel changed to:', channel.id, channel.state.messages?.length || 0, 'messages');
       const channelMessages = channel.state.messages || [];
-      console.log('Channel messages:', channelMessages);
       setMessages(channelMessages);
 
       // Listen for new messages
       const handleNewMessage = (event) => {
-        console.log('New message received:', event);
+        console.log('New message received in channel:', channel.id);
         const updatedMessages = channel.state.messages || [];
-        console.log('Updated messages from new message:', updatedMessages);
         setMessages([...updatedMessages]);
       };
 
       // Listen for channel state updates
       const handleChannelUpdate = () => {
-        console.log('Channel state updated');
+        console.log('Channel state updated:', channel.id);
         const updatedMessages = channel.state.messages || [];
-        console.log('Updated messages from state update:', updatedMessages);
         setMessages([...updatedMessages]);
       };
 
@@ -301,11 +328,14 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
         channel.off('message.updated', handleChannelUpdate);
         channel.off('message.deleted', handleChannelUpdate);
       };
+    } else if (generalChannel && !channel) {
+      // Fallback: if no channel is set but general channel is available, set it
+      console.log('Fallback: setting general channel');
+      setChannel(generalChannel);
     } else {
-      console.log('No channel available');
       setMessages([]);
     }
-  }, [channel]);
+  }, [channel, generalChannel]);
 
   function logoutAndRedirect() {
     if (chatClient) chatClient.disconnectUser();
@@ -320,31 +350,23 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
 
   // Handle Schedule Match button - show division selector
   function handleScheduleMatch() {
-    console.log('Schedule Match button clicked');
     setShowDivisionSelector(true);
   }
 
   // Send message function
   const sendMessage = async () => {
-    console.log('Send message called with:', newMessage);
-    console.log('Channel:', channel);
-    
     if (!newMessage.trim()) {
-      console.log('Message is empty, returning');
       return;
     }
     
     if (!channel) {
-      console.log('No channel available, returning');
       return;
     }
     
     try {
-      console.log('Sending message to channel...');
       const response = await channel.sendMessage({
         text: newMessage,
       });
-      console.log('Message sent successfully:', response);
       setNewMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
@@ -405,8 +427,32 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
   };
 
   return (
-    <div className={styles.outerChatBg}>
-      <div className={styles.chatContainer}>
+    <div style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.8)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 1000
+    }}>
+      <div style={{
+        background: "linear-gradient(120deg, #232323 80%, #2a0909 100%)",
+        color: "#fff",
+        border: "2px solid #e53e3e",
+        borderRadius: "1rem",
+        boxShadow: "0 0 32px #e53e3e, 0 0 40px rgba(0,0,0,0.85)",
+        width: "90vw",
+        maxWidth: "1000px",
+        height: "80vh",
+        maxHeight: "600px",
+        display: "flex",
+        flexDirection: "column",
+        position: "relative"
+      }}>
         <button
           className={styles.hamburgerButton}
           onClick={() => setSidebarOpen(true)}
@@ -422,44 +468,48 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
           />
         )}
 
-        <div className={styles.topNavBar}>
-          <div className={styles.buttonRow}>
-            <button
-              className={styles.topChatButton}
-              onClick={() => {
-                if (onClose) {
-                  onClose();
-                } else {
-                  navigate("/");
-                  window.location.reload();
-                }
-              }}
-            >
-              Dashboard
-            </button>
-            <button
-              className={styles.topChatButton}
-              onClick={handleScheduleMatch}
-            >
-              Schedule a Match
-            </button>
-          </div>
-          <span className={styles.chatGreeting}>Hello, {userName}!</span>
-          <div className={styles.logoutWithTimer}>
-            <button
-              className={styles.topChatButton}
-              onClick={logoutAndRedirect}
-            >
-              Logout
-            </button>
-            <span className={styles.timerBox}>
-              Auto Logout: {minutes}:{seconds.toString().padStart(2, "0")}
-            </span>
-          </div>
+        {/* Simple Header */}
+        <div style={{
+          padding: "1rem",
+          borderBottom: "2px solid #e53e3e",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          position: "relative"
+        }}>
+          <h2 style={{ margin: 0, color: "#fff", fontSize: "1.5rem", fontWeight: "bold" }}>League Chat - {userName}</h2>
+          <button
+            onClick={onClose || (() => navigate("/"))}
+            style={{
+              position: "absolute",
+              right: "1rem",
+              background: "none",
+              border: "none",
+              color: "#fff",
+              fontSize: "2rem",
+              cursor: "pointer",
+              padding: "0.5rem"
+            }}
+          >
+            ×
+          </button>
         </div>
 
-        <div className={styles.mainChatArea}>
-          <div className={`${styles.sidebar} ${sidebarOpen ? styles.open : ""}`}>
+        {/* Main Content */}
+        <div style={{
+          flex: 1,
+          display: "flex",
+          minHeight: 0
+        }}>
+          {/* Sidebar */}
+          <div style={{
+            width: "250px",
+            backgroundColor: "linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 100%)",
+            borderRight: "2px solid #e53e3e",
+            overflowY: "auto",
+            padding: "1rem",
+            boxShadow: "inset -2px 0 8px rgba(0,0,0,0.3)"
+          }}>
             <button
               className={styles.closeSidebarButton}
               onClick={() => setSidebarOpen(false)}
@@ -510,7 +560,7 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
             {/* General Channel */}
             <div
               className={`${styles.generalChannelRow}${
-                channel?.id === GENERAL_CHANNEL_ID ? " " + styles.active : ""
+                (channel?.id === GENERAL_CHANNEL_ID || channel === generalChannel) ? " " + styles.active : ""
               }`}
               onClick={() => {
                 setChannel(generalChannel);
@@ -532,16 +582,51 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
 
             <div className={styles.channelListWrapper}>
               {/* Announcements Section */}
-              <SectionHeader icon="📢">Announcements</SectionHeader>
-              {announcementsChannel && renderChannelWithPin(announcementsChannel, 'announcements')}
+              <SectionHeader 
+                icon="📢" 
+                sectionKey="announcements"
+                isCollapsed={collapsedSections.announcements}
+                onToggle={(key) => setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }))}
+              >
+                Announcements
+              </SectionHeader>
+              <div className={`${styles.sectionContent} ${collapsedSections.announcements ? styles.collapsed : styles.expanded}`}>
+                {announcementsChannel ? renderChannelWithPin(announcementsChannel, 'announcements') : (
+                  <div style={{ padding: '8px', color: '#888', fontStyle: 'italic' }}>No announcements channel available</div>
+                )}
+              </div>
 
               {/* Division Channels Section */}
-              <SectionHeader icon="🏆">Division Channels</SectionHeader>
-              {Object.values(divisionChannels).map(ch => renderChannelWithPin(ch, 'divisions'))}
+              <SectionHeader 
+                icon="🏆" 
+                sectionKey="divisions"
+                isCollapsed={collapsedSections.divisions}
+                onToggle={(key) => setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }))}
+              >
+                Division Channels
+              </SectionHeader>
+              <div className={`${styles.sectionContent} ${collapsedSections.divisions ? styles.collapsed : styles.expanded}`}>
+                {Object.values(divisionChannels).length > 0 ? 
+                  Object.values(divisionChannels).map(ch => renderChannelWithPin(ch, 'divisions')) : 
+                  <div style={{ padding: '8px', color: '#888', fontStyle: 'italic' }}>No division channels available</div>
+                }
+              </div>
 
               {/* Game Rooms Section */}
-              <SectionHeader icon="🎮">Game Rooms</SectionHeader>
-              {gameRoomChannels.map(ch => renderChannelWithPin(ch, 'game-rooms'))}
+              <SectionHeader 
+                icon="🎮" 
+                sectionKey="gameRooms"
+                isCollapsed={collapsedSections.gameRooms}
+                onToggle={(key) => setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }))}
+              >
+                Game Rooms
+              </SectionHeader>
+              <div className={`${styles.sectionContent} ${collapsedSections.gameRooms ? styles.collapsed : styles.expanded}`}>
+                {gameRoomChannels.length > 0 ? 
+                  gameRoomChannels.map(ch => renderChannelWithPin(ch, 'game-rooms')) : 
+                  <div style={{ padding: '8px', color: '#888', fontStyle: 'italic' }}>No game room channels available</div>
+                }
+              </div>
               
               {/* Play Game Button */}
               <div 
@@ -557,90 +642,98 @@ export default function MatchChat({ userName, userEmail, userPin, channelId, onC
             </div>
           </div>
 
-          <div className={styles.mainChatWindow}>
+          {/* Chat Area */}
+          <div className={styles.mainChatWindow} style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            position: "relative"
+          }}>
             {/* Pool Simulation Background */}
             <div className={styles.poolBackground}>
               <PoolSimulation />
             </div>
             
-            {channel && (
-              <>
-                <CustomChannelHeader 
-                  channel={channel}
-                  currentUser={chatClient?.user}
-                />
+            {/* Channel Header */}
+            <CustomChannelHeader 
+              channel={channel}
+              currentUser={chatClient?.user}
+            />
+            
+            {/* Messages Area */}
+            <div className={styles.messagesArea} style={{
+              flex: 1,
+              overflowY: "auto",
+              paddingBottom: "80px" // Space for input box
+            }}>
+              {messages.map((message) => {
+                const messageUserId = message.user?.id;
+                const currentUserId = chatClient?.user?.id;
+                let isCurrentUser = messageUserId === currentUserId;
                 
-                {/* Messages Area */}
-                <div className={styles.messagesArea}>
-                  {messages.map((message) => {
-                    // More robust user comparison that handles both old and new ID formats
-                    const messageUserId = message.user?.id;
-                    const currentUserId = chatClient?.user?.id;
-                    
-                    // Check exact match first
-                    let isCurrentUser = messageUserId === currentUserId;
-                    
-                    // If no exact match, check if the message user ID is the base ID (without timestamp)
-                    // and the current user ID contains that base ID
-                    if (!isCurrentUser && messageUserId && currentUserId) {
-                      const baseUserId = messageUserId.replace(/_\d+$/, ''); // Remove timestamp suffix
-                      isCurrentUser = currentUserId.startsWith(baseUserId);
-                    }
-                    
-                    return (
-                      <div 
-                        key={message.id} 
-                        className={`${styles.messageItem} ${isCurrentUser ? styles.messageItemRight : styles.messageItemLeft}`}
-                      >
-                        <div className={styles.messageHeader}>
-                          <span className={styles.messageAuthor}>
-                            {message.user?.name || message.user?.id}
-                          </span>
-                          <span className={styles.messageTime}>
-                            {new Date(message.created_at).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        <div className={styles.messageText}>
-                          {message.text}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Message Input */}
-                <div className={styles.messageInputContainer}>
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Type your message..."
-                    className={styles.messageInput}
-                  />
-                  <button
-                    onClick={sendMessage}
-                    className={styles.sendButton}
-                    disabled={!newMessage.trim()}
+                if (!isCurrentUser && messageUserId && currentUserId) {
+                  const baseUserId = messageUserId.split('_')[0];
+                  isCurrentUser = currentUserId.startsWith(baseUserId);
+                }
+                
+                return (
+                  <div 
+                    key={message.id} 
+                    className={`${styles.messageItem} ${isCurrentUser ? styles.messageItemRight : styles.messageItemLeft}`}
                   >
-                    🚀 Send
-                  </button>
-                </div>
-              </>
-            )}
+                    <div className={styles.messageHeader}>
+                      <span className={styles.messageAuthor}>
+                        {message.user?.name || message.user?.id}
+                      </span>
+                      <span className={styles.messageTime}>
+                        {new Date(message.created_at).toLocaleTimeString()}
+                      </span>
+                    </div>
+                    <div className={styles.messageText}>
+                      {message.text}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Message Input */}
+            <div className={styles.messageInputContainer} style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 10
+            }}>
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Type your message..."
+                className={styles.messageInput}
+              />
+              <button
+                onClick={sendMessage}
+                className={styles.sendButton}
+                disabled={!newMessage.trim()}
+              >
+                🚀 Send
+              </button>
+            </div>
           </div>
         </div>
-
-        {showDivisionSelector && (
-          <DivisionSelectorModal
-            userName={userName}
-            userEmail={userEmail}
-            userPin={userPin}
-            onClose={() => setShowDivisionSelector(false)}
-            fromChat={true}
-          />
-        )}
       </div>
+
+      {showDivisionSelector && (
+        <DivisionSelectorModal
+          userName={userName}
+          userEmail={userEmail}
+          userPin={userPin}
+          onClose={() => setShowDivisionSelector(false)}
+          fromChat={true}
+        />
+      )}
     </div>
   );
 }
