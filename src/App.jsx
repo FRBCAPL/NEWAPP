@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { HashRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 
 // Main pages/components
 import ConfirmMatch from "./components/ConfirmMatch";
@@ -12,7 +12,20 @@ import FloatingLogos from './components/FloatingLogos';
 import TenBallTutorial from './components/TenBallTutorial';
 import SimplePoolGame from './components/tenball/SimplePoolGame';
 import MobileTestPage from './components/MobileTestPage';
+import AppHub from './components/hub/AppHub';
+import LoggedOutHub from './components/hub/LoggedOutHub';
+import HubNavigation from './components/hub/HubNavigation';
+import AppRouteWrapper from './components/hub/AppRouteWrapper';
+import LadderApp from './components/ladder/LadderApp';
+import LadderManagement from './components/ladder/LadderManagement';
+import LadderPlayerManagement from './components/ladder/LadderPlayerManagement';
+import PlayerManagement from './components/admin/PlayerManagement';
 import adminAuthService from './services/adminAuthService.js';
+
+// Guest App Components
+import GuestLeagueApp from './components/guest/GuestLeagueApp';
+import GuestLadderApp from './components/guest/GuestLadderApp';
+
 import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
 import csiLogo from "./assets/csi_logo.png";
@@ -21,25 +34,7 @@ import fargorateLogo from "./assets/fargorate-logo.png";
 import "./styles/variables.css";
 import "./styles/global.css";
 
-function AppHeader() {
-  return (
-    <div style={{
-      width: "100%",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "0.25rem 0 0.5rem 0",
-      position: "static",
-      background: "rgba(0,0,0,0.8)",
-      backdropFilter: "blur(6px)",
-      boxShadow: "0 4px 20px rgba(0,0,0,0.5)"
-    }}>
-      <span className="app-header-title">
-        Front Range Pool League
-      </span>
-    </div>
-  );
-}
+
 
 function MainApp({
   isAuthenticated,
@@ -47,6 +42,7 @@ function MainApp({
   userLastName,
   userEmail,
   userPin,
+  userType,
   handleLoginSuccess,
   handleLogout
 }) {
@@ -54,31 +50,33 @@ function MainApp({
   return (
     <main className="main-app-content">
       {!isAuthenticated ? (
-        <PinLogin onSuccess={handleLoginSuccess} />
+        <LoggedOutHub onLoginSuccess={handleLoginSuccess} />
       ) : (
-        <Dashboard
-          playerName={userFirstName}
-          playerLastName={userLastName}
-          senderEmail={userEmail}
-          onScheduleMatch={() => {}}
-          onOpenChat={() => (window.location.hash = "#/chat")}
-          onLogout={handleLogout}
+        <AppHub
+          isAuthenticated={isAuthenticated}
+          userFirstName={userFirstName}
+          userLastName={userLastName}
+          userEmail={userEmail}
           userPin={userPin}
-          onGoToAdmin={() => navigate("/admin")}
-          onGoToPlatformAdmin={() => navigate("/platform-admin")}
+          userType={userType}
+          handleLogout={handleLogout}
         />
       )}
     </main>
   );
 }
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+  
   // --- State ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userFirstName, setUserFirstName] = useState("");
   const [userLastName, setUserLastName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [userPin, setUserPin] = useState("");
+  const [userType, setUserType] = useState("league");
+  const [currentAppName, setCurrentAppName] = useState("");
 
   // --- Load auth/user info from localStorage on mount ---
   useEffect(() => {
@@ -88,12 +86,37 @@ function App() {
       setUserLastName(localStorage.getItem("userLastName") || "");
       setUserEmail(localStorage.getItem("userEmail") || "");
       setUserPin(localStorage.getItem("userPin") || "");
+      setUserType(localStorage.getItem("userType") || "league");
       setIsAuthenticated(true);
     }
   }, []);
 
+  // --- Listen for app name changes and ladder login success ---
+  useEffect(() => {
+    const handleAppNameChange = (event) => {
+      setCurrentAppName(event.detail);
+    };
+
+    // Listen for ladder login success events
+    const handleLadderLoginSuccess = (event) => {
+      console.log('App.jsx received ladderLoginSuccess event:', event.detail);
+      const { name, email, pin, userType } = event.detail;
+      
+      // Call the existing login success handler
+      handleLoginSuccess(name, email, pin, userType);
+    };
+
+    window.addEventListener('appNameChange', handleAppNameChange);
+    window.addEventListener('ladderLoginSuccess', handleLadderLoginSuccess);
+
+    return () => {
+      window.removeEventListener('appNameChange', handleAppNameChange);
+      window.removeEventListener('ladderLoginSuccess', handleLadderLoginSuccess);
+    };
+  }, []);
+
   // --- Login handler ---
-  const handleLoginSuccess = (name, email, pin) => {
+  const handleLoginSuccess = (name, email, pin, userType) => {
     let firstName = "";
     let lastName = "";
     if (name) {
@@ -105,12 +128,14 @@ function App() {
     setUserLastName(lastName);
     setUserEmail(email);
     setUserPin(pin);
+    setUserType(userType || 'league');
     setIsAuthenticated(true);
 
     localStorage.setItem("userFirstName", firstName);
     localStorage.setItem("userLastName", lastName);
     localStorage.setItem("userEmail", email);
     localStorage.setItem("userPin", pin);
+    localStorage.setItem("userType", userType || 'league'); // Default to league if not specified
     localStorage.setItem("isAuthenticated", "true");
   };
 
@@ -165,27 +190,208 @@ function App() {
     setUserLastName("");
     setUserEmail("");
     setUserPin("");
+    setUserType("league");
+    setCurrentAppName("");
     setIsAuthenticated(false);
     localStorage.removeItem("userFirstName");
     localStorage.removeItem("userLastName");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("userPin");
+    localStorage.removeItem("userType");
     localStorage.removeItem("isAuthenticated");
   };
 
   // --- Main Router ---
   return (
-    <HashRouter>
-             <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
-         <FloatingLogos />
-        <AppHeader />
-        <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "0px" }}>
+    <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
+        <FloatingLogos />
+                         <HubNavigation 
+          currentAppName={currentAppName} 
+          isAdmin={isAdminState}
+          isSuperAdmin={isSuperAdminState}
+          onLogout={handleLogout}
+          userFirstName={userFirstName}
+          userLastName={userLastName}
+        />
+
+                 <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "200px" }}>
           <Routes>
+                         {/* Hub Route */}
+             <Route
+               path="/hub"
+               element={
+                 isAuthenticated ? (
+                   <AppRouteWrapper appName="Front Range Pool Hub">
+                     <main className="main-app-content">
+                       <AppHub
+                         isAuthenticated={isAuthenticated}
+                         userFirstName={userFirstName}
+                         userLastName={userLastName}
+                         userEmail={userEmail}
+                         userPin={userPin}
+                         userType={userType}
+                         handleLogout={handleLogout}
+                       />
+                     </main>
+                   </AppRouteWrapper>
+                 ) : (
+                   <Navigate to="/" />
+                 )
+               }
+             />
+            
+            {/* League App Routes */}
                          <Route
+               path="/league"
+               element={
+                 isAuthenticated ? (
+                   <AppRouteWrapper appName="Front Range Pool League">
+                    <main className="main-app-content">
+                      <Dashboard
+                        playerName={userFirstName}
+                        playerLastName={userLastName}
+                        senderEmail={userEmail}
+                        onScheduleMatch={() => {}}
+                        onOpenChat={() => (window.location.hash = "#/league/chat")}
+                        userPin={userPin}
+                        onGoToAdmin={() => {}}
+                        onGoToPlatformAdmin={() => navigate("/platform-admin")}
+                      />
+                    </main>
+                  </AppRouteWrapper>
+                ) : (
+                  <Navigate to="/" />
+                )
+              }
+            />
+            
+                         <Route
+               path="/league/chat"
+               element={
+                 isAuthenticated ? (
+                   <AppRouteWrapper appName="Front Range Pool League - Chat">
+                    <main className="main-app-content">
+                      <MatchChat
+                        userName={`${userFirstName} ${userLastName}`}
+                        userEmail={userEmail}
+                        userPin={userPin}
+                      />
+                    </main>
+                  </AppRouteWrapper>
+                ) : (
+                  <Navigate to="/" />
+                )
+              }
+            />
+            
+                         {/* Ladder App Routes */}
+                           <Route
+                path="/ladder"
+                element={
+                  isAuthenticated ? (
+                    <AppRouteWrapper appName="Ladder of Legends">
+                      <main className="main-app-content">
+                        <LadderApp
+                          playerName={userFirstName}
+                          playerLastName={userLastName}
+                          senderEmail={userEmail}
+                          userPin={userPin}
+                          isAdmin={isAdminState}
+                        />
+                      </main>
+                    </AppRouteWrapper>
+                  ) : (
+                    <Navigate to="/" />
+                  )
+                }
+              />
+             
+              
+
+             {/* Guest App Routes */}
+             <Route
+               path="/guest/league"
+               element={
+                 <AppRouteWrapper appName="League App - Guest Preview">
+                   <main className="main-app-content">
+                     <GuestLeagueApp />
+                   </main>
+                 </AppRouteWrapper>
+               }
+             />
+             
+             <Route
+               path="/guest/ladder"
+               element={
+                 <AppRouteWrapper appName="Ladder of Legends - Guest Preview">
+                   <main className="main-app-content">
+                     <GuestLadderApp />
+                   </main>
+                 </AppRouteWrapper>
+               }
+             />
+
+             {/* Ladder Management Route */}
+              <Route
+                path="/ladder/manage"
+                element={
+                  isAuthenticated && isAdmin() ? (
+                    <AppRouteWrapper appName="Ladder of Legends Management">
+                      <main className="main-app-content">
+                        <LadderManagement
+                          userEmail={userEmail}
+                          userPin={userPin}
+                        />
+                      </main>
+                    </AppRouteWrapper>
+                  ) : (
+                    <Navigate to="/" />
+                  )
+                }
+              />
+              
+              {/* Ladder Player Management Route */}
+              <Route
+                path="/ladder/admin"
+                element={
+                  isAuthenticated && isAdmin() ? (
+                    <AppRouteWrapper appName="Ladder of Legends Player Management">
+                      <main className="main-app-content">
+                        <LadderPlayerManagement />
+                      </main>
+                    </AppRouteWrapper>
+                  ) : (
+                    <Navigate to="/" />
+                  )
+                }
+              />
+             
+             {/* Admin Routes */}
+             <Route
                path="/admin"
                element={
                  isAuthenticated && isAdmin() ? (
-                   <div className="admin-app-content"><AdminDashboard /></div>
+                   <AppRouteWrapper appName="Admin Dashboard">
+                     <div className="admin-app-content">
+                       <AdminDashboard />
+                     </div>
+                   </AppRouteWrapper>
+                 ) : (
+                   <Navigate to="/" />
+                 )
+               }
+             />
+             
+             {/* Player Management Route */}
+             <Route
+               path="/admin/players"
+               element={
+                 isAuthenticated && isAdmin() ? (
+                   <AppRouteWrapper appName="Player Management">
+                     <div className="admin-app-content">
+                       <PlayerManagement />
+                     </div>
+                   </AppRouteWrapper>
                  ) : (
                    <Navigate to="/" />
                  )
@@ -195,90 +401,63 @@ function App() {
               path="/platform-admin"
               element={
                 isAuthenticated && isSuperAdmin() ? (
-                  <div className="platform-admin-app-content">
-                    <PlatformAdminDashboard />
-                  </div>
+                  <AppRouteWrapper appName="Platform Admin">
+                    <div className="platform-admin-app-content">
+                      <PlatformAdminDashboard />
+                    </div>
+                  </AppRouteWrapper>
                 ) : (
                   <Navigate to="/" />
                 )
               }
             />
+            
+            {/* Other Routes */}
             <Route path="/confirm-match" element={<ConfirmMatch />} />
             <Route
-              path="*"
-              element={
-                <main className="main-app-content">
-                  <Routes>
-                    <Route
-                      path="/chat"
-                      element={
-                        isAuthenticated ? (
-                          <MatchChat
-                            userName={`${userFirstName} ${userLastName}`}
-                            userEmail={userEmail}
-                            userPin={userPin}
-                          />
-                        ) : (
-                          <Navigate to="/" />
-                        )
-                      }
-                    />
-
-                    <Route
-                      path="/simple-pool"
-                      element={<SimplePoolGame />}
-                    />
-                    <Route
-                      path="/tenball-tutorial"
-                      element={<TenBallTutorial />}
-                    />
-                    <Route
-                      path="/mobile-test"
-                      element={<MobileTestPage />}
-                    />
-                    <Route
-                      path="/dashboard"
-                      element={
-                        isAuthenticated ? (
-                          <Dashboard
-                            playerName={userFirstName}
-                            playerLastName={userLastName}
-                            senderEmail={userEmail}
-                            onScheduleMatch={() => {}}
-                            onOpenChat={() => (window.location.hash = "#/chat")}
-                            onLogout={handleLogout}
-                            userPin={userPin}
-                            onGoToAdmin={() => {}}
-                            onGoToPlatformAdmin={() => navigate("/platform-admin")}
-                          />
-                        ) : (
-                          <Navigate to="/" />
-                        )
-                      }
-                    />
-                    <Route
-                      path="/"
-                      element={
-                        <MainApp
-                          isAuthenticated={isAuthenticated}
-                          userFirstName={userFirstName}
-                          userLastName={userLastName}
-                          userEmail={userEmail}
-                          userPin={userPin}
-                          handleLoginSuccess={handleLoginSuccess}
-                          handleLogout={handleLogout}
-                        />
-                      }
-                    />
-                    {/* Catch-all route */}
-                    <Route path="*" element={<Navigate to="/" />} />
-                  </Routes>
-                </main>
-              }
+              path="/simple-pool"
+              element={<SimplePoolGame />}
             />
+            <Route
+              path="/tenball-tutorial"
+              element={<TenBallTutorial />}
+            />
+            <Route
+              path="/mobile-test"
+              element={<MobileTestPage />}
+            />
+            
+                         {/* Default Route - Hub */}
+             <Route
+               path="/"
+               element={
+                 <AppRouteWrapper appName={isAuthenticated ? "Front Range Pool Hub" : ""}>
+                                       <MainApp
+                      isAuthenticated={isAuthenticated}
+                      userFirstName={userFirstName}
+                      userLastName={userLastName}
+                      userEmail={userEmail}
+                      userPin={userPin}
+                      userType={userType}
+                      handleLoginSuccess={handleLoginSuccess}
+                      handleLogout={handleLogout}
+                    />
+                 </AppRouteWrapper>
+               }
+             />
+            
+            {/* Catch-all route */}
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </div>
       </div>
+  );
+}
+
+function App() {
+  return (
+    <HashRouter>
+      <AppContent />
     </HashRouter>
   );
 }

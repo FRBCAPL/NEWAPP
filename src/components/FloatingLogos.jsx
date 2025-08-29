@@ -318,7 +318,7 @@ export default function FloatingLogos() {
       width: baseWidth,
       height: "auto",
       opacity: opacity * (logo.edgeOpacity || 1) * (logo.sizeOpacity || 1),
-      zIndex: 0,
+      zIndex: 1,
       pointerEvents: "none",
       filter,
       transition: "none"
@@ -332,7 +332,7 @@ export default function FloatingLogos() {
       left: 0,
       width: '100vw',
       height: '100vh',
-      zIndex: 0,
+      zIndex: 1,
       pointerEvents: 'none',
       overflow: 'hidden',
     }}>

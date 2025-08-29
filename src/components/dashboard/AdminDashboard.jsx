@@ -28,7 +28,8 @@ import {
   FaTrash,
   FaSearch,
   FaGoogle,
-  FaMapMarkerAlt
+  FaMapMarkerAlt,
+  FaEdit
 } from 'react-icons/fa';
 import { BACKEND_URL } from '../../config.js';
 
@@ -819,12 +820,170 @@ function PlayerManagementWorkflow({ backendUrl }) {
   );
 }
 
+// --- Edit Player Modal ---
+function EditPlayerModal({ player, onSave, onClose }) {
+  const [formData, setFormData] = useState({
+    firstName: player.firstName || '',
+    lastName: player.lastName || '',
+    email: player.email || '',
+    phone: player.phone || '',
+    textNumber: player.textNumber || '',
+    emergencyContactName: player.emergencyContactName || '',
+    emergencyContactPhone: player.emergencyContactPhone || '',
+    locations: player.locations || '',
+    notes: player.notes || ''
+  });
+
+  const handleInputChange = (field, value) => {
+    let formattedValue = value;
+    
+    // Format phone numbers to (xxx) xxx-xxxx
+    if (field === 'phone' || field === 'textNumber' || field === 'emergencyContactPhone') {
+      // Remove all non-digits
+      const digitsOnly = value.replace(/\D/g, '');
+      
+      // Format based on length
+      if (digitsOnly.length <= 3) {
+        formattedValue = `(${digitsOnly}`;
+      } else if (digitsOnly.length <= 6) {
+        formattedValue = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3)}`;
+      } else if (digitsOnly.length <= 10) {
+        formattedValue = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6)}`;
+      } else {
+        formattedValue = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6, 10)}`;
+      }
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      [field]: formattedValue
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave({
+      ...player,
+      ...formData
+    });
+  };
+
+  return (
+    <div className={styles.modalOverlay}>
+      <div className={styles.modal}>
+        <div className={styles.modalHeader}>
+          <h3>Edit Player: {player.firstName} {player.lastName}</h3>
+          <button onClick={onClose} className={styles.closeButton}>×</button>
+        </div>
+        <form onSubmit={handleSubmit} className={styles.modalForm}>
+          <div className={styles.formRow}>
+            <div className={styles.formField}>
+              <label>First Name:</label>
+              <input
+                type="text"
+                value={formData.firstName}
+                onChange={(e) => handleInputChange('firstName', e.target.value)}
+                required
+              />
+            </div>
+            <div className={styles.formField}>
+              <label>Last Name:</label>
+              <input
+                type="text"
+                value={formData.lastName}
+                onChange={(e) => handleInputChange('lastName', e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <div className={styles.formRow}>
+            <div className={styles.formField}>
+              <label>Email:</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                required
+              />
+            </div>
+                         <div className={styles.formField}>
+               <label>Phone:</label>
+               <input
+                 type="tel"
+                 value={formData.phone}
+                 onChange={(e) => handleInputChange('phone', e.target.value)}
+                 placeholder="(555) 123-4567"
+               />
+             </div>
+          </div>
+          <div className={styles.formRow}>
+                         <div className={styles.formField}>
+               <label>Text Number:</label>
+               <input
+                 type="tel"
+                 value={formData.textNumber}
+                 onChange={(e) => handleInputChange('textNumber', e.target.value)}
+                 placeholder="(555) 123-4567"
+               />
+             </div>
+            <div className={styles.formField}>
+              <label>Emergency Contact Name:</label>
+              <input
+                type="text"
+                value={formData.emergencyContactName}
+                onChange={(e) => handleInputChange('emergencyContactName', e.target.value)}
+              />
+            </div>
+          </div>
+          <div className={styles.formRow}>
+                         <div className={styles.formField}>
+               <label>Emergency Contact Phone:</label>
+               <input
+                 type="tel"
+                 value={formData.emergencyContactPhone}
+                 onChange={(e) => handleInputChange('emergencyContactPhone', e.target.value)}
+                 placeholder="(555) 123-4567"
+               />
+             </div>
+            <div className={styles.formField}>
+              <label>Playing Locations:</label>
+              <input
+                type="text"
+                value={formData.locations}
+                onChange={(e) => handleInputChange('locations', e.target.value)}
+              />
+            </div>
+          </div>
+          <div className={styles.formField}>
+            <label>Notes:</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => handleInputChange('notes', e.target.value)}
+              rows="3"
+            />
+          </div>
+          <div className={styles.modalActions}>
+            <button type="button" onClick={onClose} className={styles.cancelButton}>
+              Cancel
+            </button>
+            <button type="submit" className={styles.saveButton}>
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // --- Admin User Search (simplified) ---
 function AdminUserSearch({ backendUrl }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [divisions, setDivisions] = useState([]);
   const [selectedDivisions, setSelectedDivisions] = useState({});
+  const [editingPlayer, setEditingPlayer] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     fetch(`${backendUrl}/admin/divisions`)
@@ -881,6 +1040,52 @@ function AdminUserSearch({ backendUrl }) {
     }));
   };
 
+  const handleShowAllPlayers = async () => {
+    try {
+      const res = await fetch(`${backendUrl}/api/users`);
+      const users = await res.json();
+      setResults(users);
+      setQuery("");
+    } catch (error) {
+      setResults([]);
+      alert("Failed to load all players");
+    }
+  };
+
+  const handleEditPlayer = (player) => {
+    setEditingPlayer(player);
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = async (updatedPlayer) => {
+    try {
+      const res = await fetch(`${backendUrl}/api/users/${updatedPlayer._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedPlayer)
+      });
+      
+      if (res.ok) {
+        const result = await res.json();
+        
+        // Refresh the results to show updated data
+        if (query.trim()) {
+          handleSearch({ preventDefault: () => {} });
+        } else {
+          handleShowAllPlayers();
+        }
+        setShowEditModal(false);
+        setEditingPlayer(null);
+        alert('✅ Player updated successfully!');
+      } else {
+        const errorData = await res.json();
+        alert(`Failed to update player: ${errorData.message || errorData.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      alert(`Failed to update player: ${error.message}`);
+    }
+  };
+
   return (
     <div className={styles.userSearchContainer}>
       <form onSubmit={handleSearch} className={styles.searchForm}>
@@ -895,18 +1100,63 @@ function AdminUserSearch({ backendUrl }) {
           <FaSearch /> Search
         </button>
       </form>
+      <button onClick={handleShowAllPlayers} className={styles.searchButton} style={{ marginLeft: '10px' }}>
+        <FaUsers /> Show All Players
+      </button>
+      
+      {results.length > 0 && (
+        <div className={styles.resultsSummary}>
+          <div className={styles.summaryCard}>
+            <h4>📊 Player Summary</h4>
+            <div className={styles.summaryStats}>
+              <div className={styles.summaryStat}>
+                <span className={styles.statNumber}>{results.length}</span>
+                <span className={styles.statLabel}>Total Players</span>
+              </div>
+              <div className={styles.summaryStat}>
+                <span className={styles.statNumber}>{results.filter(u => u.isLeaguePlayer).length}</span>
+                <span className={styles.statLabel}>League Players</span>
+              </div>
+              <div className={styles.summaryStat}>
+                <span className={styles.statNumber}>{results.filter(u => u.isLadderPlayer).length}</span>
+                <span className={styles.statLabel}>Ladder Players</span>
+              </div>
+              <div className={styles.summaryStat}>
+                <span className={styles.statNumber}>{results.filter(u => u.system === 'both').length}</span>
+                <span className={styles.statLabel}>Both Systems</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {results.length > 0 && (
         <div className={styles.searchResults}>
           {results.map((user) => (
             <div key={user._id} className={styles.userCard}>
               <div className={styles.userInfo}>
-                <h4 className={styles.userName}>
-                  {user.firstName && user.lastName 
-                    ? `${user.firstName} ${user.lastName}` 
-                    : user.name || user.email || 'Unknown User'
-                  }
-                </h4>
+                <div className={styles.userHeader}>
+                  <h4 className={styles.userName}>
+                    {user.firstName && user.lastName 
+                      ? `${user.firstName} ${user.lastName}` 
+                      : user.name || user.email || 'Unknown User'
+                    }
+                  </h4>
+                  <div className={styles.systemBadges}>
+                    {user.system === 'league' && (
+                      <span className={styles.leagueBadge}>🏆 League</span>
+                    )}
+                    {user.system === 'ladder' && (
+                      <span className={styles.ladderBadge}>🏁 Ladder</span>
+                    )}
+                    {user.system === 'both' && (
+                      <div className={styles.bothBadges}>
+                        <span className={styles.leagueBadge}>🏆 League</span>
+                        <span className={styles.ladderBadge}>🏁 Ladder</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className={styles.userContactInfo}>
                   <p className={styles.userEmail}><strong>Email:</strong> {user.email}</p>
                   <p className={styles.userPhone}><strong>Phone:</strong> {user.phone || 'Not provided'}</p>
@@ -940,9 +1190,31 @@ function AdminUserSearch({ backendUrl }) {
                   {user.notes && (
                     <p><strong>Notes:</strong> {user.notes}</p>
                   )}
+                  {user.system === 'ladder' && (
+                    <div className={styles.ladderInfo}>
+                      <p><strong>Ladder:</strong> {user.ladderName}</p>
+                      <p><strong>Position:</strong> #{user.position}</p>
+                      <p><strong>Fargo Rate:</strong> {user.fargoRate}</p>
+                      <p><strong>Status:</strong> {user.isActive ? 'Active' : 'Inactive'}</p>
+                    </div>
+                  )}
+                  {user.system === 'both' && user.ladderInfo && (
+                    <div className={styles.ladderInfo}>
+                      <p><strong>Ladder:</strong> {user.ladderInfo.ladderName}</p>
+                      <p><strong>Position:</strong> #{user.ladderInfo.position}</p>
+                      <p><strong>Fargo Rate:</strong> {user.ladderInfo.fargoRate}</p>
+                      <p><strong>Status:</strong> {user.ladderInfo.isActive ? 'Active' : 'Inactive'}</p>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className={styles.userActions}>
+                <button
+                  onClick={() => handleEditPlayer(user)}
+                  className={styles.editButton}
+                >
+                  <FaEdit /> Edit Player
+                </button>
                 <select
                   value={selectedDivisions[user._id] || ""}
                   onChange={(e) => handleDivisionChange(user._id, e.target.value)}
@@ -973,6 +1245,17 @@ function AdminUserSearch({ backendUrl }) {
             </div>
           ))}
         </div>
+      )}
+      
+      {showEditModal && editingPlayer && (
+        <EditPlayerModal
+          player={editingPlayer}
+          onSave={handleSaveEdit}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingPlayer(null);
+          }}
+        />
       )}
     </div>
   );

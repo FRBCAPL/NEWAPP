@@ -1,0 +1,248 @@
+.ladder-smart-match-modal {
+  background: linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98));
+  border: 2px solid #ff4444;
+  border-radius: 12px;
+  color: #ffffff;
+}
+
+.ladder-smart-match-header {
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.ladder-smart-match-title {
+  color: #ff4444;
+  margin: 0 0 8px 0;
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.ladder-smart-match-subtitle {
+  color: #e0e0e0;
+  text-align: center;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.ladder-smart-match-loading {
+  text-align: center;
+  padding: 40px;
+}
+
+.ladder-smart-match-spinner {
+  border: 4px solid #333;
+  border-top: 4px solid #ff4444;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+.ladder-smart-match-loading-text {
+  color: #9ca3af;
+}
+
+.ladder-smart-match-empty {
+  text-align: center;
+  padding: 40px;
+  color: #9ca3af;
+}
+
+.ladder-smart-match-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.ladder-smart-match-empty-title {
+  margin-bottom: 8px;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.ladder-smart-match-suggestions {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.ladder-smart-match-suggestion {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ladder-smart-match-suggestion:hover {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: #ff4444;
+}
+
+.ladder-smart-match-suggestion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.ladder-smart-match-suggestion-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ladder-smart-match-suggestion-icon {
+  font-size: 20px;
+}
+
+.ladder-smart-match-suggestion-name {
+  color: #fff;
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.ladder-smart-match-suggestion-details {
+  color: #ccc;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.ladder-smart-match-confidence {
+  text-align: right;
+}
+
+.ladder-smart-match-confidence-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: white;
+}
+
+.ladder-smart-match-confidence-high {
+  background: #10b981;
+}
+
+.ladder-smart-match-confidence-medium {
+  background: #f59e0b;
+}
+
+.ladder-smart-match-confidence-low {
+  background: #6b7280;
+}
+
+.ladder-smart-match-reason {
+  color: #e0e0e0;
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.ladder-smart-match-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ladder-smart-match-tag {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.ladder-smart-match-tag-challenge {
+  background: rgba(255, 68, 68, 0.2);
+  color: #ff4444;
+}
+
+.ladder-smart-match-tag-smackdown {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.ladder-smart-match-tag-ladder-jump {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.ladder-smart-match-tag-active {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.ladder-smart-match-tag-winrate {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.ladder-smart-match-tip {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 4px;
+  color: #ffc107;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.ladder-smart-match-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.ladder-smart-match-close-btn {
+  padding: 12px 24px;
+  background: #666;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.ladder-smart-match-close-btn:hover {
+  background: #555;
+}
+
+/* Animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .ladder-smart-match-suggestion-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .ladder-smart-match-confidence {
+    text-align: left;
+  }
+  
+  .ladder-smart-match-suggestion-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .ladder-smart-match-tags {
+    flex-direction: column;
+  }
+  
+  .ladder-smart-match-tag {
+    text-align: center;
+  }
+}

@@ -91,7 +91,7 @@ export default function MobileDashboard({
     <div style={{ paddingBottom: '80px' }}>
       {/* Welcome Section */}
       <MobileSection
-        title={`Welcome, ${playerName} ${playerLastName}`}
+        title={`Hello, ${playerName} ${playerLastName}`}
         subtitle="Your pool league dashboard"
       >
         <MobileStatsGrid columns={2}>

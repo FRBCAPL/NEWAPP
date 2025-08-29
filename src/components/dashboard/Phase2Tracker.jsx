@@ -561,7 +561,7 @@ export default function Phase2Tracker({
                     zIndex: 1,
                     boxShadow: '0 6px 20px rgba(255, 68, 68, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 20px rgba(255, 68, 68, 0.2)',
                     minWidth: isMobile ? '60px' : '80px',
-                                         minHeight: isMobile ? '75px' : '90px',
+                    minHeight: isMobile ? '75px' : '90px',
                     backdropFilter: 'blur(8px)',
                     margin: isMobile ? '8px auto' : '0'
                   }}

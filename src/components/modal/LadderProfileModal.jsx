@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
-const UserProfileModal = ({ 
+const LadderProfileModal = ({ 
   isOpen, 
   onClose, 
   currentUser, 
   isMobile, 
   onUserUpdate,
-  availableLocations = [] // New prop for available locations
+  availableLocations = [] // Available pool locations for challenges
 }) => {
   const [editingSection, setEditingSection] = useState(null);
   const [editData, setEditData] = useState({});
@@ -32,13 +32,9 @@ const UserProfileModal = ({
   // Save changes for a section
   const saveSection = async (section) => {
     try {
-      console.log('Saving section:', section);
+      console.log('Saving ladder profile section:', section);
       console.log('Edit data:', editData);
       console.log('Current user:', currentUser);
-      console.log('User ID:', currentUser?._id);
-      console.log('User email:', currentUser?.email);
-      console.log('All user fields:', Object.keys(currentUser || {}));
-      console.log('Environment VITE_BACKEND_URL:', import.meta.env.VITE_BACKEND_URL);
       
       // Check if we have a valid user email
       const userEmail = currentUser?.email;
@@ -102,7 +98,7 @@ const UserProfileModal = ({
           setEditingSection(null);
           setEditData({});
           // Show success feedback
-          alert('✅ Profile updated successfully!');
+          alert('✅ Ladder profile updated successfully!');
         } else {
           const errorData = await response.json();
           console.error('Basic info update failed:', errorData);
@@ -113,8 +109,10 @@ const UserProfileModal = ({
       
       // For other sections, get the correct field value
       let fieldValue;
-      if (section === 'locations') {
-        fieldValue = editData.locations;
+      if (section === 'ladderLocations') {
+        fieldValue = editData.ladderLocations;
+      } else if (section === 'ladderAvailability') {
+        fieldValue = editData.ladderAvailability;
       } else if (section === 'preferredContacts') {
         fieldValue = editData.preferredContacts;
       } else {
@@ -141,14 +139,14 @@ const UserProfileModal = ({
         setEditingSection(null);
         setEditData({});
         // Show success feedback
-        alert('✅ Profile updated successfully!');
+        alert('✅ Ladder profile updated successfully!');
       } else {
         const errorData = await response.json();
         console.error('Section update failed:', errorData);
         alert(`Failed to update profile: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error updating ladder profile:', error);
       alert('Error updating profile. Please try again.');
     }
   };
@@ -174,9 +172,9 @@ const UserProfileModal = ({
     }));
   };
 
-  // Handle availability changes
+  // Handle availability changes for ladder challenges
   const handleAvailabilityChange = (day, slot, checked) => {
-    const currentAvailability = editData.availability || localUser.availability || {};
+    const currentAvailability = editData.ladderAvailability || localUser.ladderAvailability || {};
     const currentDaySlots = currentAvailability[day] || [];
     
     const newDaySlots = checked 
@@ -185,16 +183,16 @@ const UserProfileModal = ({
     
     setEditData(prev => ({
       ...prev,
-      availability: {
+      ladderAvailability: {
         ...currentAvailability,
         [day]: newDaySlots
       }
     }));
   };
 
-  // Handle location changes
+  // Handle location changes for ladder challenges
   const handleLocationChange = (location, checked) => {
-    const currentLocations = editData.locations || localUser.locations || '';
+    const currentLocations = editData.ladderLocations || localUser.ladderLocations || '';
     const locationArray = currentLocations.split('\n').filter(Boolean);
     
     const newLocations = checked
@@ -203,7 +201,7 @@ const UserProfileModal = ({
     
     setEditData(prev => ({
       ...prev,
-      locations: newLocations.join('\n')
+      ladderLocations: newLocations.join('\n')
     }));
   };
 
@@ -211,7 +209,7 @@ const UserProfileModal = ({
   const handleAddNewLocation = (newLocation) => {
     if (!newLocation.trim()) return;
     
-    const currentLocations = editData.locations || localUser.locations || '';
+    const currentLocations = editData.ladderLocations || localUser.ladderLocations || '';
     const locationArray = currentLocations.split('\n').filter(Boolean);
     
     // Check if location already exists
@@ -223,13 +221,13 @@ const UserProfileModal = ({
     const newLocations = [...locationArray, newLocation.trim()];
     setEditData(prev => ({
       ...prev,
-      locations: newLocations.join('\n')
+      ladderLocations: newLocations.join('\n')
     }));
   };
 
   // Get user's current locations (from edit data or current user)
   const getUserLocations = () => {
-    const locations = editData.locations || localUser.locations || '';
+    const locations = editData.ladderLocations || localUser.ladderLocations || '';
     return locations.split('\n').filter(Boolean);
   };
 
@@ -243,123 +241,91 @@ const UserProfileModal = ({
     );
   };
 
-  // Copy availability from ladder
-  const copyFromLadder = async () => {
+  // Copy availability from League app
+  const copyFromLeague = async () => {
     try {
-      // Get user's ladder availability from the database
+      const backendUrl = 'http://localhost:8080';
       const userEmail = currentUser?.email;
+      
       if (!userEmail) {
-        alert('No valid user email found. Please refresh the page and try again.');
+        alert('Error: No valid user email found.');
         return;
       }
-
-      const backendUrl = 'http://localhost:8080';
+      
       const userResponse = await fetch(`${backendUrl}/api/users/${encodeURIComponent(userEmail)}`);
       if (!userResponse.ok) {
-        alert('Error: Failed to fetch user data. Please refresh the page and try again.');
+        alert('Error: Failed to fetch user data.');
         return;
       }
-
+      
       const userData = await userResponse.json();
-      const userId = userData.user?._id || userData._id;
-      const ladderAvailability = userData.user?.ladderAvailability || {};
-
-      if (!ladderAvailability || Object.keys(ladderAvailability).length === 0) {
-        alert('No ladder availability found to copy.');
+      const user = userData.user || userData;
+      
+      if (!user.availability || Object.keys(user.availability).length === 0) {
+        alert('No availability data found in League profile.');
         return;
       }
-
-      const confirmCopy = window.confirm(
-        'Copy your ladder availability to league? This will replace your current league availability.\n\n' +
-        'Ladder availability: ' + Object.entries(ladderAvailability).map(([day, slots]) => 
-          `${day}: ${slots.join(', ')}`
-        ).join(' | ')
+      
+      const confirmed = window.confirm(
+        'This will replace your current ladder availability with your league availability. Continue?'
       );
-
-      if (confirmCopy) {
-        // Update league availability with ladder data
-        const response = await fetch(`${backendUrl}/api/users/${userId}/profile`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ availability: ladderAvailability })
-        });
-
-        if (response.ok) {
-          const updatedUser = await response.json();
-          setLocalUser(updatedUser.user);
-          onUserUpdate(updatedUser.user);
-          alert('✅ Ladder availability copied to league successfully!');
-        } else {
-          alert('Failed to copy availability. Please try again.');
-        }
+      
+      if (confirmed) {
+        setEditData(prev => ({
+          ...prev,
+          ladderAvailability: user.availability
+        }));
+        alert('✅ League availability copied to ladder profile!');
       }
     } catch (error) {
-      console.error('Error copying from ladder:', error);
-      alert('Error copying from ladder. Please try again.');
+      console.error('Error copying from league:', error);
+      alert('Error copying availability from league.');
     }
   };
 
-  // Copy locations from ladder
-  const copyLocationsFromLadder = async () => {
+  // Copy locations from League app
+  const copyLocationsFromLeague = async () => {
     try {
-      // Get user's ladder locations from the database
+      const backendUrl = 'http://localhost:8080';
       const userEmail = currentUser?.email;
+      
       if (!userEmail) {
-        alert('No valid user email found. Please refresh the page and try again.');
+        alert('Error: No valid user email found.');
         return;
       }
-
-      const backendUrl = 'http://localhost:8080';
+      
       const userResponse = await fetch(`${backendUrl}/api/users/${encodeURIComponent(userEmail)}`);
       if (!userResponse.ok) {
-        alert('Error: Failed to fetch user data. Please refresh the page and try again.');
+        alert('Error: Failed to fetch user data.');
         return;
       }
-
+      
       const userData = await userResponse.json();
-      const userId = userData.user?._id || userData._id;
-      const ladderLocations = userData.user?.ladderLocations || '';
-
-      if (!ladderLocations || ladderLocations.trim() === '') {
-        alert('No ladder locations found to copy.');
+      const user = userData.user || userData;
+      
+      if (!user.locations) {
+        alert('No locations data found in League profile.');
         return;
       }
-
-      const confirmCopy = window.confirm(
-        'Copy your ladder locations to league? This will replace your current league locations.\n\n' +
-        'Ladder locations: ' + ladderLocations.split('\n').filter(Boolean).join(', ')
+      
+      const confirmed = window.confirm(
+        'This will replace your current ladder locations with your league locations. Continue?'
       );
-
-      if (confirmCopy) {
-        // Update league locations with ladder data
-        const response = await fetch(`${backendUrl}/api/users/${userId}/profile`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ locations: ladderLocations })
-        });
-
-        if (response.ok) {
-          const updatedUser = await response.json();
-          setLocalUser(updatedUser.user);
-          onUserUpdate(updatedUser.user);
-          alert('✅ Ladder locations copied to league successfully!');
-        } else {
-          alert('Failed to copy locations. Please try again.');
-        }
+      
+      if (confirmed) {
+        setEditData(prev => ({
+          ...prev,
+          ladderLocations: user.locations
+        }));
+        alert('✅ League locations copied to ladder profile!');
       }
     } catch (error) {
-      console.error('Error copying locations from ladder:', error);
-      alert('Error copying locations from ladder. Please try again.');
+      console.error('Error copying locations from league:', error);
+      alert('Error copying locations from league.');
     }
   };
 
   if (!isOpen || !localUser) return null;
-
-  const divisions = localUser.divisions || [];
 
   return (
     <div
@@ -380,30 +346,30 @@ const UserProfileModal = ({
       }}
       onClick={onClose}
     >
-             <div
-         style={{
-           transform: `translate(0px, 0px)`,
-           cursor: "default",
-           background: "linear-gradient(120deg, #232323 80%, #2a0909 100%)",
-           color: "#fff",
-           border: "2px solid #e53e3e",
-           borderRadius: isMobile ? "0" : "1rem",
-           boxShadow: "0 0 32px #e53e3e, 0 0 40px rgba(0,0,0,0.85)",
-                       width: isMobile ? "95vw" : "auto",
-            maxWidth: isMobile ? "95vw" : "750px",
-            minWidth: isMobile ? "auto" : "500px",
-           margin: isMobile ? "0" : "0 auto",
-           left: 0,
-           right: 0,
-           animation: "modalBounceIn 0.5s cubic-bezier(.21,1.02,.73,1.01)",
-           padding: 0,
-           position: "relative",
-           fontFamily: "inherit",
-           boxSizing: "border-box",
-           textAlign: "center",
-                       maxHeight: isMobile ? "70vh" : "75vh",
-            overflowY: "auto"
-         }}
+      <div
+        style={{
+          transform: `translate(0px, 0px)`,
+          cursor: "default",
+          background: "linear-gradient(120deg, #232323 80%, #2a0909 100%)",
+          color: "#fff",
+          border: "2px solid #e53e3e",
+          borderRadius: isMobile ? "0" : "1rem",
+          boxShadow: "0 0 32px #e53e3e, 0 0 40px rgba(0,0,0,0.85)",
+          width: isMobile ? "95vw" : "auto",
+          maxWidth: isMobile ? "95vw" : "750px",
+          minWidth: isMobile ? "auto" : "500px",
+          margin: isMobile ? "0" : "0 auto",
+          left: 0,
+          right: 0,
+          animation: "modalBounceIn 0.5s cubic-bezier(.21,1.02,.73,1.01)",
+          padding: 0,
+          position: "relative",
+          fontFamily: "inherit",
+          boxSizing: "border-box",
+          textAlign: "center",
+          maxHeight: isMobile ? "70vh" : "75vh",
+          overflowY: "auto"
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
@@ -448,7 +414,7 @@ const UserProfileModal = ({
               minWidth: 0
             }}
           >
-            👤 Profile Information
+            ⚔️ Ladder Challenge Profile
           </h2>
           <button 
             onClick={onClose}
@@ -476,45 +442,45 @@ const UserProfileModal = ({
           </button>
         </div>
 
-                                   {/* Modal Content */}
-                     <div style={{
-             padding: isMobile ? "0.8rem" : "1rem",
-             overflowY: "auto",
-             maxHeight: isMobile ? "calc(60vh - 80px)" : "calc(65vh - 80px)"
-           }}>
-                       <div style={{
-              display: 'grid',
-              gap: isMobile ? '8px' : '10px'
-            }}>
+        {/* Modal Content */}
+        <div style={{
+          padding: isMobile ? "0.8rem" : "1rem",
+          overflowY: "auto",
+          maxHeight: isMobile ? "calc(60vh - 80px)" : "calc(65vh - 80px)"
+        }}>
+          <div style={{
+            display: 'grid',
+            gap: isMobile ? '8px' : '10px'
+          }}>
             
-                         {/* Basic Info */}
-             <div style={{
-               background: 'rgba(255, 255, 255, 0.05)',
-               padding: isMobile ? '6px' : '8px',
-               borderRadius: '6px',
-               border: '1px solid rgba(255, 255, 255, 0.1)'
-             }}>
+            {/* Basic Info */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              padding: isMobile ? '6px' : '8px',
+              borderRadius: '6px',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 marginBottom: '4px'
               }}>
-                                 <div style={{
-                   fontWeight: 'bold',
-                   color: '#ffffff',
-                   fontSize: isMobile ? '0.9rem' : '1rem'
-                 }}>
-                   👤 Basic Information
-                 </div>
+                <div style={{
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  fontSize: isMobile ? '0.9rem' : '1rem'
+                }}>
+                  👤 Basic Information
+                </div>
                 {editingSection !== 'basic' && (
                   <button
-                                         onClick={() => startEditing('basic', {
-                       firstName: localUser.firstName || '',
-                       lastName: localUser.lastName || '',
-                       email: localUser.email || '',
-                       phone: localUser.phone || ''
-                     })}
+                    onClick={() => startEditing('basic', {
+                      firstName: localUser.firstName || '',
+                      lastName: localUser.lastName || '',
+                      email: localUser.email || '',
+                      phone: localUser.phone || ''
+                    })}
                     style={{
                       background: 'rgba(76, 175, 80, 0.2)',
                       border: '1px solid rgba(76, 175, 80, 0.4)',
@@ -625,39 +591,39 @@ const UserProfileModal = ({
                   </div>
                 </div>
               ) : (
-                                                                   <div style={{ color: '#cccccc', lineHeight: '1.4', fontSize: isMobile ? '0.85rem' : '0.9rem' }}>
-                   <div><strong>Name:</strong> {localUser.firstName} {localUser.lastName}</div>
-                   <div><strong>Email:</strong> {localUser.email}</div>
-                   <div><strong>Phone:</strong> {localUser.phone || 'Not provided'}</div>
-                 </div>
+                <div style={{ color: '#cccccc', lineHeight: '1.4', fontSize: isMobile ? '0.85rem' : '0.9rem' }}>
+                  <div><strong>Name:</strong> {localUser.firstName} {localUser.lastName}</div>
+                  <div><strong>Email:</strong> {localUser.email}</div>
+                  <div><strong>Phone:</strong> {localUser.phone || 'Not provided'}</div>
+                </div>
               )}
             </div>
 
-                         {/* Contact Methods */}
-             <div style={{
-               background: 'rgba(255, 255, 255, 0.05)',
-               padding: isMobile ? '6px' : '8px',
-               borderRadius: '6px',
-               border: '1px solid rgba(255, 255, 255, 0.1)'
-             }}>
-               <div style={{
-                 display: 'flex',
-                 justifyContent: 'space-between',
-                 alignItems: 'center',
-                 marginBottom: '4px'
-               }}>
-                 <div style={{
-                   fontWeight: 'bold',
-                   color: '#ffffff',
-                   fontSize: isMobile ? '0.9rem' : '1rem'
-                 }}>
-                   📞 Preferred Contact Methods
-                 </div>
+            {/* Contact Methods for Challenges */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              padding: isMobile ? '6px' : '8px',
+              borderRadius: '6px',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '4px'
+              }}>
+                <div style={{
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  fontSize: isMobile ? '0.9rem' : '1rem'
+                }}>
+                  📞 Challenge Contact Methods
+                </div>
                 {editingSection !== 'contacts' && (
                   <button
-                                         onClick={() => startEditing('contacts', {
-                       preferredContacts: localUser.preferredContacts || []
-                     })}
+                    onClick={() => startEditing('contacts', {
+                      preferredContacts: localUser.preferredContacts || []
+                    })}
                     style={{
                       background: 'rgba(76, 175, 80, 0.2)',
                       border: '1px solid rgba(76, 175, 80, 0.4)',
@@ -734,87 +700,87 @@ const UserProfileModal = ({
                   </div>
                 </div>
               ) : (
-                                 <div style={{ color: '#cccccc', lineHeight: '1.5', fontSize: isMobile ? '0.9rem' : '1rem' }}>
-                   {localUser.preferredContacts && localUser.preferredContacts.length > 0 
-                     ? localUser.preferredContacts.map(method => method.charAt(0).toUpperCase() + method.slice(1)).join(', ')
-                     : 'No preferred methods set'
-                   }
-                 </div>
+                <div style={{ color: '#cccccc', lineHeight: '1.5', fontSize: isMobile ? '0.9rem' : '1rem' }}>
+                  {localUser.preferredContacts && localUser.preferredContacts.length > 0 
+                    ? localUser.preferredContacts.map(method => method.charAt(0).toUpperCase() + method.slice(1)).join(', ')
+                    : 'No preferred methods set'
+                  }
+                </div>
               )}
             </div>
 
-                         {/* League Availability */}
-             <div style={{
-               background: 'rgba(255, 255, 255, 0.05)',
-               padding: isMobile ? '6px' : '8px',
-               borderRadius: '6px',
-               border: '1px solid rgba(255, 255, 255, 0.1)'
-             }}>
-               <div style={{
-                 display: 'flex',
-                 justifyContent: 'space-between',
-                 alignItems: 'center',
-                 marginBottom: '4px'
-               }}>
-                 <div style={{
-                   fontWeight: 'bold',
-                   color: '#ffffff',
-                   fontSize: isMobile ? '0.9rem' : '1rem'
-                 }}>
-                   ⏰ League Availability
-                 </div>
-                {editingSection !== 'availability' && (
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      onClick={copyFromLadder}
-                      style={{
-                        background: 'rgba(33, 150, 243, 0.2)',
-                        border: '1px solid rgba(33, 150, 243, 0.4)',
-                        color: '#2196F3',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: isMobile ? '0.7rem' : '0.8rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => e.target.style.background = 'rgba(33, 150, 243, 0.3)'}
-                      onMouseLeave={(e) => e.target.style.background = 'rgba(33, 150, 243, 0.2)'}
-                    >
-                      📋 Copy from Ladder
-                    </button>
-                    <button
-                      onClick={() => startEditing('availability', {
-                        availability: localUser.availability || {}
-                      })}
-                      style={{
-                        background: 'rgba(76, 175, 80, 0.2)',
-                        border: '1px solid rgba(76, 175, 80, 0.4)',
-                        color: '#4CAF50',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: isMobile ? '0.7rem' : '0.8rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.3)'}
-                      onMouseLeave={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.2)'}
-                    >
-                      ✏️ Edit
-                    </button>
-                  </div>
-                )}
+            {/* Challenge Availability */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              padding: isMobile ? '6px' : '8px',
+              borderRadius: '6px',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '4px'
+              }}>
+                <div style={{
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  fontSize: isMobile ? '0.9rem' : '1rem'
+                }}>
+                  ⏰ Challenge Availability
+                </div>
+                                 {editingSection !== 'availability' && (
+                   <div style={{ display: 'flex', gap: '4px' }}>
+                     <button
+                       onClick={() => startEditing('availability', {
+                         ladderAvailability: localUser.ladderAvailability || {}
+                       })}
+                       style={{
+                         background: 'rgba(76, 175, 80, 0.2)',
+                         border: '1px solid rgba(76, 175, 80, 0.4)',
+                         color: '#4CAF50',
+                         padding: '4px 8px',
+                         borderRadius: '4px',
+                         fontSize: isMobile ? '0.7rem' : '0.8rem',
+                         cursor: 'pointer',
+                         transition: 'all 0.2s ease'
+                       }}
+                       onMouseEnter={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.3)'}
+                       onMouseLeave={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.2)'}
+                     >
+                       ✏️ Edit
+                     </button>
+                     <button
+                       onClick={copyFromLeague}
+                       style={{
+                         background: 'rgba(255, 193, 7, 0.2)',
+                         border: '1px solid rgba(255, 193, 7, 0.4)',
+                         color: '#ffc107',
+                         padding: '4px 8px',
+                         borderRadius: '4px',
+                         fontSize: isMobile ? '0.7rem' : '0.8rem',
+                         cursor: 'pointer',
+                         transition: 'all 0.2s ease'
+                       }}
+                       onMouseEnter={(e) => e.target.style.background = 'rgba(255, 193, 7, 0.3)'}
+                       onMouseLeave={(e) => e.target.style.background = 'rgba(255, 193, 7, 0.2)'}
+                     >
+                       📋 Copy from League
+                     </button>
+                   </div>
+                 )}
               </div>
               
                              {editingSection === 'availability' ? (
                  <div style={{ display: 'grid', gap: '6px' }}>
-                                       <div style={{ 
-                      color: '#ffc107', 
-                      fontSize: '0.85rem', 
-                      fontWeight: 'bold',
-                      marginBottom: '4px'
-                    }}>
-                      Quick Time Slot Editor:
-                    </div>
+                   <div style={{ 
+                     color: '#ffc107', 
+                     fontSize: '0.85rem', 
+                     fontWeight: 'bold',
+                     marginBottom: '4px'
+                   }}>
+                     Quick Time Slot Editor:
+                   </div>
                    
                    {/* Quick Add Section */}
                    <div style={{
@@ -823,26 +789,26 @@ const UserProfileModal = ({
                      borderRadius: '3px',
                      border: '1px solid rgba(255, 255, 255, 0.08)'
                    }}>
-                                           <div style={{ 
-                        color: '#4CAF50', 
-                        fontSize: '0.8rem', 
-                        fontWeight: 'bold',
-                        marginBottom: '3px'
-                      }}>
-                        ➕ Quick Add:
-                      </div>
+                     <div style={{ 
+                       color: '#4CAF50', 
+                       fontSize: '0.8rem', 
+                       fontWeight: 'bold',
+                       marginBottom: '3px'
+                     }}>
+                       ➕ Quick Add:
+                     </div>
                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '3px', alignItems: 'end' }}>
-                                               <select
-                          id="quick-day"
-                          style={{
-                            padding: '3px 4px',
-                            borderRadius: '3px',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            background: 'rgba(0, 0, 0, 0.4)',
-                            color: '#ffffff',
-                            fontSize: '0.8rem',
-                            minHeight: '24px'
-                          }}
+                       <select
+                         id="quick-day"
+                         style={{
+                           padding: '3px 4px',
+                           borderRadius: '3px',
+                           border: '1px solid rgba(255, 255, 255, 0.15)',
+                           background: 'rgba(0, 0, 0, 0.4)',
+                           color: '#ffffff',
+                           fontSize: '0.8rem',
+                           minHeight: '24px'
+                         }}
                        >
                          <option value="">Day</option>
                          <option value="Mon">Mon</option>
@@ -853,31 +819,31 @@ const UserProfileModal = ({
                          <option value="Sat">Sat</option>
                          <option value="Sun">Sun</option>
                        </select>
-                                               <input
-                          type="time"
-                          id="quick-start"
-                          style={{
-                            padding: '3px 4px',
-                            borderRadius: '3px',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            background: 'rgba(0, 0, 0, 0.4)',
-                            color: '#ffffff',
-                            fontSize: '0.8rem',
-                            minHeight: '24px'
-                          }}
+                       <input
+                         type="time"
+                         id="quick-start"
+                         style={{
+                           padding: '3px 4px',
+                           borderRadius: '3px',
+                           border: '1px solid rgba(255, 255, 255, 0.15)',
+                           background: 'rgba(0, 0, 0, 0.4)',
+                           color: '#ffffff',
+                           fontSize: '0.8rem',
+                           minHeight: '24px'
+                         }}
                        />
-                                               <input
-                          type="time"
-                          id="quick-end"
-                          style={{
-                            padding: '3px 4px',
-                            borderRadius: '3px',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            background: 'rgba(0, 0, 0, 0.4)',
-                            color: '#ffffff',
-                            fontSize: '0.8rem',
-                            minHeight: '24px'
-                          }}
+                       <input
+                         type="time"
+                         id="quick-end"
+                         style={{
+                           padding: '3px 4px',
+                           borderRadius: '3px',
+                           border: '1px solid rgba(255, 255, 255, 0.15)',
+                           background: 'rgba(0, 0, 0, 0.4)',
+                           color: '#ffffff',
+                           fontSize: '0.8rem',
+                           minHeight: '24px'
+                         }}
                        />
                        <button
                          type="button"
@@ -908,7 +874,7 @@ const UserProfileModal = ({
                            };
                            
                            const newSlot = `${formatTime(startTime)} - ${formatTime(endTime)}`;
-                           const currentSlots = editData.availability?.[day] || localUser.availability?.[day] || [];
+                           const currentSlots = editData.ladderAvailability?.[day] || localUser.ladderAvailability?.[day] || [];
                            
                            if (currentSlots.includes(newSlot)) {
                              alert('This time slot already exists.');
@@ -919,8 +885,8 @@ const UserProfileModal = ({
                            
                            setEditData(prev => ({
                              ...prev,
-                             availability: {
-                               ...prev.availability,
+                             ladderAvailability: {
+                               ...prev.ladderAvailability,
                                [day]: newSlots
                              }
                            }));
@@ -930,17 +896,17 @@ const UserProfileModal = ({
                            startInput.value = '';
                            endInput.value = '';
                          }}
-                                                   style={{
-                            background: 'rgba(76, 175, 80, 0.3)',
-                            border: '1px solid rgba(76, 175, 80, 0.5)',
-                            color: '#4CAF50',
-                            padding: '3px 6px',
-                            borderRadius: '3px',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            minHeight: '24px'
-                          }}
+                         style={{
+                           background: 'rgba(76, 175, 80, 0.3)',
+                           border: '1px solid rgba(76, 175, 80, 0.5)',
+                           color: '#4CAF50',
+                           padding: '3px 6px',
+                           borderRadius: '3px',
+                           fontSize: '0.75rem',
+                           cursor: 'pointer',
+                           fontWeight: 'bold',
+                           minHeight: '24px'
+                         }}
                        >
                          Add
                        </button>
@@ -950,31 +916,37 @@ const UserProfileModal = ({
                    {/* Current Slots Display */}
                    <div style={{
                      padding: '4px',
-                     background: 'rgba(255, 255, 255, 0.02)',
+                     background: 'rgba(255, 255, 255, 0.03)',
                      borderRadius: '3px',
-                     border: '1px solid rgba(255, 255, 255, 0.05)'
+                     border: '1px solid rgba(255, 255, 255, 0.08)'
                    }}>
-                                           <div style={{ 
-                        color: '#4CAF50', 
-                        fontSize: '0.8rem', 
-                        fontWeight: 'bold',
-                        marginBottom: '3px'
-                      }}>
-                        📅 Current Slots:
-                      </div>
-                     <div style={{ display: 'grid', gap: '2px', maxHeight: '120px', overflowY: 'auto' }}>
-                       {Object.entries(editData.availability || localUser.availability || {}).map(([day, slots]) => 
-                         slots && slots.length > 0 ? slots.map((slot, index) => (
+                     <div style={{ 
+                       color: '#4CAF50', 
+                       fontSize: '0.8rem', 
+                       fontWeight: 'bold',
+                       marginBottom: '3px'
+                     }}>
+                       📅 Current Slots:
+                     </div>
+                     <div style={{ 
+                       maxHeight: '120px', 
+                       overflowY: 'auto',
+                       display: 'grid',
+                       gap: '3px'
+                     }}>
+                       {Object.entries(editData.ladderAvailability || localUser.ladderAvailability || {}).map(([day, slots]) => 
+                         slots.map((slot, index) => (
                            <div key={`${day}-${index}`} style={{
                              display: 'flex',
                              alignItems: 'center',
                              justifyContent: 'space-between',
-                             padding: '2px 4px',
-                             background: 'rgba(76, 175, 80, 0.08)',
-                             borderRadius: '2px',
-                             border: '1px solid rgba(76, 175, 80, 0.2)'
+                             padding: '3px 5px',
+                             background: 'rgba(76, 175, 80, 0.1)',
+                             borderRadius: '3px',
+                             border: '1px solid rgba(76, 175, 80, 0.2)',
+                             fontSize: '0.75rem'
                            }}>
-                                                           <span style={{ color: '#4CAF50', fontSize: '0.75rem', fontWeight: '500' }}>
+                             <span style={{ color: '#4CAF50', fontSize: '0.75rem', fontWeight: '500' }}>
                                <strong>{day}:</strong> {slot}
                              </span>
                              <button
@@ -983,41 +955,41 @@ const UserProfileModal = ({
                                  const newSlots = slots.filter((_, i) => i !== index);
                                  setEditData(prev => ({
                                    ...prev,
-                                   availability: {
-                                     ...prev.availability,
+                                   ladderAvailability: {
+                                     ...prev.ladderAvailability,
                                      [day]: newSlots
                                    }
                                  }));
                                }}
-                                                               style={{
-                                  background: 'rgba(220, 53, 69, 0.2)',
-                                  border: '1px solid rgba(220, 53, 69, 0.3)',
-                                  color: '#dc3545',
-                                  padding: '2px 4px',
-                                  borderRadius: '2px',
-                                  fontSize: '0.7rem',
-                                  cursor: 'pointer',
-                                  fontWeight: 'bold'
-                                }}
+                               style={{
+                                 background: 'rgba(220, 53, 69, 0.2)',
+                                 border: '1px solid rgba(220, 53, 69, 0.3)',
+                                 color: '#dc3545',
+                                 padding: '2px 4px',
+                                 borderRadius: '2px',
+                                 fontSize: '0.65rem',
+                                 cursor: 'pointer',
+                                 fontWeight: 'bold'
+                               }}
                              >
                                ✕
                              </button>
                            </div>
-                         )) : null
-                       ).flat().filter(Boolean)}
+                         ))
+                       )}
                      </div>
                    </div>
                    
                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
                      <button
-                       onClick={() => saveSection('availability')}
+                       onClick={() => saveSection('ladderAvailability')}
                        style={{
                          background: '#4CAF50',
                          color: '#fff',
                          border: 'none',
                          padding: '4px 8px',
                          borderRadius: '3px',
-                         fontSize: '0.7rem',
+                         fontSize: '0.75rem',
                          cursor: 'pointer'
                        }}
                      >
@@ -1031,7 +1003,7 @@ const UserProfileModal = ({
                          border: 'none',
                          padding: '4px 8px',
                          borderRadius: '3px',
-                         fontSize: '0.7rem',
+                         fontSize: '0.75rem',
                          cursor: 'pointer'
                        }}
                      >
@@ -1039,112 +1011,112 @@ const UserProfileModal = ({
                      </button>
                    </div>
                  </div>
-                                                           ) : (
-                                                                                                                   <div style={{ color: '#cccccc', lineHeight: '1.4', fontSize: isMobile ? '0.85rem' : '0.9rem' }}>
-                      {localUser.availability && Object.keys(localUser.availability).length > 0 
-                        ? (() => {
-                           const availableDays = Object.entries(localUser.availability)
-                             .filter(([day, slots]) => slots && slots.length > 0);
-                           
-                           if (availableDays.length === 0) return 'No availability set';
-                           
-                           // Group days into a more compact format
-                           const dayNames = {
-                             'Mon': 'Mon',
-                             'Tue': 'Tue', 
-                             'Wed': 'Wed',
-                             'Thu': 'Thu',
-                             'Fri': 'Fri',
-                             'Sat': 'Sat',
-                             'Sun': 'Sun'
-                           };
-                           
-                           return (
-                             <div style={{
-                               display: 'grid',
-                               gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-                               gap: '6px'
-                             }}>
-                               {availableDays.map(([day, slots]) => (
-                                                                                                      <div key={day} style={{ 
-                                     padding: '4px 6px',
-                                     background: 'rgba(255, 255, 255, 0.05)',
-                                     borderRadius: '4px',
-                                     border: '1px solid rgba(255, 255, 255, 0.1)',
-                                     fontSize: '0.85rem'
-                                   }}>
-                                    <span style={{ fontWeight: 'bold', color: '#ffc107' }}>{dayNames[day]}:</span> {slots.join(', ')}
-                                  </div>
-                               ))}
+                             ) : (
+                 <div style={{ color: '#cccccc', lineHeight: '1.4', fontSize: isMobile ? '0.85rem' : '0.9rem' }}>
+                   {localUser.ladderAvailability && Object.keys(localUser.ladderAvailability).length > 0 
+                     ? (() => {
+                        const availableDays = Object.entries(localUser.ladderAvailability)
+                          .filter(([day, slots]) => slots && slots.length > 0);
+                        
+                        if (availableDays.length === 0) return 'No availability set';
+                        
+                        // Group days into a more compact format
+                        const dayNames = {
+                          'Mon': 'Mon',
+                          'Tue': 'Tue', 
+                          'Wed': 'Wed',
+                          'Thu': 'Thu',
+                          'Fri': 'Fri',
+                          'Sat': 'Sat',
+                          'Sun': 'Sun'
+                        };
+                        
+                        return (
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                            gap: '6px'
+                          }}>
+                            {availableDays.map(([day, slots]) => (
+                              <div key={day} style={{ 
+                                padding: '4px 6px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                borderRadius: '4px',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                fontSize: '0.85rem'
+                              }}>
+                               <span style={{ fontWeight: 'bold', color: '#ffc107' }}>{dayNames[day]}:</span> {slots.join(', ')}
                              </div>
-                           );
-                         })()
-                       : 'No availability set'
-                     }
-                   </div>
-               )}
+                            ))}
+                          </div>
+                        );
+                      })()
+                    : 'No availability set'
+                  }
+                </div>
+              )}
             </div>
 
-                         {/* Locations */}
-             <div style={{
-               background: 'rgba(255, 255, 255, 0.05)',
-               padding: isMobile ? '6px' : '8px',
-               borderRadius: '6px',
-               border: '1px solid rgba(255, 255, 255, 0.1)'
-             }}>
-               <div style={{
-                 display: 'flex',
-                 justifyContent: 'space-between',
-                 alignItems: 'center',
-                 marginBottom: '4px'
-               }}>
-                 <div style={{
-                   fontWeight: 'bold',
-                   color: '#ffffff',
-                   fontSize: isMobile ? '0.9rem' : '1rem'
-                 }}>
-                   📍 Preferred Locations
-                 </div>
-                {editingSection !== 'locations' && (
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      onClick={copyLocationsFromLadder}
-                      style={{
-                        background: 'rgba(33, 150, 243, 0.2)',
-                        border: '1px solid rgba(33, 150, 243, 0.4)',
-                        color: '#2196F3',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: isMobile ? '0.7rem' : '0.8rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => e.target.style.background = 'rgba(33, 150, 243, 0.3)'}
-                      onMouseLeave={(e) => e.target.style.background = 'rgba(33, 150, 243, 0.2)'}
-                    >
-                      📋 Copy from Ladder
-                    </button>
-                    <button
-                      onClick={() => startEditing('locations', {
-                        locations: localUser.locations || ''
-                      })}
-                      style={{
-                        background: 'rgba(76, 175, 80, 0.2)',
-                        border: '1px solid rgba(76, 175, 80, 0.4)',
-                        color: '#4CAF50',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: isMobile ? '0.7rem' : '0.8rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.3)'}
-                      onMouseLeave={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.2)'}
-                    >
-                      ✏️ Edit
-                    </button>
-                  </div>
-                )}
+            {/* Challenge Locations */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              padding: isMobile ? '6px' : '8px',
+              borderRadius: '6px',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '4px'
+              }}>
+                <div style={{
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  fontSize: isMobile ? '0.9rem' : '1rem'
+                }}>
+                  📍 Challenge Locations
+                </div>
+                                 {editingSection !== 'locations' && (
+                   <div style={{ display: 'flex', gap: '4px' }}>
+                     <button
+                       onClick={() => startEditing('locations', {
+                         ladderLocations: localUser.ladderLocations || ''
+                       })}
+                       style={{
+                         background: 'rgba(76, 175, 80, 0.2)',
+                         border: '1px solid rgba(76, 175, 80, 0.4)',
+                         color: '#4CAF50',
+                         padding: '4px 8px',
+                         borderRadius: '4px',
+                         fontSize: isMobile ? '0.7rem' : '0.8rem',
+                         cursor: 'pointer',
+                         transition: 'all 0.2s ease'
+                       }}
+                       onMouseEnter={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.3)'}
+                       onMouseLeave={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.2)'}
+                     >
+                       ✏️ Edit
+                     </button>
+                     <button
+                       onClick={copyLocationsFromLeague}
+                       style={{
+                         background: 'rgba(255, 193, 7, 0.2)',
+                         border: '1px solid rgba(255, 193, 7, 0.4)',
+                         color: '#ffc107',
+                         padding: '4px 8px',
+                         borderRadius: '4px',
+                         fontSize: isMobile ? '0.7rem' : '0.8rem',
+                         cursor: 'pointer',
+                         transition: 'all 0.2s ease'
+                       }}
+                       onMouseEnter={(e) => e.target.style.background = 'rgba(255, 193, 7, 0.3)'}
+                       onMouseLeave={(e) => e.target.style.background = 'rgba(255, 193, 7, 0.2)'}
+                     >
+                       📋 Copy from League
+                     </button>
+                   </div>
+                 )}
               </div>
               
               {editingSection === 'locations' ? (
@@ -1210,21 +1182,21 @@ const UserProfileModal = ({
                             background: 'rgba(255, 193, 7, 0.1)',
                             border: '1px solid rgba(255, 193, 7, 0.3)'
                           }}>
-                                                     <button
-                           type="button"
-                           onClick={() => handleAddNewLocation(location)}
-                           style={{ 
-                             cursor: 'pointer', 
-                             background: 'none',
-                             border: 'none',
-                             color: '#ffc107',
-                             fontSize: '0.75rem',
-                             padding: '0',
-                             margin: '0'
-                           }}
-                         >
-                           ➕ Add
-                         </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAddNewLocation(location)}
+                              style={{ 
+                                cursor: 'pointer', 
+                                background: 'none',
+                                border: 'none',
+                                color: '#ffc107',
+                                fontSize: '0.75rem',
+                                padding: '0',
+                                margin: '0'
+                              }}
+                            >
+                              ➕ Add
+                            </button>
                             <span style={{ color: '#ffc107', fontSize: '0.75rem' }}>
                               {location}
                             </span>
@@ -1248,7 +1220,7 @@ const UserProfileModal = ({
                   
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                     <button
-                      onClick={() => saveSection('locations')}
+                      onClick={() => saveSection('ladderLocations')}
                       style={{
                         background: '#4CAF50',
                         color: '#fff',
@@ -1283,15 +1255,15 @@ const UserProfileModal = ({
                   gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
                   gap: '6px'
                 }}>
-                                     {localUser.locations && localUser.locations.split('\n').filter(Boolean).map((location, index) => (
+                  {localUser.ladderLocations && localUser.ladderLocations.split('\n').filter(Boolean).map((location, index) => (
                     <span 
                       key={index} 
-                                             style={{
-                         background: 'rgba(255, 255, 255, 0.1)',
-                         color: '#ffffff',
-                         padding: '5px 8px',
-                         borderRadius: '8px',
-                         fontSize: isMobile ? '0.75rem' : '0.8rem',
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        color: '#ffffff',
+                        padding: '5px 8px',
+                        borderRadius: '8px',
+                        fontSize: isMobile ? '0.75rem' : '0.8rem',
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',
@@ -1310,26 +1282,6 @@ const UserProfileModal = ({
                   ))}
                 </div>
               )}
-            </div>
-
-                         {/* Divisions */}
-             <div style={{
-               background: 'rgba(255, 255, 255, 0.05)',
-               padding: isMobile ? '6px' : '8px',
-               borderRadius: '6px',
-               border: '1px solid rgba(255, 255, 255, 0.1)'
-             }}>
-                                <div style={{
-                   fontWeight: 'bold',
-                   color: '#ffffff',
-                   marginBottom: '4px',
-                   fontSize: isMobile ? '0.9rem' : '1rem'
-                 }}>
-                   🏆 Divisions
-                 </div>
-                             <div style={{ color: '#cccccc', lineHeight: '1.5', fontSize: isMobile ? '0.9rem' : '1rem' }}>
-                {divisions.length > 0 ? divisions.join(', ') : 'No divisions assigned'}
-              </div>
             </div>
 
           </div>
@@ -1374,4 +1326,4 @@ const UserProfileModal = ({
   );
 };
 
-export default UserProfileModal;
+export default LadderProfileModal;

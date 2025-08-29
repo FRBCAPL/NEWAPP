@@ -67,6 +67,7 @@ import DivisionSelector from './components/DivisionSelector';
 import UpcomingMatchesSection from './components/UpcomingMatchesSection';
 import NewsUpdatesSection from './components/NewsUpdatesSection';
 import AdminButtonsSection from './components/AdminButtonsSection';
+import PendingClaimsManager from '../admin/PendingClaimsManager';
 import ModalContainer from './components/ModalContainer';
 import SecondaryModalContainer from './components/SecondaryModalContainer';
 import FinalModalContainer from './components/FinalModalContainer';
@@ -188,7 +189,6 @@ export default function Dashboard({
   onOpenChat,
   userPin,
   onGoToAdmin,
-  onLogout,
   onScheduleMatch,
   senderEmail,
   onGoToPlatformAdmin,
@@ -349,6 +349,7 @@ export default function Dashboard({
   // Registration modal state
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const [showPendingRegistrationsModal, setShowPendingRegistrationsModal] = useState(false);
+  const [showPendingClaimsModal, setShowPendingClaimsModal] = useState(false);
   const [pendingRegistrations, setPendingRegistrations] = useState([]);
   const [loadingPendingRegistrations, setLoadingPendingRegistrations] = useState(false);
 
@@ -1714,13 +1715,7 @@ export default function Dashboard({
           styles={styles}
         />
 
-        <button
-          className={styles.dashboardLogoutBtn}
-          onClick={onLogout}
-          type="button"
-        >
-          Logout
-        </button>
+
 
         {/* Admin Buttons Section Component */}
         <AdminButtonsSection
@@ -1788,6 +1783,7 @@ export default function Dashboard({
             }
           }}
           onShowNoteModal={() => setShowNoteModal(true)}
+          onShowPendingClaimsModal={() => setShowPendingClaimsModal(true)}
           onGoToAdmin={onGoToAdmin}
           onGoToPlatformAdmin={onGoToPlatformAdmin}
           isSuperAdmin={isSuperAdmin}
@@ -2201,6 +2197,11 @@ export default function Dashboard({
 
     {/* All Matches Modal */}
     {allMatchesModal}
+
+    {/* Pending Claims Modal */}
+    {showPendingClaimsModal && (
+      <PendingClaimsManager onClose={() => setShowPendingClaimsModal(false)} />
+    )}
    </div>
  );
 }

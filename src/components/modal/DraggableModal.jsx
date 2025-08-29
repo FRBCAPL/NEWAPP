@@ -91,6 +91,7 @@ export default function DraggableModal({
           maxWidth: window.innerWidth <= 400 ? "100vw" : maxWidth,
           minWidth: 0,
           margin: window.innerWidth <= 400 ? "0" : "0 auto",
+          marginTop: "80px",
           left: 0,
           right: 0,
           animation: "modalBounceIn 0.5s cubic-bezier(.21,1.02,.73,1.01)",
@@ -98,8 +99,8 @@ export default function DraggableModal({
           position: "relative",
           fontFamily: "inherit",
           boxSizing: "border-box",
-          height: window.innerWidth <= 500 ? "95vh" : "auto",
-          maxHeight: window.innerWidth <= 500 ? "95vh" : "85vh",
+          height: window.innerWidth <= 500 ? "75vh" : "auto",
+          maxHeight: window.innerWidth <= 500 ? "75vh" : "65vh",
           display: "flex",
           flexDirection: "column"
         }}

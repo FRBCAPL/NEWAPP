@@ -1,19 +1,29 @@
-import React, { useRef, useLayoutEffect, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 
 export default function ResponsiveWrapper({ aspectWidth, aspectHeight, children }) {
   const ref = useRef(null);
   const [scale, setScale] = useState(1);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     function updateScale() {
       if (!ref.current) return;
       const { width, height } = ref.current.getBoundingClientRect();
-      setScale(Math.min(width / aspectWidth, height / aspectHeight));
+      const newScale = Math.min(width / aspectWidth, height / aspectHeight);
+      setScale(newScale);
     }
+    
     updateScale();
-    const ro = new window.ResizeObserver(updateScale);
-    ro.observe(ref.current);
-    return () => ro.disconnect();
+    
+    // Use a simple resize listener instead of ResizeObserver for better compatibility
+    const handleResize = () => {
+      updateScale();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
   }, [aspectWidth, aspectHeight]);
 
   return (

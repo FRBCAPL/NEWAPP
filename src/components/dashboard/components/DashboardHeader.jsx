@@ -46,7 +46,7 @@ const DashboardHeader = ({
             e.target.style.textShadow = '';
           }}
         >
-          Welcome,
+          Hello,
           <span className={styles.dashboardUserName} style={{ fontSize: isMobile ? '1.4rem' : '1.8rem' }}>
             {playerName} {playerLastName}
           </span>

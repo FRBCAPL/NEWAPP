@@ -25,7 +25,8 @@ const AdminButtonsSection = ({
   isSuperAdmin,
   onActivatePhase2,
   onSetPhaseOverride,
-  onRefreshSeasonData
+  onRefreshSeasonData,
+  onShowPendingClaimsModal
 }) => {
   // Check if user is authenticated as admin
   const currentAdmin = adminAuthService.getCurrentAdmin();
@@ -88,6 +89,15 @@ const AdminButtonsSection = ({
         type="button"
       >
         Add Note
+      </button>
+      
+      <button
+        className={styles.dashboardAdminBtn}
+        onClick={onShowPendingClaimsModal}
+        type="button"
+        style={{ background: '#2196F3' }}
+      >
+        🔑 Pending Claims
       </button>
       
       <button
@@ -187,7 +197,8 @@ AdminButtonsSection.propTypes = {
   isSuperAdmin: PropTypes.func.isRequired,
   onActivatePhase2: PropTypes.func.isRequired,
   onSetPhaseOverride: PropTypes.func.isRequired,
-  onRefreshSeasonData: PropTypes.func.isRequired
+  onRefreshSeasonData: PropTypes.func.isRequired,
+  onShowPendingClaimsModal: PropTypes.func.isRequired
 };
 
 export default AdminButtonsSection;
