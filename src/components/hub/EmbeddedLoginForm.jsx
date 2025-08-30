@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { BACKEND_URL } from '../../config.js';
 import ResponsiveWrapper from "../ResponsiveWrapper";
 import PoolSimulation from "../PoolSimulation";
+import unifiedAuthService from '../../services/unifiedAuthService.js';
 import './EmbeddedLoginForm.css';
 
 export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
@@ -24,34 +25,17 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
     setError(null);
     
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          identifier: trimmedInput
-        })
-      });
-
-      const data = await response.json();
+      // Use the new unified authentication service
+      const result = await unifiedAuthService.login(trimmedInput);
       setLoading(false);
 
-      if (response.ok && data.success) {
+      if (result.success) {
         setMessage("");
-        // Pass userType along with user data
-        onSuccess(`${data.user.firstName} ${data.user.lastName}`.trim(), data.user.email, data.user.pin, data.userType);
+        // Pass complete user data including ladderProfile
+        onSuccess(`${result.user.firstName} ${result.user.lastName}`.trim(), result.user.email, result.user.pin, result.userType, result.user);
       } else {
         // Handle different error cases
-        if (response.status === 401) {
-          setMessage(data.message || "Invalid email or PIN. Please try again.");
-        } else if (response.status === 400) {
-          setMessage(data.message || "Please enter a valid email or PIN.");
-        } else if (response.status >= 500) {
-          setMessage("Server error. Please try again in a moment.");
-        } else {
-          setMessage(data.message || "Login failed. Please try again or contact frbcapl@gmail.com for help.");
-        }
+        setMessage(result.message || "Login failed. Please try again or contact frbcapl@gmail.com for help.");
       }
     } catch (error) {
       setLoading(false);

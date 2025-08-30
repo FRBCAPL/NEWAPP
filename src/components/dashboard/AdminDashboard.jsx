@@ -10,6 +10,7 @@ import LocationManagement from "./LocationManagement.jsx";
 import PaymentConfiguration from "./PaymentConfiguration.jsx";
 import PaymentTracker from "./PaymentTracker.jsx";
 import LeagueManagement from "./LeagueManagement.jsx";
+import unifiedAdminService from '../../services/unifiedAdminService.js';
 import { 
   FaSyncAlt, 
   FaCheckCircle, 
@@ -29,7 +30,13 @@ import {
   FaSearch,
   FaGoogle,
   FaMapMarkerAlt,
-  FaEdit
+  FaEdit,
+  FaUserCog,
+  FaLink,
+  FaUnlink,
+  FaEye,
+  FaBan,
+  FaCheck
 } from 'react-icons/fa';
 import { BACKEND_URL } from '../../config.js';
 
@@ -1082,7 +1089,7 @@ function AdminUserSearch({ backendUrl }) {
         alert(`Failed to update player: ${errorData.message || errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
-      alert(`Failed to update player: ${error.message}`);
+      alert(`Failed to update unified player: ${error.message}`);
     }
   };
 
@@ -1374,6 +1381,436 @@ function SystemStatusSection({ backendUrl }) {
   );
 }
 
+// --- Unified Users Workflow ---
+function UnifiedUsersWorkflow({ backendUrl }) {
+  const [activeTab, setActiveTab] = useState('view'); // 'view', 'add', 'edit'
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [editingUser, setEditingUser] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [backendUrl]);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const users = await unifiedAdminService.getAllUsers();
+      setUsers(users);
+    } catch (err) {
+      setError('Failed to fetch users: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    setLoading(true);
+    try {
+      const users = await unifiedAdminService.searchUsers(searchQuery);
+      setUsers(users);
+    } catch (err) {
+      setError('Search failed: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddUser = async (userData) => {
+    setLoading(true);
+    try {
+      const newUser = await unifiedAdminService.addUser(userData);
+      setUsers(prev => [...prev, newUser]);
+      alert('User added successfully!');
+      setActiveTab('view'); // Return to view after adding
+    } catch (err) {
+      setError('Failed to add user: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = async (updatedUser) => {
+    setLoading(true);
+    try {
+      const updatedUserData = await unifiedAdminService.updateUser(updatedUser._id, updatedUser);
+      setUsers(prev => prev.map(u => u._id === updatedUser._id ? updatedUserData : u));
+      alert('User updated successfully!');
+      setShowEditModal(false);
+      setEditingUser(null);
+    } catch (err) {
+      setError('Failed to update user: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) {
+      return;
+    }
+    setLoading(true);
+    try {
+      await unifiedAdminService.deleteUser(userId);
+      setUsers(prev => prev.filter(u => u._id !== userId));
+      alert('User deleted successfully!');
+    } catch (err) {
+      setError('Failed to delete user: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddDivision = async (userId, division) => {
+    setLoading(true);
+    try {
+      await unifiedAdminService.addUserDivision(userId, division);
+      setUsers(prev => prev.map(u => u._id === userId ? { ...u, divisions: [...u.divisions, division] } : u));
+      alert('Division added to user successfully!');
+    } catch (err) {
+      setError('Failed to add division to user: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveDivision = async (userId, division) => {
+    setLoading(true);
+    try {
+      await unifiedAdminService.removeUserDivision(userId, division);
+      setUsers(prev => prev.map(u => u._id === userId ? { ...u, divisions: u.divisions.filter(d => d !== division) } : u));
+      alert('Division removed from user successfully!');
+    } catch (err) {
+      setError('Failed to remove division from user: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className={styles.unifiedUsersContainer}>
+      <div className={styles.tabHeader}>
+        <button 
+          className={`${styles.tabButton} ${activeTab === 'view' ? styles.active : ''}`}
+          onClick={() => setActiveTab('view')}
+        >
+          <FaUsers /> View All Users ({users.length})
+        </button>
+        <button 
+          className={`${styles.tabButton} ${activeTab === 'add' ? styles.active : ''}`}
+          onClick={() => setActiveTab('add')}
+        >
+          <FaUserPlus /> Add New User
+        </button>
+        <button 
+          className={`${styles.tabButton} ${activeTab === 'edit' ? styles.active : ''}`}
+          onClick={() => setActiveTab('edit')}
+        >
+          <FaUserCog /> Edit User
+        </button>
+      </div>
+      
+      <div className={styles.tabContent}>
+        {activeTab === 'view' && (
+          <div className={styles.viewUsersSection}>
+            <form onSubmit={handleSearch} className={styles.searchForm}>
+              <input
+                type="text"
+                placeholder="Search users by name, email, or ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={styles.searchInput}
+              />
+              <button type="submit" className={styles.searchButton}>
+                <FaSearch /> Search
+              </button>
+            </form>
+            {loading ? (
+              <div className={styles.loadingMessage}>Loading users...</div>
+            ) : error ? (
+              <div className={styles.errorMessage}>{error}</div>
+            ) : users.length === 0 ? (
+              <div className={styles.emptyState}>
+                <FaUsers /> No users found. Add one to get started!
+              </div>
+            ) : (
+              <div className={styles.userList}>
+                {users.map((user) => (
+                  <div key={user._id} className={styles.userCard}>
+                    <div className={styles.userHeader}>
+                      <h4 className={styles.userName}>
+                        {user.firstName && user.lastName 
+                          ? `${user.firstName} ${user.lastName}` 
+                          : user.name || user.email || 'Unknown User'
+                        }
+                      </h4>
+                      <div className={styles.systemBadges}>
+                        {user.system === 'league' && (
+                          <span className={styles.leagueBadge}>🏆 League</span>
+                        )}
+                        {user.system === 'ladder' && (
+                          <span className={styles.ladderBadge}>🏁 Ladder</span>
+                        )}
+                        {user.system === 'both' && (
+                          <div className={styles.bothBadges}>
+                            <span className={styles.leagueBadge}>🏆 League</span>
+                            <span className={styles.ladderBadge}>🏁 Ladder</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className={styles.userContactInfo}>
+                      <p className={styles.userEmail}><strong>Email:</strong> {user.email}</p>
+                      <p className={styles.userPhone}><strong>Phone:</strong> {user.phone || 'Not provided'}</p>
+                      {user.textNumber && (
+                        <p className={styles.userTextNumber}><strong>Text:</strong> {user.textNumber}</p>
+                      )}
+                    </div>
+                    <div className={styles.userDetails}>
+                      <p><strong>Current Divisions:</strong> {user.divisions?.join(', ') || 'None'}</p>
+                      {user.locations && (
+                        <p><strong>Playing Locations:</strong> {user.locations}</p>
+                      )}
+                      {user.availability && (
+                        <div className={styles.userAvailability}>
+                          <p><strong>Availability:</strong></p>
+                          <div className={styles.availabilityGrid}>
+                            {Object.entries(user.availability).map(([day, times]) => (
+                              times && times.length > 0 && (
+                                <div key={day} className={styles.availabilityDay}>
+                                  <span className={styles.dayLabel}>{day}:</span>
+                                  <span className={styles.timeSlots}>{times.join(', ')}</span>
+                                </div>
+                              )
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {user.emergencyContactName && (
+                        <p><strong>Emergency Contact:</strong> {user.emergencyContactName} ({user.emergencyContactPhone})</p>
+                      )}
+                      {user.notes && (
+                        <p><strong>Notes:</strong> {user.notes}</p>
+                      )}
+                      {user.system === 'ladder' && (
+                        <div className={styles.ladderInfo}>
+                          <p><strong>Ladder:</strong> {user.ladderName}</p>
+                          <p><strong>Position:</strong> #{user.position}</p>
+                          <p><strong>Fargo Rate:</strong> {user.fargoRate}</p>
+                          <p><strong>Status:</strong> {user.isActive ? 'Active' : 'Inactive'}</p>
+                        </div>
+                      )}
+                      {user.system === 'both' && user.ladderInfo && (
+                        <div className={styles.ladderInfo}>
+                          <p><strong>Ladder:</strong> {user.ladderInfo.ladderName}</p>
+                          <p><strong>Position:</strong> #{user.ladderInfo.position}</p>
+                          <p><strong>Fargo Rate:</strong> {user.ladderInfo.fargoRate}</p>
+                          <p><strong>Status:</strong> {user.ladderInfo.isActive ? 'Active' : 'Inactive'}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className={styles.userActions}>
+                      <button 
+                        onClick={() => handleEditUser(user)}
+                        className={styles.editButton}
+                      >
+                        <FaEdit /> Edit User
+                      </button>
+                      <select
+                        value={user.system || ''}
+                        onChange={(e) => {
+                          const newSystem = e.target.value;
+                          if (newSystem === 'league') {
+                            handleRemoveDivision(user._id, 'ladder');
+                            handleRemoveDivision(user._id, 'both');
+                          } else if (newSystem === 'ladder') {
+                            handleRemoveDivision(user._id, 'league');
+                            handleRemoveDivision(user._id, 'both');
+                          } else { // 'both' or ''
+                            handleRemoveDivision(user._id, 'league');
+                            handleRemoveDivision(user._id, 'ladder');
+                          }
+                          handleAddDivision(user._id, newSystem);
+                        }}
+                        className={styles.systemSelect}
+                      >
+                        <option value="">Select System</option>
+                        <option value="league">League Only</option>
+                        <option value="ladder">Ladder Only</option>
+                        <option value="both">Both Systems</option>
+                      </select>
+                      <button 
+                        onClick={() => handleDeleteUser(user._id)}
+                        className={styles.deleteButton}
+                      >
+                        <FaTrash /> Delete User
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        
+        {activeTab === 'add' && (
+          <div className={styles.addUserSection}>
+            <h3>Add New User</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = {
+                firstName: document.getElementById('add-firstName').value,
+                lastName: document.getElementById('add-lastName').value,
+                email: document.getElementById('add-email').value,
+                phone: document.getElementById('add-phone').value,
+                textNumber: document.getElementById('add-textNumber').value,
+                emergencyContactName: document.getElementById('add-emergencyContactName').value,
+                emergencyContactPhone: document.getElementById('add-emergencyContactPhone').value,
+                locations: document.getElementById('add-locations').value,
+                notes: document.getElementById('add-notes').value,
+                system: document.getElementById('add-system').value,
+                isActive: true, // New users are active by default
+                isApproved: true, // New users are approved by default
+                isLeaguePlayer: false,
+                isLadderPlayer: false,
+                ladderName: '',
+                position: '',
+                fargoRate: '',
+                availability: {},
+                divisions: [],
+                paymentInfo: {
+                  hasPaid: false,
+                  paymentDate: null,
+                  paymentMethod: '',
+                  paymentNotes: ''
+                }
+              };
+              handleAddUser(formData);
+            }} className={styles.addUserForm}>
+              <div className={styles.formRow}>
+                <div className={styles.formField}>
+                  <label>First Name:</label>
+                  <input
+                    type="text"
+                    id="add-firstName"
+                    required
+                  />
+                </div>
+                <div className={styles.formField}>
+                  <label>Last Name:</label>
+                  <input
+                    type="text"
+                    id="add-lastName"
+                    required
+                  />
+                </div>
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formField}>
+                  <label>Email:</label>
+                  <input
+                    type="email"
+                    id="add-email"
+                    required
+                  />
+                </div>
+                <div className={styles.formField}>
+                  <label>Phone:</label>
+                  <input
+                    type="tel"
+                    id="add-phone"
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formField}>
+                  <label>Text Number:</label>
+                  <input
+                    type="tel"
+                    id="add-textNumber"
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+                <div className={styles.formField}>
+                  <label>Emergency Contact Name:</label>
+                  <input
+                    type="text"
+                    id="add-emergencyContactName"
+                  />
+                </div>
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formField}>
+                  <label>Emergency Contact Phone:</label>
+                  <input
+                    type="tel"
+                    id="add-emergencyContactPhone"
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+                <div className={styles.formField}>
+                  <label>Playing Locations:</label>
+                  <input
+                    type="text"
+                    id="add-locations"
+                  />
+                </div>
+              </div>
+              <div className={styles.formField}>
+                <label>Notes:</label>
+                <textarea
+                  id="add-notes"
+                  rows="3"
+                />
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formField}>
+                  <label>System:</label>
+                  <select
+                    id="add-system"
+                    required
+                  >
+                    <option value="">Select System</option>
+                    <option value="league">League Only</option>
+                    <option value="ladder">Ladder Only</option>
+                    <option value="both">Both Systems</option>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" className={styles.addUserButton}>
+                {loading ? 'Adding...' : 'Add User'}
+              </button>
+              {error && <div className={styles.errorMessage}>{error}</div>}
+            </form>
+          </div>
+        )}
+
+        {activeTab === 'edit' && editingUser && (
+          <EditPlayerModal // Reusing EditPlayerModal for now, as it handles most fields
+            player={editingUser}
+            onSave={handleSaveEdit}
+            onClose={() => {
+              setShowEditModal(false);
+              setEditingUser(null);
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ============================================================================
 // MAIN ADMIN DASHBOARD
 // ============================================================================
@@ -1500,6 +1937,9 @@ export default function AdminDashboard() {
              case 'league-management':
         return <LeagueManagement />;
       
+      case 'unified-users':
+        return <UnifiedUsersWorkflow backendUrl={BACKEND_URL} />;
+      
       default:
         return null;
     }
@@ -1593,6 +2033,12 @@ export default function AdminDashboard() {
              onClick={() => setActiveSection('league-management')}
            >
              📅 League Management
+           </button>
+           <button 
+             className={`${styles.sectionButton} ${activeSection === 'unified-users' ? styles.active : ''}`}
+             onClick={() => setActiveSection('unified-users')}
+           >
+             👥 Unified Users
            </button>
         </div>
 

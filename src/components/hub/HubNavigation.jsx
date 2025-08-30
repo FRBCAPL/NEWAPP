@@ -46,34 +46,34 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
         
         <div className="nav-center">
           <div style={{ textAlign: 'center' }}>
-            <span className="app-title" style={{
-              color: 'white',
-              fontSize: '1.8rem',
-              fontWeight: 'bold',
-              textAlign: 'center',
-              textShadow: '0 0 20px rgba(229, 62, 62, 0.5)',
-              margin: 0,
-              padding: 0,
-              display: 'block',
-              lineHeight: '1.2',
-              fontFamily: 'inherit'
-            }}>
-              {location.pathname === '/' || location.pathname === '/login' 
-                ? 'Front Range Pool Hub Log In'
-                : currentAppName ? currentAppName.replace('→ ', '') : 'Front Range Pool Hub'
-              }
-            </span>
-            {userFirstName && (
-              <div style={{
-                color: 'white',
-                fontSize: '2.0rem',
-                fontWeight: '600',
-                marginTop: '0.5rem',
-                opacity: 0.9
-              }}>
-                Welcome, {userFirstName} {userLastName}
-              </div>
-            )}
+                         <span className="app-title" style={{
+               color: 'white',
+               fontSize: '1.8rem',
+               fontWeight: 'bold',
+               textAlign: 'center',
+               textShadow: '0 0 20px rgba(229, 62, 62, 0.5)',
+               margin: 0,
+               padding: 0,
+               display: 'block',
+               lineHeight: '1.2',
+               fontFamily: 'inherit'
+             }}>
+               {(!userFirstName && (location.pathname === '/' || location.pathname === '/login')) 
+                 ? 'THE HUB - Login'
+                 : 'Front Range Pool League'
+               }
+             </span>
+             {userFirstName && (
+               <div style={{
+                 color: 'white',
+                 fontSize: '2.0rem',
+                 fontWeight: '600',
+                 marginTop: '0.5rem',
+                 opacity: 0.9
+               }}>
+                 Welcome to the Hub, {userFirstName} {userLastName}
+               </div>
+             )}
           </div>
         </div>
         

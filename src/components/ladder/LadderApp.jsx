@@ -18,6 +18,7 @@ const LadderApp = ({
   playerLastName, 
   senderEmail, 
   userPin, 
+  userType,
   isAdmin = false,
   showClaimForm = false
 }) => {
@@ -84,43 +85,82 @@ const LadderApp = ({
         console.error('Invalid ladder data format:', ladderResult);
       }
       
-             // Check player status if we have an email
-       console.log('🔍 senderEmail exists:', !!senderEmail, 'Value:', senderEmail);
-       if (senderEmail) {
-         console.log('🚀 Calling checkPlayerStatus for:', senderEmail);
-         await checkPlayerStatus(senderEmail);
-       } else {
+      // Check if we have unified user data with ladder profile
+      const unifiedUserData = localStorage.getItem("unifiedUserData");
+      if (unifiedUserData) {
+        try {
+          const userData = JSON.parse(unifiedUserData);
+          console.log('🔍 Found unified user data:', userData);
+          
+          if (userData.ladderProfile) {
+            // User has ladder profile - use it directly
+            const ladderProfile = userData.ladderProfile;
+            setUserLadderData({
+              playerId: 'ladder',
+              name: `${userData.firstName} ${userData.lastName}`,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              email: userData.email,
+              fargoRate: ladderProfile.fargoRate,
+              ladder: ladderProfile.ladderName,
+              position: ladderProfile.position,
+              immunityUntil: ladderProfile.immunityUntil,
+              activeChallenges: [],
+              canChallenge: ladderProfile.isActive,
+              stats: {
+                wins: ladderProfile.wins,
+                losses: ladderProfile.losses,
+                totalMatches: ladderProfile.totalMatches
+              }
+            });
+            
+            // Don't automatically switch - let user choose which ladder to view
+            // setSelectedLadder(ladderProfile.ladderName);
+            console.log('✅ Set user ladder data from unified profile');
+            // Continue loading the selected ladder data
+          }
+        } catch (error) {
+          console.error('Error parsing unified user data:', error);
+        }
+      }
+      
+      // Fallback to old method if no unified data
+      console.log('🔍 senderEmail exists:', !!senderEmail, 'Value:', senderEmail);
+      if (senderEmail) {
+        console.log('🚀 Calling checkPlayerStatus for:', senderEmail);
+        await checkPlayerStatus(senderEmail);
+      } else {
         // No email, show as guest
-                 setUserLadderData({
-           playerId: 'guest',
-           name: `${playerName} ${playerLastName}`,
-           firstName: playerName,
-           lastName: playerLastName,
-           email: null,
-           fargoRate: 450,
-           ladder: '499-under',
-           position: 'Guest',
-           immunityUntil: null,
-           activeChallenges: [],
-           canChallenge: false
-         });
+        setUserLadderData({
+          playerId: 'guest',
+          name: `${playerName} ${playerLastName}`,
+          firstName: playerName,
+          lastName: playerLastName,
+          email: null,
+          fargoRate: 450,
+          ladder: '499-under',
+          position: 'Guest',
+          immunityUntil: null,
+          activeChallenges: [],
+          canChallenge: false
+        });
       }
     } catch (error) {
       console.error('Error loading ladder data:', error);
       // Set fallback data
-             setUserLadderData({
-         playerId: 'guest',
-         name: `${playerName} ${playerLastName}`,
-         firstName: playerName,
-         lastName: playerLastName,
-         email: senderEmail,
-         fargoRate: 450,
-         ladder: '499-under',
-         position: 'Guest',
-         immunityUntil: null,
-         activeChallenges: [],
-         canChallenge: false
-       });
+      setUserLadderData({
+        playerId: 'guest',
+        name: `${playerName} ${playerLastName}`,
+        firstName: playerName,
+        lastName: playerLastName,
+        email: senderEmail,
+        fargoRate: 450,
+        ladder: '499-under',
+        position: 'Guest',
+        immunityUntil: null,
+        activeChallenges: [],
+        canChallenge: false
+      });
     } finally {
       setLoading(false);
     }
@@ -176,8 +216,8 @@ const LadderApp = ({
           stats: status.ladderInfo.stats
         });
         
-        // Automatically switch to the player's ladder
-        setSelectedLadder(status.ladderInfo.ladderName);
+        // Don't automatically switch - let user choose which ladder to view
+        // setSelectedLadder(status.ladderInfo.ladderName);
       } else if (status.isLeaguePlayer) {
         // League player but no ladder account - can claim
         setUserLadderData({
@@ -673,7 +713,7 @@ const LadderApp = ({
                   </div>
                 )}
               </div>
-              <div className="table-cell fargo">{player.fargoRate}</div>
+              <div className="table-cell fargo">{player.fargoRate === 0 ? "No FargoRate" : player.fargoRate}</div>
               <div className="table-cell wins">{player.wins || 0}</div>
               <div className="table-cell losses">{player.losses || 0}</div>
               <div className="table-cell status">
@@ -934,7 +974,7 @@ const LadderApp = ({
                       {player.firstName} {player.lastName}
                       {!player.email && <span className="no-account">*</span>}
                     </div>
-                    <div className="table-cell fargo">{player.fargoRate}</div>
+                    <div className="table-cell fargo">{player.fargoRate === 0 ? "No FargoRate" : player.fargoRate}</div>
                     <div className="table-cell wins">{player.wins || 0}</div>
                     <div className="table-cell losses">{player.losses || 0}</div>
                     <div className="table-cell status">
@@ -994,7 +1034,7 @@ const LadderApp = ({
               </div>
               <div className="status-item">
                 <span className="label">FargoRate:</span>
-                <span className="value">{userLadderData?.fargoRate}</span>
+                <span className="value">{userLadderData?.fargoRate === 0 ? "No FargoRate" : userLadderData?.fargoRate}</span>
               </div>
               {userLadderData?.immunityUntil && (
                 <div className="status-item immunity">

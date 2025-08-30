@@ -116,7 +116,7 @@ function AppContent() {
   }, []);
 
   // --- Login handler ---
-  const handleLoginSuccess = (name, email, pin, userType) => {
+  const handleLoginSuccess = (name, email, pin, userType, userData = null) => {
     let firstName = "";
     let lastName = "";
     if (name) {
@@ -131,12 +131,27 @@ function AppContent() {
     setUserType(userType || 'league');
     setIsAuthenticated(true);
 
+    // Store unified user data
     localStorage.setItem("userFirstName", firstName);
     localStorage.setItem("userLastName", lastName);
     localStorage.setItem("userEmail", email);
     localStorage.setItem("userPin", pin);
     localStorage.setItem("userType", userType || 'league'); // Default to league if not specified
     localStorage.setItem("isAuthenticated", "true");
+    
+    // Store complete user data if provided (includes ladderProfile, leagueProfile, etc.)
+    if (userData) {
+      localStorage.setItem("unifiedUserData", JSON.stringify(userData));
+    }
+    
+    console.log('🔐 Unified Login Success:', {
+      firstName,
+      lastName,
+      email,
+      userType,
+      pin: pin ? '***' : 'none',
+      hasUserData: !!userData
+    });
   };
 
   // --- Check if user is super admin ---
@@ -193,6 +208,8 @@ function AppContent() {
     setUserType("league");
     setCurrentAppName("");
     setIsAuthenticated(false);
+    setIsAdminState(false);
+    setIsSuperAdminState(false);
     localStorage.removeItem("userFirstName");
     localStorage.removeItem("userLastName");
     localStorage.removeItem("userEmail");
@@ -297,6 +314,7 @@ function AppContent() {
                           senderEmail={userEmail}
                           userPin={userPin}
                           isAdmin={isAdminState}
+                          userType={userType}
                         />
                       </main>
                     </AppRouteWrapper>

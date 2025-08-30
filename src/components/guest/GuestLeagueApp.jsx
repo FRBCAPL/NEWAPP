@@ -126,6 +126,37 @@ const GuestLeagueApp = () => {
     },
     onGoToPlatformAdmin: () => {
       alert('🔧 Platform Admin\n\nPlatform admin features are only available to super administrators.\n\nContact frbcapl@gmail.com for platform admin access requests.');
+    },
+    // Phase 1 handlers
+    onOpenOpponentsModal: () => {
+      alert('👥 Opponents Modal\n\nThis feature is available to members only.\n\nContact frbcapl@gmail.com to join and view your opponents!');
+    },
+    onOpenCompletedMatchesModal: () => {
+      alert('✅ Completed Matches\n\nThis feature is available to members only.\n\nContact frbcapl@gmail.com to join and view your completed matches!');
+    },
+    onOpenStandingsModal: () => {
+      alert('📊 Standings\n\nThis feature is available to members only.\n\nContact frbcapl@gmail.com to join and view the standings!');
+    },
+    onOpenAllMatchesModal: () => {
+      alert('📋 All Matches\n\nThis feature is available to members only.\n\nContact frbcapl@gmail.com to join and view all matches!');
+    },
+    onOpenProposalListModal: () => {
+      alert('📝 Proposals\n\nThis feature is available to members only.\n\nContact frbcapl@gmail.com to join and view your proposals!');
+    },
+    onOpenSentProposalListModal: () => {
+      alert('📤 Sent Proposals\n\nThis feature is available to members only.\n\nContact frbcapl@gmail.com to join and view your sent proposals!');
+    },
+    onMatchClick: () => {
+      alert('🎯 Match Details\n\nThis feature is available to members only.\n\nContact frbcapl@gmail.com to join and view match details!');
+    },
+    onOpenMessageCenter: () => {
+      alert('💬 Message Center\n\nThis feature is available to members only.\n\nContact frbcapl@gmail.com to join and access the message center!');
+    },
+    onSmartMatchClick: () => {
+      alert('🧠 Smart Match\n\nThis feature is available to members only.\n\nContact frbcapl@gmail.com to join and use smart matchmaking!');
+    },
+    onOpenCalendar: () => {
+      alert('📅 Calendar\n\nThis feature is available to members only.\n\nContact frbcapl@gmail.com to join and access the calendar!');
     }
   };
 
@@ -215,6 +246,36 @@ const GuestLeagueApp = () => {
 
             {/* Actual Dashboard Component with real guest user data */}
             <div className="dashboard-preview">
+              {(() => {
+                console.log('🎮 Guest App Debug - Dashboard Props:', {
+                  effectivePhase: "scheduled",
+                  hasSeasonData: true,
+                  completedMatches: [
+                    {
+                      _id: 'guest-match-1',
+                      player1Id: 'Guest User',
+                      player2Id: 'John Smith',
+                      winner: 'Guest User',
+                      score: '5-3',
+                      matchDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+                      status: 'completed'
+                    },
+                    {
+                      _id: 'guest-match-2',
+                      player1Id: 'Guest User',
+                      player2Id: 'Jane Doe',
+                      winner: 'Jane Doe',
+                      score: '3-5',
+                      matchDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+                      status: 'completed'
+                    }
+                  ],
+                  totalRequiredMatches: 6,
+                  pendingCount: 2,
+                  sentCount: 1
+                });
+                return null;
+              })()}
               <Dashboard
                 playerName={guestUser?.firstName || 'Guest'}
                 playerLastName={guestUser?.lastName || 'User'}
@@ -225,6 +286,75 @@ const GuestLeagueApp = () => {
                 userPin={guestUser?.pin || 'GUEST'}
                 onGoToAdmin={guestHandlers.onGoToAdmin}
                 onGoToPlatformAdmin={guestHandlers.onGoToPlatformAdmin}
+                // Phase 1 Example Data - Show Phase 1 overlay for guest preview
+                effectivePhase="scheduled"
+                seasonData={{
+                  _id: 'guest-season-1',
+                  name: 'BCAPL Singles Division - Guest Preview',
+                  division: 'FRBCAPL TEST',
+                  startDate: new Date(),
+                  endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days from now
+                  phase1EndDate: new Date(Date.now() + 42 * 24 * 60 * 60 * 1000), // 42 days from now
+                  totalWeeks: 10,
+                  currentWeek: 3,
+                  isActive: true
+                }}
+                completedMatches={[
+                  {
+                    _id: 'guest-match-1',
+                    player1Id: 'Guest User',
+                    player2Id: 'John Smith',
+                    winner: 'Guest User',
+                    score: '5-3',
+                    matchDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+                    status: 'completed'
+                  },
+                  {
+                    _id: 'guest-match-2',
+                    player1Id: 'Guest User',
+                    player2Id: 'Jane Doe',
+                    winner: 'Jane Doe',
+                    score: '3-5',
+                    matchDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+                    status: 'completed'
+                  }
+                ]}
+                totalRequiredMatches={6}
+                selectedDivision="FRBCAPL TEST"
+                pendingCount={2}
+                sentCount={1}
+                upcomingMatches={[
+                  {
+                    _id: 'guest-upcoming-1',
+                    player1Id: 'Guest User',
+                    player2Id: 'Mike Johnson',
+                    proposedDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    status: 'pending'
+                  }
+                ]}
+                allPlayers={[
+                  { firstName: 'Guest', lastName: 'User', email: 'guest@frontrangepool.com' },
+                  { firstName: 'John', lastName: 'Smith', email: 'john@example.com' },
+                  { firstName: 'Jane', lastName: 'Doe', email: 'jane@example.com' },
+                  { firstName: 'Mike', lastName: 'Johnson', email: 'mike@example.com' }
+                ]}
+                standings={[
+                  { rank: 1, playerName: 'John Smith', points: 120, matchesPlayed: 6 },
+                  { rank: 2, playerName: 'Jane Doe', points: 110, matchesPlayed: 6 },
+                  { rank: 3, playerName: 'Guest User', points: 100, matchesPlayed: 6 },
+                  { rank: 4, playerName: 'Mike Johnson', points: 90, matchesPlayed: 6 }
+                ]}
+                // Phase 1 handlers
+                onOpenOpponentsModal={guestHandlers.onOpenOpponentsModal}
+                onOpenCompletedMatchesModal={guestHandlers.onOpenCompletedMatchesModal}
+                onOpenStandingsModal={guestHandlers.onOpenStandingsModal}
+                onOpenAllMatchesModal={guestHandlers.onOpenAllMatchesModal}
+                onOpenProposalListModal={guestHandlers.onOpenProposalListModal}
+                onOpenSentProposalListModal={guestHandlers.onOpenSentProposalListModal}
+                onMatchClick={guestHandlers.onMatchClick}
+                onOpenMessageCenter={guestHandlers.onOpenMessageCenter}
+                onSmartMatchClick={guestHandlers.onSmartMatchClick}
+                onOpenCalendar={guestHandlers.onOpenCalendar}
               />
             </div>
           </div>

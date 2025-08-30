@@ -7,11 +7,12 @@ import adminAuthService from '../../../services/adminAuthService.js';
  * DashboardHeader Component
  * Extracted from Dashboard.jsx to improve maintainability and reusability
  */
-const DashboardHeader = ({
-  playerName,
-  playerLastName,
-  isMobile,
+const DashboardHeader = ({ 
+  playerName, 
+  playerLastName, 
+  isMobile, 
   userPin,
+  playerEmail,
   proposalsLoading,
   matchesLoading,
   notesLoading,
@@ -19,7 +20,7 @@ const DashboardHeader = ({
   standingsLoading,
   scheduleLoading,
   onProfileClick,
-  styles
+  styles 
 }) => {
   const isLoading = proposalsLoading || matchesLoading || notesLoading || seasonLoading || standingsLoading || scheduleLoading;
 
@@ -115,8 +116,8 @@ const DashboardHeader = ({
         This is for testing purposes only.
       </div>
 
-             {/* 10-Ball Tutorial Link - Admin Only */}
-               {adminAuthService.getCurrentAdmin() && (
+             {/* 10-Ball Tutorial Link - Admin Only (Not for guests) */}
+               {adminAuthService.getCurrentAdmin() && playerEmail !== 'guest@frontrangepool.com' && (
         <div style={{ 
           marginBottom: isMobile ? 12 : 16,
           textAlign: 'center'
@@ -152,6 +153,7 @@ DashboardHeader.propTypes = {
   playerLastName: PropTypes.string.isRequired,
   isMobile: PropTypes.bool.isRequired,
   userPin: PropTypes.string,
+  playerEmail: PropTypes.string,
   proposalsLoading: PropTypes.bool,
   matchesLoading: PropTypes.bool,
   notesLoading: PropTypes.bool,

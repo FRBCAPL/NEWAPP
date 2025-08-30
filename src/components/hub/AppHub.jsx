@@ -67,7 +67,7 @@ const AppHub = ({ isAuthenticated, userFirstName, userLastName, userEmail, userP
                      {isAuthenticated && (
              <div className="user-info">
                                <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: 'white' }}>
-                  Hello, {userFirstName} {userLastName}
+                  Hello, {userFirstName}
                 </div>
                                {/* User Type Badge */}
                 <div className="user-type-badge" style={{

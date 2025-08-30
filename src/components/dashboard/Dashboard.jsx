@@ -1586,6 +1586,17 @@ export default function Dashboard({
       )
     : null;
 
+  // Check if we're in guest mode
+  const isGuestMode = senderEmail === 'guest@frontrangepool.com';
+
+  // Override loading states for guest mode to prevent "Updating..." status
+  const guestProposalsLoading = isGuestMode ? false : proposalsLoading;
+  const guestMatchesLoading = isGuestMode ? false : matchesLoading;
+  const guestNotesLoading = isGuestMode ? false : notesLoading;
+  const guestSeasonLoading = isGuestMode ? false : seasonLoading;
+  const guestStandingsLoading = isGuestMode ? false : standingsLoading;
+  const guestScheduleLoading = isGuestMode ? false : scheduleLoading;
+
   return (
     <div className={styles.dashboardBg} style={{ position: 'relative' }}>
       <style>
@@ -1606,20 +1617,21 @@ export default function Dashboard({
           margin: isMobile ? '6px' : '16px'
         }}>
           {/* Dashboard Header Component */}
-          <DashboardHeader
-            playerName={playerName}
-            playerLastName={playerLastName}
-            isMobile={isMobile}
-            userPin={userPin}
-            proposalsLoading={proposalsLoading}
-            matchesLoading={matchesLoading}
-            notesLoading={notesLoading}
-            seasonLoading={seasonLoading}
-            standingsLoading={standingsLoading}
-            scheduleLoading={scheduleLoading}
-            onProfileClick={() => setShowUserProfileModal(true)}
-            styles={styles}
-          />
+                  <DashboardHeader
+          playerName={playerName}
+          playerLastName={playerLastName}
+          isMobile={isMobile}
+          userPin={userPin}
+          playerEmail={senderEmail}
+          proposalsLoading={guestProposalsLoading}
+          matchesLoading={guestMatchesLoading}
+          notesLoading={guestNotesLoading}
+          seasonLoading={guestSeasonLoading}
+          standingsLoading={guestStandingsLoading}
+          scheduleLoading={guestScheduleLoading}
+          onProfileClick={() => setShowUserProfileModal(true)}
+          styles={styles}
+        />
           
 
           
@@ -1717,8 +1729,9 @@ export default function Dashboard({
 
 
 
-        {/* Admin Buttons Section Component */}
-        <AdminButtonsSection
+        {/* Admin Buttons Section Component - Only show for non-guest users */}
+        {!isGuestMode && (
+          <AdminButtonsSection
           userPin={userPin}
           loadingPendingRegistrations={loadingPendingRegistrations}
           phaseOverride={phaseOverride}
@@ -1802,6 +1815,7 @@ export default function Dashboard({
             }
           }}
         />
+        )}
       </div>
     </div>
     {/* Modal Container Component */}
@@ -2201,6 +2215,106 @@ export default function Dashboard({
     {/* Pending Claims Modal */}
     {showPendingClaimsModal && (
       <PendingClaimsManager onClose={() => setShowPendingClaimsModal(false)} />
+    )}
+
+    {/* Phase 1 Tracker Overlay - Show ONLY for guest mode */}
+    {senderEmail === 'guest@frontrangepool.com' && (
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 9999,
+        width: '85%',
+        maxWidth: '1000px',
+        height: '500px',
+        pointerEvents: 'auto'
+      }}>
+        <div style={{
+          background: 'transparent',
+          borderRadius: '12px',
+          padding: '20px',
+          width: '100%',
+          height: '100%',
+          overflow: 'auto'
+        }}>
+          <Phase1Tracker
+            currentPhase="scheduled"
+            seasonData={{
+              _id: 'guest-season-1',
+              name: 'BCAPL Singles Division - Guest Preview',
+              division: 'FRBCAPL TEST',
+              startDate: new Date(),
+              endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+              phase1EndDate: new Date(Date.now() + 42 * 24 * 60 * 60 * 1000),
+              totalWeeks: 10,
+              currentWeek: 3,
+              isActive: true
+            }}
+            completedMatches={[
+              {
+                _id: 'guest-match-1',
+                player1Id: 'Guest User',
+                player2Id: 'John Smith',
+                winner: 'Guest User',
+                score: '5-3',
+                matchDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+                status: 'completed'
+              },
+              {
+                _id: 'guest-match-2',
+                player1Id: 'Guest User',
+                player2Id: 'Jane Doe',
+                winner: 'Jane Doe',
+                score: '3-5',
+                matchDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+                status: 'completed'
+              }
+            ]}
+            totalRequiredMatches={6}
+            playerName={playerName}
+            playerLastName={playerLastName}
+            selectedDivision="FRBCAPL TEST"
+            onOpenOpponentsModal={() => alert('👥 Opponents Modal - Members only!')}
+            onOpenCompletedMatchesModal={() => alert('✅ Completed Matches - Members only!')}
+            onOpenStandingsModal={() => alert('📊 Standings - Members only!')}
+            onOpenAllMatchesModal={() => alert('📋 All Matches - Members only!')}
+            pendingCount={2}
+            sentCount={1}
+            onOpenProposalListModal={() => alert('📝 Proposals - Members only!')}
+            onOpenSentProposalListModal={() => alert('📤 Sent Proposals - Members only!')}
+            upcomingMatches={[
+              {
+                _id: 'guest-upcoming-1',
+                player1Id: 'Guest User',
+                player2Id: 'Mike Johnson',
+                proposedDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                status: 'pending'
+              }
+            ]}
+            onMatchClick={() => alert('🎯 Match Details - Members only!')}
+            isMobile={isMobile}
+            onOpenMessageCenter={() => alert('💬 Message Center - Members only!')}
+            currentUser={currentUser}
+            allPlayers={[
+              { firstName: 'Guest', lastName: 'User', email: 'guest@frontrangepool.com' },
+              { firstName: 'John', lastName: 'Smith', email: 'john@example.com' },
+              { firstName: 'Jane', lastName: 'Doe', email: 'jane@example.com' },
+              { firstName: 'Mike', lastName: 'Johnson', email: 'mike@example.com' }
+            ]}
+            onSmartMatchClick={() => alert('🧠 Smart Match - Members only!')}
+            showPhase1Rules={showPhase1Rules}
+            setShowPhase1Rules={setShowPhase1Rules}
+            showPhase1Overview={showPhase1Overview}
+            setShowPhase1Overview={setShowPhase1Overview}
+            setPlayerStats={setPlayerStats}
+            setTimeLeft={setTimeLeft}
+            setDeadlineStatus={setDeadlineStatus}
+            setPhase1EndDate={setPhase1EndDate}
+            onOpenCalendar={() => alert('📅 Calendar - Members only!')}
+          />
+        </div>
+      </div>
     )}
    </div>
  );

@@ -19,16 +19,16 @@ export default function PlayerManagement() {
     isActive: true
   });
 
-  // Fetch all players
+  // Fetch all unified players
   const fetchPlayers = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/users`);
+      const response = await fetch(`${BACKEND_URL}/api/unified-auth/all-users`);
       const data = await response.json();
       if (data.success) {
         setPlayers(data.users);
       }
     } catch (error) {
-      console.error('Error fetching players:', error);
+      console.error('Error fetching unified players:', error);
     } finally {
       setLoading(false);
     }
@@ -47,11 +47,11 @@ export default function PlayerManagement() {
     }));
   };
 
-  // Add new player
+  // Add new unified player
   const handleAddPlayer = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${BACKEND_URL}/api/users`, {
+      const response = await fetch(`${BACKEND_URL}/api/unified-auth/admin/add-user`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -84,11 +84,11 @@ export default function PlayerManagement() {
     }
   };
 
-  // Update existing player
+  // Update existing unified player
   const handleUpdatePlayer = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${BACKEND_URL}/api/users/${editingPlayer._id}`, {
+      const response = await fetch(`${BACKEND_URL}/api/unified-auth/admin/update-user/${editingPlayer._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -137,12 +137,12 @@ export default function PlayerManagement() {
     });
   };
 
-  // Delete player
+  // Delete unified player
   const handleDeletePlayer = async (playerId) => {
     if (!confirm('Are you sure you want to delete this player?')) return;
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/users/${playerId}`, {
+      const response = await fetch(`${BACKEND_URL}/api/unified-auth/admin/delete-user/${playerId}`, {
         method: 'DELETE'
       });
 
@@ -160,13 +160,13 @@ export default function PlayerManagement() {
   };
 
   if (loading) {
-    return <div className={styles.container}>Loading players...</div>;
+    return <div className={styles.container}>Loading unified players...</div>;
   }
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h2>League Player Management</h2>
+        <h2>Unified Player Management</h2>
         <button 
           className={styles.addButton}
           onClick={() => setShowAddForm(true)}
@@ -179,7 +179,7 @@ export default function PlayerManagement() {
       {showAddForm && (
         <div className={styles.formOverlay}>
           <div className={styles.form}>
-            <h3>Add New Player</h3>
+            <h3>Add New Unified Player</h3>
             <form onSubmit={handleAddPlayer}>
               <div className={styles.formRow}>
                 <input
@@ -233,7 +233,7 @@ export default function PlayerManagement() {
               <input
                 type="text"
                 name="locations"
-                placeholder="Playing Locations"
+                placeholder="Locations"
                 value={formData.locations}
                 onChange={handleInputChange}
               />
@@ -272,7 +272,7 @@ export default function PlayerManagement() {
       {editingPlayer && (
         <div className={styles.formOverlay}>
           <div className={styles.form}>
-            <h3>Edit Player: {editingPlayer.firstName} {editingPlayer.lastName}</h3>
+            <h3>Edit Unified Player: {editingPlayer.firstName} {editingPlayer.lastName}</h3>
             <form onSubmit={handleUpdatePlayer}>
               <div className={styles.formRow}>
                 <input
@@ -326,7 +326,7 @@ export default function PlayerManagement() {
               <input
                 type="text"
                 name="locations"
-                placeholder="Playing Locations"
+                placeholder="Locations"
                 value={formData.locations}
                 onChange={handleInputChange}
               />
@@ -370,7 +370,7 @@ export default function PlayerManagement() {
               <th>Email</th>
               <th>Phone</th>
               <th>PIN</th>
-              <th>Division</th>
+              <th>Role</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -381,8 +381,8 @@ export default function PlayerManagement() {
                 <td>{player.firstName} {player.lastName}</td>
                 <td>{player.email}</td>
                 <td>{player.phone}</td>
-                <td>{player.pin}</td>
-                <td>{player.division}</td>
+                <td>{player.pin ? '***' : 'Not Set'}</td>
+                <td>{player.role || 'player'}</td>
                 <td>
                   <span className={`${styles.status} ${player.isApproved ? styles.approved : styles.pending}`}>
                     {player.isApproved ? 'Approved' : 'Pending'}
