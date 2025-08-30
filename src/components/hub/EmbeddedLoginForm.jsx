@@ -12,6 +12,8 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
 
+  // Check if mobile
+  const isMobile = window.innerWidth <= 768;
 
   const verifyInput = async () => {
     if (!input || input.trim() === '') {
@@ -49,8 +51,6 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
     }
   };
 
-
-
   const handleKeyDown = (e) => {
     if (e.key === "Enter") verifyInput();
   };
@@ -67,165 +67,173 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
 
   return (
     <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center',
+      position: 'relative',
       width: '100%',
-      minHeight: '500px'
+      height: isMobile ? '350px' : '450px',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      overflow: 'hidden'
     }}>
-      <div style={{ 
-        position: 'relative',
-        width: '800px',
-        height: '400px'
+      
+      {/* Pool Table Background - Better proportions */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 1
       }}>
-        
-        {/* Login Form Overlay - wider to fit title on one line */}
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 100,
-          width: '380px',
-          pointerEvents: 'auto'
-        }}>
-          <div style={{ 
-            padding: '20px', 
-            background: 'rgba(0, 0, 0, 0.9)',
-            border: '2px solid #e53e3e',
-            borderRadius: '12px',
-            width: '100%'
-          }}>
-            {/* Title First */}
-            <h3 style={{ 
-              color: 'white', 
-              textAlign: 'center', 
-              marginBottom: '16px',
-              fontSize: '1.2rem',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap'
-            }}>
-              🔒 Front Range Pool League
-            </h3>
-            
-            {/* Login Section Second */}
-            <div style={{ marginBottom: '16px' }}>
-              <input
-                type={showPassword ? "text" : "password"}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Enter Email or PIN"
-                autoFocus
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '2px solid #e53e3e',
-                  borderRadius: '8px',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  color: '#fff',
-                  fontSize: '0.9rem',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-            
-            <button
-              onClick={verifyInput}
-              disabled={loading}
-              type="button"
-              style={{
-                width: '100%',
-                background: '#e53e3e',
-                color: 'white',
-                border: 'none',
-                padding: '12px',
-                fontSize: '1rem',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                marginBottom: '8px'
-              }}
-            >
-              {loading ? "Verifying..." : "Login to Access Hub"}
-            </button>
-
-            {/* First Time User Button */}
-            <button
-              onClick={onShowSignup}
-              type="button"
-              style={{
-                width: '100%',
-                background: 'transparent',
-                color: '#FF6B35',
-                border: '2px solid #FF6B35',
-                padding: '10px',
-                fontSize: '0.9rem',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                marginBottom: '12px',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = '#FF6B35';
-                e.target.style.color = 'white';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'transparent';
-                e.target.style.color = '#FF6B35';
-              }}
-            >
-              🆕 First Time User? Apply for Access
-            </button>
-
-
-
-
-            
-            {message && (
-              <p style={{
-                color: '#ff6b6b',
-                textAlign: 'center',
-                margin: '0 0 16px 0',
-                fontSize: '0.8rem',
-                padding: '8px',
-                borderRadius: '6px',
-                background: 'rgba(255, 107, 107, 0.1)',
-                border: '1px solid rgba(255, 107, 107, 0.3)'
-              }}>
-                {message}
-              </p>
-            )}
-            
-            {/* Apps Selection Third */}
-            <p style={{
-              color: '#ccc',
-              fontSize: '0.7rem',
-              textAlign: 'center',
-              margin: '0'
-            }}>
-              Access league matches, ladder challenges, and more
-            </p>
-          </div>
-        </div>
-
-        {/* Pool Simulation - centered */}
-        <ResponsiveWrapper aspectWidth={800} aspectHeight={400}>
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              position: 'relative'
-            }}
-          >
-            <PoolSimulation />
-          </div>
+        {/* Use better aspect ratio for pool table - more realistic proportions */}
+        <ResponsiveWrapper aspectWidth={isMobile ? 350 : 800} aspectHeight={isMobile ? 200 : 400}>
+          <PoolSimulation />
         </ResponsiveWrapper>
       </div>
 
+      {/* Login Form Overlay - PERFECTLY CENTERED on pool table, SMALLER on mobile */}
+      <div style={{
+        position: 'absolute',
+        top: isMobile ? '30%' : '50%', // Move up on mobile to align with playing surface
+        left: isMobile ? '50%' : 'calc(40%)', // Move 30px left on PC to center on pool table
+        transform: 'translate(-50%, -50%)', // Perfect centering
+        zIndex: 10,
+        width: isMobile ? '180px' : '420px', // Wide on PC, small on mobile
+        maxWidth: isMobile ? '60%' : '90%', // Very restrictive on mobile
+        pointerEvents: 'auto',
+        // Prevent movement on mobile tap
+        touchAction: 'manipulation',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none',
+        // Prevent zoom on input focus
+        transformOrigin: 'center center',
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden'
+      }}>
+        <div style={{ 
+          padding: isMobile ? '8px' : '24px', // Much smaller padding on mobile
+          background: 'rgba(0, 0, 0, 0.85)',
+          border: '2px solid #e53e3e',
+          borderRadius: '12px',
+          width: '100%',
+          backdropFilter: 'blur(10px)'
+        }}>
+          {/* Title First - much smaller on mobile */}
+          <h3 style={{ 
+            color: 'white', 
+            textAlign: 'center', 
+            marginBottom: isMobile ? '4px' : '20px',
+            fontSize: isMobile ? '0.7rem' : '1.4rem', // Much smaller font on mobile
+            fontWeight: 'bold',
+            whiteSpace: 'nowrap'
+          }}>
+            🔒 Front Range Pool League
+          </h3>
+          
+          {/* Login Section Second */}
+          <div style={{ marginBottom: isMobile ? '4px' : '20px' }}>
+            <input
+              type={showPassword ? "text" : "password"}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Enter Email or PIN"
+              autoFocus
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: isMobile ? '6px' : '16px', // Much smaller padding on mobile
+                border: '2px solid #e53e3e',
+                borderRadius: '8px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: '#fff',
+                fontSize: isMobile ? '16px' : '1rem',
+                boxSizing: 'border-box',
+                minHeight: isMobile ? '28px' : 'auto' // Much smaller height on mobile
+              }}
+            />
+          </div>
+          
+          <button
+            onClick={verifyInput}
+            disabled={loading}
+            type="button"
+            style={{
+              width: '100%',
+              background: '#e53e3e',
+              color: 'white',
+              border: 'none',
+              padding: isMobile ? '6px' : '16px', // Much smaller padding on mobile
+              fontSize: isMobile ? '0.6rem' : '1.1rem', // Much smaller font on mobile
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              marginBottom: isMobile ? '3px' : '12px',
+              minHeight: isMobile ? '28px' : 'auto' // Much smaller height on mobile
+            }}
+          >
+            {loading ? "Verifying..." : "Login to Access Hub"}
+          </button>
 
+          {/* First Time User Button - much smaller on mobile */}
+          <button
+            onClick={onShowSignup}
+            type="button"
+            style={{
+              width: '100%',
+              background: 'transparent',
+              color: '#FF6B35',
+              border: '2px solid #FF6B35',
+              padding: isMobile ? '4px' : '14px', // Much smaller padding on mobile
+              fontSize: isMobile ? '0.5rem' : '1rem', // Much smaller font on mobile
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              marginBottom: isMobile ? '3px' : '16px',
+              transition: 'all 0.3s ease',
+              minHeight: isMobile ? '24px' : 'auto' // Much smaller height on mobile
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#FF6B35';
+              e.target.style.color = 'white';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+              e.target.style.color = '#FF6B35';
+            }}
+          >
+            🆕 First Time User? Apply for Access
+          </button>
+          
+          {message && (
+            <p style={{
+              color: '#ff6b6b',
+              textAlign: 'center',
+              margin: '0 0 4px 0',
+              fontSize: isMobile ? '0.4rem' : '0.9rem', // Much smaller font on mobile
+              padding: '2px',
+              borderRadius: '4px',
+              background: 'rgba(255, 107, 107, 0.1)',
+              border: '1px solid rgba(255, 107, 107, 0.3)'
+            }}>
+              {message}
+            </p>
+          )}
+          
+          {/* Apps Selection Third - much smaller on mobile */}
+          <p style={{
+            color: '#ccc',
+            fontSize: isMobile ? '0.3rem' : '0.8rem', // Much smaller font on mobile
+            textAlign: 'center',
+            margin: '0'
+          }}>
+            Access league matches, ladder challenges, and more
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

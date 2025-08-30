@@ -37,6 +37,11 @@
   transition: all 0.3s ease;
   font-size: 1.1rem;
   font-weight: 600;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .hub-btn:hover {
@@ -97,6 +102,11 @@
   transition: all 0.3s ease;
   font-size: 1.1rem;
   font-weight: 600;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .admin-btn:hover {
@@ -114,6 +124,11 @@
   transition: all 0.3s ease;
   font-size: 1.1rem;
   font-weight: 600;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .super-admin-btn:hover {
@@ -132,6 +147,11 @@
   font-size: 1.1rem;
   font-weight: 600;
   margin-right: 4rem;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .switch-app-btn:hover {
@@ -149,6 +169,11 @@
   transition: all 0.3s ease;
   font-size: 0.8rem;
   font-weight: 500;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .logout-btn:hover {
@@ -158,29 +183,49 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .hub-navigation {
+    padding: 0.3rem 0;
+  }
+  
   .nav-content {
     padding: 0 0.5rem;
+    flex-direction: row;
+    gap: 0.3rem;
   }
   
   .nav-left {
-    gap: 0.5rem;
+    gap: 0.3rem;
   }
   
   .hub-btn,
-  .switch-app-btn {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8rem;
+  .switch-app-btn,
+  .admin-btn,
+  .super-admin-btn,
+  .logout-btn {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.9rem;
+    min-height: 40px;
+    min-width: 40px;
   }
   
   .current-app {
     font-size: 0.8rem;
   }
+  
+  .nav-center .app-title {
+    font-size: 1.4rem !important;
+  }
 }
 
 @media (max-width: 480px) {
+  .hub-navigation {
+    padding: 0.2rem 0;
+  }
+  
   .nav-content {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.3rem;
+    padding: 0.3rem;
   }
   
   .nav-left,
@@ -190,7 +235,18 @@
     justify-content: center;
   }
   
-  .app-title {
-    font-size: 0.9rem;
+  .nav-center .app-title {
+    font-size: 1.2rem !important;
+  }
+  
+  .hub-btn,
+  .switch-app-btn,
+  .admin-btn,
+  .super-admin-btn,
+  .logout-btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    min-height: 36px;
+    min-width: 36px;
   }
 }

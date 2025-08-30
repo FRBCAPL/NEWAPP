@@ -35,7 +35,9 @@ import UserProfileModal from '../modal/UserProfileModal';
 import SmartMatchmakingModal from '../modal/SmartMatchmakingModal';
 import PlayerRegistrationModal from '../modal/PlayerRegistrationModal';
 
-
+// Import mobile optimization components
+import MobileDashboard from './MobileDashboard';
+import { useMobileOptimization } from '../../hooks/useMobileOptimization';
 
 // Import new services and hooks
 import { useProposals } from '../../hooks/useProposals';
@@ -369,23 +371,8 @@ export default function Dashboard({
 
   const navigate = useNavigate();
 
-  // Check if we're on a mobile device - improved for iframe compatibility
-  const isMobile = (() => {
-    // First try viewport width (works better in iframes)
-    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
-      return true;
-    }
-    // Fallback to user agent detection
-    if (typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-      return true;
-    }
-    // Additional check for iframe context
-    if (typeof window !== 'undefined' && window.self !== window.top) {
-      // We're in an iframe, be more conservative with mobile detection
-      return window.innerWidth <= 768 || window.innerHeight <= 600;
-    }
-    return false;
-  })();
+  // Use the mobile optimization hook for better mobile detection and utilities
+  const { isMobile, mobileUtils, swipeUtils, pullToRefreshUtils } = useMobileOptimization();
 
   // Test backend connection on component mount
   useEffect(() => {
@@ -1608,14 +1595,44 @@ export default function Dashboard({
           }
         `}
       </style>
-      <div className={styles.dashboardFrame} style={{ position: 'relative', zIndex: 1 }}>
-        {/* Main dashboard content starts here */}
-        <div className={styles.dashboardCard} style={{ 
-          position: 'relative', 
-          zIndex: 1,
-          padding: isMobile ? '12px' : '20px',
-          margin: isMobile ? '6px' : '16px'
-        }}>
+      
+      {/* Render Mobile Dashboard if on mobile device */}
+      {isMobile ? (
+        <MobileDashboard
+          playerName={playerName}
+          playerLastName={playerLastName}
+          pendingProposals={pendingProposals}
+          sentProposals={sentProposals}
+          matches={completedMatches}
+          notes={notes}
+          standings={standings}
+          schedule={schedule}
+          proposalsLoading={guestProposalsLoading}
+          matchesLoading={guestMatchesLoading}
+          notesLoading={guestNotesLoading}
+          seasonLoading={guestSeasonLoading}
+          standingsLoading={guestStandingsLoading}
+          scheduleLoading={guestScheduleLoading}
+          setShowMatchProposalModal={() => setShowMatchProposalModal(true)}
+          setShowUserProfileModal={() => setShowUserProfileModal(true)}
+          onViewMatch={handleProposalClick}
+          onViewProposal={(proposal) => {
+            setSelectedProposal(proposal);
+            setShowProposalDetailsModal(true);
+          }}
+          onViewStandings={() => setShowStandings(true)}
+          onViewSchedule={() => setShowCalendarModal(true)}
+          onQuickAction={() => setShowMatchProposalModal(true)}
+        />
+      ) : (
+        <div className={styles.dashboardFrame} style={{ position: 'relative', zIndex: 1 }}>
+          {/* Main dashboard content starts here */}
+          <div className={styles.dashboardCard} style={{ 
+            position: 'relative', 
+            zIndex: 1,
+            padding: '20px',
+            margin: '16px'
+          }}>
           {/* Dashboard Header Component */}
                   <DashboardHeader
           playerName={playerName}
@@ -1816,8 +1833,9 @@ export default function Dashboard({
           }}
         />
         )}
-      </div>
-    </div>
+          </div>
+        </div>
+      )}
     {/* Modal Container Component */}
     <ModalContainer
       // Modal visibility states

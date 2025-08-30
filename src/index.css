@@ -20,6 +20,19 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* Mobile-specific variables */
+  --mobile-touch-target: 44px;
+  --mobile-spacing-xs: 4px;
+  --mobile-spacing-sm: 8px;
+  --mobile-spacing-md: 12px;
+  --mobile-spacing-lg: 16px;
+  --mobile-spacing-xl: 24px;
+  --mobile-font-xs: 0.7rem;
+  --mobile-font-sm: 0.8rem;
+  --mobile-font-md: 0.9rem;
+  --mobile-font-lg: 1rem;
+  --mobile-font-xl: 1.1rem;
 }
 
 *, *::before, *::after {
@@ -63,6 +76,73 @@ body {
 * {
   max-width: unset !important;
   max-height: unset !important;
+}
+
+/* ============================
+   Mobile-Specific Optimizations
+   ============================ */
+
+/* Touch-friendly interactions */
+button, input, select, textarea, a {
+  min-height: var(--mobile-touch-target);
+  min-width: var(--mobile-touch-target);
+}
+
+/* Prevent zoom on input focus (iOS) */
+input, textarea, select {
+  font-size: 16px !important;
+}
+
+/* Remove tap highlight */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Optimize touch scrolling */
+.scrollable, .mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
+/* Mobile-specific touch feedback */
+.mobile-touch-feedback {
+  transition: transform 0.2s ease-out;
+}
+
+.mobile-touch-feedback:active {
+  transform: scale(0.98);
+}
+
+/* Mobile-optimized animations */
+@media (max-width: 768px) {
+  * {
+    animation-duration: 0.2s !important;
+    transition-duration: 0.2s !important;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mobile-specific spacing */
+@media (max-width: 768px) {
+  .mobile-padding {
+    padding: var(--mobile-spacing-md);
+  }
+  
+  .mobile-margin {
+    margin: var(--mobile-spacing-sm);
+  }
+  
+  .mobile-text {
+    font-size: var(--mobile-font-md);
+  }
 }
 
 /* ============================
