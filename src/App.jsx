@@ -412,7 +412,7 @@ function AppContent() {
           userLastName={userLastName}
         />
 
-                 <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "200px" }}>
+                 <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "120px" }}>
           <Routes>
                          {/* Hub Route */}
              <Route

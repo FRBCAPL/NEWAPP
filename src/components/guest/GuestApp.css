@@ -3,9 +3,253 @@
   max-width: none;
   margin: 0 auto;
   padding: 1rem;
+  padding-top: 2rem;
   min-height: 100vh;
   background: transparent;
   color: white;
+}
+
+/* Mobile Responsive Design */
+@media (max-width: 768px) {
+  .guest-app-container {
+    padding: 0.8rem !important;
+    padding-top: 3rem !important;
+  }
+  
+  .guest-app-header {
+    padding: 1rem !important;
+    margin-bottom: 1.5rem !important;
+    border-radius: 16px !important;
+  }
+  
+  .guest-app-header h1 {
+    font-size: 1.6rem !important;
+    margin-bottom: 0.3rem !important;
+  }
+  
+  .guest-app-header p {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.6rem !important;
+  }
+  
+  .guest-badge {
+    font-size: 0.8rem !important;
+    padding: 5px 10px !important;
+    margin-bottom: 0.8rem !important;
+  }
+  
+  .guest-actions {
+    gap: 0.6rem !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+  
+  .back-btn, .join-btn {
+    width: 100% !important;
+    max-width: 280px !important;
+    padding: 10px 16px !important;
+    font-size: 0.9rem !important;
+    min-height: 44px !important;
+  }
+  
+  .view-tabs {
+    gap: 0.6rem !important;
+    margin-bottom: 1.2rem !important;
+  }
+  
+  .tab-btn {
+    padding: 8px 16px !important;
+    font-size: 0.85rem !important;
+    min-height: 40px !important;
+  }
+  
+  .content-area {
+    padding: 1.5rem !important;
+    border-radius: 16px !important;
+  }
+  
+  .content-area h2 {
+    font-size: 1.5rem !important;
+    margin-bottom: 1.2rem !important;
+  }
+  
+  .guest-notice {
+    padding: 1.2rem !important;
+    border-radius: 12px !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .guest-notice h3 {
+    font-size: 1.2rem !important;
+    margin-bottom: 0.8rem !important;
+  }
+  
+  .guest-notice p {
+    font-size: 0.95rem !important;
+    margin-bottom: 1.2rem !important;
+  }
+  
+  .guest-limitations {
+    padding: 0.8rem !important;
+    border-radius: 8px !important;
+  }
+  
+  .guest-limitations strong {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.4rem !important;
+  }
+  
+  .guest-limitations li {
+    font-size: 0.85rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  .info-cards {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+    margin-bottom: 2rem !important;
+  }
+  
+  .info-card {
+    padding: 1.5rem !important;
+    border-radius: 14px !important;
+  }
+  
+  .info-card h3 {
+    font-size: 1.2rem !important;
+    margin-bottom: 0.6rem !important;
+  }
+  
+  .info-card p {
+    font-size: 0.95rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .info-card ul {
+    padding: 0.8rem !important;
+  }
+  
+  .info-card li {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.6rem !important;
+    padding-left: 1.2rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .guest-app-container {
+    padding: 0.5rem !important;
+    padding-top: 2.5rem !important;
+  }
+  
+  .guest-app-header {
+    padding: 0.8rem !important;
+    margin-bottom: 1.2rem !important;
+    border-radius: 12px !important;
+  }
+  
+  .guest-app-header h1 {
+    font-size: 1.4rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  .guest-app-header p {
+    font-size: 0.85rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .guest-badge {
+    font-size: 0.75rem !important;
+    padding: 4px 8px !important;
+    margin-bottom: 0.6rem !important;
+  }
+  
+  .guest-actions {
+    gap: 0.6rem !important;
+  }
+  
+  .back-btn, .join-btn {
+    padding: 10px 16px !important;
+    font-size: 0.9rem !important;
+    min-height: 44px !important;
+  }
+  
+  .view-tabs {
+    gap: 0.6rem !important;
+    margin-bottom: 1.2rem !important;
+  }
+  
+  .tab-btn {
+    padding: 8px 16px !important;
+    font-size: 0.85rem !important;
+    min-height: 40px !important;
+  }
+  
+  .content-area {
+    padding: 1rem !important;
+    border-radius: 12px !important;
+  }
+  
+  .content-area h2 {
+    font-size: 1.3rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .guest-notice {
+    padding: 1rem !important;
+    border-radius: 10px !important;
+    margin-bottom: 1.2rem !important;
+  }
+  
+  .guest-notice h3 {
+    font-size: 1.1rem !important;
+    margin-bottom: 0.6rem !important;
+  }
+  
+  .guest-notice p {
+    font-size: 0.9rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .guest-limitations {
+    padding: 0.6rem !important;
+    border-radius: 6px !important;
+  }
+  
+  .guest-limitations strong {
+    font-size: 0.85rem !important;
+    margin-bottom: 0.3rem !important;
+  }
+  
+  .guest-limitations li {
+    font-size: 0.8rem !important;
+    margin-bottom: 0.2rem !important;
+  }
+  
+  .info-cards {
+    gap: 1rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .info-card {
+    padding: 1rem !important;
+    border-radius: 10px !important;
+  }
+  
+  .info-card h3 {
+    font-size: 1rem !important;
+    margin-bottom: 0.3rem !important;
+  }
+  
+  .info-card p {
+    font-size: 0.85rem !important;
+    margin-bottom: 0.6rem !important;
+  }
+  
+  .info-card li {
+    font-size: 0.8rem !important;
+    margin-bottom: 0.3rem !important;
+  }
 }
 
 /* Guest App Header */
@@ -349,46 +593,58 @@
 }
 
 .info-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: rgba(229, 62, 62, 0.1);
+  border: 2px solid #e53e3e;
+  border-radius: 16px;
+  padding: 1.8rem;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(229, 62, 62, 0.2);
 }
 
 .info-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-2px);
+  background: rgba(229, 62, 62, 0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(229, 62, 62, 0.3);
 }
 
 .info-card h3 {
   color: #e53e3e;
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
+  font-size: 1.3rem;
+  margin-bottom: 0.8rem;
+  text-align: center;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(229, 62, 62, 0.3);
 }
 
 .info-card p {
-  color: #ccc;
-  margin-bottom: 1rem;
+  color: #fff;
+  margin-bottom: 1.2rem;
+  text-align: center;
+  font-size: 1rem;
 }
 
 .info-card ul {
   list-style: none;
   padding: 0;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
 }
 
 .info-card li {
   color: #fff;
-  margin-bottom: 0.5rem;
-  padding-left: 1rem;
+  margin-bottom: 0.8rem;
+  padding-left: 1.5rem;
   position: relative;
+  font-size: 0.95rem;
+  line-height: 1.4;
 }
 
 .info-card li:before {
-  content: "•";
-  color: #e53e3e;
+  content: "💰";
   position: absolute;
   left: 0;
+  top: 0;
 }
 
 /* Ladder Rules */

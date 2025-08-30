@@ -41,10 +41,11 @@ export default function ResponsiveWrapper({ aspectWidth, aspectHeight, children 
           width: aspectWidth,
           height: aspectHeight,
           transform: `scale(${scale})`,
-          transformOrigin: "top left",
+          transformOrigin: "center center",
           position: "absolute",
-          top: 0,
-          left: 0
+          top: "50%",
+          left: "50%",
+          transform: `translate(-50%, -50%) scale(${scale})`
         }}
       >
         {children}

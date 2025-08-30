@@ -85,7 +85,10 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
         bottom: 0,
         width: '100%',
         height: '100%',
-        zIndex: 1
+        zIndex: 1,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
       }}>
         {/* Use better aspect ratio for pool table - more realistic proportions */}
         <ResponsiveWrapper aspectWidth={isMobile ? 350 : 800} aspectHeight={isMobile ? 200 : 400}>
@@ -96,8 +99,8 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
       {/* Login Form Overlay - PERFECTLY CENTERED on pool table, SMALLER on mobile */}
       <div style={{
         position: 'absolute',
-        top: isMobile ? '30%' : '50%', // Move up on mobile to align with playing surface
-        left: isMobile ? '50%' : 'calc(40%)', // Move 30px left on PC to center on pool table
+        top: isMobile ? '50%' : '50%', // Move down on mobile to align with playing surface
+        left: isMobile ? '50%' : '50%', // Center on PC
         transform: 'translate(-50%, -50%)', // Perfect centering
         zIndex: 10,
         width: isMobile ? '180px' : '420px', // Wide on PC, small on mobile
