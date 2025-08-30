@@ -680,20 +680,51 @@
 }
 
 @media (max-width: 480px) {
-  .table-header,
-  .table-row {
-    grid-template-columns: 50px 1fr 70px 50px 50px 70px;
-    padding: 8px 10px;
-    font-size: 0.7rem;
+  .ladder-app-container {
+    padding: 2px;
+    margin: 0;
   }
   
-  .header-cell,
-  .table-cell {
-    font-size: 0.7rem;
+  .ladder-header {
+    padding: 8px;
+    margin-bottom: 10px;
+    border-radius: 12px;
   }
   
   .ladder-title h1 {
     font-size: 1.5rem;
+  }
+  
+  .table-header,
+  .table-row {
+    grid-template-columns: 30px 3.5fr 45px 30px 30px 55px;
+    padding: 4px 6px;
+    font-size: 0.60rem;
+  }
+  
+  .header-cell,
+  .table-cell {
+    font-size: 0.55rem;
+  }
+  
+  .table-cell.name {
+    font-size: 0.6rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    word-break: keep-all;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .table-cell.status {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.5rem;
+  }
+  
+  .table-cell.fargo {
+    font-size: 0.5rem;
   }
 }
 

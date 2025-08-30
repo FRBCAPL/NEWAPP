@@ -668,8 +668,8 @@ const LadderApp = ({
             <div className="header-cell">Rank</div>
             <div className="header-cell">Player</div>
             <div className="header-cell">FargoRate</div>
-            <div className="header-cell">Wins</div>
-            <div className="header-cell">Losses</div>
+            <div className="header-cell">W</div>
+            <div className="header-cell">L</div>
             <div className="header-cell">Status</div>
           </div>
           
@@ -962,8 +962,8 @@ const LadderApp = ({
                   <div className="header-cell">Rank</div>
                   <div className="header-cell">Player</div>
                   <div className="header-cell">FargoRate</div>
-                  <div className="header-cell">Wins</div>
-                  <div className="header-cell">Losses</div>
+                  <div className="header-cell">W</div>
+                  <div className="header-cell">L</div>
                   <div className="header-cell">Status</div>
                 </div>
                 
