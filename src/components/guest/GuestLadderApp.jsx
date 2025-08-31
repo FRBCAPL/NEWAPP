@@ -142,6 +142,11 @@ const GuestLadderApp = () => {
     setShowJoinModal(true);
   };
 
+  const handleViewLadder = () => {
+    console.log('View Ladder button clicked! Setting currentView to ladders');
+    setCurrentView('ladders');
+  };
+
     const handleJoinSubmit = async (e) => {
     e.preventDefault();
     
@@ -260,10 +265,30 @@ const GuestLadderApp = () => {
         <div className="guest-badge">👀 Guest Mode - Limited Access</div>
         
         <div className="guest-actions">
-          <button onClick={handleBackToHub} className="back-btn">
+          <button 
+            type="button"
+            onClick={handleBackToHub} 
+            className="back-btn"
+          >
             ← Back to Hub
           </button>
-          <button onClick={handleJoinLadder} className="join-btn">
+          <button 
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('View Ladder button clicked!');
+              handleViewLadder();
+            }} 
+            className="view-ladder-btn"
+          >
+            View Ladder
+          </button>
+          <button 
+            type="button"
+            onClick={handleJoinLadder} 
+            className="join-btn"
+          >
             Join Ladder
           </button>
         </div>
@@ -287,6 +312,7 @@ const GuestLadderApp = () => {
 
       {/* Content */}
       <div className="content-area">
+        {console.log('Current view is:', currentView)}
         {currentView === 'app' && (
           <div className="app-preview-section">
             <div className="guest-notice">
@@ -313,6 +339,29 @@ const GuestLadderApp = () => {
                 userPin={guestUser?.pin || 'GUEST'}
                 onLogout={guestHandlers.onLogout}
                 isAdmin={false}
+              />
+            </div>
+          </div>
+        )}
+
+        {currentView === 'ladders' && (
+          <div className="ladders-preview-section">
+            <div className="guest-notice">
+              <h3>📊 Ladder Rankings</h3>
+              <p>View the current ladder rankings and player positions. This is the same interface that logged-in users see!</p>
+            </div>
+
+            {/* Ladder Rankings Component */}
+            <div className="ladder-rankings-preview">
+              <LadderApp
+                playerName={guestUser?.firstName || 'Guest'}
+                playerLastName={guestUser?.lastName || 'User'}
+                senderEmail={guestUser?.email || 'guest@frontrangepool.com'}
+                userPin={guestUser?.pin || 'GUEST'}
+                onLogout={guestHandlers.onLogout}
+                isAdmin={false}
+                showClaimForm={false}
+                initialView="ladders"
               />
             </div>
           </div>

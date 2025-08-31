@@ -20,10 +20,11 @@ const LadderApp = ({
   userPin, 
   userType,
   isAdmin = false,
-  showClaimForm = false
+  showClaimForm = false,
+  initialView = 'main'
 }) => {
   const navigate = useNavigate();
-  const [currentView, setCurrentView] = useState('main');
+  const [currentView, setCurrentView] = useState(initialView);
   const [userLadderData, setUserLadderData] = useState(null);
   const [ladderData, setLadderData] = useState([]);
   const [loading, setLoading] = useState(true);

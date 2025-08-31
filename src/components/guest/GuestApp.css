@@ -85,6 +85,37 @@
   transform: translateY(-2px);
 }
 
+.view-ladder-btn {
+  background: #4CAF50;
+  color: white;
+  border-color: #4CAF50;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  border: 2px solid;
+}
+
+.view-ladder-btn:hover {
+  background: #45a049;
+  border-color: #45a049;
+  transform: translateY(-2px);
+}
+
+.view-ladder-btn {
+  background: #4CAF50;
+  color: white;
+  border-color: #4CAF50;
+}
+
+.view-ladder-btn:hover {
+  background: #45a049;
+  border-color: #45a049;
+  transform: translateY(-2px);
+}
+
 /* Division/Ladder Selector */
 .division-selector, .ladder-selector {
   margin-bottom: 2rem;
@@ -588,11 +619,39 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .guest-app-container {
+    padding: 0.5rem;
+    padding-top: 3rem !important;
+  }
+  
+  .guest-app-header {
     padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 12px;
   }
   
   .guest-app-header h1 {
-    font-size: 2rem;
+    font-size: 1.4rem;
+    margin-bottom: 0.3rem;
+  }
+  
+  .guest-app-header p {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .guest-badge {
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .guest-actions {
+    gap: 0.5rem;
+  }
+  
+  .back-btn, .join-btn {
+    padding: 8px 16px;
+    font-size: 0.8rem;
   }
   
   .standings-header, .standings-row, .rankings-header, .rankings-row {
@@ -614,8 +673,9 @@
   }
   
   .guest-actions {
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
+    justify-content: center;
   }
   
   .view-tabs {
@@ -628,5 +688,166 @@
   
   .guest-limitations {
     padding: 0.8rem;
+  }
+  
+  /* Guest notice section - more mobile friendly */
+  .guest-notice {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 10px;
+  }
+  
+  .guest-notice h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .guest-notice p {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  
+  .guest-limitations {
+    padding: 0.8rem;
+    border-radius: 8px;
+  }
+  
+  .guest-limitations strong {
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+  }
+  
+  .guest-limitations li {
+    font-size: 0.8rem;
+    margin-bottom: 0.2rem;
+  }
+  
+  /* Info cards - more mobile friendly */
+  .info-cards {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .info-card {
+    padding: 1rem;
+    border-radius: 10px;
+  }
+  
+  .info-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.4rem;
+  }
+  
+  .info-card p {
+    font-size: 0.9rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .info-card li {
+    font-size: 0.85rem;
+    margin-bottom: 0.3rem;
+    padding-left: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .guest-app-container {
+    padding: 0.3rem;
+    padding-top: 2.5rem !important;
+  }
+  
+  .guest-app-header {
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border-radius: 10px;
+  }
+  
+  .guest-app-header h1 {
+    font-size: 1.2rem;
+    margin-bottom: 0.2rem;
+  }
+  
+  .guest-app-header p {
+    font-size: 0.8rem;
+    margin-bottom: 0.4rem;
+  }
+  
+  .guest-badge {
+    padding: 3px 10px;
+    font-size: 0.7rem;
+    margin-bottom: 0.6rem;
+  }
+  
+  .guest-actions {
+    gap: 0.4rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .back-btn, .join-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+  
+  /* Guest notice section - even more compact for small phones */
+  .guest-notice {
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+  }
+  
+  .guest-notice h3 {
+    font-size: 1rem;
+    margin-bottom: 0.6rem;
+  }
+  
+  .guest-notice p {
+    font-size: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .guest-limitations {
+    padding: 0.6rem;
+    border-radius: 6px;
+  }
+  
+  .guest-limitations strong {
+    font-size: 0.8rem;
+    margin-bottom: 0.3rem;
+  }
+  
+  .guest-limitations li {
+    font-size: 0.75rem;
+    margin-bottom: 0.15rem;
+  }
+  
+  /* Info cards - even more compact for small phones */
+  .info-cards {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .info-card {
+    padding: 0.8rem;
+    border-radius: 8px;
+  }
+  
+  .info-card h3 {
+    font-size: 1rem;
+    margin-bottom: 0.3rem;
+  }
+  
+  .info-card p {
+    font-size: 0.8rem;
+    margin-bottom: 0.6rem;
+  }
+  
+  .info-card li {
+    font-size: 0.75rem;
+    margin-bottom: 0.2rem;
+    padding-left: 0.6rem;
   }
 }

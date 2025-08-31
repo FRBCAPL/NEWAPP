@@ -89,7 +89,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
         <div className="nav-right">
           {!userFirstName ? (
             <div className="login-nav-info">
-              🎯 Your Pool Community Hub
+              🎯 Your Front Range Pool League Hub
             </div>
           ) : (
             <>
