@@ -1,0 +1,406 @@
+/* Live Comment Display Overlay Styles */
+.live-comment-display {
+  position: fixed;
+  font-family: 'Arial', sans-serif;
+  z-index: 9999;
+  pointer-events: none; /* Allow clicks to pass through */
+  max-width: 400px;
+  min-width: 300px;
+}
+
+/* Positioning */
+.position-bottom-right {
+  bottom: 20px;
+  right: 20px;
+}
+
+.position-bottom-left {
+  bottom: 20px;
+  left: 20px;
+}
+
+.position-top-right {
+  top: 20px;
+  right: 20px;
+}
+
+.position-top-left {
+  top: 20px;
+  left: 20px;
+}
+
+/* Theme Styles */
+.theme-dark {
+  color: #fff;
+}
+
+.theme-light {
+  color: #333;
+}
+
+.theme-transparent {
+  color: #fff;
+}
+
+/* Comments Container */
+.comments-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+/* Individual Comment Item */
+.comment-item {
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 12px;
+  padding: 12px 16px;
+  border-left: 4px solid #888;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+  pointer-events: auto; /* Enable interactions for remove button */
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+.theme-light .comment-item {
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.theme-transparent .comment-item {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+}
+
+/* Platform-specific styling */
+.platform-facebook {
+  border-left-color: #1877F2;
+}
+
+.platform-youtube {
+  border-left-color: #FF0000;
+}
+
+/* Comment Header */
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.platform-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.author-name {
+  font-weight: bold;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remove-comment {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.remove-comment:hover {
+  opacity: 1;
+  background: rgba(255, 0, 0, 0.3);
+}
+
+/* Comment Text */
+.comment-text {
+  font-size: 1rem;
+  line-height: 1.4;
+  margin-bottom: 6px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Comment Time */
+.comment-time {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  text-align: right;
+}
+
+/* Live Status Indicator */
+.live-status {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 5px;
+}
+
+.status-indicators {
+  display: flex;
+  gap: 8px;
+}
+
+.platform-status {
+  background: rgba(0, 0, 0, 0.8);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  backdrop-filter: blur(5px);
+}
+
+.facebook-live {
+  background: rgba(24, 119, 242, 0.8);
+  border: 1px solid #1877F2;
+}
+
+.youtube-live {
+  background: rgba(255, 0, 0, 0.8);
+  border: 1px solid #FF0000;
+}
+
+.theme-light .platform-status {
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+}
+
+.theme-light .facebook-live {
+  background: rgba(24, 119, 242, 0.1);
+  color: #1877F2;
+}
+
+.theme-light .youtube-live {
+  background: rgba(255, 0, 0, 0.1);
+  color: #FF0000;
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+}
+
+/* Configuration Interface Styles */
+.live-comment-config {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d1810 100%);
+  color: #fff;
+  font-family: 'Arial', sans-serif;
+  min-height: 100vh;
+}
+
+.live-comment-config h2 {
+  color: #e53e3e;
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 2rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.live-comment-config > p {
+  text-align: center;
+  color: #ccc;
+  margin-bottom: 40px;
+  font-size: 1.1rem;
+}
+
+.config-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(229, 62, 62, 0.3);
+}
+
+.config-section h3 {
+  color: #e53e3e;
+  margin: 0 0 15px 0;
+  font-size: 1.2rem;
+}
+
+.config-section input,
+.config-section select {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(229, 62, 62, 0.5);
+  border-radius: 6px;
+  padding: 12px;
+  color: #fff;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.config-section input:focus,
+.config-section select:focus {
+  outline: none;
+  border-color: #e53e3e;
+  box-shadow: 0 0 10px rgba(229, 62, 62, 0.3);
+}
+
+.config-section label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.config-section input[type="checkbox"] {
+  width: auto;
+  transform: scale(1.2);
+  accent-color: #e53e3e;
+}
+
+.config-result {
+  background: rgba(229, 62, 62, 0.1);
+  border: 2px solid #e53e3e;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 30px 0;
+}
+
+.config-result h3 {
+  color: #e53e3e;
+  margin: 0 0 15px 0;
+  font-size: 1.2rem;
+}
+
+.url-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.vmix-url {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(229, 62, 62, 0.5);
+  border-radius: 6px;
+  padding: 12px;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+.copy-button {
+  background: linear-gradient(135deg, #e53e3e 0%, #c00 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.copy-button:hover {
+  background: linear-gradient(135deg, #c00 0%, #a00 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(229, 62, 62, 0.3);
+}
+
+.config-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.preview-button {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 15px 25px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.preview-button:hover {
+  background: linear-gradient(135deg, #45a049 0%, #4CAF50 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(76, 175, 80, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .live-comment-display {
+    max-width: calc(100vw - 40px);
+    min-width: 250px;
+  }
+  
+  .comment-item {
+    padding: 10px 12px;
+  }
+  
+  .comment-text {
+    font-size: 0.9rem;
+  }
+  
+  .live-comment-config {
+    padding: 20px 10px;
+  }
+  
+  .url-container {
+    flex-direction: column;
+  }
+  
+  .copy-button {
+    width: 100%;
+  }
+}
+
+/* VMix Compatibility */
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+/* Hide scrollbars for VMix */
+::-webkit-scrollbar {
+  display: none;
+}
+
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
