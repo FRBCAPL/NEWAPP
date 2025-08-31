@@ -79,10 +79,9 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
       {/* Pool Table Background - Better proportions */}
       <div style={{
         position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
         width: '100%',
         height: '100%',
         zIndex: 1
@@ -96,8 +95,8 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
       {/* Login Form Overlay - PERFECTLY CENTERED on pool table, SMALLER on mobile */}
       <div style={{
         position: 'absolute',
-        top: isMobile ? '30%' : '50%', // Move up on mobile to align with playing surface
-        left: isMobile ? '50%' : 'calc(40%)', // Move 30px left on PC to center on pool table
+        top: isMobile ? '50%' : '50%', // Center vertically on both mobile and PC
+        left: '50%', // Center horizontally on both mobile and PC
         transform: 'translate(-50%, -50%)', // Perfect centering
         zIndex: 10,
         width: isMobile ? '180px' : '420px', // Wide on PC, small on mobile
@@ -134,7 +133,7 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
           </h3>
           
           {/* Login Section Second */}
-          <div style={{ marginBottom: isMobile ? '4px' : '20px' }}>
+          <div style={{ marginBottom: isMobile ? '4px' : '20px', position: 'relative' }}>
             <input
               type={showPassword ? "text" : "password"}
               value={input}
@@ -145,7 +144,7 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
               disabled={loading}
               style={{
                 width: '100%',
-                padding: isMobile ? '6px' : '16px', // Much smaller padding on mobile
+                padding: isMobile ? '6px 40px 6px 16px' : '16px 40px 16px 16px', // Add right padding for toggle button
                 border: '2px solid #e53e3e',
                 borderRadius: '8px',
                 background: 'rgba(255, 255, 255, 0.1)',
@@ -155,6 +154,28 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
                 minHeight: isMobile ? '28px' : 'auto' // Much smaller height on mobile
               }}
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: 'absolute',
+                right: '8px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px',
+                fontSize: isMobile ? '14px' : '16px',
+                color: '#666',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? "🙈" : "👁️"}
+            </button>
           </div>
           
           <button

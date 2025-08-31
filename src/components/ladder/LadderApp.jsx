@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '../../config.js';
 import LadderApplicationsManager from '../admin/LadderApplicationsManager';
 import DraggableModal from '../modal/DraggableModal';
@@ -20,10 +21,11 @@ const LadderApp = ({
   userPin, 
   userType,
   isAdmin = false,
-  showClaimForm = false
+  showClaimForm = false,
+  initialView = 'main'
 }) => {
   const navigate = useNavigate();
-  const [currentView, setCurrentView] = useState('main');
+  const [currentView, setCurrentView] = useState(initialView);
   const [userLadderData, setUserLadderData] = useState(null);
   const [ladderData, setLadderData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +55,11 @@ const LadderApp = ({
   const [sentChallenges, setSentChallenges] = useState([]);
   const [showPrizePoolModal, setShowPrizePoolModal] = useState(false);
   const [showMatchReportingModal, setShowMatchReportingModal] = useState(false);
+  
+  // Mobile player stats state
+  const [selectedPlayerForStats, setSelectedPlayerForStats] = useState(null);
+  const [showMobilePlayerStats, setShowMobilePlayerStats] = useState(false);
+  const [lastMatchData, setLastMatchData] = useState(null);
 
   useEffect(() => {
     // Load user's ladder data and ladder rankings
@@ -451,6 +458,35 @@ const LadderApp = ({
     setShowChallengeModal(true);
   };
 
+  const handlePlayerClick = (player) => {
+    console.log('🎯 Player clicked:', player);
+    console.log('📊 Setting modal state...');
+    setSelectedPlayerForStats(player);
+    setShowMobilePlayerStats(true);
+    console.log('📊 Modal should now be visible');
+    fetchLastMatchData(player);
+  };
+
+  const fetchLastMatchData = async (player) => {
+    if (!player.email) {
+      setLastMatchData(null);
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/ladder/matches/last-match/${encodeURIComponent(player.email)}`);
+      if (response.ok) {
+        const matchData = await response.json();
+        setLastMatchData(matchData);
+      } else {
+        setLastMatchData(null);
+      }
+    } catch (error) {
+      console.error('Error fetching last match data:', error);
+      setLastMatchData(null);
+    }
+  };
+
   const handleSmartMatch = () => {
     console.log('🧠 Smart Match clicked');
     console.log('📊 Current ladder data:', ladderData);
@@ -663,71 +699,78 @@ const LadderApp = ({
           </div>
         </div>
         
-        <div className="ladder-table">
-          <div className="table-header">
-            <div className="header-cell">Rank</div>
-            <div className="header-cell">Player</div>
-            <div className="header-cell">FargoRate</div>
-            <div className="header-cell">W</div>
-            <div className="header-cell">L</div>
-            <div className="header-cell">Status</div>
-          </div>
-          
-          {ladderData.map((player, index) => (
-            <div key={player._id || index} className="table-row">
-              <div className="table-cell rank">#{player.position}</div>
-              <div className="table-cell name">
-                {player.firstName} {player.lastName}
-                {!player.email && <span className="no-account">*</span>}
-                {userLadderData?.canChallenge && player.email && userLadderData.email !== player.email && (
-                  <div style={{ marginTop: '4px' }}>
-                    <button
-                      onClick={() => handleChallengePlayer(player, 'challenge')}
-                      style={{
-                        background: '#ff4444',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '2px 6px',
-                        fontSize: '0.7rem',
-                        cursor: 'pointer',
-                        marginRight: '4px'
-                      }}
-                    >
-                      Challenge
-                    </button>
-                    <button
-                      onClick={() => handleChallengePlayer(player, 'smackdown')}
-                      style={{
-                        background: '#f59e0b',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '2px 6px',
-                        fontSize: '0.7rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      SmackDown
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="table-cell fargo">{player.fargoRate === 0 ? "No FargoRate" : player.fargoRate}</div>
-              <div className="table-cell wins">{player.wins || 0}</div>
-              <div className="table-cell losses">{player.losses || 0}</div>
-              <div className="table-cell status">
-                {!player.isActive ? (
-                  <span className="inactive">Inactive</span>
-                ) : player.immunityUntil && new Date(player.immunityUntil) > new Date() ? (
-                  <span className="immune">Immune</span>
-                ) : (
-                  <span className="active">Active</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+                 <div className="ladder-table" style={{ position: 'relative' }}>
+           <div className="table-header">
+             <div className="header-cell">Rank</div>
+             <div className="header-cell">Player</div>
+             <div className="header-cell">FargoRate</div>
+             <div className="header-cell">W</div>
+             <div className="header-cell">L</div>
+             <div className="header-cell">Status</div>
+           </div>
+           
+           {ladderData.map((player, index) => (
+             <div key={player._id || index} className="table-row">
+               <div className="table-cell rank">#{player.position}</div>
+               <div className="table-cell name">
+                 <div 
+                   className="player-name-clickable"
+                   onClick={() => handlePlayerClick(player)}
+                 >
+                   {player.firstName} {player.lastName}
+                   {!player.email && <span className="no-account">*</span>}
+                 </div>
+                 {userLadderData?.canChallenge && player.email && userLadderData.email !== player.email && (
+                   <div style={{ marginTop: '4px' }}>
+                     <button
+                       onClick={() => handleChallengePlayer(player, 'challenge')}
+                       style={{
+                         background: '#ff4444',
+                         color: 'white',
+                         border: 'none',
+                         borderRadius: '4px',
+                         padding: '2px 6px',
+                         fontSize: '0.7rem',
+                         cursor: 'pointer',
+                         marginRight: '4px'
+                       }}
+                     >
+                       Challenge
+                     </button>
+                     <button
+                       onClick={() => handleChallengePlayer(player, 'smackdown')}
+                       style={{
+                         background: '#f59e0b',
+                         color: 'white',
+                         border: 'none',
+                         borderRadius: '4px',
+                         padding: '2px 6px',
+                         fontSize: '0.7rem',
+                         cursor: 'pointer'
+                       }}
+                     >
+                       SmackDown
+                     </button>
+                   </div>
+                 )}
+               </div>
+               <div className="table-cell fargo">{player.fargoRate === 0 ? "No FargoRate" : player.fargoRate}</div>
+               <div className="table-cell wins">{player.wins || 0}</div>
+               <div className="table-cell losses">{player.losses || 0}</div>
+               <div className="table-cell status">
+                 {!player.isActive ? (
+                   <span className="inactive">Inactive</span>
+                 ) : player.immunityUntil && new Date(player.immunityUntil) > new Date() ? (
+                   <span className="immune">Immune</span>
+                 ) : (
+                   <span className="active">Active</span>
+                 )}
+               </div>
+             </div>
+           ))}
+
+           
+         </div>
         
         <div className="ladder-legend">
           <p><span className="no-account">*</span> = Account not claimed yet</p>
@@ -971,8 +1014,13 @@ const LadderApp = ({
                   <div key={player._id || index} className="table-row">
                     <div className="table-cell rank">#{player.position}</div>
                     <div className="table-cell name">
-                      {player.firstName} {player.lastName}
-                      {!player.email && <span className="no-account">*</span>}
+                      <div 
+                        className="player-name-clickable"
+                        onClick={() => handlePlayerClick(player)}
+                      >
+                        {player.firstName} {player.lastName}
+                        {!player.email && <span className="no-account">*</span>}
+                      </div>
                     </div>
                     <div className="table-cell fargo">{player.fargoRate === 0 ? "No FargoRate" : player.fargoRate}</div>
                     <div className="table-cell wins">{player.wins || 0}</div>
@@ -1368,19 +1416,155 @@ const LadderApp = ({
          />
        )}
        
-       {showMatchReportingModal && (
-         <LadderMatchReportingModal
-           isOpen={showMatchReportingModal}
-           onClose={() => setShowMatchReportingModal(false)}
-           playerName={`${playerName} ${playerLastName}`}
-           selectedLadder={selectedLadder}
-           onMatchReported={(matchData) => {
-             // Refresh ladder data after match is reported
-             loadData();
-             loadChallenges();
-           }}
-         />
-       )}
+               {showMatchReportingModal && (
+          <LadderMatchReportingModal
+            isOpen={showMatchReportingModal}
+            onClose={() => setShowMatchReportingModal(false)}
+            playerName={`${playerName} ${playerLastName}`}
+            selectedLadder={selectedLadder}
+            onMatchReported={(matchData) => {
+              // Refresh ladder data after match is reported
+              loadData();
+              loadChallenges();
+            }}
+          />
+        )}
+
+        {/* Player Stats Modal - Rendered via Portal */}
+        {showMobilePlayerStats && selectedPlayerForStats && createPortal(
+          <div 
+            className="player-stats-modal"
+            style={{
+              position: 'fixed',
+              top: '0',
+              left: '0',
+              right: '0',
+              bottom: '0',
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(0, 0, 0, 0.8)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 99999,
+              backdropFilter: 'blur(5px)',
+              padding: '10px',
+              boxSizing: 'border-box',
+              overflow: 'hidden',
+              transform: 'none'
+            }}
+          >
+            <div 
+              className="player-stats-content"
+              style={{
+                background: 'rgba(35, 35, 42, 0.16)',
+                borderRadius: '18px',
+                maxWidth: '90vw',
+                width: window.innerWidth <= 768 ? '280px' : '400px',
+                maxHeight: '80vh',
+                overflowY: 'auto',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                boxShadow: '0 4px 32px #e53e3e22, 0 0 16px #e53e3e11',
+                boxSizing: 'border-box',
+                position: 'relative'
+              }}
+            >
+              <div className="player-stats-header">
+                <h3>{selectedPlayerForStats.firstName} {selectedPlayerForStats.lastName}</h3>
+                <button 
+                  className="stats-close-btn"
+                  onClick={() => setShowMobilePlayerStats(false)}
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="player-stats-body">
+                <div className="stats-grid">
+                  <div className="stat-item">
+                    <div className="stat-label">Rank</div>
+                    <div className="stat-value">#{selectedPlayerForStats.position}</div>
+                  </div>
+                  
+                  <div className="stat-item">
+                    <div className="stat-label">FargoRate</div>
+                    <div className="stat-value">
+                      {selectedPlayerForStats.fargoRate === 0 ? "No FargoRate" : selectedPlayerForStats.fargoRate}
+                    </div>
+                  </div>
+                  
+                  <div className="stat-item">
+                    <div className="stat-label">Wins</div>
+                    <div className="stat-value wins">{selectedPlayerForStats.wins || 0}</div>
+                  </div>
+                  
+                  <div className="stat-item">
+                    <div className="stat-label">Losses</div>
+                    <div className="stat-value losses">{selectedPlayerForStats.losses || 0}</div>
+                  </div>
+                  
+                  <div className="stat-item">
+                    <div className="stat-label">Status</div>
+                    <div className="stat-value status">
+                      {!selectedPlayerForStats.isActive ? (
+                        <span className="inactive">Inactive</span>
+                      ) : selectedPlayerForStats.immunityUntil && new Date(selectedPlayerForStats.immunityUntil) > new Date() ? (
+                        <span className="immune">Immune</span>
+                      ) : (
+                        <span className="active">Active</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {selectedPlayerForStats.immunityUntil && new Date(selectedPlayerForStats.immunityUntil) > new Date() && (
+                    <div className="stat-item">
+                      <div className="stat-label">Immunity Until</div>
+                      <div className="stat-value">
+                        {new Date(selectedPlayerForStats.immunityUntil).toLocaleDateString()}
+                      </div>
+                    </div>
+                  )}
+                  
+                                     <div className="stat-item">
+                     <div className="stat-label">Last Match</div>
+                     <div className="stat-value">
+                       {lastMatchData ? (
+                         <div className="last-match-info">
+                           <div className="match-opponent">
+                             vs {lastMatchData.opponentName}
+                           </div>
+                           <div className={`match-result ${lastMatchData.result === 'W' ? 'win' : 'loss'}`}>
+                             {lastMatchData.result === 'W' ? 'Won' : 'Lost'} {lastMatchData.score}
+                           </div>
+                           <div className="match-type">
+                             {lastMatchData.matchType === 'challenge' ? 'Challenge Match' :
+                              lastMatchData.matchType === 'ladder-jump' ? 'Ladder Jump' :
+                              lastMatchData.matchType === 'smackdown' ? 'SmackDown' :
+                              lastMatchData.matchType === 'smackback' ? 'SmackBack' :
+                              lastMatchData.matchType}
+                           </div>
+                           <div className="player-role">
+                             {lastMatchData.playerRole === 'challenger' ? 'Challenger' :
+                              lastMatchData.playerRole === 'defender' ? 'Defender' :
+                              'Player'}
+                           </div>
+                           <div className="match-date">
+                             {new Date(lastMatchData.matchDate).toLocaleDateString()}
+                           </div>
+                         </div>
+                       ) : (
+                         <span className="no-match">No recent matches</span>
+                       )}
+                     </div>
+                   </div>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
         
      </div>
    );

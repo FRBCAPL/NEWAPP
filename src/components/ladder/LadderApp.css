@@ -664,7 +664,7 @@
   
   .table-header,
   .table-row {
-    grid-template-columns: 60px 1.5fr 80px 60px 60px 80px;
+    grid-template-columns: 60px 1fr 80px;
     padding: 10px 15px;
     font-size: 0.8rem;
   }
@@ -672,6 +672,19 @@
   .header-cell,
   .table-cell {
     font-size: 0.8rem;
+  }
+  
+  /* Hide FargoRate, Wins, and Losses columns on mobile */
+  .table-header .header-cell:nth-child(3),
+  .table-header .header-cell:nth-child(4),
+  .table-header .header-cell:nth-child(5) {
+    display: none;
+  }
+  
+  .table-row .table-cell:nth-child(3),
+  .table-row .table-cell:nth-child(4),
+  .table-row .table-cell:nth-child(5) {
+    display: none;
   }
   
   .ladder-view {
@@ -697,7 +710,7 @@
   
   .table-header,
   .table-row {
-    grid-template-columns: 30px 3.5fr 45px 30px 30px 55px;
+    grid-template-columns: 30px 2fr 45px;
     padding: 4px 6px;
     font-size: 0.60rem;
   }
@@ -723,8 +736,17 @@
     font-size: 0.5rem;
   }
   
-  .table-cell.fargo {
-    font-size: 0.5rem;
+  /* Hide FargoRate, Wins, and Losses columns on mobile */
+  .table-header .header-cell:nth-child(3),
+  .table-header .header-cell:nth-child(4),
+  .table-header .header-cell:nth-child(5) {
+    display: none;
+  }
+  
+  .table-row .table-cell:nth-child(3),
+  .table-row .table-cell:nth-child(4),
+  .table-row .table-cell:nth-child(5) {
+    display: none;
   }
 }
 
@@ -1012,5 +1034,258 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Clickable Player Names */
+.player-name-clickable {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  position: relative;
+  display: inline-block;
+}
+
+.player-name-clickable:hover {
+  background: rgba(229, 62, 62, 0.1);
+  color: var(--accent-red);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.2);
+}
+
+.player-name-clickable:active {
+  transform: translateY(0);
+}
+
+/* Player Stats Modal */
+.player-stats-modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 99999 !important;
+  backdrop-filter: blur(5px);
+  padding: 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+  animation: fadeIn 0.3s ease;
+  transform: none !important;
+}
+
+.player-stats-content {
+  background: var(--glass-bg);
+  border-radius: 18px;
+  max-width: 90vw;
+  width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  box-sizing: border-box;
+  position: relative;
+  animation: slideInUp 0.3s ease;
+}
+
+.player-stats-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.player-stats-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.player-stats-content::-webkit-scrollbar-thumb {
+  background: var(--accent-red);
+  border-radius: 4px;
+}
+
+.player-stats-content::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-red-dark);
+}
+
+.player-stats-header {
+  position: relative;
+  padding: 25px 30px 20px 30px;
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 18px 18px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.player-stats-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--white);
+  text-shadow: 0 0 8px var(--accent-red);
+}
+
+.stats-close-btn {
+  background: none;
+  border: none;
+  color: var(--gray);
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.stats-close-btn:hover {
+  color: var(--accent-red);
+  background: rgba(229, 62, 62, 0.1);
+  transform: scale(1.1);
+}
+
+.player-stats-body {
+  padding: 25px 30px 30px 30px;
+}
+
+.stats-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.1);
+}
+
+.stat-label {
+  font-weight: 600;
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+.stat-value {
+  font-weight: bold;
+  color: var(--white);
+  font-size: 1rem;
+}
+
+.stat-value.wins {
+  color: #2ecc71;
+  text-shadow: 0 0 8px #2ecc71;
+}
+
+.stat-value.losses {
+  color: #e74c3c;
+  text-shadow: 0 0 8px #e74c3c;
+}
+
+.stat-value.status .active {
+  color: #2ecc71;
+  text-shadow: 0 0 8px #2ecc71;
+}
+
+.stat-value.status .inactive {
+  color: var(--gray);
+}
+
+.stat-value.status .immune {
+  color: var(--admin-orange);
+  text-shadow: 0 0 8px var(--admin-orange);
+}
+
+/* Last Match Info Styles */
+.last-match-info {
+  text-align: left;
+  line-height: 1.4;
+}
+
+.match-opponent {
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+
+.match-result {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.match-result.win {
+  color: #2ecc71;
+  text-shadow: 0 0 8px #2ecc71;
+}
+
+.match-result.loss {
+  color: #e74c3c;
+  text-shadow: 0 0 8px #e74c3c;
+}
+
+.match-type {
+  color: var(--admin-orange);
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.player-role {
+  color: var(--gray);
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.match-date {
+  color: var(--gray);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.no-match {
+  color: var(--gray);
+  font-style: italic;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+  .player-stats-content {
+    width: 280px;
+    max-height: 60vh;
+  }
+  
+  .player-stats-header h3 {
+    font-size: 1.3rem;
+  }
+  
+  .stat-item {
+    padding: 12px;
+  }
+  
+  .stat-label {
+    font-size: 0.8rem;
+  }
+  
+  .stat-value {
+    font-size: 0.9rem;
   }
 }

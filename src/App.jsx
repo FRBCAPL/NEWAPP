@@ -33,7 +33,7 @@ import usaplLogo from "./assets/usapl_logo.png";
 import fargorateLogo from "./assets/fargorate-logo.png";
 import "./styles/variables.css";
 import "./styles/global.css";
-
+   // render force update
 // Mobile optimization test script (development only)
 const mobileOptimizationTestScript = `
 // Mobile Optimization Test Script

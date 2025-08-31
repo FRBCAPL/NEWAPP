@@ -1,6 +1,9 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './HubNavigation.css';
+import ball8 from '../../assets/ball8.svg';
+import ball9 from '../../assets/nineball.svg';
+import ball10 from '../../assets/tenball.svg';
 
 const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFirstName, userLastName }) => {
   const navigate = useNavigate();
@@ -39,9 +42,15 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
     <div className="hub-navigation">
       <div className="nav-content">
         <div className="nav-left">
-          <button onClick={handleReturnToHub} className="hub-btn">
-            🏠 Front Range Hub
-          </button>
+          {!userFirstName ? (
+                         <div className="hub-brand">
+               🎱 Front Range <img src={ball9} alt="9-ball" className="nav-ball" /> Pool League <img src={ball10} alt="10-ball" className="nav-ball" />
+             </div>
+          ) : (
+            <button onClick={handleReturnToHub} className="hub-btn">
+              🏠 Front Range Hub
+            </button>
+          )}
         </div>
         
         <div className="nav-center">
@@ -78,33 +87,41 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
         </div>
         
         <div className="nav-right">
-          {/* Admin buttons */}
-          {isAdmin && (
+          {!userFirstName ? (
+            <div className="login-nav-info">
+              🎯 Your Front Range Pool League Hub
+            </div>
+          ) : (
             <>
-              <button onClick={handlePlayerManagementClick} className="admin-btn">
-                👥 Players
+              {/* Admin buttons */}
+              {isAdmin && (
+                <>
+                  <button onClick={handlePlayerManagementClick} className="admin-btn">
+                    👥 Players
+                  </button>
+                  <button onClick={handleAdminClick} className="admin-btn">
+                    ⚙️ Admin
+                  </button>
+                </>
+              )}
+              
+              {/* Super Admin button */}
+              {isSuperAdmin && (
+                <button onClick={handlePlatformAdminClick} className="super-admin-btn">
+                  🔧 Platform Admin
+                </button>
+              )}
+              
+              <button onClick={handleSwitchApp} className="switch-app-btn" style={{
+                marginRight: '10rem'
+              }}>
+                🔄 Switch App
               </button>
-              <button onClick={handleAdminClick} className="admin-btn">
-                ⚙️ Admin
+              <button onClick={handleLogout} className="logout-btn">
+                🚪 Logout
               </button>
             </>
           )}
-          
-          {/* Super Admin button */}
-          {isSuperAdmin && (
-            <button onClick={handlePlatformAdminClick} className="super-admin-btn">
-              🔧 Platform Admin
-            </button>
-          )}
-          
-          <button onClick={handleSwitchApp} className="switch-app-btn" style={{
-            marginRight: '10rem'
-          }}>
-            🔄 Switch App
-          </button>
-          <button onClick={handleLogout} className="logout-btn">
-            🚪 Logout
-          </button>
         </div>
       </div>
     </div>
