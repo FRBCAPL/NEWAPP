@@ -670,6 +670,34 @@ const LadderApp = ({
           <h2>{getLadderDisplayName(selectedLadder)} Ladder</h2>
           <p>Current rankings and positions</p>
           
+          {/* Independent Tournament Disclaimer */}
+          <div className="ladder-disclaimer" style={{
+            marginTop: '1rem',
+            padding: '16px 20px',
+            background: 'rgba(255, 193, 7, 0.15)',
+            border: '2px solid rgba(255, 193, 7, 0.4)',
+            borderRadius: '10px',
+            textAlign: 'center',
+            maxWidth: '600px',
+            margin: '1rem auto 0 auto',
+            boxShadow: '0 4px 12px rgba(255, 193, 7, 0.2)',
+            position: 'relative',
+            zIndex: 10
+          }}>
+            <p style={{ 
+              margin: '0', 
+              color: '#ffc107', 
+              fontSize: '1rem',
+              fontWeight: '600',
+              lineHeight: '1.5',
+              textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)'
+            }}>
+              <strong>⚠️ Independent Tournament Series ⚠️</strong><br/><br/>
+              This ladder system is <strong>NOT</strong> affiliated with, endorsed by, or sanctioned by the Front Range Pool League, CSI, BCAPL, or USAPL.<br/><br/>
+              It is an independent tournament series operated by <strong>Legends Brews and Cues</strong>.
+            </p>
+          </div>
+          
           {/* Ladder Selector */}
           <div className="ladder-selector" style={{
             marginTop: '1rem',
@@ -1134,6 +1162,37 @@ const LadderApp = ({
                </div>
              )}
           </div>
+        </div>
+
+        {/* Independent Tournament Disclaimer */}
+        <div style={{
+          marginBottom: '30px',
+          padding: '20px 24px',
+          background: 'rgba(255, 193, 7, 0.2)',
+          border: '3px solid #ffc107',
+          borderRadius: '12px',
+          textAlign: 'center',
+          maxWidth: '800px',
+          margin: '0 auto 30px auto',
+          boxShadow: '0 6px 20px rgba(255, 193, 7, 0.3)',
+          position: 'relative',
+          zIndex: 999,
+          display: 'block',
+          visibility: 'visible',
+          opacity: 1
+        }}>
+          <p style={{ 
+            margin: '0', 
+            color: '#ffc107', 
+            fontSize: '1.2rem',
+            fontWeight: '700',
+            lineHeight: '1.6',
+            textShadow: '0 2px 4px rgba(0, 0, 0, 0.8)'
+          }}>
+            <strong>⚠️ INDEPENDENT TOURNAMENT SERIES ⚠️</strong><br/><br/>
+            This ladder system is <strong>NOT</strong> affiliated with, endorsed by, or sanctioned by the Front Range Pool League, CSI, BCAPL, or USAPL.<br/><br/>
+            It is an independent tournament series operated by <strong>Legends Brews and Cues</strong>.
+          </p>
         </div>
 
                  {/* Main Navigation */}
