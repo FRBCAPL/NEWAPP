@@ -27,6 +27,39 @@
   gap: 1rem;
 }
 
+.hub-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(229, 62, 62, 0.1);
+  border: 2px solid #e53e3e;
+  border-radius: 12px;
+  padding: 0.8rem 1.2rem;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(229, 62, 62, 0.5);
+}
+
+.nav-ball {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 8px rgba(229, 62, 62, 0.4);
+}
+
+.login-nav-info {
+  background: rgba(229, 62, 62, 0.1);
+  border: 2px solid #e53e3e;
+  border-radius: 12px;
+  padding: 0.8rem 1.2rem;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(229, 62, 62, 0.5);
+}
+
 .hub-btn {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
