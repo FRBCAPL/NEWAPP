@@ -23,7 +23,7 @@
 
 .app-hub-content {
   position: absolute;
-  top: 7%;
+  top: 25%;
   left: 50%;
   transform: translate(-50%, 0);
   z-index: 2;
