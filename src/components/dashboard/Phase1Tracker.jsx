@@ -417,7 +417,7 @@ function formatDateMMDDYYYY(dateStr) {
                   background: `linear-gradient(135deg, rgba(0, 0, 0, 0.85), rgba(20, 20, 20, 0.9), rgba(0, 0, 0, 0.85))`,
                   border: `2px solid rgba(255, 255, 255, 0.2)`,
                   borderRadius: isMobile ? '16px' : '20px',
-                  padding: isMobile ? '8px 12px 12px 12px' : '12px 20px 20px 20px',
+                  padding: isMobile ? '6px 10px 10px 10px' : '10px 16px 16px 16px',
           margin: isMobile ? '-15px 0 0 0' : '13px auto',
           width: isMobile ? '100%' : '98%',
           maxWidth: isMobile ? 'none' : '1600px',
@@ -428,7 +428,7 @@ function formatDateMMDDYYYY(dateStr) {
                    backdropFilter: 'blur(8px)',
           overflow: isMobile ? 'auto' : 'hidden',
                    maxHeight: isMobile ? 'none' : '35vh',
-           height: isMobile ? (isExpanded ? '350px' : '60px') : (isExpanded ? '400px' : '160px'),
+           height: isMobile ? (isExpanded ? '350px' : '60px') : (isExpanded ? '408px' : '160px'),
           transition: 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
           position: 'relative',
           transform: 'none',
@@ -441,8 +441,8 @@ function formatDateMMDDYYYY(dateStr) {
                                                                <div style={{
             position: 'relative',
             textAlign: 'center',
-                                marginBottom: isMobile ? '0px' : '4px',
-             padding: isMobile ? '2px' : '4px',
+                                marginBottom: isMobile ? '0px' : '3px',
+             padding: isMobile ? '2px' : '3px',
             borderRadius: '12px',
                                   background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(20, 20, 20, 0.8))',
              border: '1px solid rgba(255,255,255,0.15)',
@@ -451,16 +451,16 @@ function formatDateMMDDYYYY(dateStr) {
                                                                                                                                                                                                <h3 style={{
                   margin: 0,
                   color: '#ffffff',
-                  fontSize: isMobile ? '0.8rem' : '1.1rem',
+                  fontSize: isMobile ? '0.6rem' : '0.9rem',
                   fontWeight: 'bold',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: isMobile ? '4px' : '6px',
+                  gap: isMobile ? '3px' : '5px',
                   flexWrap: 'wrap',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                   letterSpacing: '0.5px',
-                  minHeight: isMobile ? '2.5rem' : '3rem'
+                  minHeight: isMobile ? '2rem' : '2.5rem'
                 }}>
                     {/* Center - Status indicators and Phase 1 text */}
                                          <div style={{
@@ -481,7 +481,7 @@ function formatDateMMDDYYYY(dateStr) {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: isMobile ? '4px' : '8px'
+                      gap: isMobile ? '3px' : '6px'
                     }}>
                                              {/* Smart Match Button - Left */}
                        <button
@@ -503,9 +503,9 @@ function formatDateMMDDYYYY(dateStr) {
                              background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.3), rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1))',
                              border: '1px solid rgba(255, 193, 7, 0.4)',
                              color: '#ffffff',
-                             fontSize: isMobile ? '0.5rem' : '0.8rem',
+                             fontSize: isMobile ? '0.4rem' : '0.7rem',
                              fontWeight: 'bold',
-                             padding: isMobile ? '8px 12px' : '10px 16px',
+                             padding: isMobile ? '6px 10px' : '8px 14px',
                              borderRadius: '8px',
                              cursor: 'pointer',
                              transition: 'all 0.3s ease',
@@ -537,9 +537,9 @@ function formatDateMMDDYYYY(dateStr) {
                            setShowPhase1Overview(true);
                          }}
                          style={{ 
-                           fontSize: isMobile ? '0.5rem' : '0.8rem',
+                           fontSize: isMobile ? '0.4rem' : '0.7rem',
                            background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd, ${primaryColor})`,
-                           padding: isMobile ? '8px 12px' : '10px 16px',
+                           padding: isMobile ? '6px 10px' : '8px 14px',
                            borderRadius: '8px',
                            boxShadow: '0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2), 0 0 10px rgba(255,255,255,0.1)',
                            border: '1px solid rgba(255,255,255,0.3)',
@@ -577,9 +577,9 @@ function formatDateMMDDYYYY(dateStr) {
                              background: 'linear-gradient(135deg, rgba(255, 68, 68, 0.3), rgba(255, 68, 68, 0.2), rgba(255, 68, 68, 0.1))',
                              border: '1px solid rgba(255, 68, 68, 0.4)',
                              color: '#ffffff',
-                             fontSize: isMobile ? '0.5rem' : '0.8rem',
+                             fontSize: isMobile ? '0.4rem' : '0.7rem',
                              fontWeight: 'bold',
-                             padding: isMobile ? '8px 12px' : '10px 16px',
+                             padding: isMobile ? '6px 10px' : '8px 14px',
                              borderRadius: '8px',
                              cursor: 'pointer',
                              transition: 'all 0.3s ease',
@@ -609,10 +609,10 @@ function formatDateMMDDYYYY(dateStr) {
                                            {/* Status Message - ends in XX days */}
                                                  <div style={{
                   color: '#ffffff',
-                  fontSize: isMobile ? '0.7rem' : '0.95rem',
+                  fontSize: isMobile ? '0.6rem' : '0.8rem',
                   lineHeight: isMobile ? '1.1' : '1.1',
-                                 marginTop: isMobile ? '2px' : '2px',
-                  marginBottom: isMobile ? '2px' : '4px',
+                                 marginTop: isMobile ? '1px' : '1px',
+                  marginBottom: isMobile ? '1px' : '3px',
                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
                 fontWeight: '500',
                 display: 'flex',
@@ -629,22 +629,22 @@ function formatDateMMDDYYYY(dateStr) {
                         top: isMobile ? 'auto' : '50%',
                         transform: isMobile ? 'none' : 'translate(-50%, -50%)',
                          cursor: 'pointer',
-                         fontSize: isMobile ? '2.5rem' : '3.2rem',
+                         fontSize: isMobile ? '2rem' : '2.8rem',
                          transition: 'all 0.3s ease',
                                                    display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          minHeight: isMobile ? '90px' : '140px',
+                          minHeight: isMobile ? '80px' : '120px',
                          lineHeight: 1,
                                                      background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.35), rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.25))',
                             border: '1px solid rgba(76, 175, 80, 0.7)',
-                          padding: isMobile ? '4px' : '6px',
-                          borderRadius: isMobile ? '12px' : '18px',
+                          padding: isMobile ? '3px' : '5px',
+                          borderRadius: isMobile ? '10px' : '16px',
                           zIndex: 1,
                                                                            boxShadow: '0 2px 8px rgba(76, 175, 80, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
-                         minWidth: isMobile ? '70px' : '100px',
-                         minHeight: isMobile ? '90px' : '140px',
+                         minWidth: isMobile ? '60px' : '90px',
+                         minHeight: isMobile ? '80px' : '120px',
                         backdropFilter: 'blur(8px)',
                         margin: isMobile ? '8px auto' : '0'
                       }}
@@ -659,11 +659,11 @@ function formatDateMMDDYYYY(dateStr) {
                                  tabIndex="0"
                               >
                                                                                                                                                                                                                                                  <div style={{ 
-                                                                                       fontSize: isMobile ? '0.5rem' : '0.7rem',
+                                                                                       fontSize: isMobile ? '0.4rem' : '0.6rem',
                                            color: '#ffffff',
                                            fontWeight: 'bold',
                                            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                                           marginBottom: isMobile ? '10px' : '14px',
+                                           marginBottom: isMobile ? '8px' : '12px',
                                            textAlign: 'center'
                                           }}>
                                             Today's Date
@@ -675,14 +675,14 @@ function formatDateMMDDYYYY(dateStr) {
                                              justifyContent: 'center',
                                              flex: 1
                                            }}>
-                                             <div style={{ fontSize: isMobile ? '0.8rem' : '1.2rem' }}>
+                                             <div style={{ fontSize: isMobile ? '0.7rem' : '1rem' }}>
                                                {(() => {
                                                  const today = new Date();
                                                  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                                                  return dayNames[today.getDay()];
                                                })()}
                                              </div>
-                                             <div style={{ fontSize: isMobile ? '1.2rem' : '2rem' }}>
+                                             <div style={{ fontSize: isMobile ? '1rem' : '1.8rem' }}>
                                                {(() => {
                                                  const today = new Date();
                                                  const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -693,7 +693,7 @@ function formatDateMMDDYYYY(dateStr) {
                                              </div>
                                            </div>
                                                                                    <div style={{ 
-                                                   fontSize: isMobile ? '0.3rem' : '0.65rem', 
+                                                   fontSize: isMobile ? '0.25rem' : '0.6rem', 
                          color: '#ffffff', 
                          fontWeight: 'bold',
                          textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
@@ -701,7 +701,7 @@ function formatDateMMDDYYYY(dateStr) {
                          textAlign: 'center',
                          whiteSpace: 'nowrap',
                          background: 'rgba(0, 0, 0, 0.7)',
-                         padding: isMobile ? '1px 2px' : '2px 4px',
+                         padding: isMobile ? '1px 2px' : '2px 3px',
                          borderRadius: '4px',
                          border: '1px solid rgba(255, 255, 255, 0.3)'
                                              }}>
@@ -728,8 +728,8 @@ function formatDateMMDDYYYY(dateStr) {
                         borderRadius: isMobile ? '10px' : '16px',
                          zIndex: 1,
                                                                         boxShadow: '0 2px 8px rgba(52, 152, 219, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
-                                                 minWidth: isMobile ? '70px' : '100px',
-                          minHeight: isMobile ? '90px' : '140px',
+                                                 minWidth: isMobile ? '60px' : '90px',
+                          minHeight: isMobile ? '80px' : '120px',
                        backdropFilter: 'blur(8px)',
                        margin: isMobile ? '8px auto' : '0'
                      }}
@@ -748,11 +748,11 @@ function formatDateMMDDYYYY(dateStr) {
                   }}
                 >
                   <div style={{ 
-                    fontSize: isMobile ? '0.6rem' : '0.85rem',
+                    fontSize: isMobile ? '0.5rem' : '0.75rem',
                     color: '#ffffff', 
                     fontWeight: 'bold',
                     textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
-                    marginBottom: isMobile ? '4px' : '8px',
+                    marginBottom: isMobile ? '3px' : '6px',
                     textAlign: 'center',
                     whiteSpace: 'nowrap'
                   }}>
@@ -762,7 +762,7 @@ function formatDateMMDDYYYY(dateStr) {
                   <div style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: isMobile ? '3px' : '6px',
+                    gap: isMobile ? '2px' : '4px',
                     justifyContent: 'center',
                     width: '100%'
                   }}>
@@ -776,8 +776,8 @@ function formatDateMMDDYYYY(dateStr) {
                           color: '#ffffff',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
                           borderRadius: '6px',
-                          padding: isMobile ? '3px 4px' : '6px 8px',
-                          fontSize: isMobile ? '0.5rem' : '0.75rem',
+                          padding: isMobile ? '2px 3px' : '5px 7px',
+                          fontSize: isMobile ? '0.4rem' : '0.65rem',
                           fontWeight: '600',
                           cursor: 'pointer',
                           boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
@@ -810,8 +810,8 @@ function formatDateMMDDYYYY(dateStr) {
                           color: '#ffffff',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
                           borderRadius: '6px',
-                          padding: isMobile ? '3px 4px' : '6px 8px',
-                          fontSize: isMobile ? '0.5rem' : '0.75rem',
+                          padding: isMobile ? '2px 3px' : '5px 7px',
+                          fontSize: isMobile ? '0.4rem' : '0.65rem',
                           fontWeight: '600',
                           cursor: 'pointer',
                           boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
@@ -840,10 +840,10 @@ function formatDateMMDDYYYY(dateStr) {
                          {/* Completion counter */}
              <div style={{
                  color: '#ffffff',
-                 fontSize: isMobile ? '0.75rem' : '0.95rem',
+                 fontSize: isMobile ? '0.65rem' : '0.8rem',
                  fontWeight: 'bold',
-                 marginTop: isMobile ? '4px' : '2px',
-                 marginBottom: isMobile ? '2px' : '4px',
+                 marginTop: isMobile ? '3px' : '1px',
+                 marginBottom: isMobile ? '1px' : '3px',
                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
                  lineHeight: isMobile ? '1.1' : '1.1',
                  textAlign: isMobile ? 'center' : 'center'
@@ -854,10 +854,10 @@ function formatDateMMDDYYYY(dateStr) {
                                    {/* Remaining matches counter */}
             <div style={{
                 color: '#ffffff',
-                fontSize: isMobile ? '0.75rem' : '0.95rem',
+                fontSize: isMobile ? '0.65rem' : '0.8rem',
                 fontWeight: 'bold',
-                               marginTop: isMobile ? '2px' : '2px',
-               marginBottom: isMobile ? '4px' : '2px',
+                               marginTop: isMobile ? '1px' : '1px',
+               marginBottom: isMobile ? '3px' : '1px',
                textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
                lineHeight: isMobile ? '1.1' : '1.1',
                textAlign: isMobile ? 'center' : 'center'
@@ -878,11 +878,11 @@ function formatDateMMDDYYYY(dateStr) {
                     setIsExpanded(!isExpanded);
                   }}
                   style={{
-                    fontSize: isMobile ? '0.5rem' : '0.9rem',
+                    fontSize: isMobile ? '0.4rem' : '0.8rem',
                     color: '#ffffff',
                     fontWeight: 'bold',
                     cursor: 'pointer',
-                    padding: isMobile ? '1px 3px' : '4px 8px',
+                    padding: isMobile ? '1px 2px' : '3px 6px',
                     borderRadius: '6px',
                     display: 'inline-block',
                     transition: 'background-color 0.2s ease',
@@ -904,9 +904,9 @@ function formatDateMMDDYYYY(dateStr) {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'stretch',
-                           marginBottom: isMobile ? '8px' : '4px',
-             gap: isMobile ? '6px' : '12px',
-                padding: isMobile ? '6px' : '8px',
+                           marginBottom: isMobile ? '6px' : '3px',
+             gap: isMobile ? '4px' : '8px',
+                padding: isMobile ? '4px' : '6px',
                 borderRadius: '8px',
                                               background: 'rgba(0, 0, 0, 0.5)',
                  border: '1px solid rgba(255,255,255,0.15)',
@@ -920,7 +920,7 @@ function formatDateMMDDYYYY(dateStr) {
                   }}
                                                                      style={{
                       background: 'rgba(0, 0, 0, 0.4)',
-                      padding: isMobile ? '6px' : '8px',
+                      padding: isMobile ? '4px' : '6px',
                       borderRadius: '8px',
                     cursor: 'pointer',
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -933,7 +933,7 @@ function formatDateMMDDYYYY(dateStr) {
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    minHeight: isMobile ? '70px' : '80px'
+                    minHeight: isMobile ? '60px' : '70px'
                   }}
                onMouseEnter={(e) => {
                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.3))';
@@ -949,26 +949,26 @@ function formatDateMMDDYYYY(dateStr) {
                }}
              >
                                                                                                                                <div style={{
-                    fontSize: isMobile ? '0.6rem' : '0.8rem',
+                    fontSize: isMobile ? '0.5rem' : '0.7rem',
                     fontWeight: 'bold',
                     color: '#e0e0e0',
-                                       marginBottom: isMobile ? '4px' : '2px'
+                                       marginBottom: isMobile ? '3px' : '1px'
                    }}>
                      Progress
                    </div>
                                    <div style={{
-                    fontSize: isMobile ? '0.7rem' : '0.9rem',
+                    fontSize: isMobile ? '0.6rem' : '0.8rem',
                     color: '#ffffff',
                     fontWeight: 'bold',
                     textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                                       marginBottom: isMobile ? '3px' : '1px'
+                                       marginBottom: isMobile ? '2px' : '1px'
                   }}>
                     {completedMatches.length}/{totalRequiredMatches}
                  </div>
                                {/* Progress Bar */}
                                  <div style={{
                    width: '100%',
-                   height: isMobile ? '3px' : '6px',
+                   height: isMobile ? '2px' : '5px',
                    background: 'rgba(255,255,255,0.15)',
                    borderRadius: '3px',
                    overflow: 'hidden',
@@ -996,7 +996,7 @@ function formatDateMMDDYYYY(dateStr) {
                    </div>
                  </div>
                                                                        <div style={{
-                     fontSize: isMobile ? '0.55rem' : '0.75rem',
+                     fontSize: isMobile ? '0.45rem' : '0.65rem',
                      color: '#e0e0e0',
                      fontStyle: 'italic',
                      textAlign: 'center',
@@ -1016,7 +1016,7 @@ function formatDateMMDDYYYY(dateStr) {
                  }}
                  style={{
                    background: 'rgba(0, 0, 0, 0.4)',
-                   padding: isMobile ? '4px' : '8px',
+                   padding: isMobile ? '3px' : '6px',
                    borderRadius: '8px',
                   cursor: 'pointer',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -1029,7 +1029,7 @@ function formatDateMMDDYYYY(dateStr) {
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  minHeight: '80px'
+                  minHeight: '70px'
                 }}
                onMouseEnter={(e) => {
                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(33, 150, 243, 0.2), rgba(33, 150, 243, 0.3))';
@@ -1045,7 +1045,7 @@ function formatDateMMDDYYYY(dateStr) {
                }}
              >
                                <div style={{
-                  fontSize: isMobile ? '0.35rem' : '0.8rem',
+                  fontSize: isMobile ? '0.3rem' : '0.7rem',
                   fontWeight: 'bold',
                   color: '#e0e0e0',
                                                     marginBottom: isMobile ? '1px' : '1px'
@@ -1053,16 +1053,16 @@ function formatDateMMDDYYYY(dateStr) {
                  Record
                 </div>
                                <div style={{
-                  fontSize: isMobile ? '0.5rem' : '0.9rem',
+                  fontSize: isMobile ? '0.4rem' : '0.8rem',
                   color: '#ffffff',
                   fontWeight: 'bold',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
                                    marginBottom: isMobile ? '1px' : '1px'
                  }}>
                                        {localPlayerStats?.wins || 0}-{localPlayerStats?.losses || 0} ({localPlayerStats?.winRate || 0}%)
-                </div>
+                                 </div>
                                 <div style={{
-                 fontSize: isMobile ? '0.4rem' : '0.75rem',
+                 fontSize: isMobile ? '0.35rem' : '0.65rem',
                  color: '#e0e0e0',
                  fontStyle: 'italic',
                  textAlign: 'center',
@@ -1126,7 +1126,7 @@ function formatDateMMDDYYYY(dateStr) {
                                    {loadingStandings ? '...' : (localPlayerStats?.position || 'N/A')}
               </div>
                <div style={{
-                 fontSize: isMobile ? '0.4rem' : '0.75rem',
+                 fontSize: isMobile ? '0.35rem' : '0.65rem',
                  color: '#e0e0e0',
                  fontStyle: 'italic',
                  textAlign: 'center',
@@ -1140,29 +1140,29 @@ function formatDateMMDDYYYY(dateStr) {
                                                                                                                                                                                                                                                                                                                                                                {/* Compact Matches Row */}
                                                      <div style={{
                    display: 'flex',
-                                                                   gap: isMobile ? '8px' : '12px',
-                                                                                                                            marginBottom: isMobile ? '4px' : '4px'
+                                                                   gap: isMobile ? '6px' : '10px',
+                                                                                                                            marginBottom: isMobile ? '3px' : '3px'
                  }}>
 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   {/* Message Center Section */}
                                                                          <div style={{
-                                       flex: isMobile ? '0 0 140px' : '0 0 200px',
+                                       flex: isMobile ? '0 0 120px' : '0 0 180px',
                                        background: 'rgba(0, 0, 0, 0.4)',
                                        borderRadius: '8px',
-                                       padding: isMobile ? '4px' : '4px',
+                                       padding: isMobile ? '3px' : '3px',
                                        border: '1px solid rgba(255,255,255,0.2)',
                                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                                        display: 'flex',
                                        flexDirection: 'column',
-                                       gap: isMobile ? '4px' : '4px'
+                                       gap: isMobile ? '3px' : '3px'
                                      }}>
                                                                                                                                                              <div style={{
-                                           fontSize: isMobile ? '0.5rem' : '0.9rem',
+                                           fontSize: isMobile ? '0.4rem' : '0.8rem',
                                            color: '#ffffff',
                                            fontWeight: 'bold',
                                            textAlign: 'center',
                                            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                                           marginBottom: isMobile ? '2px' : '2px'
+                                           marginBottom: isMobile ? '1px' : '1px'
                                          }}>
                                            📨 {isMobile ? 'Messages' : 'Message Center'}
                                          </div>
@@ -1177,8 +1177,8 @@ function formatDateMMDDYYYY(dateStr) {
                                                color: '#ffffff',
                                                border: 'none',
                                                borderRadius: '6px',
-                                               padding: isMobile ? '4px 6px' : '4px 6px',
-                                               fontSize: isMobile ? '0.6rem' : '0.7rem',
+                                               padding: isMobile ? '3px 5px' : '3px 5px',
+                                               fontSize: isMobile ? '0.5rem' : '0.6rem',
                                                fontWeight: '600',
                                                cursor: 'pointer',
                                                boxShadow: '0 2px 6px rgba(255, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
@@ -1212,8 +1212,8 @@ function formatDateMMDDYYYY(dateStr) {
                                            color: '#ffffff',
                                            border: 'none',
                                            borderRadius: '6px',
-                                           padding: isMobile ? '4px 6px' : '4px 6px',
-                                           fontSize: isMobile ? '0.6rem' : '0.7rem',
+                                           padding: isMobile ? '3px 5px' : '3px 5px',
+                                           fontSize: isMobile ? '0.5rem' : '0.6rem',
                                            fontWeight: '600',
                                            cursor: 'pointer',
                                            boxShadow: '0 2px 6px rgba(0, 188, 212, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
@@ -1250,7 +1250,7 @@ function formatDateMMDDYYYY(dateStr) {
                                                flex: '1',
                          background: 'rgba(0, 0, 0, 0.4)',
                         borderRadius: '8px',
-                                                                    padding: isMobile ? '4px' : '4px',
+                                                                    padding: isMobile ? '3px' : '3px',
                                                  border: '1px solid rgba(255,255,255,0.2)',
                           boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                        cursor: 'pointer',
@@ -1270,7 +1270,7 @@ function formatDateMMDDYYYY(dateStr) {
                   }}
                >
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <div style={{
-                                              fontSize: isMobile ? '0.6rem' : '1.1rem',
+                                              fontSize: isMobile ? '0.5rem' : '0.9rem',
                          color: '#ff4444',
                          fontWeight: 'bold',
                          marginBottom: '0px',
@@ -1283,7 +1283,7 @@ function formatDateMMDDYYYY(dateStr) {
                         </div>
                                          {/* Click for details instruction */}
                                                                                                                                                                                                                                                                                                                                          <div style={{
-                                              fontSize: isMobile ? '0.45rem' : '0.75rem',
+                                              fontSize: isMobile ? '0.35rem' : '0.65rem',
                                               color: '#e0e0e0',
                                               textAlign: 'center',
                                               fontStyle: 'italic',
@@ -1304,7 +1304,7 @@ function formatDateMMDDYYYY(dateStr) {
                                        display: 'flex',
                                        flexDirection: 'column',
                                        gap: '1px',
-                                       marginTop: isMobile ? '1px' : '2px'
+                                       marginTop: isMobile ? '1px' : '1px'
                                      }}>
                                       {/* Show up to 3 matches */}
                                       {displayMatches.slice(0, 3).map((match, index) => (
@@ -1317,7 +1317,7 @@ function formatDateMMDDYYYY(dateStr) {
                           }
                         }}
                                                                                                                                                                                                        style={{
-                            fontSize: isMobile ? '0.5rem' : '0.8rem',
+                            fontSize: isMobile ? '0.4rem' : '0.7rem',
                             color: '#ccc',
                             textAlign: 'center',
                             overflow: 'hidden',
@@ -1379,7 +1379,7 @@ function formatDateMMDDYYYY(dateStr) {
                                                            {/* Show "more" indicator if there are more than 3 matches */}
                                        {displayMatches.length > 3 && (
                                                                                    <div style={{
-                                            fontSize: isMobile ? '0.25rem' : '0.55rem',
+                                            fontSize: isMobile ? '0.2rem' : '0.5rem',
                                             color: '#888',
                                             textAlign: 'center',
                                             fontStyle: 'italic',
@@ -1391,7 +1391,7 @@ function formatDateMMDDYYYY(dateStr) {
                                       </div>
                                    ) : (
                                                                            <div style={{
-                                        fontSize: isMobile ? '0.4rem' : '0.7rem',
+                                        fontSize: isMobile ? '0.35rem' : '0.6rem',
                                         color: '#999',
                                         textAlign: 'center'
                                       }}>

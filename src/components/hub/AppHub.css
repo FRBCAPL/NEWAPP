@@ -1,3 +1,177 @@
+/* App Hub Styles */
+.app-hub-container {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  background: transparent;
+  color: var(--white);
+  overflow: hidden;
+}
+
+/* Pool Simulation Background */
+.pool-simulation-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* App Hub Content */
+.app-hub-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+
+/* App Hub Header */
+.app-hub-header {
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #e53e3e;
+  border-radius: 15px;
+  padding: 1.5rem;
+  text-align: center;
+  width: 75%;
+  max-width: 800px;
+  backdrop-filter: blur(8px);
+  margin-bottom: 2rem;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 45vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* User Info */
+.user-info {
+  margin-bottom: 1.5rem;
+}
+
+/* Hub Subtitle */
+.hub-subtitle {
+  margin-bottom: 2rem;
+}
+
+/* Apps Section */
+.apps-section {
+  width: 100%;
+}
+
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+.app-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid var(--app-color, #666);
+  border-radius: 12px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.app-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.app-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.app-info h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  color: var(--white);
+}
+
+.app-info p {
+  margin: 0 0 1rem 0;
+  color: #ccc;
+  font-size: 1rem;
+}
+
+.app-status {
+  margin-top: 1rem;
+}
+
+.status-active {
+  background: #4CAF50;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .app-hub-container {
+    padding: 0.5rem;
+  }
+  
+  .pool-simulation-background {
+    opacity: 0.2;
+  }
+  
+  .app-hub-header {
+    padding: 0.8rem;
+    width: 90%;
+  }
+  
+  .user-info {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+    justify-content: center;
+    position: relative;
+  }
+  
+  .user-info span {
+    font-size: 0.9rem;
+  }
+  
+  .apps-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .app-card {
+    padding: 1rem;
+  }
+  
+  .app-icon {
+    font-size: 2rem;
+  }
+  
+  .app-info h3 {
+    font-size: 1.2rem;
+  }
+  
+  .app-info p {
+    font-size: 0.9rem;
+  }
+}
+
 /* Ladder App Styles - Updated to match main app design */
 :root {
   --primary-black: #0c0c0c;

@@ -66,7 +66,7 @@ const AppHub = ({ isAuthenticated, userFirstName, userLastName, userEmail, userP
         <div className="app-hub-header">
                      {isAuthenticated && (
              <div className="user-info">
-                               <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: 'white' }}>
+                               <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'white' }}>
                   Hello, {userFirstName}
                 </div>
                                {/* User Type Badge */}
@@ -75,11 +75,11 @@ const AppHub = ({ isAuthenticated, userFirstName, userLastName, userEmail, userP
                             userType === 'league' ? '#4CAF50' :
                             userType === 'ladder' ? '#2196F3' : '#666',
                   color: 'white',
-                  padding: '8px 16px',
+                  padding: '6px 12px',
                   borderRadius: '20px',
-                  fontSize: '1rem',
+                  fontSize: '0.9rem',
                   fontWeight: 'bold',
-                  marginTop: '0.5rem'
+                  marginTop: '0.4rem'
                 }}>
                   {userType === 'both' ? 'League & Ladder Player' :
                    userType === 'league' ? 'League Player' :
@@ -88,9 +88,9 @@ const AppHub = ({ isAuthenticated, userFirstName, userLastName, userEmail, userP
                 
                 <div style={{
                   color: 'white',
-                  fontSize: '1.2rem',
+                  fontSize: '1.1rem',
                   fontWeight: '500',
-                  marginTop: '0.5rem',
+                  marginTop: '0.4rem',
                   opacity: 0.9
                 }}>
                   You are recognized as a {userType === 'both' ? 'League & Ladder' :
@@ -102,7 +102,7 @@ const AppHub = ({ isAuthenticated, userFirstName, userLastName, userEmail, userP
            )}
            
                        <div className="hub-subtitle">
-              <p style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'white', marginTop: '0.5rem' }}>Choose your pool experience</p>
+              <p style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'white', marginTop: '0.4rem' }}>Choose your pool experience</p>
             </div>
 
           {/* Active Apps Row */}

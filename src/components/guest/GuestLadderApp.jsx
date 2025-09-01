@@ -369,7 +369,7 @@ const GuestLadderApp = () => {
 
         {currentView === 'info' && (
           <div className="info-section">
-            <h2>Ladder System Information</h2>
+            <h2>Ladder of Legends Information</h2>
             
                          <div className="info-cards">
                {/* Top Row - Match Types */}
@@ -377,7 +377,7 @@ const GuestLadderApp = () => {
                  <h3>⚔️ Challenge Matches</h3>
                  <p>Standard ladder climbing system</p>
                  <ul>
-                   <li>Challenge players up to 4 spots above you on the ladder</li>
+                   <li>Challenge  other players<br></br>up to 4 spots above you on the ladder</li>
                    <li>Challenger wins:<br></br> Players switch positions</li>
                    <li>Defender wins:<br></br> Positions remain unchanged</li>
                    <li>7-day immunity for winners</li>
@@ -444,12 +444,13 @@ const GuestLadderApp = () => {
                {/* Third Row - Disclaimer */}
                <div className="info-card">
                  <h3 style={{ 
-                   fontSize: '1.1rem', 
+                   fontSize: '1.2rem', 
                    lineHeight: '1.3', 
                    marginBottom: '0.5rem',
                    wordWrap: 'break-word'
                  }}>
-                   ⚠️ Independent Tournament Series ⚠️
+                   ⚠️ Independent<br>
+                   </br>Tournament Series ⚠️
                  </h3>
                  <p style={{ 
                    fontSize: '0.9rem', 

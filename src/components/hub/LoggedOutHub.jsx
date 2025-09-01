@@ -21,7 +21,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
     {
       id: 'ladder',
       name: 'Ladder of Legends Tournament Series',
-      description: 'Challenge-based ladder system with rankings',
+      description: 'Independently run, challenge-based ladder system',
       icon: '📈',
       color: '#2196F3',
       status: 'active'
