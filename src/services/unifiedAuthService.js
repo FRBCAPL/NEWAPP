@@ -21,6 +21,7 @@ class UnifiedAuthService {
           success: true,
           user: data.user,
           userType: data.userType,
+          profileStatus: data.profileStatus,
           message: 'Login successful'
         };
       } else {
@@ -202,6 +203,44 @@ class UnifiedAuthService {
     } catch (error) {
       console.error('Check user exists error:', error);
       return false;
+    }
+  }
+
+  // Copy profile data between apps
+  async copyProfileData(userId, fromApp, toApp) {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/unified-auth/copy-profile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          fromApp,
+          toApp
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        return {
+          success: true,
+          targetProfile: data.targetProfile,
+          message: data.message || 'Profile data copied successfully'
+        };
+      } else {
+        return {
+          success: false,
+          message: data.message || 'Failed to copy profile data'
+        };
+      }
+    } catch (error) {
+      console.error('Copy profile data error:', error);
+      return {
+        success: false,
+        message: 'Network error. Please check your connection.'
+      };
     }
   }
 

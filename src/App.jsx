@@ -20,6 +20,7 @@ import LadderApp from './components/ladder/LadderApp';
 import LadderManagement from './components/ladder/LadderManagement';
 import LadderPlayerManagement from './components/ladder/LadderPlayerManagement';
 import PlayerManagement from './components/admin/PlayerManagement';
+import UserProfileModal from './components/modal/UserProfileModal';
 import adminAuthService from './services/adminAuthService.js';
 
 // Guest App Components
@@ -339,6 +340,7 @@ function AppContent() {
   const [isSuperAdminState, setIsSuperAdminState] = useState(false);
   const [isAdminState, setIsAdminState] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const isSuperAdmin = () => {
     return isSuperAdminState;
@@ -380,6 +382,11 @@ function AppContent() {
     checkAdminStatus();
   }, [isAuthenticated, userEmail, userPin]);
 
+  // --- Profile modal handler ---
+  const handleProfileClick = () => {
+    setShowProfileModal(true);
+  };
+
   // --- Logout handler ---
   const handleLogout = () => {
     setUserFirstName("");
@@ -410,6 +417,7 @@ function AppContent() {
           onLogout={handleLogout}
           userFirstName={userFirstName}
           userLastName={userLastName}
+          onProfileClick={handleProfileClick}
         />
 
                  <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "200px" }}>
@@ -454,6 +462,7 @@ function AppContent() {
                         userPin={userPin}
                         onGoToAdmin={() => {}}
                         onGoToPlatformAdmin={() => navigate("/platform-admin")}
+                        isAdmin={isAdminState}
                       />
                     </main>
                   </AppRouteWrapper>
@@ -649,6 +658,27 @@ function AppContent() {
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </div>
+
+        {/* Global Profile Modal */}
+        {isAuthenticated && (
+          <UserProfileModal
+            isOpen={showProfileModal}
+            onClose={() => setShowProfileModal(false)}
+            currentUser={{
+              firstName: userFirstName,
+              lastName: userLastName,
+              email: userEmail,
+              phone: '',
+              locations: '',
+              availability: {}
+            }}
+            isMobile={false}
+            onUserUpdate={() => {
+              // Refresh any necessary data after profile update
+              console.log('Profile updated from global modal');
+            }}
+          />
+        )}
       </div>
   );
 }

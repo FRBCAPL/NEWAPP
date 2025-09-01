@@ -14,6 +14,8 @@ const LadderProfileModal = ({
 
   // Sync local user state with currentUser prop changes
   useEffect(() => {
+    console.log('Profile modal received currentUser:', currentUser);
+    console.log('currentUser.locations:', currentUser?.locations);
     setLocalUser(currentUser);
   }, [currentUser]);
 
@@ -30,7 +32,7 @@ const LadderProfileModal = ({
   };
 
   // Save changes for a section
-  const saveSection = async (section) => {
+  const saveSection = async (section, overrideValue = null) => {
     try {
       console.log('Saving ladder profile section:', section);
       console.log('Edit data:', editData);
@@ -69,81 +71,89 @@ const LadderProfileModal = ({
       
       console.log('Found user ID:', userId);
       
-      // Handle special cases where the field name differs
-      if (section === 'basic') {
-        // For basic info, we need to send individual fields
-        const requestBody = {
+      // Get the value to save
+      let fieldValue;
+      if (overrideValue !== null) {
+        fieldValue = overrideValue;
+        console.log('Using override value:', fieldValue);
+        } else if (section === 'locations') {
+    fieldValue = editData.locations;
+        console.log('Saving locations:', fieldValue);
+              } else if (section === 'availability') {
+          fieldValue = editData.availability;
+        console.log('Saving availability:', fieldValue);
+      } else if (section === 'preferredContacts') {
+        fieldValue = editData.preferredContacts;
+        console.log('Saving contacts:', fieldValue);
+      } else if (section === 'basic') {
+        fieldValue = {
           firstName: editData.firstName,
           lastName: editData.lastName,
           email: editData.email,
           phone: editData.phone
         };
-        
-        console.log('Sending basic info update:', requestBody);
-        
-        const response = await fetch(`${backendUrl}/api/users/${userId}/profile`, {
-          method: 'PUT',
+        console.log('Saving basic info:', fieldValue);
+      } else {
+        fieldValue = editData[section];
+        console.log('Saving other field:', fieldValue);
+      }
+      
+      // Send the update to the unified profile endpoint
+      const response = await fetch(`${backendUrl}/api/unified-auth/update-profile`, {
+        method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(requestBody)
-        });
-
-        if (response.ok) {
-          const updatedUser = await response.json();
-          console.log('Basic info updated successfully:', updatedUser);
-          // Update local state immediately for instant UI update
-          setLocalUser(updatedUser.user);
-          onUserUpdate(updatedUser.user);
-          setEditingSection(null);
-          setEditData({});
-          // Show success feedback
-          alert('✅ Ladder profile updated successfully!');
-        } else {
-          const errorData = await response.json();
-          console.error('Basic info update failed:', errorData);
-          alert(`Failed to update profile: ${errorData.error || 'Unknown error'}`);
-        }
-        return;
-      }
-      
-      // For other sections, get the correct field value
-      let fieldValue;
-      if (section === 'ladderLocations') {
-        fieldValue = editData.ladderLocations;
-      } else if (section === 'ladderAvailability') {
-        fieldValue = editData.ladderAvailability;
-      } else if (section === 'preferredContacts') {
-        fieldValue = editData.preferredContacts;
-      } else {
-        fieldValue = editData[section];
-      }
-      
-      const requestBody = { [section]: fieldValue };
-      console.log('Sending section update:', requestBody);
-      
-      const response = await fetch(`${backendUrl}/api/users/${userId}/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify({
+          userId,
+          email: userEmail,
+          appType: 'ladder',
+          updates: {
+            [section]: fieldValue
+          }
+        })
       });
 
-      if (response.ok) {
-        const updatedUser = await response.json();
-        console.log('Section updated successfully:', updatedUser);
-        // Update local state immediately for instant UI update
-        setLocalUser(updatedUser.user);
-        onUserUpdate(updatedUser.user);
+      if (!response.ok) {
+          const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update profile');
+      }
+
+      const updatedData = await response.json();
+      console.log('Update successful:', updatedData);
+
+      // Refresh profile data from the backend
+      try {
+        const profileResponse = await fetch(`${backendUrl}/api/unified-auth/profile-data?email=${encodeURIComponent(userEmail)}&appType=ladder&t=${Date.now()}`);
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          console.log('Refreshed profile data:', profileData);
+          
+                     // Update local state with the fresh data
+           setLocalUser(prev => ({
+             ...prev,
+             locations: profileData.profile.locations || '',
+             availability: profileData.profile.availability || {}
+           }));
+
+           // Notify parent component to refresh profile data
+           if (onUserUpdate) {
+             onUserUpdate();
+           }
+        }
+      } catch (error) {
+        console.error('Error refreshing profile data:', error);
+      }
+
+      // Only clear editing state if not called from a location change
+      if (section !== 'locations' || !editData.locations) {
         setEditingSection(null);
         setEditData({});
-        // Show success feedback
+      }
+
+      // Show success message unless it's a location change
+      if (section !== 'locations') {
         alert('✅ Ladder profile updated successfully!');
-      } else {
-        const errorData = await response.json();
-        console.error('Section update failed:', errorData);
-        alert(`Failed to update profile: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error updating ladder profile:', error);
@@ -174,7 +184,7 @@ const LadderProfileModal = ({
 
   // Handle availability changes for ladder challenges
   const handleAvailabilityChange = (day, slot, checked) => {
-    const currentAvailability = editData.ladderAvailability || localUser.ladderAvailability || {};
+    const currentAvailability = editData.availability || localUser.availability || {};
     const currentDaySlots = currentAvailability[day] || [];
     
     const newDaySlots = checked 
@@ -183,7 +193,7 @@ const LadderProfileModal = ({
     
     setEditData(prev => ({
       ...prev,
-      ladderAvailability: {
+      availability: {
         ...currentAvailability,
         [day]: newDaySlots
       }
@@ -191,26 +201,41 @@ const LadderProfileModal = ({
   };
 
   // Handle location changes for ladder challenges
-  const handleLocationChange = (location, checked) => {
-    const currentLocations = editData.ladderLocations || localUser.ladderLocations || '';
+  const handleLocationChange = async (location, checked) => {
+    console.log('Location change:', { location, checked });
+    const currentLocations = editData.locations || localUser.locations || '';
+    console.log('Current locations:', currentLocations);
     const locationArray = currentLocations.split('\n').filter(Boolean);
+    console.log('Location array:', locationArray);
     
     const newLocations = checked
       ? [...locationArray, location]
       : locationArray.filter(loc => loc !== location);
+    console.log('New locations:', newLocations);
     
     setEditData(prev => ({
       ...prev,
-      ladderLocations: newLocations.join('\n')
+      locations: newLocations.join('\n')
     }));
+
+    // Save immediately when a location is changed
+    try {
+      await saveSection('locations');
+    } catch (error) {
+      console.error('Error saving location change:', error);
+      alert('Failed to save location change. Please try again.');
+    }
   };
 
   // Handle new location addition
-  const handleAddNewLocation = (newLocation) => {
+  const handleAddNewLocation = async (newLocation) => {
     if (!newLocation.trim()) return;
     
-    const currentLocations = editData.ladderLocations || localUser.ladderLocations || '';
+    console.log('Adding new location:', newLocation);
+    const currentLocations = editData.locations || localUser.locations || '';
+    console.log('Current locations:', currentLocations);
     const locationArray = currentLocations.split('\n').filter(Boolean);
+    console.log('Location array:', locationArray);
     
     // Check if location already exists
     if (locationArray.some(loc => loc.trim().toLowerCase() === newLocation.trim().toLowerCase())) {
@@ -219,15 +244,30 @@ const LadderProfileModal = ({
     }
     
     const newLocations = [...locationArray, newLocation.trim()];
+    console.log('New locations:', newLocations);
+    
+    const newLocationsString = newLocations.join('\n');
+    console.log('New locations string:', newLocationsString);
+    
+    // Update editData first
     setEditData(prev => ({
       ...prev,
-      ladderLocations: newLocations.join('\n')
+      locations: newLocationsString
     }));
+
+    // Save immediately when a new location is added
+    try {
+      // Pass the new locations string directly to saveSection
+      await saveSection('locations', newLocationsString);
+    } catch (error) {
+      console.error('Error saving new location:', error);
+      alert('Failed to save new location. Please try again.');
+    }
   };
 
   // Get user's current locations (from edit data or current user)
   const getUserLocations = () => {
-    const locations = editData.ladderLocations || localUser.ladderLocations || '';
+    const locations = editData.locations || localUser.locations || '';
     return locations.split('\n').filter(Boolean);
   };
 
@@ -241,89 +281,7 @@ const LadderProfileModal = ({
     );
   };
 
-  // Copy availability from League app
-  const copyFromLeague = async () => {
-    try {
-      const backendUrl = 'http://localhost:8080';
-      const userEmail = currentUser?.email;
-      
-      if (!userEmail) {
-        alert('Error: No valid user email found.');
-        return;
-      }
-      
-      const userResponse = await fetch(`${backendUrl}/api/users/${encodeURIComponent(userEmail)}`);
-      if (!userResponse.ok) {
-        alert('Error: Failed to fetch user data.');
-        return;
-      }
-      
-      const userData = await userResponse.json();
-      const user = userData.user || userData;
-      
-      if (!user.availability || Object.keys(user.availability).length === 0) {
-        alert('No availability data found in League profile.');
-        return;
-      }
-      
-      const confirmed = window.confirm(
-        'This will replace your current ladder availability with your league availability. Continue?'
-      );
-      
-      if (confirmed) {
-        setEditData(prev => ({
-          ...prev,
-          ladderAvailability: user.availability
-        }));
-        alert('✅ League availability copied to ladder profile!');
-      }
-    } catch (error) {
-      console.error('Error copying from league:', error);
-      alert('Error copying availability from league.');
-    }
-  };
 
-  // Copy locations from League app
-  const copyLocationsFromLeague = async () => {
-    try {
-      const backendUrl = 'http://localhost:8080';
-      const userEmail = currentUser?.email;
-      
-      if (!userEmail) {
-        alert('Error: No valid user email found.');
-        return;
-      }
-      
-      const userResponse = await fetch(`${backendUrl}/api/users/${encodeURIComponent(userEmail)}`);
-      if (!userResponse.ok) {
-        alert('Error: Failed to fetch user data.');
-        return;
-      }
-      
-      const userData = await userResponse.json();
-      const user = userData.user || userData;
-      
-      if (!user.locations) {
-        alert('No locations data found in League profile.');
-        return;
-      }
-      
-      const confirmed = window.confirm(
-        'This will replace your current ladder locations with your league locations. Continue?'
-      );
-      
-      if (confirmed) {
-        setEditData(prev => ({
-          ...prev,
-          ladderLocations: user.locations
-        }));
-        alert('✅ League locations copied to ladder profile!');
-      }
-    } catch (error) {
-      console.error('Error copying locations from league:', error);
-      alert('Error copying locations from league.');
-    }
-  };
 
   if (!isOpen || !localUser) return null;
 
@@ -727,13 +685,12 @@ const LadderProfileModal = ({
                   color: '#ffffff',
                   fontSize: isMobile ? '0.9rem' : '1rem'
                 }}>
-                  ⏰ Challenge Availability
+                                     ⏰ Availability
                 </div>
                                  {editingSection !== 'availability' && (
-                   <div style={{ display: 'flex', gap: '4px' }}>
                      <button
                        onClick={() => startEditing('availability', {
-                         ladderAvailability: localUser.ladderAvailability || {}
+                       availability: localUser.availability || {}
                        })}
                        style={{
                          background: 'rgba(76, 175, 80, 0.2)',
@@ -750,24 +707,6 @@ const LadderProfileModal = ({
                      >
                        ✏️ Edit
                      </button>
-                     <button
-                       onClick={copyFromLeague}
-                       style={{
-                         background: 'rgba(255, 193, 7, 0.2)',
-                         border: '1px solid rgba(255, 193, 7, 0.4)',
-                         color: '#ffc107',
-                         padding: '4px 8px',
-                         borderRadius: '4px',
-                         fontSize: isMobile ? '0.7rem' : '0.8rem',
-                         cursor: 'pointer',
-                         transition: 'all 0.2s ease'
-                       }}
-                       onMouseEnter={(e) => e.target.style.background = 'rgba(255, 193, 7, 0.3)'}
-                       onMouseLeave={(e) => e.target.style.background = 'rgba(255, 193, 7, 0.2)'}
-                     >
-                       📋 Copy from League
-                     </button>
-                   </div>
                  )}
               </div>
               
@@ -874,7 +813,7 @@ const LadderProfileModal = ({
                            };
                            
                            const newSlot = `${formatTime(startTime)} - ${formatTime(endTime)}`;
-                           const currentSlots = editData.ladderAvailability?.[day] || localUser.ladderAvailability?.[day] || [];
+                                                       const currentSlots = editData.availability?.[day] || localUser.availability?.[day] || [];
                            
                            if (currentSlots.includes(newSlot)) {
                              alert('This time slot already exists.');
@@ -885,8 +824,8 @@ const LadderProfileModal = ({
                            
                            setEditData(prev => ({
                              ...prev,
-                             ladderAvailability: {
-                               ...prev.ladderAvailability,
+                             availability: {
+                               ...prev.availability,
                                [day]: newSlots
                              }
                            }));
@@ -934,7 +873,7 @@ const LadderProfileModal = ({
                        display: 'grid',
                        gap: '3px'
                      }}>
-                       {Object.entries(editData.ladderAvailability || localUser.ladderAvailability || {}).map(([day, slots]) => 
+                       {Object.entries(editData.availability || localUser.availability || {}).map(([day, slots]) => 
                          slots.map((slot, index) => (
                            <div key={`${day}-${index}`} style={{
                              display: 'flex',
@@ -955,8 +894,8 @@ const LadderProfileModal = ({
                                  const newSlots = slots.filter((_, i) => i !== index);
                                  setEditData(prev => ({
                                    ...prev,
-                                   ladderAvailability: {
-                                     ...prev.ladderAvailability,
+                                   availability: {
+                                     ...prev.availability,
                                      [day]: newSlots
                                    }
                                  }));
@@ -982,7 +921,7 @@ const LadderProfileModal = ({
                    
                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
                      <button
-                       onClick={() => saveSection('ladderAvailability')}
+                       onClick={() => saveSection('availability')}
                        style={{
                          background: '#4CAF50',
                          color: '#fff',
@@ -1013,9 +952,9 @@ const LadderProfileModal = ({
                  </div>
                              ) : (
                  <div style={{ color: '#cccccc', lineHeight: '1.4', fontSize: isMobile ? '0.85rem' : '0.9rem' }}>
-                   {localUser.ladderAvailability && Object.keys(localUser.ladderAvailability).length > 0 
+                                        {localUser.availability && Object.keys(localUser.availability).length > 0 
                      ? (() => {
-                        const availableDays = Object.entries(localUser.ladderAvailability)
+                                                 const availableDays = Object.entries(localUser.availability)
                           .filter(([day, slots]) => slots && slots.length > 0);
                         
                         if (availableDays.length === 0) return 'No availability set';
@@ -1078,10 +1017,9 @@ const LadderProfileModal = ({
                   📍 Challenge Locations
                 </div>
                                  {editingSection !== 'locations' && (
-                   <div style={{ display: 'flex', gap: '4px' }}>
                      <button
                        onClick={() => startEditing('locations', {
-                         ladderLocations: localUser.ladderLocations || ''
+                       locations: localUser.locations || ''
                        })}
                        style={{
                          background: 'rgba(76, 175, 80, 0.2)',
@@ -1098,24 +1036,6 @@ const LadderProfileModal = ({
                      >
                        ✏️ Edit
                      </button>
-                     <button
-                       onClick={copyLocationsFromLeague}
-                       style={{
-                         background: 'rgba(255, 193, 7, 0.2)',
-                         border: '1px solid rgba(255, 193, 7, 0.4)',
-                         color: '#ffc107',
-                         padding: '4px 8px',
-                         borderRadius: '4px',
-                         fontSize: isMobile ? '0.7rem' : '0.8rem',
-                         cursor: 'pointer',
-                         transition: 'all 0.2s ease'
-                       }}
-                       onMouseEnter={(e) => e.target.style.background = 'rgba(255, 193, 7, 0.3)'}
-                       onMouseLeave={(e) => e.target.style.background = 'rgba(255, 193, 7, 0.2)'}
-                     >
-                       📋 Copy from League
-                     </button>
-                   </div>
                  )}
               </div>
               
@@ -1220,7 +1140,7 @@ const LadderProfileModal = ({
                   
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                     <button
-                      onClick={() => saveSection('ladderLocations')}
+                      onClick={() => saveSection('locations')}
                       style={{
                         background: '#4CAF50',
                         color: '#fff',
@@ -1255,7 +1175,7 @@ const LadderProfileModal = ({
                   gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
                   gap: '6px'
                 }}>
-                  {localUser.ladderLocations && localUser.ladderLocations.split('\n').filter(Boolean).map((location, index) => (
+                  {localUser.locations && localUser.locations.split('\n').filter(Boolean).map((location, index) => (
                     <span 
                       key={index} 
                       style={{

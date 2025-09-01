@@ -33,8 +33,15 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
 
       if (result.success) {
         setMessage("");
-        // Pass complete user data including ladderProfile
-        onSuccess(`${result.user.firstName} ${result.user.lastName}`.trim(), result.user.email, result.user.pin, result.userType, result.user);
+        // Pass complete user data including profile status
+        onSuccess(
+          `${result.user.firstName} ${result.user.lastName}`.trim(),
+          result.user.email,
+          result.user.pin,
+          result.userType,
+          result.user,
+          result.profileStatus
+        );
       } else {
         // Handle different error cases
         setMessage(result.message || "Login failed. Please try again or contact frbcapl@gmail.com for help.");

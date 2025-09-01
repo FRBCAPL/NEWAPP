@@ -5,7 +5,7 @@ import { BACKEND_URL } from '../../config.js';
 import LadderApplicationsManager from '../admin/LadderApplicationsManager';
 import DraggableModal from '../modal/DraggableModal';
 import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal';
-import LadderProfileModal from '../modal/LadderProfileModal';
+
 import LadderChallengeModal from './LadderChallengeModal';
 import LadderChallengeConfirmModal from './LadderChallengeConfirmModal';
 import LadderSmartMatchModal from './LadderSmartMatchModal';
@@ -41,7 +41,7 @@ const LadderApp = ({
   const [showApplicationsManager, setShowApplicationsManager] = useState(false);
   const [selectedLadder, setSelectedLadder] = useState('499-under');
   const [showRulesModal, setShowRulesModal] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
+
   const [availableLocations, setAvailableLocations] = useState([]);
   
   // Challenge system state
@@ -66,7 +66,55 @@ const LadderApp = ({
     loadData();
     loadLocations();
     loadChallenges();
+    loadProfileData();
   }, [selectedLadder]);
+
+  // Load profile data from SimpleProfile
+  const loadProfileData = async () => {
+    if (!senderEmail) return;
+    
+    console.log('Loading profile data for email:', senderEmail);
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/unified-auth/profile-data?email=${encodeURIComponent(senderEmail)}&appType=ladder&t=${Date.now()}`);
+      console.log('Profile data response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Loaded profile data:', data);
+        
+        if (data.success && data.profile) {
+          const newPlayerInfo = {
+            firstName: playerName,
+            lastName: playerLastName,
+            email: senderEmail,
+            phone: '',
+            preferredContacts: [],
+            locations: data.profile.locations || '',
+            availability: data.profile.availability || {}
+          };
+          console.log('Setting new playerInfo:', newPlayerInfo);
+          console.log('playerInfo.locations:', newPlayerInfo.locations);
+          setPlayerInfo(newPlayerInfo);
+        } else {
+          console.log('No profile data found, setting default playerInfo');
+          setPlayerInfo({
+            firstName: playerName,
+            lastName: playerLastName,
+            email: senderEmail,
+            phone: '',
+            preferredContacts: [],
+            locations: '',
+            availability: {}
+          });
+        }
+      } else {
+        console.log('Profile data response not ok:', response.status);
+      }
+    } catch (error) {
+      console.error('Error loading profile data:', error);
+    }
+  };
 
   // Auto-show claim form if prop is true
   useEffect(() => {
@@ -198,13 +246,7 @@ const LadderApp = ({
       console.log('📋 Player status response:', status);
       setPlayerStatus(status);
       
-      // Also fetch the complete user profile data
-      const userResponse = await fetch(`${BACKEND_URL}/api/users/${encodeURIComponent(email)}`);
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        const user = userData.user || userData;
-        setPlayerInfo(user);
-      }
+      // Note: Only use ladder-specific data in LadderApp to maintain separation from league data
       
       if (status.isLadderPlayer) {
         // Player has ladder account
@@ -313,15 +355,7 @@ const LadderApp = ({
               needsClaim: false
             });
            
-           // Fetch the complete user profile data
-           if (result.playerInfo.email) {
-             const userResponse = await fetch(`${BACKEND_URL}/api/users/${encodeURIComponent(result.playerInfo.email)}`);
-             if (userResponse.ok) {
-               const userData = await userResponse.json();
-               const user = userData.user || userData;
-               setPlayerInfo(user);
-             }
-           }
+           // Note: Use only ladder-specific data to maintain separation from league data
          }
         
                  // Close the claim form
@@ -412,22 +446,7 @@ const LadderApp = ({
     setCurrentView(view);
   };
 
-  const handleOpenProfileModal = async () => {
-    // Refresh user data before opening the modal
-    if (senderEmail) {
-      try {
-        const userResponse = await fetch(`${BACKEND_URL}/api/users/${encodeURIComponent(senderEmail)}`);
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          const user = userData.user || userData;
-          setPlayerInfo(user);
-        }
-      } catch (error) {
-        console.error('Error refreshing user data:', error);
-      }
-    }
-    setShowProfileModal(true);
-  };
+
 
   // Challenge system functions
   const loadChallenges = async () => {
@@ -1266,11 +1285,7 @@ const LadderApp = ({
                <p>Read the complete ladder rules</p>
              </div>
              
-             <div className="nav-card" onClick={handleOpenProfileModal}>
-               <div className="nav-icon">👤</div>
-               <h3>My Profile</h3>
-               <p>Edit your challenge availability and locations</p>
-             </div>
+
              
              {/* Admin Buttons */}
              {isAdmin && (
@@ -1410,31 +1425,7 @@ const LadderApp = ({
         isMobile={false}
       />
 
-             {/* Ladder Profile Modal */}
-       <LadderProfileModal
-         isOpen={showProfileModal}
-         onClose={() => setShowProfileModal(false)}
-         currentUser={playerInfo ? {
-           ...playerInfo,
-           // Map availability to ladderAvailability for the modal
-           ladderAvailability: playerInfo.availability || {},
-           ladderLocations: playerInfo.locations || ''
-         } : {
-           firstName: playerName,
-           lastName: playerLastName,
-           email: senderEmail,
-           phone: '',
-           preferredContacts: [],
-           ladderAvailability: {},
-           ladderLocations: ''
-         }}
-         isMobile={false}
-         onUserUpdate={(updatedUser) => {
-           // Update local player info if needed
-           setPlayerInfo(prev => ({ ...prev, ...updatedUser }));
-         }}
-         availableLocations={availableLocations}
-       />
+
 
       {/* Challenge System Modals */}
       {showChallengeModal && selectedDefender && (

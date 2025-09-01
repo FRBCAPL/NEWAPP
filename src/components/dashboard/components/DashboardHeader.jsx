@@ -19,7 +19,6 @@ const DashboardHeader = ({
   seasonLoading,
   standingsLoading,
   scheduleLoading,
-  onProfileClick,
   styles 
 }) => {
   const isLoading = proposalsLoading || matchesLoading || notesLoading || seasonLoading || standingsLoading || scheduleLoading;
@@ -34,18 +33,10 @@ const DashboardHeader = ({
             fontSize: isMobile ? '1.6rem' : '2rem',
             textAlign: 'center',
             margin: 0,
-            cursor: 'pointer',
             transition: 'all 0.2s ease'
           }}
-          onClick={onProfileClick}
-          onMouseEnter={(e) => {
-            e.target.style.color = '#e53e3e';
-            e.target.style.textShadow = '0 0 8px rgba(229, 62, 62, 0.5)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.color = '';
-            e.target.style.textShadow = '';
-          }}
+
+
         >
           Hello,
           <span className={styles.dashboardUserName} style={{ fontSize: isMobile ? '1.4rem' : '1.8rem' }}>
@@ -75,39 +66,7 @@ const DashboardHeader = ({
           </span>
         </div>
         
-        {/* Profile Button */}
-        <button
-          onClick={onProfileClick}
-          style={{
-            background: 'linear-gradient(135deg, #e53e3e, #c53030)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            padding: isMobile ? '8px 16px' : '10px 20px',
-            fontSize: isMobile ? '0.8rem' : '0.9rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 2px 8px rgba(229, 62, 62, 0.3)',
-            marginTop: isMobile ? '6px' : '10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.background = 'linear-gradient(135deg, #c53030, #a52a2a)';
-            e.target.style.transform = 'translateY(-1px)';
-            e.target.style.boxShadow = '0 4px 12px rgba(229, 62, 62, 0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = 'linear-gradient(135deg, #e53e3e, #c53030)';
-            e.target.style.transform = 'translateY(0)';
-            e.target.style.boxShadow = '0 2px 8px rgba(229, 62, 62, 0.3)';
-          }}
-        >
-          👤 Profile
-        </button>
+
       </div>
 
       {/* Beta Announcement */}

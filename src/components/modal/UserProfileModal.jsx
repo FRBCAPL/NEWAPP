@@ -1,21 +1,133 @@
 import React, { useState, useEffect } from 'react';
+import LocationSelectionModal from './LocationSelectionModal.jsx';
 
 const UserProfileModal = ({ 
   isOpen, 
   onClose, 
   currentUser, 
   isMobile, 
-  onUserUpdate,
-  availableLocations = [] // New prop for available locations
+  onUserUpdate
 }) => {
   const [editingSection, setEditingSection] = useState(null);
   const [editData, setEditData] = useState({});
   const [localUser, setLocalUser] = useState(currentUser);
+  const [availableLocations, setAvailableLocations] = useState([]);
+  const [showLocationsModal, setShowLocationsModal] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Sync local user state with currentUser prop changes
   useEffect(() => {
     setLocalUser(currentUser);
   }, [currentUser]);
+
+  // Force re-render when localUser changes
+  useEffect(() => {
+    console.log('🔄 localUser state updated:', localUser);
+  }, [localUser]);
+
+  // Force re-render when refreshTrigger changes
+  useEffect(() => {
+    console.log('🔄 refreshTrigger changed to:', refreshTrigger);
+  }, [refreshTrigger]);
+
+    // Load profile data when modal opens
+  useEffect(() => {
+    const loadProfileData = async () => {
+      if (isOpen && currentUser?.email) {
+        try {
+          console.log('🔄 Loading profile data for:', currentUser.email);
+          const backendUrl = 'http://localhost:8080';
+          const url = `${backendUrl}/api/unified-auth/profile-data?email=${encodeURIComponent(currentUser.email)}&appType=league&t=${Date.now()}`;
+          console.log('📡 Fetching from URL:', url);
+          
+          const response = await fetch(url);
+          console.log('📥 Response status:', response.status);
+          console.log('📥 Response ok:', response.ok);
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Loaded profile data:', data);
+            console.log('📍 Locations from API:', data.profile?.locations);
+            console.log('⏰ Availability from API:', data.profile?.availability);
+            console.log('📞 Phone from API:', data.profile?.phone);
+            
+            setLocalUser(prev => {
+              const updated = {
+                ...prev,
+                locations: data.profile?.locations || '',
+                availability: data.profile?.availability || {},
+                phone: data.profile?.phone || '',
+                divisions: data.profile?.divisions || [],
+                ladderInfo: data.profile?.ladderInfo || null
+              };
+              console.log('🔄 Updated localUser:', updated);
+              return updated;
+            });
+          } else {
+            const errorText = await response.text();
+            console.error('❌ Failed to load profile data. Status:', response.status);
+            console.error('❌ Error response:', errorText);
+          }
+        } catch (error) {
+          console.error('💥 Error loading profile data:', error);
+        }
+      } else {
+        console.log('⚠️ Modal not open or no email:', { isOpen, email: currentUser?.email });
+      }
+    };
+
+    loadProfileData();
+  }, [isOpen, currentUser?.email]);
+
+  // Load available locations when modal opens
+  useEffect(() => {
+    const loadAvailableLocations = async () => {
+      if (isOpen) {
+        try {
+          console.log('🔄 Loading available locations...');
+          const backendUrl = 'http://localhost:8080';
+          const response = await fetch(`${backendUrl}/api/locations`);
+          console.log('📡 Locations API response status:', response.status);
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('📥 Locations API data:', data);
+            const rawLocations = data.locations || [];
+            console.log('🔍 Raw locations structure:', rawLocations);
+            
+            // Extract location names from objects if they're not strings
+            const locations = rawLocations.map(location => {
+              if (typeof location === 'string') {
+                console.log(`  ✅ String location: "${location}"`);
+                return location;
+              } else if (location && typeof location === 'object') {
+                console.log(`  🔍 Object location:`, location);
+                // Try to find the location name in common fields
+                const locationName = location.name || location.locationName || location.title || 
+                                   location.location || location.value || JSON.stringify(location);
+                console.log(`  📍 Extracted name: "${locationName}"`);
+                return locationName;
+              } else {
+                console.log(`  ⚠️ Other type location:`, location);
+                return String(location);
+              }
+            }).filter(Boolean); // Remove any undefined/null values
+            
+            console.log('📍 Final processed locations:', locations);
+            
+            console.log('📍 Setting availableLocations to:', locations);
+            setAvailableLocations(locations);
+          } else {
+            console.error('❌ Failed to load locations. Status:', response.status);
+          }
+        } catch (error) {
+          console.error('💥 Error loading locations:', error);
+        }
+      }
+    };
+
+    loadAvailableLocations();
+  }, [isOpen]);
 
   // Start editing a specific section
   const startEditing = (section, data) => {
@@ -73,80 +185,78 @@ const UserProfileModal = ({
       
       console.log('Found user ID:', userId);
       
-      // Handle special cases where the field name differs
+      // Use the unified profile system
+
+      // Map section names to unified profile field names
+      let fieldName = section;
+      let fieldValue;
+
       if (section === 'basic') {
-        // For basic info, we need to send individual fields
-        const requestBody = {
+        fieldValue = {
           firstName: editData.firstName,
           lastName: editData.lastName,
           email: editData.email,
           phone: editData.phone
         };
-        
-        console.log('Sending basic info update:', requestBody);
-        
-        const response = await fetch(`${backendUrl}/api/users/${userId}/profile`, {
-          method: 'PUT',
+      } else if (section === 'locations') {
+        fieldValue = editData.locations;
+             } else if (section === 'availability') {
+         fieldValue = editData.availability;
+       } else {
+         fieldValue = editData[section];
+       }
+
+      console.log('Sending unified profile update:', { fieldName, fieldValue });
+
+      const response = await fetch(`${backendUrl}/api/unified-auth/update-profile`, {
+        method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(requestBody)
-        });
-
-        if (response.ok) {
-          const updatedUser = await response.json();
-          console.log('Basic info updated successfully:', updatedUser);
-          // Update local state immediately for instant UI update
-          setLocalUser(updatedUser.user);
-          onUserUpdate(updatedUser.user);
-          setEditingSection(null);
-          setEditData({});
-          // Show success feedback
-          alert('✅ Profile updated successfully!');
-        } else {
-          const errorData = await response.json();
-          console.error('Basic info update failed:', errorData);
-          alert(`Failed to update profile: ${errorData.error || 'Unknown error'}`);
-        }
-        return;
-      }
-      
-      // For other sections, get the correct field value
-      let fieldValue;
-      if (section === 'locations') {
-        fieldValue = editData.locations;
-      } else if (section === 'preferredContacts') {
-        fieldValue = editData.preferredContacts;
-      } else {
-        fieldValue = editData[section];
-      }
-      
-      const requestBody = { [section]: fieldValue };
-      console.log('Sending section update:', requestBody);
-      
-      const response = await fetch(`${backendUrl}/api/users/${userId}/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify({
+          userId,
+          email: userEmail,
+          appType: 'league',
+          updates: {
+            [fieldName]: fieldValue
+          }
+        })
       });
 
-      if (response.ok) {
-        const updatedUser = await response.json();
-        console.log('Section updated successfully:', updatedUser);
-        // Update local state immediately for instant UI update
-        setLocalUser(updatedUser.user);
-        onUserUpdate(updatedUser.user);
+      if (!response.ok) {
+          const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update profile');
+      }
+
+      const updatedData = await response.json();
+      console.log('Unified profile update successful:', updatedData);
+
+      // Refresh profile data from the backend
+      try {
+        const profileResponse = await fetch(`${backendUrl}/api/unified-auth/profile-data?email=${encodeURIComponent(userEmail)}&appType=league&t=${Date.now()}`);
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          console.log('Refreshed league profile data:', profileData);
+
+          // Update local state with the fresh data
+          setLocalUser(prev => ({
+            ...prev,
+            locations: profileData.profile.locations || '',
+            availability: profileData.profile.availability || {}
+          }));
+
+          // Notify parent component to refresh profile data
+          if (onUserUpdate) {
+            onUserUpdate();
+          }
+        }
+      } catch (error) {
+        console.error('Error refreshing profile data:', error);
+      }
+
         setEditingSection(null);
         setEditData({});
-        // Show success feedback
-        alert('✅ Profile updated successfully!');
-      } else {
-        const errorData = await response.json();
-        console.error('Section update failed:', errorData);
-        alert(`Failed to update profile: ${errorData.error || 'Unknown error'}`);
-      }
+      alert('✅ League profile updated successfully!');
     } catch (error) {
       console.error('Error updating profile:', error);
       alert('Error updating profile. Please try again.');
@@ -161,18 +271,7 @@ const UserProfileModal = ({
     }));
   };
 
-  // Handle contact preference changes
-  const handleContactChange = (preference, checked) => {
-    const currentContacts = editData.preferredContacts || localUser.preferredContacts || [];
-    const newContacts = checked
-      ? [...currentContacts, preference]
-      : currentContacts.filter(p => p !== preference);
-    
-    setEditData(prev => ({
-      ...prev,
-      preferredContacts: newContacts
-    }));
-  };
+
 
   // Handle availability changes
   const handleAvailabilityChange = (day, slot, checked) => {
@@ -207,6 +306,91 @@ const UserProfileModal = ({
     }));
   };
 
+    // Handle locations modal save
+  const handleLocationsModalSave = async (locationsString) => {
+    try {
+      console.log('🔄 Starting location save process...');
+      console.log('📍 New locations string:', locationsString);
+      
+      // Update local state immediately for instant UI feedback
+      setLocalUser(prev => {
+        const updated = {
+          ...prev,
+          locations: locationsString
+        };
+        console.log('🔄 Updated localUser immediately:', updated);
+        return updated;
+      });
+
+      // Force immediate re-render
+      setRefreshTrigger(prev => prev + 1);
+      console.log('🔄 Triggered refresh for immediate update');
+
+      // Save to backend
+      const userEmail = currentUser?.email;
+      if (!userEmail) {
+        console.error('No valid user email found');
+        alert('Error: No valid user email found. Please refresh the page and try again.');
+        return;
+      }
+
+      const backendUrl = 'http://localhost:8080';
+      
+      // First, get the user by email to get their MongoDB _id
+      const userResponse = await fetch(`${backendUrl}/api/users/${encodeURIComponent(userEmail)}`);
+      if (!userResponse.ok) {
+        console.error('Failed to fetch user by email');
+        alert('Error: Failed to fetch user data. Please refresh the page and try again.');
+        return;
+      }
+
+      const userData = await userResponse.json();
+      const userId = userData.user?._id || userData._id;
+
+      if (!userId) {
+        console.error('No user ID found in response');
+        alert('Error: No user ID found. Please refresh the page and try again.');
+        return;
+      }
+
+      // Save locations using the unified profile system
+      const response = await fetch(`${backendUrl}/api/unified-auth/update-profile`, {
+        method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        body: JSON.stringify({
+          userId,
+          email: userEmail,
+          appType: 'league',
+          updates: {
+            locations: locationsString
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update locations');
+      }
+
+      console.log('✅ Locations updated successfully in backend');
+      setEditingSection(null);
+      
+      // Force another refresh to ensure the display updates
+      setRefreshTrigger(prev => prev + 1);
+      console.log('🔄 Final refresh triggered after backend save');
+      
+      // Notify parent component to refresh profile data
+      if (onUserUpdate) {
+        onUserUpdate();
+      }
+    } catch (error) {
+      console.error('Error saving locations:', error);
+      alert('Error saving locations. Please try again.');
+    }
+  };
+
   // Handle new location addition
   const handleAddNewLocation = (newLocation) => {
     if (!newLocation.trim()) return;
@@ -217,9 +401,9 @@ const UserProfileModal = ({
     // Check if location already exists
     if (locationArray.some(loc => loc.trim().toLowerCase() === newLocation.trim().toLowerCase())) {
       alert('This location is already in your list!');
-      return;
-    }
-    
+        return;
+      }
+
     const newLocations = [...locationArray, newLocation.trim()];
     setEditData(prev => ({
       ...prev,
@@ -229,137 +413,100 @@ const UserProfileModal = ({
 
   // Get user's current locations (from edit data or current user)
   const getUserLocations = () => {
-    const locations = editData.locations || localUser.locations || '';
-    return locations.split('\n').filter(Boolean);
+    try {
+      // Force recalculation when refreshTrigger changes
+      const locations = localUser.locations || '';
+      console.log('🔍 getUserLocations called with refreshTrigger:', refreshTrigger);
+      console.log('🔍 Current locations data:', locations);
+      console.log('🔍 localUser.locations:', localUser.locations);
+      
+      if (!locations) return [];
+      
+      // Handle both newline and comma-separated formats
+      if (typeof locations === 'string') {
+        if (locations.includes('\n')) {
+          const result = locations.split('\n').filter(Boolean).map(loc => String(loc).trim());
+          console.log('🔍 Parsed newline locations:', result);
+          return result;
+        } else if (locations.includes(',')) {
+          const result = locations.split(',').map(l => String(l).trim()).filter(Boolean);
+          console.log('🔍 Parsed comma locations:', result);
+          return result;
+        } else {
+          const result = locations.trim() ? [String(locations).trim()] : [];
+          console.log('🔍 Parsed single location:', result);
+          return result;
+        }
+      }
+      
+      // If locations is an array, ensure all items are strings
+      if (Array.isArray(locations)) {
+        const result = locations.map(loc => String(loc).trim()).filter(Boolean);
+        console.log('🔍 Parsed array locations:', result);
+        return result;
+      }
+      
+      console.log('🔍 No valid locations found, returning empty array');
+      return [];
+    } catch (error) {
+      console.error('❌ Error in getUserLocations:', error);
+      return [];
+    }
   };
 
   // Get locations not yet selected by user
   const getUnselectedLocations = () => {
     const userLocations = getUserLocations();
-    return availableLocations.filter(location => 
-      !userLocations.some(userLoc => 
-        userLoc.trim().toLowerCase() === location.trim().toLowerCase()
-      )
-    );
-  };
-
-  // Copy availability from ladder
-  const copyFromLadder = async () => {
-    try {
-      // Get user's ladder availability from the database
-      const userEmail = currentUser?.email;
-      if (!userEmail) {
-        alert('No valid user email found. Please refresh the page and try again.');
-        return;
-      }
-
-      const backendUrl = 'http://localhost:8080';
-      const userResponse = await fetch(`${backendUrl}/api/users/${encodeURIComponent(userEmail)}`);
-      if (!userResponse.ok) {
-        alert('Error: Failed to fetch user data. Please refresh the page and try again.');
-        return;
-      }
-
-      const userData = await userResponse.json();
-      const userId = userData.user?._id || userData._id;
-      const ladderAvailability = userData.user?.ladderAvailability || {};
-
-      if (!ladderAvailability || Object.keys(ladderAvailability).length === 0) {
-        alert('No ladder availability found to copy.');
-        return;
-      }
-
-      const confirmCopy = window.confirm(
-        'Copy your ladder availability to league? This will replace your current league availability.\n\n' +
-        'Ladder availability: ' + Object.entries(ladderAvailability).map(([day, slots]) => 
-          `${day}: ${slots.join(', ')}`
-        ).join(' | ')
-      );
-
-      if (confirmCopy) {
-        // Update league availability with ladder data
-        const response = await fetch(`${backendUrl}/api/users/${userId}/profile`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ availability: ladderAvailability })
-        });
-
-        if (response.ok) {
-          const updatedUser = await response.json();
-          setLocalUser(updatedUser.user);
-          onUserUpdate(updatedUser.user);
-          alert('✅ Ladder availability copied to league successfully!');
-        } else {
-          alert('Failed to copy availability. Please try again.');
-        }
-      }
-    } catch (error) {
-      console.error('Error copying from ladder:', error);
-      alert('Error copying from ladder. Please try again.');
+    console.log('🔍 getUnselectedLocations called:');
+    console.log('  - availableLocations:', availableLocations);
+    console.log('  - userLocations:', userLocations);
+    
+    if (!availableLocations || !Array.isArray(availableLocations)) {
+      console.log('  - ❌ availableLocations is not an array or is empty');
+      return [];
     }
-  };
-
-  // Copy locations from ladder
-  const copyLocationsFromLadder = async () => {
-    try {
-      // Get user's ladder locations from the database
-      const userEmail = currentUser?.email;
-      if (!userEmail) {
-        alert('No valid user email found. Please refresh the page and try again.');
-        return;
+    
+    const filtered = availableLocations.filter(location => {
+      // Ensure location is a string
+      if (typeof location !== 'string') {
+        console.warn('⚠️ Non-string location found:', location);
+        return false;
       }
-
-      const backendUrl = 'http://localhost:8080';
-      const userResponse = await fetch(`${backendUrl}/api/users/${encodeURIComponent(userEmail)}`);
-      if (!userResponse.ok) {
-        alert('Error: Failed to fetch user data. Please refresh the page and try again.');
-        return;
-      }
-
-      const userData = await userResponse.json();
-      const userId = userData.user?._id || userData._id;
-      const ladderLocations = userData.user?.ladderLocations || '';
-
-      if (!ladderLocations || ladderLocations.trim() === '') {
-        alert('No ladder locations found to copy.');
-        return;
-      }
-
-      const confirmCopy = window.confirm(
-        'Copy your ladder locations to league? This will replace your current league locations.\n\n' +
-        'Ladder locations: ' + ladderLocations.split('\n').filter(Boolean).join(', ')
-      );
-
-      if (confirmCopy) {
-        // Update league locations with ladder data
-        const response = await fetch(`${backendUrl}/api/users/${userId}/profile`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ locations: ladderLocations })
-        });
-
-        if (response.ok) {
-          const updatedUser = await response.json();
-          setLocalUser(updatedUser.user);
-          onUserUpdate(updatedUser.user);
-          alert('✅ Ladder locations copied to league successfully!');
-        } else {
-          alert('Failed to copy locations. Please try again.');
+      
+      const isSelected = userLocations.some(userLoc => {
+        // Ensure userLoc is also a string
+        if (typeof userLoc !== 'string') {
+          console.warn('⚠️ Non-string userLoc found:', userLoc);
+          return false;
         }
+        
+        return userLoc.trim().toLowerCase() === location.trim().toLowerCase();
+      });
+      
+      if (isSelected) {
+        console.log(`  - ❌ "${location}" is already selected`);
+        } else {
+        console.log(`  - ✅ "${location}" is available to add`);
       }
-    } catch (error) {
-      console.error('Error copying locations from ladder:', error);
-      alert('Error copying locations from ladder. Please try again.');
-    }
+      
+      return !isSelected;
+    });
+    
+    console.log('  - Final filtered result:', filtered);
+    return filtered;
   };
+
+
 
   if (!isOpen || !localUser) return null;
 
   const divisions = localUser.divisions || [];
+  
+  // Debug logging
+  console.log('🎯 Modal rendering with localUser:', localUser);
+  console.log('📍 Current locations:', localUser.locations);
+  console.log('⏰ Current availability:', localUser.availability);
+  console.log('📞 Current phone:', localUser.phone);
 
   return (
     <div
@@ -633,115 +780,7 @@ const UserProfileModal = ({
               )}
             </div>
 
-                         {/* Contact Methods */}
-             <div style={{
-               background: 'rgba(255, 255, 255, 0.05)',
-               padding: isMobile ? '6px' : '8px',
-               borderRadius: '6px',
-               border: '1px solid rgba(255, 255, 255, 0.1)'
-             }}>
-               <div style={{
-                 display: 'flex',
-                 justifyContent: 'space-between',
-                 alignItems: 'center',
-                 marginBottom: '4px'
-               }}>
-                 <div style={{
-                   fontWeight: 'bold',
-                   color: '#ffffff',
-                   fontSize: isMobile ? '0.9rem' : '1rem'
-                 }}>
-                   📞 Preferred Contact Methods
-                 </div>
-                {editingSection !== 'contacts' && (
-                  <button
-                                         onClick={() => startEditing('contacts', {
-                       preferredContacts: localUser.preferredContacts || []
-                     })}
-                    style={{
-                      background: 'rgba(76, 175, 80, 0.2)',
-                      border: '1px solid rgba(76, 175, 80, 0.4)',
-                      color: '#4CAF50',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontSize: isMobile ? '0.7rem' : '0.8rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.3)'}
-                    onMouseLeave={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.2)'}
-                  >
-                    ✏️ Edit
-                  </button>
-                )}
-              </div>
-              
-              {editingSection === 'contacts' ? (
-                <div style={{ display: 'grid', gap: '8px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                    {['email', 'phone', 'text'].map((method) => (
-                      <label key={method} style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '6px', 
-                        cursor: 'pointer',
-                        padding: '6px',
-                        borderRadius: '4px',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)'
-                      }}>
-                        <input
-                          type="checkbox"
-                          checked={(editData.preferredContacts || []).includes(method)}
-                          onChange={(e) => handleContactChange(method, e.target.checked)}
-                          style={{ cursor: 'pointer', accentColor: '#e53e3e' }}
-                        />
-                        <span style={{ color: '#ffffff', fontSize: '0.8rem' }}>
-                          {method.charAt(0).toUpperCase() + method.slice(1)}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                    <button
-                      onClick={() => saveSection('preferredContacts')}
-                      style={{
-                        background: '#4CAF50',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '6px 12px',
-                        borderRadius: '4px',
-                        fontSize: '0.8rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      💾 Save
-                    </button>
-                    <button
-                      onClick={cancelEditing}
-                      style={{
-                        background: '#6c757d',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '6px 12px',
-                        borderRadius: '4px',
-                        fontSize: '0.8rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ❌ Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                                 <div style={{ color: '#cccccc', lineHeight: '1.5', fontSize: isMobile ? '0.9rem' : '1rem' }}>
-                   {localUser.preferredContacts && localUser.preferredContacts.length > 0 
-                     ? localUser.preferredContacts.map(method => method.charAt(0).toUpperCase() + method.slice(1)).join(', ')
-                     : 'No preferred methods set'
-                   }
-                 </div>
-              )}
-            </div>
+                         
 
                          {/* League Availability */}
              <div style={{
@@ -761,27 +800,9 @@ const UserProfileModal = ({
                    color: '#ffffff',
                    fontSize: isMobile ? '0.9rem' : '1rem'
                  }}>
-                   ⏰ League Availability
+                                       ⏰ Availability
                  </div>
                 {editingSection !== 'availability' && (
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      onClick={copyFromLadder}
-                      style={{
-                        background: 'rgba(33, 150, 243, 0.2)',
-                        border: '1px solid rgba(33, 150, 243, 0.4)',
-                        color: '#2196F3',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: isMobile ? '0.7rem' : '0.8rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => e.target.style.background = 'rgba(33, 150, 243, 0.3)'}
-                      onMouseLeave={(e) => e.target.style.background = 'rgba(33, 150, 243, 0.2)'}
-                    >
-                      📋 Copy from Ladder
-                    </button>
                     <button
                       onClick={() => startEditing('availability', {
                         availability: localUser.availability || {}
@@ -801,7 +822,6 @@ const UserProfileModal = ({
                     >
                       ✏️ Edit
                     </button>
-                  </div>
                 )}
               </div>
               
@@ -1105,214 +1125,97 @@ const UserProfileModal = ({
                  }}>
                    📍 Preferred Locations
                  </div>
-                {editingSection !== 'locations' && (
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      onClick={copyLocationsFromLadder}
-                      style={{
-                        background: 'rgba(33, 150, 243, 0.2)',
-                        border: '1px solid rgba(33, 150, 243, 0.4)',
-                        color: '#2196F3',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: isMobile ? '0.7rem' : '0.8rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => e.target.style.background = 'rgba(33, 150, 243, 0.3)'}
-                      onMouseLeave={(e) => e.target.style.background = 'rgba(33, 150, 243, 0.2)'}
-                    >
-                      📋 Copy from Ladder
-                    </button>
-                    <button
-                      onClick={() => startEditing('locations', {
-                        locations: localUser.locations || ''
-                      })}
-                      style={{
-                        background: 'rgba(76, 175, 80, 0.2)',
-                        border: '1px solid rgba(76, 175, 80, 0.4)',
-                        color: '#4CAF50',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: isMobile ? '0.7rem' : '0.8rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.3)'}
-                      onMouseLeave={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.2)'}
-                    >
-                      ✏️ Edit
-                    </button>
-                  </div>
-                )}
+                                 {editingSection !== 'locations' && (
+                   <button
+                     onClick={() => setShowLocationsModal(true)}
+                     style={{
+                       background: 'rgba(76, 175, 80, 0.2)',
+                       border: '1px solid rgba(76, 175, 80, 0.4)',
+                       color: '#4CAF50',
+                       padding: '4px 8px',
+                       borderRadius: '4px',
+                       fontSize: isMobile ? '0.7rem' : '0.8rem',
+                       cursor: 'pointer',
+                       transition: 'all 0.2s ease'
+                     }}
+                     onMouseEnter={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.3)'}
+                     onMouseLeave={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.2)'}
+                   >
+                     ✏️ Edit
+                   </button>
+                 )}
               </div>
               
-              {editingSection === 'locations' ? (
-                <div style={{ display: 'grid', gap: '8px' }}>
-                  {/* Current Selected Locations */}
-                  {getUserLocations().length > 0 && (
-                    <div>
-                      <div style={{ 
-                        color: '#4CAF50', 
-                        fontSize: '0.8rem', 
-                        fontWeight: 'bold',
-                        marginBottom: '4px'
-                      }}>
-                        📍 Your Selected Locations:
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px' }}>
-                        {getUserLocations().map((location, index) => (
-                          <label key={index} style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '4px', 
-                            cursor: 'pointer',
-                            padding: '4px 6px',
-                            borderRadius: '4px',
-                            background: 'rgba(76, 175, 80, 0.1)',
-                            border: '1px solid rgba(76, 175, 80, 0.3)'
-                          }}>
-                            <input
-                              type="checkbox"
-                              checked={getUserLocations().includes(location)}
-                              onChange={(e) => handleLocationChange(location, e.target.checked)}
-                              style={{ cursor: 'pointer', accentColor: '#4CAF50' }}
-                            />
-                            <span style={{ color: '#4CAF50', fontSize: '0.75rem' }}>
-                              {location}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+                gap: '6px'
+              }}
+              key={refreshTrigger} // Force re-render when refreshTrigger changes
+              >
+                    {(() => {
+                      try {
+                        const locations = getUserLocations();
+                        if (!locations || locations.length === 0) {
+                          return (
+                            <span style={{
+                              color: '#888',
+                              fontSize: '0.8rem',
+                              fontStyle: 'italic',
+                              gridColumn: '1 / -1',
+                              textAlign: 'center',
+                              padding: '10px'
+                            }}>
+                              No locations selected
                             </span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Available Locations to Add */}
-                  {getUnselectedLocations().length > 0 && (
-                    <div>
-                      <div style={{ 
-                        color: '#ffc107', 
-                        fontSize: '0.8rem', 
-                        fontWeight: 'bold',
-                        marginBottom: '4px'
-                      }}>
-                        ➕ Available Locations to Add:
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px' }}>
-                        {getUnselectedLocations().map((location, index) => (
-                          <label key={index} style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '4px', 
-                            cursor: 'pointer',
-                            padding: '4px 6px',
-                            borderRadius: '4px',
-                            background: 'rgba(255, 193, 7, 0.1)',
-                            border: '1px solid rgba(255, 193, 7, 0.3)'
+                          );
+                        }
+                        
+                        return locations.map((location, index) => (
+                     <span 
+                       key={`${location}-${index}-${refreshTrigger}`} // Include refreshTrigger in key
+                                              style={{
+                          background: 'rgba(255, 255, 255, 0.1)',
+                          color: '#ffffff',
+                          padding: '5px 8px',
+                          borderRadius: '8px',
+                          fontSize: isMobile ? '0.75rem' : '0.8rem',
+                         display: 'flex',
+                         justifyContent: 'center',
+                         alignItems: 'center',
+                         gap: '3px',
+                         width: '100%',
+                         minHeight: '24px',
+                         textAlign: 'center',
+                         overflow: 'hidden',
+                         textOverflow: 'ellipsis',
+                         whiteSpace: 'nowrap'
+                       }}
+                            title={String(location)}
+                     >
+                            📍 {String(location)}
+                     </span>
+                        ));
+                      } catch (error) {
+                        console.error('❌ Error rendering locations display:', error);
+                        return (
+                          <span style={{
+                            color: '#ff6b6b',
+                            fontSize: '0.8rem',
+                            fontStyle: 'italic',
+                            gridColumn: '1 / -1',
+                            textAlign: 'center',
+                            padding: '10px'
                           }}>
-                                                     <button
-                           type="button"
-                           onClick={() => handleAddNewLocation(location)}
-                           style={{ 
-                             cursor: 'pointer', 
-                             background: 'none',
-                             border: 'none',
-                             color: '#ffc107',
-                             fontSize: '0.75rem',
-                             padding: '0',
-                             margin: '0'
-                           }}
-                         >
-                           ➕ Add
-                         </button>
-                            <span style={{ color: '#ffc107', fontSize: '0.75rem' }}>
-                              {location}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* No locations available message */}
-                  {getUnselectedLocations().length === 0 && getUserLocations().length === 0 && (
-                    <div style={{ 
-                      color: '#888', 
-                      fontSize: '0.8rem', 
-                      textAlign: 'center',
-                      fontStyle: 'italic'
-                    }}>
-                      No locations available. Contact admin to add more locations.
-                    </div>
-                  )}
-                  
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                    <button
-                      onClick={() => saveSection('locations')}
-                      style={{
-                        background: '#4CAF50',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '6px 12px',
-                        borderRadius: '4px',
-                        fontSize: '0.8rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      💾 Save
-                    </button>
-                    <button
-                      onClick={cancelEditing}
-                      style={{
-                        background: '#6c757d',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '6px 12px',
-                        borderRadius: '4px',
-                        fontSize: '0.8rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ❌ Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
-                  gap: '6px'
-                }}>
-                                     {localUser.locations && localUser.locations.split('\n').filter(Boolean).map((location, index) => (
-                    <span 
-                      key={index} 
-                                             style={{
-                         background: 'rgba(255, 255, 255, 0.1)',
-                         color: '#ffffff',
-                         padding: '5px 8px',
-                         borderRadius: '8px',
-                         fontSize: isMobile ? '0.75rem' : '0.8rem',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        gap: '3px',
-                        width: '100%',
-                        minHeight: '24px',
-                        textAlign: 'center',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}
-                      title={location}
-                    >
-                      📍 {location}
-                    </span>
-                  ))}
-                </div>
-              )}
+                            Error loading locations
+                          </span>
+                        );
+                      }
+                    })()}
+                 </div>
             </div>
 
-                         {/* Divisions */}
+                         {/* League & Ladder Info */}
              <div style={{
                background: 'rgba(255, 255, 255, 0.05)',
                padding: isMobile ? '6px' : '8px',
@@ -1325,10 +1228,67 @@ const UserProfileModal = ({
                    marginBottom: '4px',
                    fontSize: isMobile ? '0.9rem' : '1rem'
                  }}>
-                   🏆 Divisions
+                   🏆 League & Ladder Status
                  </div>
-                             <div style={{ color: '#cccccc', lineHeight: '1.5', fontSize: isMobile ? '0.9rem' : '1rem' }}>
+                             
+                             {/* League and Ladder Data - Side by Side */}
+                             <div style={{ 
+                               display: 'flex', 
+                               gap: '16px',
+                               flexDirection: isMobile ? 'column' : 'row'
+                             }}>
+                               {/* League Divisions */}
+                               <div style={{ 
+                                 flex: 1,
+                                 minWidth: isMobile ? 'auto' : '200px'
+                               }}>
+                                 <div style={{ 
+                                   color: '#4CAF50', 
+                                   fontWeight: 'bold', 
+                                   fontSize: isMobile ? '0.8rem' : '0.9rem',
+                                   marginBottom: '2px'
+                                 }}>
+                                   🏆 League Divisions:
+                                 </div>
+                                 <div style={{ 
+                                   color: '#cccccc', 
+                                   lineHeight: '1.5', 
+                                   fontSize: isMobile ? '0.8rem' : '0.9rem',
+                                   paddingLeft: '8px'
+                                 }}>
                 {divisions.length > 0 ? divisions.join(', ') : 'No divisions assigned'}
+                                 </div>
+                               </div>
+                               
+                               {/* Ladder Info */}
+                               <div style={{ 
+                                 flex: 1,
+                                 minWidth: isMobile ? 'auto' : '200px'
+                               }}>
+                                 <div style={{ 
+                                   color: '#FF9800', 
+                                   fontWeight: 'bold', 
+                                   fontSize: isMobile ? '0.8rem' : '0.9rem',
+                                   marginBottom: '2px'
+                                 }}>
+                                   🏅 Ladder Status:
+                                 </div>
+                                 <div style={{ 
+                                   color: '#cccccc', 
+                                   lineHeight: '1.5', 
+                                   fontSize: isMobile ? '0.8rem' : '0.9rem',
+                                   paddingLeft: '8px'
+                                 }}>
+                                   {localUser.ladderInfo ? (
+                                     <div>
+                                       <div>📊 Ladder: {localUser.ladderInfo.ladderName}</div>
+                                       <div>🏆 Position: {localUser.ladderInfo.position}</div>
+                                     </div>
+                                   ) : (
+                                     'Not on any ladder'
+                                   )}
+                                 </div>
+                               </div>
               </div>
             </div>
 
@@ -1370,6 +1330,15 @@ const UserProfileModal = ({
           </div>
         </div>
       </div>
+
+      {/* Location Selection Modal */}
+      <LocationSelectionModal
+        isOpen={showLocationsModal}
+        onClose={() => setShowLocationsModal(false)}
+        currentLocations={localUser.locations || ''}
+        availableLocations={availableLocations}
+        onSave={handleLocationsModalSave}
+      />
     </div>
   );
 };

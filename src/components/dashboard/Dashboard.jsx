@@ -30,7 +30,7 @@ import MatchValidationModal from './MatchValidationModal';
 import ErrorBoundary from '../ErrorBoundary';
 import Phase1RulesModal from '../modal/Phase1RulesModal';
 import Phase1OverviewModal from '../modal/Phase1OverviewModal';
-import UserProfileModal from '../modal/UserProfileModal';
+
 
 import SmartMatchmakingModal from '../modal/SmartMatchmakingModal';
 import PlayerRegistrationModal from '../modal/PlayerRegistrationModal';
@@ -194,6 +194,7 @@ export default function Dashboard({
   onScheduleMatch,
   senderEmail,
   onGoToPlatformAdmin,
+  isAdmin,
 }) {
   // State for user data
   const [divisions, setDivisions] = useState([]);
@@ -345,8 +346,7 @@ export default function Dashboard({
   
 
   
-  // User profile modal state
-  const [showUserProfileModal, setShowUserProfileModal] = useState(false);
+
 
   // Registration modal state
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
@@ -606,6 +606,34 @@ export default function Dashboard({
       setSelectedDivision("");
     }
   }, [divisions]);
+
+  // Load profile data for current user from unified system
+  useEffect(() => {
+    if (!senderEmail) return;
+    
+    const loadProfileData = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/unified-auth/profile-data?email=${encodeURIComponent(senderEmail)}&appType=league&t=${Date.now()}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Loaded league profile data:', data);
+          
+          if (data.success && data.profile) {
+            // Update current user with profile data
+            setCurrentUser(prev => ({
+              ...prev,
+              locations: data.profile.locations || '',
+              availability: data.profile.availability || {}
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading profile data:', error);
+      }
+    };
+    
+    loadProfileData();
+  }, [senderEmail]);
 
   // Auto-updating is now handled by the custom hooks
   // They poll automatically at appropriate intervals
@@ -1614,7 +1642,7 @@ export default function Dashboard({
           standingsLoading={guestStandingsLoading}
           scheduleLoading={guestScheduleLoading}
           setShowMatchProposalModal={() => setShowMatchProposalModal(true)}
-          setShowUserProfileModal={() => setShowUserProfileModal(true)}
+
           onViewMatch={handleProposalClick}
           onViewProposal={(proposal) => {
             setSelectedProposal(proposal);
@@ -1646,7 +1674,7 @@ export default function Dashboard({
           seasonLoading={guestSeasonLoading}
           standingsLoading={guestStandingsLoading}
           scheduleLoading={guestScheduleLoading}
-          onProfileClick={() => setShowUserProfileModal(true)}
+
           styles={styles}
         />
           
@@ -1746,8 +1774,8 @@ export default function Dashboard({
 
 
 
-        {/* Admin Buttons Section Component - Only show for non-guest users */}
-        {!isGuestMode && (
+        {/* Admin Buttons Section Component - Only show for admin users */}
+        {!isGuestMode && isAdmin && (
           <AdminButtonsSection
           userPin={userPin}
           loadingPendingRegistrations={loadingPendingRegistrations}
@@ -2005,7 +2033,7 @@ export default function Dashboard({
       winnerModalOpen={winnerModalOpen}
       validationModalOpen={validationModalOpen}
       showSmartMatchmakingModal={showSmartMatchmakingModal}
-      showUserProfileModal={showUserProfileModal}
+      
       showPhase1Rules={showPhase1Rules}
       showPhase1Overview={showPhase1Overview}
       showRegistrationModal={showRegistrationModal}
@@ -2031,7 +2059,7 @@ export default function Dashboard({
         setMatchToValidate(null);
       }}
       onCloseSmartMatchmakingModal={() => setShowSmartMatchmakingModal(false)}
-      onCloseUserProfileModal={() => setShowUserProfileModal(false)}
+      
       onClosePhase1Rules={() => setShowPhase1Rules(false)}
       onClosePhase1Overview={() => setShowPhase1Overview(false)}
       onCloseRegistrationModal={() => setShowRegistrationModal(false)}
