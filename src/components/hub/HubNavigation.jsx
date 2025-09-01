@@ -44,7 +44,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
         <div className="nav-left">
           {!userFirstName ? (
                          <div className="hub-brand">
-               🎱 Front Range <img src={ball9} alt="9-ball" className="nav-ball" /> Pool League <img src={ball10} alt="10-ball" className="nav-ball" />
+               🎱 Front <img src={ball9} alt="9-ball" className="nav-ball" /> Range <img src={ball10} alt="10-ball" className="nav-ball" /> Pool 
              </div>
           ) : (
             <button onClick={handleReturnToHub} className="hub-btn">
@@ -69,6 +69,8 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
              }}>
                {(!userFirstName && (location.pathname === '/' || location.pathname === '/login')) 
                  ? 'THE HUB - Login'
+                 : location.pathname === '/guest/ladder'
+                 ? 'Ladder of Legends'
                  : 'Front Range Pool League'
                }
              </span>
@@ -89,7 +91,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
         <div className="nav-right">
           {!userFirstName ? (
             <div className="login-nav-info">
-              🎯 Your Front Range Pool League Hub
+              🎯 Your Front Range Pool Hub
             </div>
           ) : (
             <>

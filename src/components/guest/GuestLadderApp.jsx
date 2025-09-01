@@ -371,74 +371,106 @@ const GuestLadderApp = () => {
           <div className="info-section">
             <h2>Ladder System Information</h2>
             
-            <div className="info-cards">
-                             <div className="info-card">
+                         <div className="info-cards">
+               {/* Top Row - Match Types */}
+               <div className="info-card">
+                 <h3>⚔️ Challenge Matches</h3>
+                 <p>Standard ladder climbing system</p>
+                 <ul>
+                   <li>Challenge players up to 4 spots above you on the ladder</li>
+                   <li>Challenger wins:<br></br> Players switch positions</li>
+                   <li>Defender wins:<br></br> Positions remain unchanged</li>
+                   <li>7-day immunity for winners</li>
+                 </ul>
+               </div>
+
+               <div className="info-card">
+                 <h3>💥 SmackDown Matches</h3>
+                 <p>Shuffle up the ladder system</p>
+                 <ul>
+                   <li>Call out players up to 5 spots below you on the ladder</li>
+                   <li>Challenger pays full entry<br></br> Defender pays 50%</li>
+                   <li>Challenger wins: <br></br>Defender moves 3 down<br></br> Challenger moves 2 up</li>
+                   <li>Defender wins: Players switch positions</li>
+                 </ul>
+               </div>
+
+               <div className="info-card">
+                 <h3>👑 SmackBack Matches</h3>
+                 <p>Jump to 1st place opportunity</p>
+                 <ul>
+                   <li>Only available after winning a SmackDown as Defender</li>
+                   <li>Must call out 1st place within 7 days</li>
+                   <li>Challenger wins:<br></br> Challenger claims 1st place<br></br>All others move down</li>
+                   <li>Defender wins: Positions unchanged</li>
+                 </ul>
+               </div>
+
+                               {/* Second Row - Rules & Structure */}
+                <div className="info-card">
+                  <h3>📅 Top 5 Exception</h3>
+                  <p>Special rules for top-ranked players</p>
+                  <ul>
+                    <li>Top 5 matches:<br></br> Saturdays/Sundays only</li>
+                    <li>Location: Legends Brews & Cues (2pm-8pm)</li>
+                    <li>Live streamed on Legends Facebook page</li>
+                    <li>Admin/TD present as referee</li>
+                  </ul>
+                </div>
+
+                <div className="info-card">
+                  <h3>🎯 Match Rules</h3>
+                  <p>Flexible format with minimum requirements</p>
+                  <ul>
+                    <li>All races are even - No handicaps</li>
+                    <li>CSI rule set (8, 9, or 10 ball allowed)</li>
+                    <li>7 or 9-foot tables by agreement</li>
+                    <li>Winner takes all entry fees and prizes</li>
+                  </ul>
+                </div>
+
+               <div className="info-card">
                  <h3>💳 Payment Structure</h3>
                  <p>Simple and transparent pricing</p>
                  <ul>
                    <li><strong>Ladder Membership:</strong> $5/month</li>
                    <li><strong>Match Fees:</strong> $5 per match (total)</li>
-                   <li><strong>Fee Distribution:</strong> $3 to prize pool, $2 to platform</li>
+                   <li><strong>Fee Distribution:</strong> $3 to prize pool<br></br>$2 to platform</li>
                    <li><strong>Payment Methods:</strong> Venmo, Cashapp, CC/Debit, Cash</li>
                    <li><strong>Billing:</strong> Monthly automatic renewal</li>
                  </ul>
                </div>
 
-              <div className="info-card">
-                <h3>⚔️ Challenge Matches</h3>
-                <p>Standard ladder climbing system</p>
-                <ul>
-                  <li>Challenge players up to 4 spots above you</li>
-                  <li>Challenger wins: Players switch positions</li>
-                  <li>Defender wins: Positions remain unchanged</li>
-                  <li>7-day immunity for winners</li>
-                </ul>
-              </div>
-
-              <div className="info-card">
-                <h3>💥 SmackDown Matches</h3>
-                <p>Shuffle up the ladder system</p>
-                <ul>
-                  <li>Call out players up to 5 spots below you</li>
-                  <li>Challenger pays full entry, Defender pays 50%</li>
-                  <li>Challenger wins: Defender moves 3 down, Challenger moves 2 up</li>
-                  <li>Defender wins: Players switch positions</li>
-                </ul>
-              </div>
-
-              <div className="info-card">
-                <h3>👑 SmackBack Matches</h3>
-                <p>Jump to 1st place opportunity</p>
-                <ul>
-                  <li>Only available after winning a SmackDown as Defender</li>
-                  <li>Must call out 1st place within 7 days</li>
-                  <li>Challenger wins: Moves to 1st, all others move down</li>
-                  <li>Defender wins: Positions unchanged</li>
-                </ul>
-              </div>
-
-              <div className="info-card">
-                <h3>🎯 Match Rules</h3>
-                <p>Flexible format with minimum requirements</p>
-                <ul>
-                  <li>All races are even - No handicaps</li>
-                  <li>CSI rule set (8, 9, or 10 ball allowed)</li>
-                  <li>7 or 9-foot tables by agreement</li>
-                  <li>Winner takes all entry fees and prizes</li>
-                </ul>
-              </div>
-
-              <div className="info-card">
-                <h3>📅 Top 5 Exception</h3>
-                <p>Special rules for top-ranked players</p>
-                <ul>
-                  <li>Top 5 matches: Saturdays/Sundays only</li>
-                  <li>Location: Legends Brews & Cues (2pm-8pm)</li>
-                  <li>Live streamed on Legends Facebook page</li>
-                  <li>Admin/TD present as referee</li>
-                </ul>
-              </div>
-            </div>
+               {/* Third Row - Disclaimer */}
+               <div className="info-card">
+                 <h3 style={{ 
+                   fontSize: '1.1rem', 
+                   lineHeight: '1.3', 
+                   marginBottom: '0.5rem',
+                   wordWrap: 'break-word'
+                 }}>
+                   ⚠️ Independent Tournament Series ⚠️
+                 </h3>
+                 <p style={{ 
+                   fontSize: '0.9rem', 
+                   marginBottom: '0.75rem',
+                   fontStyle: 'italic'
+                 }}>
+                   Important legal disclaimer
+                 </p>
+                 <ul style={{ 
+                   fontSize: '0.85rem', 
+                   lineHeight: '1.4',
+                   paddingLeft: '1.2rem'
+                 }}>
+                   <li><strong>NOT affiliated</strong> with Front Range Pool League</li>
+                   <li><strong>NOT endorsed</strong> by CSI, BCAPL, or USAPL</li>
+                   <li><strong>NOT sanctioned</strong> by any governing body</li>
+                   <li>Independent tournament series operated by <strong>Legends Brews and Cues</strong></li>
+                   <li>Front Range Pool just assists <strong>Legends Brews and Cues</strong> with their ladder system</li>
+                 </ul>
+               </div>
+             </div>
 
             <div className="join-section">
               <h3>Ready to Challenge?</h3>
