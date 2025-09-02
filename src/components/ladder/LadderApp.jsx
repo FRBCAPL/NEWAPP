@@ -499,13 +499,13 @@ const LadderApp = ({
   };
 
   const fetchLastMatchData = async (player) => {
-    if (!player.email) {
+    if (!player.unifiedAccount?.email) {
       setLastMatchData(null);
       return;
     }
     
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/matches/last-match/${encodeURIComponent(player.email)}`);
+      const response = await fetch(`${BACKEND_URL}/api/ladder/matches/last-match/${encodeURIComponent(player.unifiedAccount.email)}`);
       if (response.ok) {
         const matchData = await response.json();
         setLastMatchData(matchData);
@@ -522,7 +522,7 @@ const LadderApp = ({
     console.log('🧠 Smart Match clicked');
     console.log('📊 Current ladder data:', ladderData);
     console.log('👤 User ladder data:', userLadderData);
-    console.log('🎯 Available defenders:', ladderData.filter(player => player.email && player.email !== userLadderData?.email));
+    console.log('🎯 Available defenders:', ladderData.filter(player => player.unifiedAccount?.hasUnifiedAccount && player.unifiedAccount?.email !== userLadderData?.email));
     setShowSmartMatchModal(true);
   };
 
@@ -752,9 +752,9 @@ const LadderApp = ({
                    onClick={() => handlePlayerClick(player)}
                  >
                    {player.firstName} {player.lastName}
-                   {!player.email && <span className="no-account">*</span>}
+                   {!player.unifiedAccount?.hasUnifiedAccount && <span className="no-account">*</span>}
                  </div>
-                 {userLadderData?.canChallenge && player.email && userLadderData.email !== player.email && (
+                 {userLadderData?.canChallenge && player.unifiedAccount?.hasUnifiedAccount && userLadderData.email !== player.unifiedAccount?.email && (
                    <div style={{ marginTop: '4px' }}>
                      <button
                        onClick={() => handleChallengePlayer(player, 'challenge')}
@@ -807,8 +807,8 @@ const LadderApp = ({
          </div>
         
         <div className="ladder-legend">
-          <p><span className="no-account">*</span> = Account not claimed yet</p>
-          <p>Players can claim their accounts to participate in challenges</p>
+          <p><span className="no-account">*</span> = No unified account yet</p>
+          <p>Players need a unified account to participate in challenges</p>
           <p><strong>Anyone can view the ladder - no account required!</strong></p>
           
           {!userLadderData?.canChallenge && (
@@ -822,7 +822,7 @@ const LadderApp = ({
             }}>
               <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🔒 Challenge Features Locked</p>
               <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
-                To challenge other players, you need to login with your ladder account.
+                To challenge other players, you need a unified account.
               </p>
               <button 
                 onClick={() => setShowClaimFormState(true)}
@@ -836,7 +836,7 @@ const LadderApp = ({
                   fontSize: '0.8rem'
                 }}
               >
-                Login to Challenge
+                Get Unified Account
               </button>
             </div>
           )}
@@ -1053,7 +1053,7 @@ const LadderApp = ({
                         onClick={() => handlePlayerClick(player)}
                       >
                         {player.firstName} {player.lastName}
-                        {!player.email && <span className="no-account">*</span>}
+                        {!player.unifiedAccount?.hasUnifiedAccount && <span className="no-account">*</span>}
                       </div>
                     </div>
                     <div className="table-cell fargo">{player.fargoRate === 0 ? "No FargoRate" : player.fargoRate}</div>
@@ -1441,7 +1441,7 @@ const LadderApp = ({
            isOpen={showSmartMatchModal}
            onClose={() => setShowSmartMatchModal(false)}
            challenger={userLadderData}
-           availableDefenders={ladderData.filter(player => player.email && player.email !== userLadderData?.email)}
+           availableDefenders={ladderData.filter(player => player.unifiedAccount?.hasUnifiedAccount && player.unifiedAccount?.email !== userLadderData?.email)}
            onChallengeComplete={handleChallengeComplete}
          />
        )}
