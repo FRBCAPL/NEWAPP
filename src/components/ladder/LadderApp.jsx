@@ -173,7 +173,7 @@ const LadderApp = ({
               position: ladderProfile.position,
               immunityUntil: ladderProfile.immunityUntil,
               activeChallenges: [],
-              canChallenge: ladderProfile.isActive,
+              canChallenge: ladderProfile.isActive && !!userData.unifiedAccount?.hasUnifiedAccount,
               stats: {
                 wins: ladderProfile.wins,
                 losses: ladderProfile.losses,
@@ -273,7 +273,7 @@ const LadderApp = ({
           position: status.ladderInfo.position,
           immunityUntil: status.ladderInfo.immunityUntil,
           activeChallenges: [],
-          canChallenge: status.ladderInfo.isActive,
+          canChallenge: status.ladderInfo.isActive && !!status.unifiedAccount?.hasUnifiedAccount,
           stats: status.ladderInfo.stats
         });
         
@@ -362,7 +362,7 @@ const LadderApp = ({
               position: result.ladderInfo?.position || result.message,
               immunityUntil: result.ladderInfo?.immunityUntil || null,
               activeChallenges: [],
-              canChallenge: result.ladderInfo?.isActive || false,
+              canChallenge: (result.ladderInfo?.isActive || false) && !!result.unifiedAccount?.hasUnifiedAccount,
               stats: result.ladderInfo?.stats || { wins: 0, losses: 0 },
               needsClaim: false
             });
