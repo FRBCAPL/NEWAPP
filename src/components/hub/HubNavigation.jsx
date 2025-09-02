@@ -71,7 +71,9 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 ? 'THE HUB - Login'
                 : location.pathname === '/guest/ladder'
                 ? 'Ladder of Legends'
-                : 'Front Range Pool League'
+                : location.pathname === '/hub'
+                ? 'Front Range Pool'
+                : currentAppName || 'Front Range Pool'
               }
             </span>
             {userFirstName && (

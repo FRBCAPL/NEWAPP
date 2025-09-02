@@ -41,6 +41,7 @@ const LadderApp = ({
   const [showApplicationsManager, setShowApplicationsManager] = useState(false);
   const [selectedLadder, setSelectedLadder] = useState('499-under');
   const [showRulesModal, setShowRulesModal] = useState(false);
+  const [hasManuallySelectedLadder, setHasManuallySelectedLadder] = useState(false);
 
   const [availableLocations, setAvailableLocations] = useState([]);
   
@@ -68,6 +69,17 @@ const LadderApp = ({
     loadChallenges();
     loadProfileData();
   }, [selectedLadder]);
+
+  // Auto-update selectedLadder when userLadderData changes (only initially)
+  useEffect(() => {
+    if (userLadderData && userLadderData.ladder && userLadderData.ladder !== 'Guest' && userLadderData.ladder !== 'League Player - Claim Account' && userLadderData.ladder !== 'Not Recognized') {
+      // Only set the ladder if it hasn't been manually changed yet
+      if (selectedLadder === '499-under' && !hasManuallySelectedLadder) {
+        console.log('🔄 Setting selectedLadder to user ladder:', userLadderData.ladder);
+        setSelectedLadder(userLadderData.ladder);
+      }
+    }
+  }, [userLadderData]); // Remove selectedLadder from dependencies to prevent infinite loop
 
   // Load profile data from SimpleProfile
   const loadProfileData = async () => {
@@ -689,34 +701,6 @@ const LadderApp = ({
           <h2>{getLadderDisplayName(selectedLadder)} Ladder</h2>
           <p>Current rankings and positions</p>
           
-          {/* Independent Tournament Disclaimer */}
-          <div className="ladder-disclaimer" style={{
-            marginTop: '0.5rem',
-            padding: '8px 12px',
-            background: 'rgba(255, 193, 7, 0.15)',
-            border: '1px solid rgba(255, 193, 7, 0.4)',
-            borderRadius: '8px',
-            textAlign: 'center',
-            maxWidth: '500px',
-            margin: '0.5rem auto 0 auto',
-            boxShadow: '0 2px 8px rgba(255, 193, 7, 0.2)',
-            position: 'relative',
-            zIndex: 10
-          }}>
-            <p style={{ 
-              margin: '0', 
-              color: '#ffc107', 
-              fontSize: '0.8rem',
-              fontWeight: '600',
-              lineHeight: '1.3',
-              textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)'
-            }}>
-              <strong>⚠️ Independent Tournament Series ⚠️</strong><br/>
-              This ladder system is <strong>NOT</strong> affiliated with, endorsed by, or sanctioned by the Front Range Pool League, CSI, BCAPL, or USAPL.<br/>
-              It is an independent tournament series operated by <strong>Legends Brews and Cues</strong>.
-            </p>
-          </div>
-          
           {/* Ladder Selector */}
           <div className="ladder-selector" style={{
             marginTop: '1rem',
@@ -728,7 +712,10 @@ const LadderApp = ({
             <label style={{ color: '#fff', fontWeight: 'bold' }}>Select Ladder:</label>
             <select 
               value={selectedLadder} 
-              onChange={(e) => setSelectedLadder(e.target.value)}
+              onChange={(e) => {
+                setSelectedLadder(e.target.value);
+                setHasManuallySelectedLadder(true);
+              }}
               style={{
                 background: 'rgba(0, 0, 0, 0.8)',
                 border: '1px solid rgba(255, 255, 255, 0.3)',
