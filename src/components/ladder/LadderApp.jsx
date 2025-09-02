@@ -5,6 +5,7 @@ import { BACKEND_URL } from '../../config.js';
 import LadderApplicationsManager from '../admin/LadderApplicationsManager';
 import DraggableModal from '../modal/DraggableModal';
 import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal';
+import LadderFloatingLogos from './LadderFloatingLogos';
 
 import LadderChallengeModal from './LadderChallengeModal';
 import LadderChallengeConfirmModal from './LadderChallengeConfirmModal';
@@ -22,7 +23,10 @@ const LadderApp = ({
   userType,
   isAdmin = false,
   showClaimForm = false,
-  initialView = 'main'
+  initialView = 'main',
+  onClaimLadderPosition,
+  claimedPositions = new Set(),
+  isPositionClaimed = () => false
 }) => {
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState(initialView);
@@ -174,6 +178,7 @@ const LadderApp = ({
               immunityUntil: ladderProfile.immunityUntil,
               activeChallenges: [],
               canChallenge: ladderProfile.isActive && !!userData.unifiedAccount?.hasUnifiedAccount,
+              unifiedAccount: userData.unifiedAccount, // Add the unified account information
               stats: {
                 wins: ladderProfile.wins,
                 losses: ladderProfile.losses,
@@ -274,6 +279,7 @@ const LadderApp = ({
           immunityUntil: status.ladderInfo.immunityUntil,
           activeChallenges: [],
           canChallenge: status.ladderInfo.isActive && !!status.unifiedAccount?.hasUnifiedAccount,
+          unifiedAccount: status.unifiedAccount, // Add the unified account information
           stats: status.ladderInfo.stats
         });
         
@@ -459,6 +465,109 @@ const LadderApp = ({
   };
 
 
+
+  // Challenge eligibility rules based on ladder position
+  const canChallengePlayer = (challenger, defender) => {
+    // Debug: Log the ladder values being compared
+    console.log(`🔍 Ladder comparison: Challenger ${challenger.firstName} ${challenger.lastName} ladder="${challenger.ladder}", Defender ${defender.firstName} ${defender.lastName} ladderName="${defender.ladderName}"`);
+    
+    // Debug: Log unified account status for challenger and defender
+    console.log(`🔍 Challenger unifiedAccount:`, challenger.unifiedAccount);
+    console.log(`🔍 Defender unifiedAccount:`, defender.unifiedAccount);
+    console.log(`🔍 Challenger canChallenge:`, challenger.canChallenge);
+    console.log(`🔍 Defender hasUnifiedAccount:`, defender.unifiedAccount?.hasUnifiedAccount);
+    
+    // Both players must be on the same ladder
+    // Note: challenger.ladder is the user's ladder, defender.ladderName is the player's ladder
+    if (challenger.ladder !== defender.ladderName) {
+      console.log(`🚫 Challenge blocked: ${challenger.firstName} ${challenger.lastName} (${challenger.ladder}) cannot challenge ${defender.firstName} ${defender.lastName} (${defender.ladderName}) - Different ladder`);
+      return false;
+    }
+    
+    // Both players must have unified accounts
+    if (!challenger.unifiedAccount?.hasUnifiedAccount || !defender.unifiedAccount?.hasUnifiedAccount) {
+      console.log(`🚫 Challenge blocked: ${challenger.firstName} ${challenger.lastName} cannot challenge ${defender.firstName} ${defender.lastName} - Unified account required`);
+      return false;
+    }
+    
+    // Can't challenge yourself
+    if (challenger.email === defender.unifiedAccount?.email) {
+      console.log(`🚫 Challenge blocked: ${challenger.firstName} ${challenger.lastName} cannot challenge themselves`);
+      return false;
+    }
+    
+    // Can't challenge if you're not active
+    if (!challenger.isActive) {
+      console.log(`🚫 Challenge blocked: ${challenger.firstName} ${challenger.lastName} is not active`);
+      return false;
+    }
+    
+    // Can't challenge if defender is not active
+    if (!defender.isActive) {
+      console.log(`🚫 Challenge blocked: ${defender.firstName} ${defender.lastName} is not active`);
+      return false;
+    }
+    
+    // Can't challenge if defender has immunity
+    if (defender.immunityUntil && new Date(defender.immunityUntil) > new Date()) {
+      console.log(`🚫 Challenge blocked: ${defender.firstName} ${defender.lastName} has immunity until ${defender.immunityUntil}`);
+      return false;
+    }
+    
+    // Position-based challenge rules (following official rules):
+    // - Standard Challenge: Can challenge players up to 4 positions above you
+    // - SmackDown: Can challenge players no more than 5 positions below you
+    const challengerPosition = challenger.position;
+    const defenderPosition = defender.position;
+    const positionDifference = challengerPosition - defenderPosition;
+    
+    // Standard Challenge: Can challenge players above you (up to 4 positions)
+    if (positionDifference >= -4 && positionDifference <= 0) {
+      console.log(`✅ Standard Challenge allowed: ${challenger.firstName} ${challenger.lastName} (Position ${challengerPosition}) can challenge ${defender.firstName} ${defender.lastName} (Position ${defenderPosition}) - ${Math.abs(positionDifference)} positions above`);
+      return true;
+    }
+    
+    // SmackDown: Can challenge players below you (up to 5 positions)
+    if (positionDifference > 0 && positionDifference <= 5) {
+      console.log(`✅ SmackDown allowed: ${challenger.firstName} ${challenger.lastName} (Position ${challengerPosition}) can challenge ${defender.firstName} ${defender.lastName} (Position ${defenderPosition}) - ${positionDifference} positions below`);
+      return true;
+    }
+    
+    console.log(`🚫 Challenge blocked: ${challenger.firstName} ${challenger.lastName} (Position ${challengerPosition}) cannot challenge ${defender.firstName} ${defender.lastName} (Position ${defenderPosition}) - Position difference ${positionDifference} is outside allowed range (-4 to +5)`);
+    return false;
+  };
+
+  // Helper function to get challenge reason (for debugging)
+  const getChallengeReason = (challenger, defender) => {
+    if (!challenger.unifiedAccount?.hasUnifiedAccount || !defender.unifiedAccount?.hasUnifiedAccount) {
+      return 'No unified account';
+    }
+    if (challenger.email === defender.unifiedAccount?.email) {
+      return 'Same player';
+    }
+    if (!challenger.isActive) {
+      return 'Challenger inactive';
+    }
+    if (!defender.isActive) {
+      return 'Defender inactive';
+    }
+    if (defender.immunityUntil && new Date(defender.immunityUntil) > new Date()) {
+      return 'Defender immune';
+    }
+    
+    const challengerPosition = challenger.position;
+    const defenderPosition = defender.position;
+    const positionDifference = challengerPosition - defenderPosition;
+    
+    if (positionDifference < -4) {
+      return `Too far above (${Math.abs(positionDifference)} positions) - Max 4 positions above allowed`;
+    }
+    if (positionDifference > 5) {
+      return `Too far below (${positionDifference} positions) - Max 5 positions below allowed for SmackDown`;
+    }
+    
+    return 'Eligible';
+  };
 
   // Challenge system functions
   const loadChallenges = async () => {
@@ -754,37 +863,99 @@ const LadderApp = ({
                    {player.firstName} {player.lastName}
                    {!player.unifiedAccount?.hasUnifiedAccount && <span className="no-account">*</span>}
                  </div>
-                 {userLadderData?.canChallenge && player.unifiedAccount?.hasUnifiedAccount && userLadderData.email !== player.unifiedAccount?.email && (
+                 
+                 {/* Claim Button - Show for positions that need claiming */}
+                 {onClaimLadderPosition && !player.unifiedAccount?.hasUnifiedAccount && !isPositionClaimed({
+                   ladder: selectedLadder,
+                   position: player.position
+                 }) && (
+                   <button
+                     onClick={() => onClaimLadderPosition({
+                       firstName: player.firstName,
+                       lastName: player.lastName,
+                       fargoRate: player.fargoRate,
+                       ladder: selectedLadder,
+                       position: player.position
+                     })}
+                     style={{
+                       background: '#4CAF50',
+                       color: 'white',
+                       border: 'none',
+                       borderRadius: '4px',
+                       padding: '4px 8px',
+                       fontSize: '0.7rem',
+                       cursor: 'pointer',
+                       marginTop: '4px',
+                       fontWeight: 'bold'
+                     }}
+                   >
+                     🎯 Claim
+                   </button>
+                 )}
+                 
+                 {/* Show claimed status for positions that have been claimed */}
+                 {isPositionClaimed({
+                   ladder: selectedLadder,
+                   position: player.position
+                 }) && (
+                   <div style={{
+                     background: '#4CAF50',
+                     color: 'white',
+                     borderRadius: '4px',
+                     padding: '4px 8px',
+                     fontSize: '0.7rem',
+                     marginTop: '4px',
+                     fontWeight: 'bold',
+                     textAlign: 'center'
+                   }}>
+                     ✅ Claimed
+                   </div>
+                 )}
+                 
+                 {userLadderData?.canChallenge && (
                    <div style={{ marginTop: '4px' }}>
-                     <button
-                       onClick={() => handleChallengePlayer(player, 'challenge')}
-                       style={{
-                         background: '#ff4444',
-                         color: 'white',
-                         border: 'none',
-                         borderRadius: '4px',
-                         padding: '2px 6px',
-                         fontSize: '0.7rem',
-                         cursor: 'pointer',
-                         marginRight: '4px'
-                       }}
-                     >
-                       Challenge
-                     </button>
-                     <button
-                       onClick={() => handleChallengePlayer(player, 'smackdown')}
-                       style={{
-                         background: '#f59e0b',
-                         color: 'white',
-                         border: 'none',
-                         borderRadius: '4px',
-                         padding: '2px 6px',
-                         fontSize: '0.7rem',
-                         cursor: 'pointer'
-                       }}
-                     >
-                       SmackDown
-                     </button>
+                     {canChallengePlayer(userLadderData, player) ? (
+                       <>
+                         <button
+                           onClick={() => handleChallengePlayer(player, 'challenge')}
+                           style={{
+                             background: '#ff4444',
+                             color: 'white',
+                             border: 'none',
+                             borderRadius: '4px',
+                             padding: '2px 6px',
+                             fontSize: '0.7rem',
+                             cursor: 'pointer',
+                             marginRight: '4px'
+                           }}
+                         >
+                           Challenge
+                         </button>
+                         <button
+                           onClick={() => handleChallengePlayer(player, 'smackdown')}
+                           style={{
+                             background: '#f59e0b',
+                             color: 'white',
+                             border: 'none',
+                             borderRadius: '4px',
+                             padding: '2px 6px',
+                             fontSize: '0.7rem',
+                             cursor: 'pointer'
+                           }}
+                         >
+                           SmackDown
+                         </button>
+                       </>
+                     ) : (
+                       <div style={{
+                         fontSize: '0.6rem',
+                         color: '#888',
+                         fontStyle: 'italic',
+                         marginTop: '2px'
+                       }}>
+                         {getChallengeReason(userLadderData, player)}
+                       </div>
+                     )}
                    </div>
                  )}
                </div>
@@ -809,7 +980,20 @@ const LadderApp = ({
         <div className="ladder-legend">
           <p><span className="no-account">*</span> = No unified account yet</p>
           <p>Players need a unified account to participate in challenges</p>
+          <p><strong>Challenge Rules:</strong> Standard challenges up to 4 positions above, SmackDown up to 5 positions below</p>
           <p><strong>Anyone can view the ladder - no account required!</strong></p>
+          {onClaimLadderPosition && (
+            <p style={{ 
+              color: '#4CAF50', 
+              fontWeight: 'bold',
+              marginTop: '8px',
+              padding: '8px',
+              background: 'rgba(76, 175, 80, 0.1)',
+              borderRadius: '4px'
+            }}>
+              🎯 <strong>Claim Available Positions:</strong> Click the green "Claim" button next to any position marked with * to claim it
+            </p>
+          )}
           
           {!userLadderData?.canChallenge && (
             <div style={{
@@ -1308,6 +1492,9 @@ const LadderApp = ({
 
   return (
     <div className="ladder-app-container">
+      {/* Ladder-specific floating logos - only Legends logo and pool balls */}
+      <LadderFloatingLogos />
+      
       {/* Independent Tournament Disclaimer */}
       <div style={{
         marginTop: '10px',

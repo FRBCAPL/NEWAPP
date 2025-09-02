@@ -322,7 +322,7 @@ export default function LadderFloatingLogos() {
       left: 0,
       width: '100vw',
       height: '100vh',
-      zIndex: 1,
+      zIndex: 0, // Lower z-index to appear behind content
       pointerEvents: 'none',
       overflow: 'hidden',
     }}>

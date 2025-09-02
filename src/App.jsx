@@ -26,6 +26,7 @@ import adminAuthService from './services/adminAuthService.js';
 // Guest App Components
 import GuestLeagueApp from './components/guest/GuestLeagueApp';
 import GuestLadderApp from './components/guest/GuestLadderApp';
+import PaymentSuccess from './components/payment/PaymentSuccess';
 
 import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
@@ -409,7 +410,14 @@ function AppContent() {
   // --- Main Router ---
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
-        <FloatingLogos />
+        {/* Only show global FloatingLogos when NOT on ladder routes */}
+        {(() => {
+          const isLadderRoute = location.pathname.startsWith('/ladder');
+          console.log('🔍 Current pathname:', location.pathname);
+          console.log('🔍 Is ladder route:', isLadderRoute);
+          console.log('🔍 Should show global FloatingLogos:', !isLadderRoute);
+          return !isLadderRoute && <FloatingLogos />;
+        })()}
                          <HubNavigation 
           currentAppName={currentAppName} 
           isAdmin={isAdminState}
@@ -622,6 +630,7 @@ function AppContent() {
             
             {/* Other Routes */}
             <Route path="/confirm-match" element={<ConfirmMatch />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route
               path="/simple-pool"
               element={<SimplePoolGame />}

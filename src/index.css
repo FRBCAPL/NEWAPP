@@ -83,15 +83,12 @@ body {
    ============================ */
 
 /* Touch-friendly interactions */
-button, input, select, textarea, a {
+button, a {
   min-height: var(--mobile-touch-target);
   min-width: var(--mobile-touch-target);
 }
 
-/* Prevent zoom on input focus (iOS) */
-input, textarea, select {
-  font-size: 16px !important;
-}
+/* Prevent zoom on input focus (iOS) - REMOVED to allow custom sizing */
 
 /* Remove tap highlight */
 * {
@@ -617,4 +614,10 @@ body {
   .no-print {
     display: none !important;
   }
+}
+
+/* Payment Success Spinner Animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

@@ -371,8 +371,8 @@ const GuestLeagueApp = () => {
                  <ul>
                    <li>Maximum 30 players per session</li>
                    <li>10-week sessions with two phases</li>
-                   <li>Weeks 1-6: Scheduled opponents (6 matches)</li>
-                   <li>Weeks 7-10: Challenge matches (2-4 matches)</li>
+                   <li>Phase 1 - Weeks 1-6: <br></br>Scheduled opponents (6 matches)</li>
+                   <li>Phase 2 - Weeks 7-10: <br></br>Challenge matches (2-4 matches)</li>
                    <li>FargoRate integrated rankings</li>
                  </ul>
                </div>
@@ -431,7 +431,7 @@ const GuestLeagueApp = () => {
                   <li>3rd Place: $400</li>
                   <li>4th Place: $300</li>
                 </ul>
-                                 <h4 style={{ marginTop: '0.5rem', color: '#4CAF50', fontSize: '1rem' }}>🎁 Special Awards ($100 each)</h4>
+                     <h4 style={{ marginTop: '0.5rem', color: '#4CAF50', fontSize: '1rem' }}>🎁 Special Awards ($100 each)</h4>
                  <ul>
                    <li>Most Challenge Positions Gained (most spots climbed during challenge phase)</li>
                    <li>Biggest FargoRate Increase (min. 200+ robustness at end)</li>
