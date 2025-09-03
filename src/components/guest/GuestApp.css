@@ -104,6 +104,44 @@
   transform: translateY(-2px);
 }
 
+.info-btn {
+  background: #2196F3;
+  color: white;
+  border-color: #2196F3;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  border: 2px solid;
+}
+
+.info-btn:hover {
+  background: #1976D2;
+  border-color: #1976D2;
+  transform: translateY(-2px);
+}
+
+.app-btn {
+  background: #FF9800;
+  color: white;
+  border-color: #FF9800;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  border: 2px solid;
+}
+
+.app-btn:hover {
+  background: #F57C00;
+  border-color: #F57C00;
+  transform: translateY(-2px);
+}
+
 .view-ladder-btn {
   background: #4CAF50;
   color: white;
@@ -254,6 +292,208 @@
   overflow: visible;
   width: 100%;
   max-width: none;
+}
+
+.public-ladder-view {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  overflow: visible;
+  width: 100%;
+  max-width: none;
+}
+
+/* Ensure the ladder table fits properly in the modal */
+.public-ladder-view .ladder-table {
+  width: 100%;
+  overflow-x: auto;
+  display: table;
+  border-collapse: collapse;
+}
+
+.public-ladder-view .table-header,
+.public-ladder-view .table-row {
+  min-width: 650px;
+  display: table-row;
+}
+
+.public-ladder-view .header-cell,
+.public-ladder-view .table-cell {
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  display: table-cell;
+  vertical-align: middle;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Ensure proper column widths for alignment */
+.public-ladder-view .header-cell:nth-child(1),
+.public-ladder-view .table-cell:nth-child(1) {
+  width: 70px; /* Rank */
+  text-align: center;
+}
+
+.public-ladder-view .header-cell:nth-child(2),
+.public-ladder-view .table-cell:nth-child(2) {
+  width: 220px; /* Player Name */
+  text-align: left;
+}
+
+.public-ladder-view .header-cell:nth-child(3),
+.public-ladder-view .table-cell:nth-child(3) {
+  width: 90px; /* Fargo Rate */
+  text-align: center;
+}
+
+.public-ladder-view .header-cell:nth-child(4),
+.public-ladder-view .table-cell:nth-child(4) {
+  width: 60px; /* Wins */
+  text-align: center;
+}
+
+.public-ladder-view .header-cell:nth-child(5),
+.public-ladder-view .table-cell:nth-child(5) {
+  width: 60px; /* Losses */
+  text-align: center;
+}
+
+.public-ladder-view .header-cell:nth-child(6),
+.public-ladder-view .table-cell:nth-child(6) {
+  width: 90px; /* Status */
+  text-align: center;
+}
+
+/* Make the ladder much more compact in the modal */
+.public-ladder-view .ladder-container {
+  max-height: 65vh !important;
+  height: 65vh !important;
+  overflow-y: auto !important;
+}
+
+.public-ladder-view .ladder-header {
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.public-ladder-view .ladder-content {
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+/* Ensure all ladder elements are compact */
+.public-ladder-view * {
+  box-sizing: border-box;
+}
+
+.public-ladder-view .ladder-selector {
+  margin-bottom: 8px;
+  padding: 4px;
+}
+
+.public-ladder-view .ladder-legend {
+  margin: 12px 0;
+  padding: 12px;
+  font-size: 0.85rem;
+}
+
+.public-ladder-view .ladder-legend p {
+  margin: 6px 0;
+}
+
+/* Ensure the entire ladder view is scrollable */
+.public-ladder-view {
+  max-height: 75vh !important;
+  height: 75vh !important;
+  overflow-y: auto !important;
+  padding-right: 8px;
+}
+
+/* Custom scrollbar for the ladder view */
+.public-ladder-view::-webkit-scrollbar {
+  width: 8px;
+}
+
+.public-ladder-view::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.public-ladder-view::-webkit-scrollbar-thumb {
+  background: rgba(229, 62, 62, 0.6);
+  border-radius: 4px;
+}
+
+.public-ladder-view::-webkit-scrollbar-thumb:hover {
+  background: rgba(229, 62, 62, 0.8);
+}
+
+/* Ensure the modal content is properly sized */
+.public-ladder-view .modal-content {
+  max-height: 350px !important;
+  height: 350px !important;
+  overflow-y: auto !important;
+}
+
+/* Force the modal to be small */
+.public-ladder-view {
+  max-height: 75vh !important;
+  height: 75vh !important;
+  overflow-y: auto !important;
+  padding-right: 8px;
+}
+
+/* Make the ladder selector more compact */
+.public-ladder-view .ladder-selector {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.public-ladder-view .ladder-selector label {
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+}
+
+.public-ladder-view .ladder-selector select {
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  height: 36px;
+  min-width: 150px;
+}
+
+/* Make player names more prominent in public view */
+.public-ladder-view .player-name-clickable {
+  cursor: pointer;
+  color: #4CAF50;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: color 0.2s ease;
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 4px 0;
+}
+
+.public-ladder-view .player-name-clickable:hover {
+  color: #45a049;
+  text-decoration: underline;
+}
+
+/* Ensure table rows have consistent height */
+.public-ladder-view .table-row {
+  height: 40px;
+  min-height: 40px;
+}
+
+/* Ensure header has consistent height */
+.public-ladder-view .table-header {
+  height: 44px;
+  min-height: 44px;
+  background: rgba(0, 0, 0, 0.3);
+  font-weight: 600;
 }
 
 /* Loading and Error States */

@@ -5,6 +5,8 @@
   min-height: 100vh;
   background: transparent;
   color: white;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .logged-out-hub-header {
@@ -68,9 +70,11 @@
 
 .apps-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 2rem;
   margin-bottom: 2rem;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .app-card {

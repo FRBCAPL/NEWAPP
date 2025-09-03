@@ -24,6 +24,7 @@ const LadderApp = ({
   isAdmin = false,
   showClaimForm = false,
   initialView = 'main',
+  isPublicView = false,
   onClaimLadderPosition,
   claimedPositions = new Set(),
   isPositionClaimed = () => false
@@ -813,12 +814,23 @@ const LadderApp = ({
           {/* Ladder Selector */}
           <div className="ladder-selector" style={{
             marginTop: '1rem',
+            padding: '1rem',
+            background: 'rgba(0, 0, 0, 0.3)',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             display: 'flex',
             gap: '1rem',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            flexWrap: 'wrap'
           }}>
-            <label style={{ color: '#fff', fontWeight: 'bold' }}>Select Ladder:</label>
+            <label style={{ 
+              color: '#fff', 
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              fontSize: '0.9rem'
+            }}>Select Ladder:</label>
             <select 
               value={selectedLadder} 
               onChange={(e) => {
@@ -829,10 +841,12 @@ const LadderApp = ({
                 background: 'rgba(0, 0, 0, 0.8)',
                 border: '1px solid rgba(255, 255, 255, 0.3)',
                 color: 'white',
-                padding: '0.5rem 1rem',
+                padding: '0.5rem 0.8rem',
                 borderRadius: '8px',
-                fontSize: '1rem',
-                cursor: 'pointer'
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                minWidth: '120px',
+                flexShrink: 0
               }}
             >
               <option value="499-under">499 & Under</option>
@@ -861,54 +875,63 @@ const LadderApp = ({
                    onClick={() => handlePlayerClick(player)}
                  >
                    {player.firstName} {player.lastName}
-                   {!player.unifiedAccount?.hasUnifiedAccount && <span className="no-account">*</span>}
+                   {!isPublicView && !player.unifiedAccount?.hasUnifiedAccount && <span className="no-account">*</span>}
                  </div>
                  
-                 {/* Claim Button - Show for positions that need claiming */}
-                 {onClaimLadderPosition && !player.unifiedAccount?.hasUnifiedAccount && !isPositionClaimed({
-                   ladder: selectedLadder,
-                   position: player.position
-                 }) && (
-                   <button
-                     onClick={() => onClaimLadderPosition({
-                       firstName: player.firstName,
-                       lastName: player.lastName,
-                       fargoRate: player.fargoRate,
-                       ladder: selectedLadder,
-                       position: player.position
-                     })}
-                     style={{
-                       background: '#4CAF50',
-                       color: 'white',
-                       border: 'none',
-                       borderRadius: '4px',
-                       padding: '4px 8px',
-                       fontSize: '0.7rem',
-                       cursor: 'pointer',
-                       marginTop: '4px',
-                       fontWeight: 'bold'
-                     }}
-                   >
-                     🎯 Claim
-                   </button>
-                 )}
-                 
-                 {/* Show claimed status for positions that have been claimed */}
-                 {isPositionClaimed({
+                 {/* Claim Button - Show for positions that need claiming (only when not in public view) */}
+                 {!isPublicView && onClaimLadderPosition && !player.unifiedAccount?.hasUnifiedAccount && !isPositionClaimed({
                    ladder: selectedLadder,
                    position: player.position
                  }) && (
                    <div style={{
-                     background: '#4CAF50',
-                     color: 'white',
-                     borderRadius: '4px',
-                     padding: '4px 8px',
-                     fontSize: '0.7rem',
-                     marginTop: '4px',
-                     fontWeight: 'bold',
-                     textAlign: 'center'
+                     display: 'inline-block',
+                     width: 'fit-content',
+                     flexShrink: '0'
                    }}>
-                     ✅ Claimed
+                     <button
+                       className="compact-claim-btn"
+                       onClick={() => onClaimLadderPosition({
+                         firstName: player.firstName,
+                         lastName: player.lastName,
+                         fargoRate: player.fargoRate,
+                         ladder: selectedLadder,
+                         position: player.position
+                       })}
+                     >
+                       🎯 Claim
+                     </button>
+                   </div>
+                 )}
+                 
+                 {/* Show claimed status for positions that have been claimed (only when not in public view) */}
+                 {!isPublicView && isPositionClaimed({
+                   ladder: selectedLadder,
+                   position: player.position
+                 }) && (
+                   <div style={{
+                     display: 'inline-block',
+                     width: 'fit-content',
+                     flexShrink: '0'
+                   }}>
+                     <div style={{
+                       background: '#4CAF50',
+                       color: 'white',
+                       borderRadius: '1px',
+                       padding: '0px',
+                       fontSize: '0.6rem',
+                       marginTop: '0px',
+                       fontWeight: '400',
+                       textAlign: 'center',
+                       height: '12px',
+                       lineHeight: '12px',
+                       display: 'block',
+                       whiteSpace: 'nowrap',
+                       width: '45px',
+                       boxSizing: 'border-box',
+                       overflow: 'hidden'
+                     }}>
+                       ✅ Claimed
+                     </div>
                    </div>
                  )}
                  
@@ -978,11 +1001,11 @@ const LadderApp = ({
          </div>
         
         <div className="ladder-legend">
-          <p><span className="no-account">*</span> = No unified account yet</p>
+          {!isPublicView && <p><span className="no-account">*</span> = No unified account yet</p>}
           <p>Players need a unified account to participate in challenges</p>
           <p><strong>Challenge Rules:</strong> Standard challenges up to 4 positions above, SmackDown up to 5 positions below</p>
           <p><strong>Anyone can view the ladder - no account required!</strong></p>
-          {onClaimLadderPosition && (
+          {!isPublicView && onClaimLadderPosition && (
             <p style={{ 
               color: '#4CAF50', 
               fontWeight: 'bold',
@@ -995,7 +1018,7 @@ const LadderApp = ({
             </p>
           )}
           
-          {!userLadderData?.canChallenge && (
+          {!isPublicView && !userLadderData?.canChallenge && (
             <div style={{
               marginTop: '16px',
               padding: '12px',
@@ -1026,9 +1049,11 @@ const LadderApp = ({
           )}
         </div>
         
-        <button onClick={() => setCurrentView('main')} className="back-btn">
-          ← Back to Main Menu
-        </button>
+        {!isPublicView && (
+          <button onClick={() => setCurrentView('main')} className="back-btn">
+            ← Back to Main Menu
+          </button>
+        )}
       </div>
     );
   };
@@ -1139,9 +1164,11 @@ const LadderApp = ({
           )}
         </div>
         
-        <button onClick={() => setCurrentView('main')} className="back-btn">
-          ← Back to Main Menu
-        </button>
+        {!isPublicView && (
+          <button onClick={() => setCurrentView('main')} className="back-btn">
+            ← Back to Main Menu
+          </button>
+        )}
       </div>
     );
   };
@@ -1237,7 +1264,7 @@ const LadderApp = ({
                         onClick={() => handlePlayerClick(player)}
                       >
                         {player.firstName} {player.lastName}
-                        {!player.unifiedAccount?.hasUnifiedAccount && <span className="no-account">*</span>}
+                        {!isPublicView && !player.unifiedAccount?.hasUnifiedAccount && <span className="no-account">*</span>}
                       </div>
                     </div>
                     <div className="table-cell fargo">{player.fargoRate === 0 ? "No FargoRate" : player.fargoRate}</div>
@@ -1270,9 +1297,11 @@ const LadderApp = ({
           ))}
         </div>
         
-        <button onClick={() => setCurrentView('main')} className="back-btn">
-          ← Back to Main Menu
-        </button>
+        {!isPublicView && (
+          <button onClick={() => setCurrentView('main')} className="back-btn">
+            ← Back to Main Menu
+          </button>
+        )}
       </div>
     );
   };
@@ -1322,7 +1351,7 @@ const LadderApp = ({
             </div>
             
                          {/* Claim Account Button for League Players */}
-                            {userLadderData?.needsClaim && (
+                            {!isPublicView && userLadderData?.needsClaim && (
                  <div className="claim-account-section">
                    <button 
                      onClick={() => setShowClaimFormState(true)}
@@ -1337,7 +1366,7 @@ const LadderApp = ({
                )}
              
              {/* Apply for Ladder Button for Unknown Players */}
-             {userLadderData?.playerId === 'unknown' && (
+             {!isPublicView && userLadderData?.playerId === 'unknown' && (
                <div className="claim-account-section">
                  <button 
                    onClick={() => navigate('/ladder/signup')}
@@ -1356,31 +1385,37 @@ const LadderApp = ({
                  {/* Main Navigation */}
          <div className="ladder-navigation">
            <div className="nav-grid">
-             <div className="nav-card" onClick={() => navigateToView('ladders')}>
-               <div className="nav-icon">📊</div>
-               <h3>View Ladders</h3>
-               <p>See all ladder positions and rankings</p>
+             {!isPublicView && (
+               <>
+                 <div className="nav-card" onClick={() => navigateToView('ladders')}>
+                   <div className="nav-icon">📊</div>
+                   <h3>View Ladders</h3>
+                   <p>See all ladder positions and rankings</p>
+                 </div>
+                 
+                 <div className="nav-card" onClick={() => navigateToView('all-ladders')}>
+                   <div className="nav-icon">🏆</div>
+                   <h3>All Ladders</h3>
+                   <p>View all three ladder divisions at once</p>
+                 </div>
+               </>
+             )}
+             
+             <div className="nav-card" onClick={() => setShowPrizePoolModal(true)}>
+               <div className="nav-icon">💰</div>
+               <h3>Prize Pools</h3>
+               <p>View current prize pools and winners</p>
              </div>
-             
-                           <div className="nav-card" onClick={() => navigateToView('all-ladders')}>
-                <div className="nav-icon">🏆</div>
-                <h3>All Ladders</h3>
-                <p>View all three ladder divisions at once</p>
-              </div>
               
-              <div className="nav-card" onClick={() => setShowPrizePoolModal(true)}>
-                <div className="nav-icon">💰</div>
-                <h3>Prize Pools</h3>
-                <p>View current prize pools and winners</p>
-              </div>
-              
-              <div className="nav-card" onClick={() => setShowMatchReportingModal(true)}>
-                <div className="nav-icon">🏓</div>
-                <h3>Report Match</h3>
-                <p>Report match results and pay fees</p>
-              </div>
+              {!isPublicView && (
+                <div className="nav-card" onClick={() => setShowMatchReportingModal(true)}>
+                  <div className="nav-icon">🏓</div>
+                  <h3>Report Match</h3>
+                  <p>Report match results and pay fees</p>
+                </div>
+              )}
              
-             {userLadderData?.canChallenge && (
+             {!isPublicView && userLadderData?.canChallenge && (
                <>
                  <div className="nav-card" onClick={handleSmartMatch}>
                    <div className="nav-icon">🧠</div>
@@ -1442,7 +1477,7 @@ const LadderApp = ({
                </div>
              )}
              
-             {userLadderData?.playerId === 'ladder' && (
+             {!isPublicView && userLadderData?.playerId === 'ladder' && (
                <div className="nav-card" onClick={() => navigateToView('matches')}>
                  <div className="nav-icon">🎯</div>
                  <h3>My Matches</h3>
@@ -1536,7 +1571,7 @@ const LadderApp = ({
          </div>
          
          {/* Back to Ladder Home Button */}
-         {currentView !== 'main' && (
+         {!isPublicView && currentView !== 'main' && (
            <button 
              onClick={() => setCurrentView('main')}
              style={{

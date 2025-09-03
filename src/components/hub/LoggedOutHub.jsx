@@ -141,7 +141,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
              {/* Title and Active Apps in Red Border */}
        <div className="logged-out-hub-header">
                    <div className="hub-title">
-            <h1>Choose Your Pool Experience</h1>
+            <h1>Guest Access</h1>
           </div>
          
          <div className="apps-section">

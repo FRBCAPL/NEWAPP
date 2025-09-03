@@ -93,7 +93,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
         {/* Buttons placed directly without container */}
         {!userFirstName ? (
           <div className="login-nav-info">
-            🎯 Your Front Range Pool Hub
+            🎯  Front Range Pool Hub
           </div>
         ) : (
           <>

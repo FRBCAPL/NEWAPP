@@ -476,6 +476,26 @@
   margin-left: 5px;
 }
 
+/* Compact Claim Button - Force override with !important */
+button.compact-claim-btn {
+  background: #4CAF50 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 1px !important;
+  padding: 0px !important;
+  font-size: 0.6rem !important;
+  cursor: pointer !important;
+  margin-top: 0px !important;
+  font-weight: 400 !important;
+  width: 45px !important;
+  height: 12px !important;
+  line-height: 12px !important;
+  display: block !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
 /* Ladder Legend */
 .ladder-legend {
   background: rgba(255, 255, 255, 0.05);
@@ -768,9 +788,11 @@
 .claim-account-content {
   background: var(--glass-bg);
   border-radius: 18px;
-  padding: 30px;
-  max-width: 400px;
-  width: 90%;
+  padding: 16px;
+  max-width: 600px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
   backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
@@ -778,18 +800,19 @@
 }
 
 .claim-account-content h3 {
-  margin: 0 0 10px 0;
+  margin: 0 0 4px 0;
   color: var(--accent-red);
   text-shadow: 0 0 8px var(--accent-red);
   font-weight: 700;
   text-align: center;
+  font-size: 1.4rem;
 }
 
 .claim-account-content p {
-  margin: 0 0 20px 0;
+  margin: 0 0 10px 0;
   color: var(--gray);
   text-align: center;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .form-group {
@@ -1287,5 +1310,14 @@
   
   .stat-value {
     font-size: 0.9rem;
+  }
+  
+  /* Modal responsive adjustments */
+  .claim-account-content {
+    max-width: 95vw;
+    width: 95%;
+    max-height: 85vh;
+    padding: 20px;
+    margin: 10px;
   }
 }

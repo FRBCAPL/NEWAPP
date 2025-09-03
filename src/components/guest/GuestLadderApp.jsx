@@ -14,6 +14,7 @@ const GuestLadderApp = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showLadderModal, setShowLadderModal] = useState(false);
   const [joinFormData, setJoinFormData] = useState({
     firstName: '',
     lastName: '',
@@ -208,10 +209,7 @@ const GuestLadderApp = () => {
     setShowJoinModal(true);
   };
 
-  const handleViewLadder = () => {
-    console.log('View Ladder button clicked! Setting currentView to ladders');
-    setCurrentView('ladders');
-  };
+
 
     const handleJoinSubmit = async (e) => {
     e.preventDefault();
@@ -465,12 +463,21 @@ const GuestLadderApp = () => {
           </button>
           <button 
             type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('View Ladder button clicked!');
-              handleViewLadder();
-            }} 
+            onClick={() => setCurrentView('info')} 
+            className="info-btn"
+          >
+            ℹ️ Ladder Info
+          </button>
+          <button 
+            type="button"
+            onClick={() => setCurrentView('app')} 
+            className="app-btn"
+          >
+            🎮 Try App Interface
+          </button>
+          <button 
+            type="button"
+            onClick={() => setShowLadderModal(true)} 
             className="view-ladder-btn"
           >
             View Ladder
@@ -485,21 +492,7 @@ const GuestLadderApp = () => {
         </div>
       </div>
 
-      {/* View Tabs */}
-      <div className="view-tabs">
-        <button 
-          className={`tab-btn ${currentView === 'info' ? 'active' : ''}`}
-          onClick={() => setCurrentView('info')}
-        >
-          ℹ️ Ladder Info
-        </button>
-        <button 
-          className={`tab-btn ${currentView === 'app' ? 'active' : ''}`}
-          onClick={() => setCurrentView('app')}
-        >
-          🎮 Try App Interface
-        </button>
-      </div>
+
 
       {/* Content */}
       <div className="content-area">
@@ -538,31 +531,7 @@ const GuestLadderApp = () => {
           </div>
         )}
 
-        {currentView === 'ladders' && (
-          <div className="ladders-preview-section">
-            <div className="guest-notice">
-              <h3>📊 Ladder Rankings</h3>
-              <p>View the current ladder rankings and player positions. This is the same interface that logged-in users see!</p>
-            </div>
 
-            {/* Ladder Rankings Component */}
-            <div className="ladder-rankings-preview">
-                           <LadderApp
-               playerName={guestUser?.firstName || 'Guest'}
-               playerLastName={guestUser?.lastName || 'User'}
-               senderEmail={guestUser?.email || 'guest@frontrangepool.com'}
-               userPin={guestUser?.pin || 'GUEST'}
-               onLogout={guestHandlers.onLogout}
-               isAdmin={false}
-               showClaimForm={false}
-               initialView="ladders"
-               onClaimLadderPosition={handleClaimLadderPosition}
-               claimedPositions={claimedPositions}
-               isPositionClaimed={isPositionClaimed}
-             />
-            </div>
-          </div>
-        )}
 
         {currentView === 'info' && (
           <div className="info-section">
@@ -860,7 +829,7 @@ const GuestLadderApp = () => {
                 marginBottom: '0.3rem',
                 fontWeight: '600',
                 fontSize: '0.8rem'
-              }}>Phone Number</label>
+              }}>Phone Number (Optional)</label>
               <input
                 type="tel"
                 id="phone"
@@ -899,7 +868,7 @@ const GuestLadderApp = () => {
                     marginBottom: '0.3rem',
                     fontWeight: '600',
                     fontSize: '0.75rem'
-                  }}>Fargo Rate</label>
+                  }}>Fargo Rate (Optional)</label>
                   <input
                     type="number"
                     id="fargoRate"
@@ -925,17 +894,18 @@ const GuestLadderApp = () => {
                 </div>
 
                                <div>
-                  <label htmlFor="experience" style={{
-                    display: 'block',
-                    color: '#fff',
-                    marginBottom: '0.3rem',
-                    fontWeight: '600',
-                    fontSize: '0.75rem'
-                  }}>Experience</label>
-                  <select
-                    id="experience"
-                    value={joinFormData.experience}
-                    onChange={(e) => setJoinFormData({...joinFormData, experience: e.target.value})}
+                                     <label htmlFor="experience" style={{
+                     display: 'block',
+                     color: '#fff',
+                     marginBottom: '0.3rem',
+                     fontWeight: '600',
+                     fontSize: '0.75rem'
+                   }}>Experience *</label>
+                                     <select
+                     id="experience"
+                     value={joinFormData.experience}
+                     onChange={(e) => setJoinFormData({...joinFormData, experience: e.target.value})}
+                     required
                     style={{
                       width: '100%',
                       padding: '0.4rem 0.6rem',
@@ -972,7 +942,7 @@ const GuestLadderApp = () => {
                    marginBottom: '0.3rem',
                    fontWeight: '600',
                    fontSize: '0.75rem'
-                 }}>Current League</label>
+                 }}>Current League (Optional)</label>
                  <input
                    type="text"
                    id="currentLeague"
@@ -1002,7 +972,7 @@ const GuestLadderApp = () => {
                    marginBottom: '0.3rem',
                    fontWeight: '600',
                    fontSize: '0.75rem'
-                 }}>Current Ranking</label>
+                 }}>Current Ranking (Optional)</label>
                  <input
                    type="text"
                    id="currentRanking"
@@ -1241,16 +1211,70 @@ const GuestLadderApp = () => {
               fontSize: '0.75rem',
               lineHeight: '1.3'
             }}>
-              <li>We'll review your application and contact you as soon as possible</li>
-              <li>Get your FargoRate established and choose your skill tier</li>
-              <li>Start challenging players and climbing the rankings</li>
-              <li>Track your progress and compete in the ladder system</li>
+              <li>If you paid the monthly membership now:<br></br> 
+              If claiming an account, you will be added immediatly.<br></br>
+              New users will be added to the appropriate ladder upon admin approval<br></br></li>
+              <br />
+             <li>If not paid now, your application will be processed after payment is received</li>
+              <li><br></br>Once added to the ladder, you can start challenging players and climbing the rankings
+              <br></br>Issue challenges, defend your position, and compete in the ladder system</li>
             </ul>
           </div>
-        </DraggableModal>
-      )}
-    </div>
-  );
-};
+                 </DraggableModal>
+       )}
+
+               {/* View Ladder Modal */}
+        {showLadderModal && (
+          <DraggableModal
+            open={showLadderModal}
+            onClose={() => setShowLadderModal(false)}
+            title="📊 Ladder Rankings - Public View"
+            maxWidth="1000px"
+            maxHeight="90vh"
+            style={{
+              maxHeight: '85vh',
+              height: '85vh',
+              overflowY: 'auto'
+            }}
+          >
+                       <div className="public-ladder-view">
+              {/* Public View Notice */}
+              <div style={{
+                background: 'rgba(229, 62, 62, 0.1)',
+                border: '1px solid rgba(229, 62, 62, 0.3)',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '16px',
+                textAlign: 'center'
+              }}>
+                <span style={{
+                  color: '#e53e3e',
+                  fontWeight: '600',
+                  fontSize: '0.9rem'
+                }}>
+                  👁️ Public View - Anyone can view the ladder rankings
+                </span>
+              </div>
+              
+                             <LadderApp
+                 playerName={guestUser?.firstName || 'Guest'}
+                 playerLastName={guestUser?.lastName || 'User'}
+                 senderEmail={guestUser?.email || 'guest@frontrangepool.com'}
+                 userPin={guestUser?.pin || 'GUEST'}
+                 onLogout={guestHandlers.onLogout}
+                 isAdmin={false}
+                 showClaimForm={false}
+                 initialView="ladders"
+                 isPublicView={true}
+                 onClaimLadderPosition={handleClaimLadderPosition}
+                 claimedPositions={claimedPositions}
+                 isPositionClaimed={isPositionClaimed}
+               />
+            </div>
+         </DraggableModal>
+       )}
+     </div>
+   );
+ };
 
 export default GuestLadderApp;

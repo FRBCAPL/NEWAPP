@@ -119,7 +119,7 @@ export default function DraggableModal({
             alignItems: "center",
             justifyContent: "space-between",
             background: "#e53e3e",
-            padding: "1.1rem 1.5rem 0.7rem 1.5rem",
+            padding: "0.05rem .05rem 0.05rem .05rem",
             borderTopLeftRadius: "1.2rem",
             borderTopRightRadius: "1.2rem",
             position: "relative",
@@ -146,7 +146,7 @@ export default function DraggableModal({
             className="modal-title"
             style={{
               margin: 0,
-              fontSize: window.innerWidth <= 500 ? "1.1rem" : "1.3rem",
+              fontSize: window.innerWidth <= 500 ? "1rem" : "1.1rem",
               fontWeight: "bold",
               textAlign: "center",
               letterSpacing: "0.02em",
