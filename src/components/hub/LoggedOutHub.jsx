@@ -315,7 +315,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
             background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',
             border: '2px solid #f59e0b',
             borderRadius: '15px',
-            width: '50%',
+            width: '55%',
             maxWidth: '700px',
             minWidth: '700px',
             height: '90vh',
@@ -437,7 +437,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     borderBottom: '2px solid #ff4444',
                     paddingBottom: '10px'
                   }}>
-                    🏆 Front Range BCAPL Singles League
+                    🏆 Front Range BCAPL Singles League 🏆
                   </h3>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -511,20 +511,20 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                   border: '1px solid rgba(255, 255, 255, 0.1)'
                 }}>
                   <h3 style={{
-                    color: '#667eea',
+                    color: '#a855f7',
                     margin: '0 0 15px 0',
                     fontSize: '1.3rem',
                     textAlign: 'center',
-                    borderBottom: '2px solid #667eea',
+                    borderBottom: '2px solid #a855f7',
                     paddingBottom: '10px'
                   }}>
-                    ⚔️ Ladder of Legends Tournament Series
+                    ⚔️ Ladder of Legends Tournament Series ⚔️
                   </h3>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {/* Structure */}
-                    <div style={{ background: 'rgba(102, 126, 234, 0.1)', padding: '10px', borderRadius: '8px' }}>
-                      <h4 style={{ color: '#667eea', margin: '0 0 8px 0', fontSize: '1rem' }}>🏗️ Ladder Structure</h4>
+                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: '1rem' }}>🏗️ Ladder Structure</h4>
                       <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                         <li><strong>Format:</strong> Independent tournament series</li>
                         <li><strong>Divisions:</strong> 3 skill-based ladders</li>
@@ -535,8 +535,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     </div>
 
                     {/* Match Types */}
-                    <div style={{ background: 'rgba(102, 126, 234, 0.1)', padding: '10px', borderRadius: '8px' }}>
-                      <h4 style={{ color: '#667eea', margin: '0 0 8px 0', fontSize: '1rem' }}>⚔️ Match Types</h4>
+                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: '1rem' }}>⚔️ Match Types</h4>
                       <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                         <li><strong>Challenge Match:</strong> Up to 4 spots above, switch positions</li>
                         <li><strong>SmackDown:</strong> Call out below, special positioning rules</li>
@@ -547,8 +547,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     </div>
 
                     {/* Payment Structure */}
-                    <div style={{ background: 'rgba(102, 126, 234, 0.1)', padding: '10px', borderRadius: '8px' }}>
-                      <h4 style={{ color: '#667eea', margin: '0 0 8px 0', fontSize: '1rem' }}>💰 Payment Structure</h4>
+                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: '1rem' }}>💰 Payment Structure</h4>
                       <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                         <li><strong>Membership:</strong> $5/month (required)</li>
                         <li><strong>Match Fee:</strong> $5 per match (total)</li>
@@ -559,8 +559,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     </div>
 
                     {/* Special Rules */}
-                    <div style={{ background: 'rgba(102, 126, 234, 0.1)', padding: '10px', borderRadius: '8px' }}>
-                      <h4 style={{ color: '#667eea', margin: '0 0 8px 0', fontSize: '1rem' }}>🛡️ Special Rules</h4>
+                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: '1rem' }}>🛡️ Special Rules</h4>
                       <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                         <li><strong>Immunity:</strong> 7 days after winning any match</li>
                         <li><strong>Top 5 Exception:</strong> Saturdays/Sundays at Legends only</li>
@@ -571,8 +571,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     </div>
 
                     {/* Key Features */}
-                    <div style={{ background: 'rgba(102, 126, 234, 0.1)', padding: '10px', borderRadius: '8px' }}>
-                      <h4 style={{ color: '#667eea', margin: '0 0 8px 0', fontSize: '1rem' }}>🔑 Key Features</h4>
+                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: '1rem' }}>🔑 Key Features</h4>
                       <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                         <li><strong>Independent:</strong> Not affiliated with any league</li>
                         <li><strong>Challenge-based:</strong> No mandatory match requirements</li>
@@ -619,7 +619,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                   </div>
                   
                   <div>
-                    <h4 style={{ color: '#4CAF50', margin: '0 0 10px 0', fontSize: '1rem' }}>🏆 Ladder of Legends</h4>
+                    <h4 style={{ color: '#a855f7', margin: '0 0 10px 0', fontSize: '1rem' }}>🏆 Ladder of Legends</h4>
                     <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                       <li><strong>Structure:</strong> Challenge-based with no deadlines</li>
                       <li><strong>Requirements:</strong> No minimum matches required</li>
@@ -702,7 +702,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     setShowLadderRules(true);
                   }}
                   style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #4c63d2 100%)',
+                    background: 'linear-gradient(135deg, #a855f7 0%, #9333ea 100%)',
                     color: 'white',
                     border: 'none',
                     padding: '12px 18px',
@@ -710,16 +710,16 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     cursor: 'pointer',
                     fontSize: '0.9rem',
                     fontWeight: 'bold',
-                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
+                    boxShadow: '0 4px 15px rgba(168, 85, 247, 0.3)',
                     transition: 'all 0.3s ease'
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.transform = 'translateY(-2px)';
-                    e.target.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.4)';
+                    e.target.style.boxShadow = '0 6px 20px rgba(168, 85, 247, 0.4)';
                   }}
                   onMouseLeave={(e) => {
                     e.target.style.transform = 'translateY(0)';
-                    e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.3)';
+                    e.target.style.boxShadow = '0 4px 15px rgba(168, 85, 247, 0.3)';
                   }}
                 >
                   📖 View Ladder Rules
