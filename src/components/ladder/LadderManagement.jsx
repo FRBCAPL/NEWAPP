@@ -4,12 +4,33 @@ import { BACKEND_URL } from '../../config.js';
 import './LadderManagement.css';
 
 const LadderManagement = ({ userEmail, userPin }) => {
+  // Configure your league ID here - this should match your backend configuration
+  const LEAGUE_ID = 'front-range-pool-hub';
   const [selectedLadder, setSelectedLadder] = useState('499-under');
   const [ladderData, setLadderData] = useState([]);
   const [importData, setImportData] = useState('');
   const [importMode, setImportMode] = useState('json'); // 'json' or 'csv'
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  
+  // Match result states
+  const [showMatchForm, setShowMatchForm] = useState(false);
+  const [matchFormData, setMatchFormData] = useState({
+    player1Id: '',
+    player1Name: '',
+    player1Position: '',
+    player2Id: '',
+    player2Name: '',
+    player2Position: '',
+    winnerId: '',
+    score: '',
+    matchDate: new Date().toISOString().split('T')[0],
+    matchFormat: 'best-of-5',
+    location: '',
+    notes: ''
+  });
+  const [matchHistory, setMatchHistory] = useState([]);
+  const [showMatchHistory, setShowMatchHistory] = useState(false);
 
   const ladders = [
     { name: '499-under', displayName: '499 & Under' },
@@ -156,6 +177,126 @@ const LadderManagement = ({ userEmail, userPin }) => {
     a.download = `${selectedLadder}-ladder.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
+  };
+
+  // Match result functions
+  const handleMatchInputChange = (e) => {
+    const { name, value } = e.target;
+    setMatchFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handlePlayer1Select = (e) => {
+    const playerId = e.target.value;
+    const player = ladderData.find(p => p._id === playerId);
+    if (player) {
+      setMatchFormData(prev => ({
+        ...prev,
+        player1Id: playerId,
+        player1Name: `${player.firstName} ${player.lastName}`,
+        player1Position: player.position
+      }));
+    }
+  };
+
+  const handlePlayer2Select = (e) => {
+    const playerId = e.target.value;
+    const player = ladderData.find(p => p._id === playerId);
+    if (player) {
+      setMatchFormData(prev => ({
+        ...prev,
+        player2Id: playerId,
+        player2Name: `${player.firstName} ${player.lastName}`,
+        player2Position: player.position
+      }));
+    }
+  };
+
+  const handleWinnerSelect = (e) => {
+    const winnerId = e.target.value;
+    setMatchFormData(prev => ({
+      ...prev,
+      winnerId
+    }));
+  };
+
+  const submitMatchResult = async (e) => {
+    e.preventDefault();
+    
+    if (!matchFormData.player1Id || !matchFormData.player2Id || !matchFormData.winnerId) {
+      setMessage('Please select both players and a winner');
+      return;
+    }
+
+    if (matchFormData.player1Id === matchFormData.player2Id) {
+      setMessage('Players must be different');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setMessage('');
+
+      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...matchFormData,
+          matchDate: new Date(matchFormData.matchDate).toISOString()
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        setMessage(`Match result recorded successfully! ${result.message}`);
+        setShowMatchForm(false);
+        setMatchFormData({
+          player1Id: '',
+          player1Name: '',
+          player1Position: '',
+          player2Id: '',
+          player2Name: '',
+          player2Position: '',
+          winnerId: '',
+          score: '',
+          matchDate: new Date().toISOString().split('T')[0],
+          matchFormat: 'best-of-5',
+          location: '',
+          notes: ''
+        });
+        loadLadderData(); // Reload to show updated positions
+      } else {
+        setMessage(`Match recording failed: ${result.message || result.error}`);
+      }
+    } catch (error) {
+      console.error('Error recording match result:', error);
+      setMessage('Error recording match result');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMatchHistory = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches`);
+      if (response.ok) {
+        const data = await response.json();
+        setMatchHistory(data.matches || []);
+      } else {
+        setMessage('Failed to load match history');
+      }
+    } catch (error) {
+      console.error('Error loading match history:', error);
+      setMessage('Error loading match history');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -312,6 +453,234 @@ const LadderManagement = ({ userEmail, userPin }) => {
             {ladderData.length === 0 && (
               <div className="no-data">
                 No players found in this ladder. Import some data to get started!
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Match Result Management Section */}
+      <div className="match-management-section">
+        <div className="section-header">
+          <h3>Match Result Management</h3>
+          <div className="action-buttons">
+            <button 
+              onClick={() => setShowMatchForm(true)} 
+              className="add-match-btn"
+              disabled={ladderData.length < 2}
+            >
+              Report Match Result
+            </button>
+            <button 
+              onClick={() => {
+                setShowMatchHistory(!showMatchHistory);
+                if (!showMatchHistory) {
+                  loadMatchHistory();
+                }
+              }} 
+              className="view-history-btn"
+            >
+              {showMatchHistory ? 'Hide Match History' : 'View Match History'}
+            </button>
+          </div>
+        </div>
+
+        {ladderData.length < 2 && (
+          <div className="message warning">
+            Need at least 2 players on the ladder to report match results.
+          </div>
+        )}
+
+        {/* Match Result Form */}
+        {showMatchForm && (
+          <div className="match-form-overlay">
+            <div className="match-form">
+              <h4>Report Match Result</h4>
+              <form onSubmit={submitMatchResult}>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Player 1:</label>
+                    <select 
+                      value={matchFormData.player1Id} 
+                      onChange={handlePlayer1Select}
+                      required
+                    >
+                      <option value="">Select Player 1</option>
+                      {ladderData.map(player => (
+                        <option key={player._id} value={player._id}>
+                          #{player.position} - {player.firstName} {player.lastName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Player 2:</label>
+                    <select 
+                      value={matchFormData.player2Id} 
+                      onChange={handlePlayer2Select}
+                      required
+                    >
+                      <option value="">Select Player 2</option>
+                      {ladderData.map(player => (
+                        <option key={player._id} value={player._id}>
+                          #{player.position} - {player.firstName} {player.lastName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Winner:</label>
+                    <select 
+                      value={matchFormData.winnerId} 
+                      onChange={handleWinnerSelect}
+                      required
+                    >
+                      <option value="">Select Winner</option>
+                      {matchFormData.player1Id && (
+                        <option value={matchFormData.player1Id}>
+                          {matchFormData.player1Name}
+                        </option>
+                      )}
+                      {matchFormData.player2Id && (
+                        <option value={matchFormData.player2Id}>
+                          {matchFormData.player2Name}
+                        </option>
+                      )}
+                    </select>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Score:</label>
+                    <input
+                      type="text"
+                      name="score"
+                      value={matchFormData.score}
+                      onChange={handleMatchInputChange}
+                      placeholder="e.g., 3-1, 5-3"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Match Date:</label>
+                    <input
+                      type="date"
+                      name="matchDate"
+                      value={matchFormData.matchDate}
+                      onChange={handleMatchInputChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Match Format:</label>
+                    <select
+                      name="matchFormat"
+                      value={matchFormData.matchFormat}
+                      onChange={handleMatchInputChange}
+                      required
+                    >
+                      <option value="best-of-3">Best of 3</option>
+                      <option value="best-of-5">Best of 5</option>
+                      <option value="best-of-7">Best of 7</option>
+                      <option value="best-of-9">Best of 9</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Location:</label>
+                    <input
+                      type="text"
+                      name="location"
+                      value={matchFormData.location}
+                      onChange={handleMatchInputChange}
+                      placeholder="Pool hall or venue"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Notes:</label>
+                    <input
+                      type="text"
+                      name="notes"
+                      value={matchFormData.notes}
+                      onChange={handleMatchInputChange}
+                      placeholder="Optional match notes"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-buttons">
+                  <button 
+                    type="submit" 
+                    disabled={loading}
+                    className="submit-btn"
+                  >
+                    {loading ? 'Recording...' : 'Record Match Result'}
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowMatchForm(false)}
+                    className="cancel-btn"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Match History */}
+        {showMatchHistory && (
+          <div className="match-history-section">
+            <h4>Match History</h4>
+            {matchHistory.length === 0 ? (
+              <div className="no-data">No matches recorded yet.</div>
+            ) : (
+              <div className="match-history-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Winner</th>
+                      <th>Loser</th>
+                      <th>Score</th>
+                      <th>Format</th>
+                      <th>Location</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {matchHistory.map((match, index) => (
+                      <tr key={match.id || index}>
+                        <td>{new Date(match.matchDate).toLocaleDateString()}</td>
+                        <td>
+                          <strong>{match.winner.name}</strong> (#{match.winner.position})
+                        </td>
+                        <td>
+                          {match.loser.name} (#{match.loser.position})
+                        </td>
+                        <td>{match.score}</td>
+                        <td>{match.matchFormat || 'N/A'}</td>
+                        <td>{match.location || 'N/A'}</td>
+                        <td>
+                          <span className={`status ${match.verificationStatus}`}>
+                            {match.verificationStatus}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

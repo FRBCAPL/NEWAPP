@@ -66,6 +66,8 @@ const LadderApp = ({
   const [selectedPlayerForStats, setSelectedPlayerForStats] = useState(null);
   const [showMobilePlayerStats, setShowMobilePlayerStats] = useState(false);
   const [lastMatchData, setLastMatchData] = useState(null);
+  
+
 
   useEffect(() => {
     // Load user's ladder data and ladder rankings
@@ -1824,6 +1826,7 @@ const LadderApp = ({
           </div>,
           document.body
         )}
+
 
         
      </div>

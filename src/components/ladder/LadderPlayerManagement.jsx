@@ -3,6 +3,12 @@ import { BACKEND_URL } from '../../config.js';
 import styles from './LadderPlayerManagement.module.css';
 
 export default function LadderPlayerManagement() {
+  // Configure your league ID here - this should match your backend configuration
+  const LEAGUE_ID = 'front-range-pool-hub';
+  
+  // State for available locations
+  const [availableLocations, setAvailableLocations] = useState([]);
+  
   const [ladderPlayers, setLadderPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingPlayer, setEditingPlayer] = useState(null);
@@ -17,6 +23,69 @@ export default function LadderPlayerManagement() {
     isActive: true,
     ladderName: '499-under'
   });
+  
+  // Match result states
+  const [showMatchForm, setShowMatchForm] = useState(false);
+  const [matchFormData, setMatchFormData] = useState({
+    matchId: '', // For reporting on existing matches
+    challengerId: '',
+    challengerName: '',
+    challengerPosition: '',
+    defenderId: '',
+    defenderName: '',
+    defenderPosition: '',
+    winnerId: '',
+    score: '',
+    matchDate: new Date().toISOString().split('T')[0],
+    matchFormat: 'race-to-5',
+    location: '',
+    notes: ''
+  });
+  const [matchHistory, setMatchHistory] = useState([]);
+  const [showMatchHistory, setShowMatchHistory] = useState(false);
+  
+  // Create match states
+  const [showCreateMatchForm, setShowCreateMatchForm] = useState(false);
+  const [createMatchFormData, setCreateMatchFormData] = useState({
+    matchType: 'challenge', // challenge, defense, position, exhibition
+    challengerId: '',
+    defenderId: '',
+    matchFormat: 'race-to-5',
+    proposedDate: new Date().toISOString().split('T')[0],
+    location: '',
+    notes: ''
+  });
+  
+  // Pending matches for reporting results
+  const [pendingMatches, setPendingMatches] = useState([]);
+  const [showPendingMatches, setShowPendingMatches] = useState(false);
+  
+  // Race-to options display state
+  const [showExtendedRaceOptions, setShowExtendedRaceOptions] = useState(false);
+  
+  // Ladder selection state
+  const [selectedLadder, setSelectedLadder] = useState('499-under');
+
+
+
+  // Fetch available locations from the backend
+  const fetchLocations = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/locations`);
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.locations)) {
+        setAvailableLocations(data.locations);
+        console.log(`Loaded ${data.locations.length} locations from backend`);
+      } else {
+        console.error('Invalid locations response format:', data);
+        setAvailableLocations([]);
+      }
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+      setAvailableLocations([]);
+    }
+  };
 
   // Fetch all ladder players across all ladders
   const fetchLadderPlayers = async () => {
@@ -41,6 +110,9 @@ export default function LadderPlayerManagement() {
   };
 
   useEffect(() => {
+    // Scroll to top when component mounts
+    window.scrollTo(0, 0);
+    fetchLocations();
     fetchLadderPlayers();
   }, []);
 
@@ -169,6 +241,283 @@ export default function LadderPlayerManagement() {
     }
   };
 
+  // Match result functions
+  const handleMatchInputChange = (e) => {
+    const { name, value } = e.target;
+    setMatchFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handlePlayer1Select = (e) => {
+    const playerId = e.target.value;
+    const player = ladderPlayers.find(p => p._id === playerId);
+    if (player) {
+      setMatchFormData(prev => ({
+        ...prev,
+        player1Id: playerId,
+        player1Name: `${player.firstName} ${player.lastName}`,
+        player1Position: player.position
+      }));
+    }
+  };
+
+  const handlePlayer2Select = (e) => {
+    const playerId = e.target.value;
+    const player = ladderPlayers.find(p => p._id === playerId);
+    if (player) {
+      setMatchFormData(prev => ({
+        ...prev,
+        player2Id: playerId,
+        player2Name: `${player.firstName} ${player.lastName}`,
+        player2Position: player.position
+      }));
+    }
+  };
+
+  const handleWinnerSelect = (e) => {
+    const winnerId = e.target.value;
+    setMatchFormData(prev => ({
+      ...prev,
+      winnerId
+    }));
+  };
+
+  // Select an existing pending match to report results on
+  const selectPendingMatch = (match) => {
+    setMatchFormData({
+      matchId: match._id,
+      challengerId: match.challenger?._id || '',
+      challengerName: `${match.challenger?.firstName} ${match.challenger?.lastName}`,
+      challengerPosition: match.challenger?.position,
+      defenderId: match.defender?._id || '',
+      defenderName: `${match.defender?.firstName} ${match.defender?.lastName}`,
+      defenderPosition: match.defender?.position,
+      winnerId: '',
+      score: '',
+      matchDate: new Date().toISOString().split('T')[0],
+      matchFormat: match.matchFormat || 'best-of-5',
+      location: match.location || '',
+      notes: match.notes || ''
+    });
+    setShowMatchForm(true);
+  };
+
+  const submitMatchResult = async (e) => {
+    e.preventDefault();
+    
+    if (!matchFormData.player1Id || !matchFormData.player2Id || !matchFormData.winnerId) {
+      alert('Please select both players and a winner');
+      return;
+    }
+
+    if (matchFormData.player1Id === matchFormData.player2Id) {
+      alert('Players must be different');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+             const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...matchFormData,
+          matchDate: new Date(matchFormData.matchDate).toISOString()
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        alert(`Match result recorded successfully! ${result.message}`);
+        setShowMatchForm(false);
+                 setMatchFormData({
+           player1Id: '',
+           player1Name: '',
+           player1Position: '',
+           player2Id: '',
+           player2Name: '',
+           player2Position: '',
+           winnerId: '',
+           score: '',
+           matchDate: new Date().toISOString().split('T')[0],
+           matchFormat: 'race-to-5',
+           location: '',
+           notes: ''
+         });
+        fetchLadderPlayers(); // Reload to show updated positions
+      } else {
+        alert(`Match recording failed: ${result.message || result.error}`);
+      }
+    } catch (error) {
+      console.error('Error recording match result:', error);
+      alert('Error recording match result');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+    const loadMatchHistory = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches`);
+      if (response.ok) {
+        const data = await response.json();
+        setMatchHistory(data.matches || []);
+      } else {
+        alert('Failed to load match history');
+      }
+    } catch (error) {
+      console.error('Error loading match history:', error);
+      alert('Error loading match history');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load pending matches for the selected ladder
+  const loadPendingMatches = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches?status=pending`);
+      if (response.ok) {
+        const data = await response.json();
+        setPendingMatches(data.matches || []);
+      } else {
+        alert('Failed to load pending matches');
+      }
+    } catch (error) {
+      console.error('Error loading pending matches:', error);
+      alert('Error loading pending matches');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Create a new match between two players
+  const createMatch = async (e) => {
+    e.preventDefault();
+    
+    if (!createMatchFormData.challengerId || !createMatchFormData.defenderId) {
+      alert('Please select both challenger and defender');
+      return;
+    }
+
+    if (createMatchFormData.challengerId === createMatchFormData.defenderId) {
+      alert('Challenger and defender must be different players');
+      return;
+    }
+
+    // Get player positions to validate based on match type
+    const challenger = ladderPlayers.find(p => p._id === createMatchFormData.challengerId);
+    const defender = ladderPlayers.find(p => p._id === createMatchFormData.defenderId);
+    
+    if (challenger && defender) {
+      const challengerPos = challenger.position || 0;
+      const defenderPos = defender.position || 0;
+      
+      switch (createMatchFormData.matchType) {
+        case 'challenge':
+          // Challenge: Lower position challenges higher position
+          if (challengerPos >= defenderPos) {
+            alert('For Challenge Matches: Challenger must have a lower position number than defender');
+            return;
+          }
+          break;
+        case 'defense':
+          // Defense: Higher position defends against lower position
+          if (challengerPos <= defenderPos) {
+            alert('For Defense Matches: Challenger must have a higher position number than defender');
+            return;
+          }
+          break;
+        case 'position':
+          // Position: Players at same position compete
+          if (challengerPos !== defenderPos) {
+            alert('For Position Matches: Both players must be at the same position');
+            return;
+          }
+          break;
+        case 'exhibition':
+          // Exhibition: Any positions allowed
+          break;
+        default:
+          alert('Please select a valid match type');
+          return;
+      }
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...createMatchFormData,
+          status: 'pending',
+          proposedDate: new Date(createMatchFormData.proposedDate).toISOString()
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        alert('Match created successfully! Players can now play and report the result.');
+        setShowCreateMatchForm(false);
+                 setCreateMatchFormData({
+           matchType: 'challenge',
+           challengerId: '',
+           defenderId: '',
+           matchFormat: 'race-to-5',
+           proposedDate: new Date().toISOString().split('T')[0],
+           location: '',
+           notes: ''
+         });
+        loadPendingMatches(); // Reload pending matches
+      } else {
+        alert(`Match creation failed: ${result.message || result.error}`);
+      }
+    } catch (error) {
+      console.error('Error creating match:', error);
+      alert('Error creating match');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle create match form input changes
+  const handleCreateMatchInputChange = (e) => {
+    const { name, value } = e.target;
+    setCreateMatchFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle player selection in create match form
+  const handleCreateMatchChallengerSelect = (e) => {
+    const playerId = e.target.value;
+    setCreateMatchFormData(prev => ({
+      ...prev,
+      challengerId: playerId
+    }));
+  };
+
+  const handleCreateMatchDefenderSelect = (e) => {
+    const playerId = e.target.value;
+    setCreateMatchFormData(prev => ({
+      ...prev,
+      defenderId: playerId
+    }));
+  };
+
   if (loading) {
     return <div className={styles.container}>Loading ladder players...</div>;
   }
@@ -177,12 +526,74 @@ export default function LadderPlayerManagement() {
     <div className={styles.container}>
       <div className={styles.header}>
         <h2>Ladder Player Management</h2>
+         <div className={styles.headerContent}>
+           <div className={styles.ladderSelector}>
+             <label htmlFor="ladderSelect">Select Ladder:</label>
+             <select
+               id="ladderSelect"
+               value={selectedLadder}
+               onChange={(e) => setSelectedLadder(e.target.value)}
+               className={styles.ladderSelect}
+             >
+               <option value="499-under">499 & Under</option>
+               <option value="500-549">500-549</option>
+               <option value="550-plus">550+</option>
+             </select>
+           </div>
+                       <div className={styles.headerButtons}>
         <button 
           className={styles.addButton}
-          onClick={() => setShowAddForm(true)}
+                 onClick={() => {
+                   window.scrollTo(0, 0);
+                   setShowAddForm(true);
+                 }}
         >
           Add New Ladder Player
+               </button>
+                             <button 
+                 className={styles.createMatchButton}
+                 onClick={() => {
+                   window.scrollTo(0, 0);
+                   setShowCreateMatchForm(true);
+                 }}
+                 disabled={ladderPlayers.filter(p => p.ladderName === selectedLadder).length < 2}
+               >
+                 Create Match
+               </button>
+              <button 
+                className={styles.pendingMatchesButton}
+                onClick={() => {
+                  setShowPendingMatches(!showPendingMatches);
+                  if (!showPendingMatches) {
+                    loadPendingMatches();
+                  }
+                }}
+              >
+                {showPendingMatches ? 'Hide Pending Matches' : 'View Pending Matches'}
+              </button>
+                             <button 
+                 className={styles.matchButton}
+                 onClick={() => {
+                   window.scrollTo(0, 0);
+                   setShowMatchForm(true);
+                 }}
+                 disabled={ladderPlayers.filter(p => p.ladderName === selectedLadder).length < 2}
+               >
+                 Report Match Result
+               </button>
+              <button 
+                className={styles.historyButton}
+                onClick={() => {
+                  setShowMatchHistory(!showMatchHistory);
+                  if (!showMatchHistory) {
+                    loadMatchHistory();
+                  }
+                }}
+              >
+                {showMatchHistory ? 'Hide Match History' : 'View Match History'}
         </button>
+            </div>
+         </div>
       </div>
 
       {/* Add Player Form */}
@@ -240,13 +651,23 @@ export default function LadderPlayerManagement() {
                 <option value="500-549">500-549</option>
                 <option value="550-plus">550+</option>
               </select>
-              <input
-                type="text"
+               <select
                 name="location"
-                placeholder="Preferred Location"
                 value={formData.location}
                 onChange={handleInputChange}
-              />
+                 required
+               >
+                 <option value="">Select Preferred Location</option>
+                 {availableLocations.length > 0 ? (
+                   availableLocations.map(location => (
+                     <option key={location._id} value={location.name}>
+                       {location.name}
+                     </option>
+                   ))
+                 ) : (
+                   <option value="" disabled>Loading locations...</option>
+                 )}
+               </select>
               <div className={styles.checkboxes}>
                 <label>
                   <input
@@ -268,6 +689,165 @@ export default function LadderPlayerManagement() {
           </div>
         </div>
       )}
+
+               {/* Create Match Form */}
+        {showCreateMatchForm && (
+          <div className={styles.formOverlay}>
+            <div className={styles.form}>
+              <h3>Create New Match</h3>
+              <form onSubmit={createMatch}>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label>Match Type:</label>
+                                         <select
+                       name="matchType"
+                       value={createMatchFormData.matchType}
+                       onChange={handleCreateMatchInputChange}
+                       required
+                     >
+                                               <option value="challenge">Challenge Match</option>
+                        <option value="smackdown">SmackDown</option>
+                        <option value="smackback">SmackBack</option>
+                     </select>
+                  </div>
+                  
+                                     <div className={styles.formGroup}>
+                     <label>Race to:</label>
+                                           <select
+                        name="matchFormat"
+                        value={createMatchFormData.matchFormat}
+                        onChange={handleCreateMatchInputChange}
+                        required
+                      >
+                        <option value="race-to-5">Race to 5</option>
+                        <option value="race-to-7">Race to 7</option>
+                        <option value="race-to-9">Race to 9</option>
+                        {showExtendedRaceOptions && (
+                          <>
+                            <option value="race-to-6">Race to 6</option>
+                            <option value="race-to-8">Race to 8</option>
+                            <option value="race-to-10">Race to 10</option>
+                            <option value="race-to-11">Race to 11</option>
+                            <option value="race-to-12">Race to 12</option>
+                            <option value="race-to-13">Race to 13</option>
+                            <option value="race-to-14">Race to 14</option>
+                            <option value="race-to-15">Race to 15</option>
+                            <option value="race-to-16">Race to 16</option>
+                            <option value="race-to-17">Race to 17</option>
+                            <option value="race-to-18">Race to 18</option>
+                            <option value="race-to-19">Race to 19</option>
+                            <option value="race-to-20">Race to 20</option>
+                            <option value="race-to-21">Race to 21</option>
+                          </>
+                        )}
+                      </select>
+                      <button
+                        type="button"
+                        className={styles.moreOptionsButton}
+                        onClick={() => setShowExtendedRaceOptions(!showExtendedRaceOptions)}
+                      >
+                        {showExtendedRaceOptions ? 'Hide Options' : 'More Options'}
+                      </button>
+                   </div>
+                </div>
+
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label>Challenger :</label>
+                    <select 
+                      value={createMatchFormData.challengerId} 
+                      onChange={handleCreateMatchChallengerSelect}
+                      required
+                    >
+                      <option value="">Select Challenger</option>
+                      {ladderPlayers
+                        .filter(player => player.ladderName === selectedLadder)
+                        .sort((a, b) => (a.position || 0) - (b.position || 0))
+                        .map(player => (
+                        <option key={player._id} value={player._id}>
+                          #{player.position} - {player.firstName} {player.lastName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className={styles.formGroup}>
+                    <label>Defender :</label>
+                    <select 
+                      value={createMatchFormData.defenderId} 
+                      onChange={handleCreateMatchDefenderSelect}
+                      required
+                    >
+                      <option value="">Select Defender</option>
+                      {ladderPlayers
+                        .filter(player => player.ladderName === selectedLadder)
+                        .sort((a, b) => (a.position || 0) - (b.position || 0))
+                        .map(player => (
+                        <option key={player._id} value={player._id}>
+                          #{player.position} - {player.firstName} {player.lastName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                                                               <div className={styles.formRow}>
+                                      <div className={styles.formGroup}>
+                      <label>Match Date:</label>
+                     <input
+                       type="date"
+                       name="proposedDate"
+                       value={createMatchFormData.proposedDate}
+                       onChange={handleCreateMatchInputChange}
+                       required
+                     />
+                   </div>
+                   
+                   <div className={styles.formGroup}>
+                     <label>Location:</label>
+                     <select
+                       name="location"
+                       value={createMatchFormData.location}
+                       onChange={handleCreateMatchInputChange}
+                       required
+                     >
+                       <option value="">Select Location</option>
+                       {availableLocations.length > 0 ? (
+                         availableLocations.map(location => (
+                           <option key={location._id} value={location.name}>
+                             {location.name}
+                           </option>
+                         ))
+                       ) : (
+                         <option value="" disabled>Loading locations...</option>
+                       )}
+                     </select>
+                   </div>
+                   
+                   <div className={styles.formGroup}>
+                     <label>Notes:</label>
+                     <input
+                       type="text"
+                       name="notes"
+                       value={createMatchFormData.notes}
+                       onChange={handleCreateMatchInputChange}
+                       placeholder="Optional match notes"
+                     />
+                   </div>
+                 </div>
+
+               <div className={styles.formButtons}>
+                 <button type="submit" disabled={loading}>
+                   {loading ? 'Creating...' : 'Create Match'}
+                 </button>
+                 <button type="button" onClick={() => setShowCreateMatchForm(false)}>
+                   Cancel
+                 </button>
+               </div>
+             </form>
+           </div>
+         </div>
+       )}
 
       {/* Edit Player Form */}
       {editingPlayer && (
@@ -324,13 +904,23 @@ export default function LadderPlayerManagement() {
                 <option value="500-549">500-549</option>
                 <option value="550-plus">550+</option>
               </select>
-              <input
-                type="text"
+                             <select
                 name="location"
-                placeholder="Preferred Location"
                 value={formData.location}
                 onChange={handleInputChange}
-              />
+                 required
+               >
+                 <option value="">Select Preferred Location</option>
+                 {availableLocations.length > 0 ? (
+                   availableLocations.map(location => (
+                     <option key={location._id} value={location.name}>
+                       {location.name}
+                     </option>
+                   ))
+                 ) : (
+                   <option value="" disabled>Loading locations...</option>
+                 )}
+               </select>
               <div className={styles.checkboxes}>
                 <label>
                   <input
@@ -353,12 +943,196 @@ export default function LadderPlayerManagement() {
         </div>
       )}
 
-      {/* Players List */}
+      {/* Match Result Form */}
+      {showMatchForm && (
+        <div className={styles.formOverlay}>
+          <div className={styles.form}>
+            <h3>Report Match Result</h3>
+            <form onSubmit={submitMatchResult}>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Player 1:</label>
+                  <select 
+                    value={matchFormData.player1Id} 
+                    onChange={handlePlayer1Select}
+                    required
+                  >
+                                         <option value="">Select Player 1</option>
+                     {ladderPlayers
+                       .filter(player => player.ladderName === selectedLadder)
+                       .map(player => (
+                       <option key={player._id} value={player._id}>
+                         #{player.position} - {player.firstName} {player.lastName}
+                       </option>
+                     ))}
+                  </select>
+                </div>
+                
+                <div className={styles.formGroup}>
+                  <label>Player 2:</label>
+                  <select 
+                    value={matchFormData.player2Id} 
+                    onChange={handlePlayer2Select}
+                    required
+                  >
+                                         <option value="">Select Player 2</option>
+                     {ladderPlayers
+                       .filter(player => player.ladderName === selectedLadder)
+                       .map(player => (
+                       <option key={player._id} value={player._id}>
+                         #{player.position} - {player.firstName} {player.lastName}
+                       </option>
+                     ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Winner:</label>
+                  <select 
+                    value={matchFormData.winnerId} 
+                    onChange={handleWinnerSelect}
+                    required
+                  >
+                    <option value="">Select Winner</option>
+                    {matchFormData.player1Id && (
+                      <option value={matchFormData.player1Id}>
+                        {matchFormData.player1Name}
+                      </option>
+                    )}
+                    {matchFormData.player2Id && (
+                      <option value={matchFormData.player2Id}>
+                        {matchFormData.player2Name}
+                      </option>
+                    )}
+                  </select>
+                </div>
+                
+                <div className={styles.formGroup}>
+                  <label>Score:</label>
+                  <input
+                    type="text"
+                    name="score"
+                    value={matchFormData.score}
+                    onChange={handleMatchInputChange}
+                    placeholder="e.g., 3-1, 5-3"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Match Date:</label>
+                  <input
+                    type="date"
+                    name="matchDate"
+                    value={matchFormData.matchDate}
+                    onChange={handleMatchInputChange}
+                    required
+                  />
+                </div>
+                
+                                 <div className={styles.formGroup}>
+                   <label>Race to:</label>
+                                       <select
+                      name="matchFormat"
+                      value={matchFormData.matchFormat}
+                      onChange={handleMatchInputChange}
+                      required
+                    >
+                      <option value="race-to-5">Race to 5</option>
+                      <option value="race-to-7">Race to 7</option>
+                      <option value="race-to-9">Race to 9</option>
+                      {showExtendedRaceOptions && (
+                        <>
+                          <option value="race-to-6">Race to 6</option>
+                          <option value="race-to-8">Race to 8</option>
+                          <option value="race-to-10">Race to 10</option>
+                          <option value="race-to-11">Race to 11</option>
+                          <option value="race-to-12">Race to 12</option>
+                          <option value="race-to-13">Race to 13</option>
+                          <option value="race-to-14">Race to 14</option>
+                          <option value="race-to-15">Race to 15</option>
+                          <option value="race-to-16">Race to 16</option>
+                          <option value="race-to-17">Race to 17</option>
+                          <option value="race-to-18">Race to 18</option>
+                          <option value="race-to-19">Race to 19</option>
+                          <option value="race-to-20">Race to 20</option>
+                          <option value="race-to-21">Race to 21</option>
+                        </>
+                      )}
+                    </select>
+                    <button
+                      type="button"
+                      className={styles.moreOptionsButton}
+                      onClick={() => setShowExtendedRaceOptions(!showExtendedRaceOptions)}
+                    >
+                      {showExtendedRaceOptions ? 'Hide Options' : 'More Options'}
+                    </button>
+                 </div>
+              </div>
+
+              <div className={styles.formRow}>
+                                 <div className={styles.formGroup}>
+                   <label>Location:</label>
+                   <select
+                     name="location"
+                     value={matchFormData.location}
+                     onChange={handleMatchInputChange}
+                     required
+                   >
+                     <option value="">Select Location</option>
+                     {availableLocations.length > 0 ? (
+                       availableLocations.map(location => (
+                         <option key={location._id} value={location.name}>
+                           {location.name}
+                         </option>
+                       ))
+                     ) : (
+                       <option value="" disabled>Loading locations...</option>
+                     )}
+                   </select>
+                 </div>
+                
+                <div className={styles.formGroup}>
+                  <label>Notes:</label>
+                  <input
+                    type="text"
+                    name="notes"
+                    value={matchFormData.notes}
+                    onChange={handleMatchInputChange}
+                    placeholder="Optional match notes"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formButtons}>
+                <button type="submit" disabled={loading}>
+                  {loading ? 'Recording...' : 'Record Match Result'}
+                </button>
+                <button type="button" onClick={() => setShowMatchForm(false)}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+             {/* Players List - Single Ladder View */}
+       <div className={styles.ladderSection}>
+         <h3 className={styles.ladderTitle}>
+           {selectedLadder === '499-under' ? '499 & Under' : 
+            selectedLadder === '500-549' ? '500-549' : 
+            selectedLadder === '550-plus' ? '550+' : selectedLadder} Ladder
+         </h3>
       <div className={styles.playersList}>
+           {ladderPlayers.filter(player => player.ladderName === selectedLadder).length > 0 ? (
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Ladder</th>
               <th>Position</th>
               <th>Name</th>
               <th>Email</th>
@@ -370,12 +1144,12 @@ export default function LadderPlayerManagement() {
             </tr>
           </thead>
           <tbody>
-            {ladderPlayers.map((player, index) => (
+                 {ladderPlayers
+                   .filter(player => player.ladderName === selectedLadder)
+                   .sort((a, b) => (a.position || 0) - (b.position || 0))
+                   .map((player, index) => (
               <tr key={player._id || player.email}>
-                <td>{player.ladderName === '499-under' ? '499 & Under' : 
-                     player.ladderName === '500-549' ? '500-549' : 
-                     player.ladderName === '550-plus' ? '550+' : player.ladderName}</td>
-                <td>{player.position}</td>
+                     <td>{player.position || index + 1}</td>
                 <td>{player.firstName} {player.lastName}</td>
                 <td>{player.email}</td>
                 <td>{player.phone}</td>
@@ -404,7 +1178,130 @@ export default function LadderPlayerManagement() {
             ))}
           </tbody>
         </table>
+           ) : (
+             <div className={styles.noPlayers}>No players in this ladder yet</div>
+           )}
       </div>
+       </div>
+
+       {/* Pending Matches Section */}
+       {showPendingMatches && (
+         <div className={styles.pendingMatchesSection}>
+           <h3>Pending Matches</h3>
+           {pendingMatches.length === 0 ? (
+             <div className={styles.noData}>No pending matches for this ladder.</div>
+           ) : (
+             <div className={styles.pendingMatchesTable}>
+               <table>
+                 <thead>
+                   <tr>
+                     <th>Date</th>
+                     <th>Type</th>
+                     <th>Challenger</th>
+                     <th>Defender</th>
+                     <th>Format</th>
+                     <th>Location</th>
+                     <th>Notes</th>
+                     <th>Status</th>
+                     <th>Actions</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   {pendingMatches.map((match, index) => (
+                     <tr key={match.id || index}>
+                       <td>{new Date(match.proposedDate).toLocaleDateString()}</td>
+                                               <td>
+                          <span className={`${styles.matchType} ${styles[match.matchType || 'challenge']}`}>
+                            {match.matchType === 'challenge' ? 'Challenge' :
+                             match.matchType === 'smackdown' ? 'SmackDown' :
+                             match.matchType === 'smackback' ? 'SmackBack' : 'Challenge'}
+                          </span>
+                        </td>
+                       <td>
+                         <strong>{match.challenger?.firstName} {match.challenger?.lastName}</strong>
+                         {match.challenger?.position && ` (#${match.challenger.position})`}
+                         <br />
+                         <small style={{color: '#06b6d4'}}>Challenger</small>
+                       </td>
+                       <td>
+                         <strong>{match.defender?.firstName} {match.defender?.lastName}</strong>
+                         {match.defender?.position && ` (#${match.defender.position})`}
+                         <br />
+                         <small style={{color: '#f59e0b'}}>Defender</small>
+                       </td>
+                       <td>{match.matchFormat || 'N/A'}</td>
+                       <td>{match.location || 'N/A'}</td>
+                       <td>{match.notes || 'N/A'}</td>
+                       <td>
+                         <span className={`${styles.status} ${styles.pending}`}>
+                           Pending
+                         </span>
+                       </td>
+                       <td>
+                         <button 
+                           className={styles.reportResultButton}
+                           onClick={() => selectPendingMatch(match)}
+                         >
+                           Report Result
+                         </button>
+                       </td>
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+             </div>
+           )}
+         </div>
+       )}
+
+      {/* Match History Section */}
+      {showMatchHistory && (
+        <div className={styles.matchHistorySection}>
+          <h3>Match History</h3>
+          {matchHistory.length === 0 ? (
+            <div className={styles.noData}>No matches recorded yet.</div>
+          ) : (
+            <div className={styles.matchHistoryTable}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Winner</th>
+                    <th>Loser</th>
+                    <th>Score</th>
+                    <th>Format</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {matchHistory.map((match, index) => (
+                    <tr key={match.id || index}>
+                      <td>{new Date(match.matchDate).toLocaleDateString()}</td>
+                      <td>
+                        <strong>{match.winner.name}</strong> (#{match.winner.position})
+                      </td>
+                      <td>
+                        {match.loser.name} (#{match.loser.position})
+                      </td>
+                      <td>{match.score}</td>
+                      <td>{match.matchFormat || 'N/A'}</td>
+                      <td>{match.location || 'N/A'}</td>
+                      <td>
+                        <span className={`${styles.status} ${styles[match.verificationStatus]}`}>
+                          {match.verificationStatus}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      
     </div>
   );
 }

@@ -2,11 +2,21 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmbeddedLoginForm from './EmbeddedLoginForm';
 import HubSignupForm from '../auth/LadderSignupForm';
+import Phase1RulesModal from '../modal/Phase1RulesModal';
+import Phase2RulesModal from '../modal/Phase2RulesModal';
+import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal';
+import GuestLadderApp from '../guest/GuestLadderApp';
+
 import './LoggedOutHub.css';
 
 const LoggedOutHub = ({ onLoginSuccess }) => {
   const [isGuestMode, setIsGuestMode] = useState(false);
   const [showSignupForm, setShowSignupForm] = useState(false);
+  const [showFormatDifferencesModal, setShowFormatDifferencesModal] = useState(false);
+  const [showPhase1Rules, setShowPhase1Rules] = useState(false);
+  const [showPhase2Rules, setShowPhase2Rules] = useState(false);
+  const [showLadderRules, setShowLadderRules] = useState(false);
+
   const navigate = useNavigate();
 
   const availableApps = [
@@ -51,6 +61,13 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
   const handleGuestLogout = () => {
     setIsGuestMode(false);
     navigate('/');
+  };
+
+
+
+  const handlePublicView = () => {
+    // Open the public view modal directly
+    setShowFormatDifferencesModal(true);
   };
 
   // If in guest mode, show a different layout
@@ -133,10 +150,39 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
   // Regular logged out view
   return (
     <div className="logged-out-hub-container">
-             {/* Login Section First */}
-       <div className="login-section">
-         <EmbeddedLoginForm onSuccess={handleLoginSuccess} onShowSignup={() => setShowSignupForm(true)} />
-       </div>
+                     {/* Login Section First */}
+        <div className="login-section">
+          <EmbeddedLoginForm onSuccess={handleLoginSuccess} onShowSignup={() => setShowSignupForm(true)} />
+        </div>
+
+        {/* Format Differences Button - Under Simulation Section */}
+        <div style={{ textAlign: 'center', marginTop: '30px', marginBottom: '20px' }}>
+          <button
+            onClick={() => setShowFormatDifferencesModal(true)}
+            style={{
+              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+              color: 'white',
+              border: 'none',
+              padding: '15px 30px',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 6px 20px rgba(245, 158, 11, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 15px rgba(245, 158, 11, 0.3)';
+            }}
+          >
+                         ❓ Singles League vs Ladder of Legends - What's the Difference  ❓ 
+          </button>
+        </div>
 
              {/* Title and Active Apps in Red Border */}
        <div className="logged-out-hub-header">
@@ -193,6 +239,39 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                       >
                         👀 Access as Guest
                       </button>
+                      
+                                             {/* Public View Button - Only for Ladder */}
+                       {app.id === 'ladder' && (
+                         <button
+                           className="public-view-btn"
+                           onClick={handlePublicView}
+                           style={{
+                             background: '#4CAF50',
+                             color: 'white',
+                             border: '2px solid #4CAF50',
+                             padding: '8px 16px',
+                             borderRadius: '6px',
+                             cursor: 'pointer',
+                             fontSize: '0.9rem',
+                             fontWeight: 'bold',
+                             marginTop: '8px',
+                             marginLeft: '8px',
+                             transition: 'all 0.3s ease'
+                           }}
+                           onMouseEnter={(e) => {
+                             e.target.style.background = '#45a049';
+                             e.target.style.borderColor = '#45a049';
+                             e.target.style.transform = 'translateY(-2px)';
+                           }}
+                           onMouseLeave={(e) => {
+                             e.target.style.background = '#4CAF50';
+                             e.target.style.borderColor = '#4CAF50';
+                             e.target.style.transform = 'translateY(0)';
+                           }}
+                         >
+                           View Ladder 👀
+                         </button>
+                       )}
                      
                                            
                    </div>
@@ -201,20 +280,464 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
             ))}
           </div>
         </div>
-      </div>
+        
+               </div>
       
 
 
-             {/* Hub Signup Form Modal */}
-       {showSignupForm && (
-         <HubSignupForm 
-           onClose={() => setShowSignupForm(false)}
-           onSuccess={(data) => {
-             console.log('Signup successful:', data);
-             // You can add any success handling here
-           }}
-         />
-       )}
+                     {/* Hub Signup Form Modal */}
+        {showSignupForm && (
+          <HubSignupForm 
+            onClose={() => setShowSignupForm(false)}
+            onSuccess={(data) => {
+              console.log('Signup successful:', data);
+              // You can add any success handling here
+            }}
+          />
+        )}
+
+       {/* Format Differences Modal */}
+      {showFormatDifferencesModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',
+            border: '2px solid #f59e0b',
+            borderRadius: '15px',
+            width: '95%',
+            maxWidth: '1200px',
+            minWidth: '800px',
+            height: '90vh',
+            maxHeight: '800px',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+            color: '#ffffff',
+            marginTop: '20px'
+          }}>
+            <div style={{
+              position: 'relative',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '15px',
+              borderBottom: '2px solid #f59e0b',
+              flexShrink: 0
+            }}>
+              <h2 style={{
+                margin: 0,
+                fontSize: '1.5rem',
+                color: '#ffffff',
+                fontWeight: 'bold',
+                textAlign: 'center'
+              }}>
+                🎯 Ladder vs Singles League - COMPLETELY DIFFERENT FORMATS
+              </h2>
+              <button
+                onClick={() => setShowFormatDifferencesModal(false)}
+                style={{
+                  position: 'absolute',
+                  right: '25px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontSize: '2rem',
+                  cursor: 'pointer',
+                  padding: '5px',
+                  borderRadius: '50%',
+                  width: '40px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '20px',
+              fontSize: '0.95rem',
+              lineHeight: '1.4'
+            }}>
+              <div style={{
+                background: 'rgba(245, 158, 11, 0.1)',
+                border: '2px solid #f59e0b',
+                borderRadius: '10px',
+                padding: '15px',
+                marginBottom: '20px',
+                textAlign: 'center'
+              }}>
+                <h3 style={{
+                  margin: '0 0 15px 0',
+                  color: '#f59e0b',
+                  fontSize: '1.2rem'
+                }}>
+                  ⚠️ IMPORTANT: These are TWO SEPARATE COMPETITION SYSTEMS
+                </h3>
+                <p style={{ margin: 0, color: '#e0e0e0', fontSize: '1rem' }}>
+                  This detailed comparison helps explain the key differences between these completely separate formats.
+                </p>
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '20px',
+                marginBottom: '20px'
+              }}>
+                {/* Singles League Section */}
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '10px',
+                  padding: '18px',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                  <h3 style={{
+                    color: '#ff4444',
+                    margin: '0 0 15px 0',
+                    fontSize: '1.3rem',
+                    textAlign: 'center',
+                    borderBottom: '2px solid #ff4444',
+                    paddingBottom: '10px'
+                  }}>
+                    ⚔️ Front Range BCAPL Singles League
+                  </h3>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {/* Structure */}
+                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#ff4444', margin: '0 0 8px 0', fontSize: '1rem' }}>🏗️ League Structure</h4>
+                      <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
+                        <li><strong>Season Length:</strong> 10 weeks total</li>
+                        <li><strong>Phase 1:</strong> Weeks 1-6 (6 mandatory matches)</li>
+                        <li><strong>Phase 2:</strong> Weeks 7-10 (2-4 challenge matches)</li>
+                        <li><strong>Format:</strong> BCAPL Singles Division - Hybrid</li>
+                        <li><strong>Max Players:</strong> 30 players per session</li>
+                      </ul>
+                    </div>
+
+                    {/* Phase 1 Details */}
+                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#ff4444', margin: '0 0 8px 0', fontSize: '1rem' }}>📅 Phase 1 - Scheduled Matches</h4>
+                      <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
+                        <li><strong>6 MANDATORY MATCHES</strong> against assigned opponents</li>
+                        <li><strong>Flexible Scheduling:</strong> Any day, any time, any location</li>
+                        <li><strong>Deadline:</strong> Must complete by end of Week 6</li>
+                        <li><strong>Scoring:</strong> BCAPL scoring app required</li>
+                        <li><strong>FargoRate:</strong> All matches integrated for ratings</li>
+                      </ul>
+                    </div>
+
+                    {/* Phase 2 Details */}
+                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#ff4444', margin: '0 0 8px 0', fontSize: '1rem' }}>⚔️ Phase 2 - Challenge System</h4>
+                      <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
+                        <li><strong>Total Required:</strong> 2-4 matches (minimum 2)</li>
+                        <li><strong>Challenge Limit:</strong> Up to 4 spots higher in standings</li>
+                        <li><strong>Weekly Limit:</strong> Only 1 match per week</li>
+                        <li><strong>Defense Rules:</strong> Must accept until 2 defenses completed</li>
+                        <li><strong>Dynamic Limits:</strong> Based on times challenged</li>
+                      </ul>
+                    </div>
+
+                    {/* Match Rules */}
+                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#ff4444', margin: '0 0 8px 0', fontSize: '1rem' }}>🎱 Match Rules</h4>
+                      <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
+                        <li><strong>Race Length:</strong> Race to 5 games per match</li>
+                        <li><strong>Scoring:</strong> 10 points per game + 10 bonus for match winner</li>
+                        <li><strong>Rules:</strong> Official CSI rule book</li>
+                        <li><strong>Payment:</strong> Standard league fees apply</li>
+                        <li><strong>Communication:</strong> League Scheduling Hub required</li>
+                      </ul>
+                    </div>
+
+                    {/* Key Features */}
+                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#ff4444', margin: '0 0 8px 0', fontSize: '1rem' }}>🔑 Key Features</h4>
+                      <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
+                        <li><strong>Season-based:</strong> Structured competition with deadlines</li>
+                        <li><strong>Standings-driven:</strong> Phase 1 results determine Phase 2 eligibility</li>
+                        <li><strong>League Affiliation:</strong> Official BCAPL division</li>
+                        <li><strong>Website:</strong> https://frusapl.com</li>
+                        <li><strong>Chat System:</strong> League-wide communication</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ladder of Legends Section */}
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '10px',
+                  padding: '18px',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                  <h3 style={{
+                    color: '#667eea',
+                    margin: '0 0 15px 0',
+                    fontSize: '1.3rem',
+                    textAlign: 'center',
+                    borderBottom: '2px solid #667eea',
+                    paddingBottom: '10px'
+                  }}>
+                    🏆 Ladder of Legends Tournament Series
+                  </h3>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {/* Structure */}
+                    <div style={{ background: 'rgba(102, 126, 234, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#667eea', margin: '0 0 8px 0', fontSize: '1rem' }}>🏗️ Ladder Structure</h4>
+                      <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
+                        <li><strong>Format:</strong> Independent tournament series</li>
+                        <li><strong>Divisions:</strong> 3 skill-based ladders</li>
+                        <li><strong>499 & Under:</strong> Beginner to intermediate</li>
+                        <li><strong>500-549:</strong> Intermediate to advanced</li>
+                        <li><strong>550+:</strong> Advanced to expert</li>
+                      </ul>
+                    </div>
+
+                    {/* Match Types */}
+                    <div style={{ background: 'rgba(102, 126, 234, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#667eea', margin: '0 0 8px 0', fontSize: '1rem' }}>⚔️ Match Types</h4>
+                      <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
+                        <li><strong>Challenge Match:</strong> Up to 4 spots above, switch positions</li>
+                        <li><strong>SmackDown:</strong> Call out below, special positioning rules</li>
+                        <li><strong>SmackBack:</strong> Jump to 1st place opportunity</li>
+                        <li><strong>No Minimum:</strong> Play as many or few as you want</li>
+                        <li><strong>Flexible:</strong> Any time, any location by agreement</li>
+                      </ul>
+                    </div>
+
+                    {/* Payment Structure */}
+                    <div style={{ background: 'rgba(102, 126, 234, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#667eea', margin: '0 0 8px 0', fontSize: '1rem' }}>💰 Payment Structure</h4>
+                      <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
+                        <li><strong>Membership:</strong> $5/month (required)</li>
+                        <li><strong>Match Fee:</strong> $5 per match (total)</li>
+                        <li><strong>Distribution:</strong> $3 to prize pool, $2 to platform</li>
+                        <li><strong>Prize Periods:</strong> Every 2 months</li>
+                        <li><strong>Winner Takes All:</strong> Entry fees + sponsor prizes</li>
+                      </ul>
+                    </div>
+
+                    {/* Special Rules */}
+                    <div style={{ background: 'rgba(102, 126, 234, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#667eea', margin: '0 0 8px 0', fontSize: '1rem' }}>🛡️ Special Rules</h4>
+                      <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
+                        <li><strong>Immunity:</strong> 7 days after winning any match</li>
+                        <li><strong>Top 5 Exception:</strong> Saturdays/Sundays at Legends only</li>
+                        <li><strong>Live Streaming:</strong> Top 5 matches on Facebook</li>
+                        <li><strong>Referee:</strong> Admin present for top 5 matches</li>
+                        <li><strong>No Greens Fees:</strong> Tables open for top 5 matches</li>
+                      </ul>
+                    </div>
+
+                    {/* Key Features */}
+                    <div style={{ background: 'rgba(102, 126, 234, 0.1)', padding: '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#667eea', margin: '0 0 8px 0', fontSize: '1rem' }}>🔑 Key Features</h4>
+                      <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
+                        <li><strong>Independent:</strong> Not affiliated with any league</li>
+                        <li><strong>Challenge-based:</strong> No mandatory match requirements</li>
+                        <li><strong>Prize-focused:</strong> Bi-monthly prize distributions</li>
+                        <li><strong>Facebook Group:</strong> "Top Colorado Springs Pool Players"</li>
+                        <li><strong>Skill-based:</strong> FargoRate integrated divisions</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Key Differences Summary */}
+              <div style={{
+                background: 'rgba(76, 175, 80, 0.1)',
+                border: '2px solid #4CAF50',
+                borderRadius: '10px',
+                padding: '18px',
+                marginBottom: '20px'
+              }}>
+                <h3 style={{
+                  margin: '0 0 15px 0',
+                  color: '#4CAF50',
+                  fontSize: '1.2rem',
+                  textAlign: 'center'
+                }}>
+                  💡 Key Differences Summary
+                </h3>
+                
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '20px'
+                }}>
+                  <div>
+                    <h4 style={{ color: '#4CAF50', margin: '0 0 10px 0', fontSize: '1rem' }}>🎯 Singles League</h4>
+                    <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
+                      <li><strong>Structure:</strong> Season-based with deadlines</li>
+                      <li><strong>Requirements:</strong> 6+ mandatory matches per season</li>
+                      <li><strong>Pressure:</strong> Must complete matches to advance</li>
+                      <li><strong>Affiliation:</strong> Official BCAPL division</li>
+                      <li><strong>Focus:</strong> League competition and standings</li>
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h4 style={{ color: '#4CAF50', margin: '0 0 10px 0', fontSize: '1rem' }}>🏆 Ladder of Legends</h4>
+                    <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
+                      <li><strong>Structure:</strong> Challenge-based with no deadlines</li>
+                      <li><strong>Requirements:</strong> No minimum matches required</li>
+                      <li><strong>Pressure:</strong> Play at your own pace</li>
+                      <li><strong>Affiliation:</strong> Independent tournament series</li>
+                      <li><strong>Focus:</strong> Individual challenges and prizes</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rules Buttons Section */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1fr',
+                gap: '15px',
+                marginTop: '20px'
+              }}>
+                <button
+                  onClick={() => {
+                    setShowFormatDifferencesModal(false);
+                    setShowPhase1Rules(true);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #ff4444 0%, #cc0000 100%)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 18px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: 'bold',
+                    boxShadow: '0 4px 15px rgba(255, 68, 68, 0.3)',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 6px 20px rgba(255, 68, 68, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 4px 15px rgba(255, 68, 68, 0.3)';
+                  }}
+                >
+                  📖 View Singles League Phase 1 Rules
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowFormatDifferencesModal(false);
+                    setShowPhase2Rules(true);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #ff8800 0%, #ff6600 100%)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 18px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: 'bold',
+                    boxShadow: '0 4px 15px rgba(255, 136, 0, 0.3)',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 6px 20px rgba(255, 136, 0, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 4px 15px rgba(255, 136, 0, 0.3)';
+                  }}
+                >
+                  📖 View Phase 2 Rules
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowFormatDifferencesModal(false);
+                    setShowLadderRules(true);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #4c63d2 100%)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 18px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: 'bold',
+                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.3)';
+                  }}
+                >
+                  📖 View Ladder Rules
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+        {/* Phase 1 Rules Modal */}
+        {showPhase1Rules && (
+          <Phase1RulesModal 
+            isOpen={showPhase1Rules} 
+            onClose={() => setShowPhase1Rules(false)} 
+          />
+        )}
+
+        {/* Phase 2 Rules Modal */}
+        {showPhase2Rules && (
+          <Phase2RulesModal 
+            isOpen={showPhase2Rules} 
+            onClose={() => setShowPhase2Rules(false)} 
+          />
+        )}
+
+        {/* Ladder of Legends Rules Modal */}
+        {showLadderRules && (
+          <LadderOfLegendsRulesModal 
+            isOpen={showLadderRules} 
+            onClose={() => setShowLadderRules(false)} 
+            isMobile={false}
+          />
+        )}
+       
     </div>
   );
 };

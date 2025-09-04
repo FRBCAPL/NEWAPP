@@ -41,6 +41,17 @@ const GuestLadderApp = () => {
     authenticateGuest();
     loadPaymentConfig();
     checkPaymentStatus();
+    
+    // Check if we should automatically open the ladder modal
+    const urlParams = new URLSearchParams(window.location.search);
+    const shouldOpenModal = urlParams.get('openModal');
+    
+    if (shouldOpenModal === 'true') {
+      console.log('Auto-opening ladder modal from URL parameter');
+      setShowLadderModal(true);
+      // Clear the URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   // Check payment status when component mounts or user returns from payment
