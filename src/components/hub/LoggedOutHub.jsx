@@ -315,9 +315,9 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
             background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',
             border: '2px solid #f59e0b',
             borderRadius: '15px',
-            width: '95%',
-            maxWidth: '1200px',
-            minWidth: '800px',
+            width: '50%',
+            maxWidth: '700px',
+            minWidth: '700px',
             height: '90vh',
             maxHeight: '800px',
             display: 'flex',
@@ -342,7 +342,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                 fontWeight: 'bold',
                 textAlign: 'center'
               }}>
-                🎯 Ladder vs Singles League - COMPLETELY DIFFERENT FORMATS
+                🏆 Singles League vs Ladder of Legends ⚔️<br></br>Seperate & Different Formats
               </h2>
               <button
                 onClick={() => setShowFormatDifferencesModal(false)}
@@ -379,6 +379,23 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
               fontSize: '0.95rem',
               lineHeight: '1.4'
             }}>
+              <div style={{
+                background: 'rgba(76, 175, 80, 0.1)',
+                border: '2px solid #4CAF50',
+                borderRadius: '10px',
+                padding: '15px',
+                marginBottom: '20px',
+                textAlign: 'center'
+              }}>
+                <p style={{ margin: '0 0 8px 0', color: '#4CAF50', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                  🔑 ONE LOGIN FOR BOTH FORMATS
+                </p>
+                <p style={{ margin: 0, color: '#e0e0e0', fontSize: '1rem' }}>
+                  Use the Front Range Pool Hub to access both the Singles League and Ladder of Legends with a single login.<br></br>
+                  Your account works across both systems, making it easy to participate in whichever format interests you most.
+                </p>
+              </div>
+
               <div style={{
                 background: 'rgba(245, 158, 11, 0.1)',
                 border: '2px solid #f59e0b',
@@ -420,7 +437,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     borderBottom: '2px solid #ff4444',
                     paddingBottom: '10px'
                   }}>
-                    ⚔️ Front Range BCAPL Singles League
+                    🏆 Front Range BCAPL Singles League
                   </h3>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -501,7 +518,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     borderBottom: '2px solid #667eea',
                     paddingBottom: '10px'
                   }}>
-                    🏆 Ladder of Legends Tournament Series
+                    ⚔️ Ladder of Legends Tournament Series
                   </h3>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
