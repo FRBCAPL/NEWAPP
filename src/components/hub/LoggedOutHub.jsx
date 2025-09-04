@@ -664,7 +664,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     e.target.style.boxShadow = '0 4px 15px rgba(255, 68, 68, 0.3)';
                   }}
                 >
-                  📖 View Singles League Phase 1 Rules
+                  📖 View Singles League<br></br> Phase 1 Rules
                 </button>
 
                 <button
@@ -693,7 +693,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     e.target.style.boxShadow = '0 4px 15px rgba(255, 136, 0, 0.3)';
                   }}
                 >
-                  📖 View Phase 2 Rules
+                  📖 View Single League<br></br>Phase 2 Rules
                 </button>
 
                 <button
@@ -734,7 +734,10 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
         {showPhase1Rules && (
           <Phase1RulesModal 
             isOpen={showPhase1Rules} 
-            onClose={() => setShowPhase1Rules(false)} 
+            onClose={() => {
+              setShowPhase1Rules(false);
+              setShowFormatDifferencesModal(true);
+            }} 
           />
         )}
 
@@ -742,7 +745,10 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
         {showPhase2Rules && (
           <Phase2RulesModal 
             isOpen={showPhase2Rules} 
-            onClose={() => setShowPhase2Rules(false)} 
+            onClose={() => {
+              setShowPhase2Rules(false);
+              setShowFormatDifferencesModal(true);
+            }} 
           />
         )}
 
@@ -750,7 +756,10 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
         {showLadderRules && (
           <LadderOfLegendsRulesModal 
             isOpen={showLadderRules} 
-            onClose={() => setShowLadderRules(false)} 
+            onClose={() => {
+              setShowLadderRules(false);
+              setShowFormatDifferencesModal(true);
+            }} 
             isMobile={false}
           />
         )}
