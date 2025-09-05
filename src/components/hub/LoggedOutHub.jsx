@@ -6,6 +6,8 @@ import Phase1RulesModal from '../modal/Phase1RulesModal';
 import Phase2RulesModal from '../modal/Phase2RulesModal';
 import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal';
 import GuestLadderApp from '../guest/GuestLadderApp';
+import DraggableModal from '../modal/DraggableModal';
+import LadderApp from '../ladder/LadderApp';
 
 import './LoggedOutHub.css';
 
@@ -16,6 +18,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
   const [showPhase1Rules, setShowPhase1Rules] = useState(false);
   const [showPhase2Rules, setShowPhase2Rules] = useState(false);
   const [showLadderRules, setShowLadderRules] = useState(false);
+  const [showPublicLadderView, setShowPublicLadderView] = useState(false);
 
   const navigate = useNavigate();
 
@@ -66,8 +69,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
 
 
   const handlePublicView = () => {
-    // Open the public view modal directly
-    setShowFormatDifferencesModal(true);
+    // Open the public ladder view directly
+    setShowPublicLadderView(true);
   };
 
   // If in guest mode, show a different layout
@@ -762,6 +765,57 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
             }} 
             isMobile={false}
           />
+        )}
+
+        {/* Public Ladder View Modal */}
+        {showPublicLadderView && (
+          <DraggableModal
+            open={showPublicLadderView}
+            onClose={() => setShowPublicLadderView(false)}
+            title="📊 Ladder Rankings - Public View"
+            maxWidth="1000px"
+            maxHeight="90vh"
+            style={{
+              maxHeight: '85vh',
+              height: '85vh',
+              overflowY: 'auto'
+            }}
+          >
+            <div className="public-ladder-view">
+              {/* Public View Notice */}
+              <div style={{
+                background: 'rgba(229, 62, 62, 0.1)',
+                border: '1px solid rgba(229, 62, 62, 0.3)',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '16px',
+                textAlign: 'center'
+              }}>
+                <span style={{
+                  color: '#e53e3e',
+                  fontWeight: '600',
+                  fontSize: '0.9rem'
+                }}>
+                  👁️ Public View - Anyone can view the ladder rankings
+                </span>
+              </div>
+              
+              <LadderApp
+                playerName="Guest"
+                playerLastName="User"
+                senderEmail="guest@frontrangepool.com"
+                userPin="GUEST"
+                onLogout={() => setShowPublicLadderView(false)}
+                isAdmin={false}
+                showClaimForm={false}
+                initialView="ladders"
+                isPublicView={true}
+                onClaimLadderPosition={() => {}}
+                claimedPositions={[]}
+                isPositionClaimed={() => false}
+              />
+            </div>
+          </DraggableModal>
         )}
        
     </div>
