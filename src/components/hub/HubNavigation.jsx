@@ -36,8 +36,10 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
     navigate('/');
   };
 
+  const isLadderApp = location.pathname === '/guest/ladder' || location.pathname === '/ladder' || currentAppName === 'Ladder of Legends';
+  
   return (
-    <div className="hub-navigation">
+    <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''}`}>
       <div className="nav-content">
         <div className="nav-left">
           <div 
@@ -60,7 +62,9 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
               fontSize: '1.8rem',
               fontWeight: 'bold',
               textAlign: 'center',
-              textShadow: '0 0 20px rgba(229, 62, 62, 0.5)',
+              textShadow: (location.pathname === '/guest/ladder' || location.pathname === '/ladder' || currentAppName === 'Ladder of Legends') 
+                ? '0 0 20px rgba(107, 70, 193, 0.5) !important' 
+                : '0 0 20px rgba(229, 62, 62, 0.5)',
               margin: 0,
               padding: 0,
               display: 'block',

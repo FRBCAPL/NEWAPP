@@ -312,38 +312,39 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
           justifyContent: 'center',
           alignItems: 'center',
           zIndex: 1000,
-          padding: '20px'
+          padding: window.innerWidth <= 768 ? '10px' : '20px'
         }}>
           <div style={{
             background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',
             border: '2px solid #f59e0b',
             borderRadius: '15px',
-            width: '55%',
-            maxWidth: '700px',
-            minWidth: '700px',
-            height: '90vh',
-            maxHeight: '800px',
+            width: window.innerWidth <= 768 ? '95%' : '55%',
+            maxWidth: window.innerWidth <= 768 ? '100%' : '700px',
+            minWidth: window.innerWidth <= 768 ? 'auto' : '700px',
+            height: window.innerWidth <= 768 ? '95vh' : '90vh',
+            maxHeight: window.innerWidth <= 768 ? '95vh' : '800px',
             display: 'flex',
             flexDirection: 'column',
             boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
             color: '#ffffff',
-            marginTop: '20px'
+            marginTop: window.innerWidth <= 768 ? '0' : '20px'
           }}>
             <div style={{
               position: 'relative',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              padding: '15px',
+              padding: window.innerWidth <= 768 ? '12px' : '15px',
               borderBottom: '2px solid #f59e0b',
               flexShrink: 0
             }}>
               <h2 style={{
                 margin: 0,
-                fontSize: '1.5rem',
+                fontSize: window.innerWidth <= 768 ? '1.2rem' : '1.5rem',
                 color: '#ffffff',
                 fontWeight: 'bold',
-                textAlign: 'center'
+                textAlign: 'center',
+                lineHeight: window.innerWidth <= 768 ? '1.3' : '1.4'
               }}>
                 🏆 Singles League vs Ladder of Legends ⚔️<br></br>Seperate & Different Formats
               </h2>
@@ -378,8 +379,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
             <div style={{
               flex: 1,
               overflowY: 'auto',
-              padding: '20px',
-              fontSize: '0.95rem',
+              padding: window.innerWidth <= 768 ? '15px' : '20px',
+              fontSize: window.innerWidth <= 768 ? '0.9rem' : '0.95rem',
               lineHeight: '1.4'
             }}>
               <div style={{
@@ -421,21 +422,21 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
 
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '20px',
+                gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : '1fr 1fr',
+                gap: window.innerWidth <= 768 ? '15px' : '20px',
                 marginBottom: '20px'
               }}>
                 {/* Singles League Section */}
                 <div style={{
                   background: 'rgba(255, 255, 255, 0.05)',
                   borderRadius: '10px',
-                  padding: '18px',
+                  padding: window.innerWidth <= 768 ? '15px' : '18px',
                   border: '1px solid rgba(255, 255, 255, 0.1)'
                 }}>
                   <h3 style={{
                     color: '#ff4444',
                     margin: '0 0 15px 0',
-                    fontSize: '1.3rem',
+                    fontSize: window.innerWidth <= 768 ? '1.1rem' : '1.3rem',
                     textAlign: 'center',
                     borderBottom: '2px solid #ff4444',
                     paddingBottom: '10px'
@@ -445,8 +446,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {/* Structure */}
-                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', padding: '10px', borderRadius: '8px' }}>
-                      <h4 style={{ color: '#ff4444', margin: '0 0 8px 0', fontSize: '1rem' }}>🏗️ League Structure</h4>
+                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', padding: window.innerWidth <= 768 ? '8px' : '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#ff4444', margin: '0 0 8px 0', fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem' }}>🏗️ League Structure</h4>
                       <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                         <li><strong>Season Length:</strong> 10 weeks total</li>
                         <li><strong>Phase 1:</strong> Weeks 1-6 (6 mandatory matches)</li>
@@ -457,8 +458,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     </div>
 
                     {/* Phase 1 Details */}
-                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', padding: '10px', borderRadius: '8px' }}>
-                      <h4 style={{ color: '#ff4444', margin: '0 0 8px 0', fontSize: '1rem' }}>📅 Phase 1 - Scheduled Matches</h4>
+                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', padding: window.innerWidth <= 768 ? '8px' : '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#ff4444', margin: '0 0 8px 0', fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem' }}>📅 Phase 1 - Scheduled Matches</h4>
                       <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                         <li><strong>6 MANDATORY MATCHES</strong> against assigned opponents</li>
                         <li><strong>Flexible Scheduling:</strong> Any day, any time, any location</li>
@@ -469,8 +470,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     </div>
 
                     {/* Phase 2 Details */}
-                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', padding: '10px', borderRadius: '8px' }}>
-                      <h4 style={{ color: '#ff4444', margin: '0 0 8px 0', fontSize: '1rem' }}>⚔️ Phase 2 - Challenge System</h4>
+                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', padding: window.innerWidth <= 768 ? '8px' : '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#ff4444', margin: '0 0 8px 0', fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem' }}>⚔️ Phase 2 - Challenge System</h4>
                       <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                         <li><strong>Total Required:</strong> 2-4 matches (minimum 2)</li>
                         <li><strong>Challenge Limit:</strong> Up to 4 spots higher in standings</li>
@@ -481,8 +482,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     </div>
 
                     {/* Match Rules */}
-                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', padding: '10px', borderRadius: '8px' }}>
-                      <h4 style={{ color: '#ff4444', margin: '0 0 8px 0', fontSize: '1rem' }}>🎱 Match Rules</h4>
+                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', padding: window.innerWidth <= 768 ? '8px' : '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#ff4444', margin: '0 0 8px 0', fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem' }}>🎱 Match Rules</h4>
                       <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                         <li><strong>Race Length:</strong> Race to 5 games per match</li>
                         <li><strong>Scoring:</strong> 10 points per game + 10 bonus for match winner</li>
@@ -493,8 +494,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     </div>
 
                     {/* Key Features */}
-                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', padding: '10px', borderRadius: '8px' }}>
-                      <h4 style={{ color: '#ff4444', margin: '0 0 8px 0', fontSize: '1rem' }}>🔑 Key Features</h4>
+                    <div style={{ background: 'rgba(255, 68, 68, 0.1)', padding: window.innerWidth <= 768 ? '8px' : '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#ff4444', margin: '0 0 8px 0', fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem' }}>🔑 Key Features</h4>
                       <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                         <li><strong>Season-based:</strong> Structured competition with deadlines</li>
                         <li><strong>Standings-driven:</strong> Phase 1 results determine Phase 2 eligibility</li>
@@ -510,13 +511,13 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                 <div style={{
                   background: 'rgba(255, 255, 255, 0.05)',
                   borderRadius: '10px',
-                  padding: '18px',
+                  padding: window.innerWidth <= 768 ? '15px' : '18px',
                   border: '1px solid rgba(255, 255, 255, 0.1)'
                 }}>
                   <h3 style={{
                     color: '#a855f7',
                     margin: '0 0 15px 0',
-                    fontSize: '1.3rem',
+                    fontSize: window.innerWidth <= 768 ? '1.1rem' : '1.3rem',
                     textAlign: 'center',
                     borderBottom: '2px solid #a855f7',
                     paddingBottom: '10px'
@@ -526,8 +527,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {/* Structure */}
-                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: '10px', borderRadius: '8px' }}>
-                      <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: '1rem' }}>🏗️ Ladder Structure</h4>
+                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: window.innerWidth <= 768 ? '8px' : '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem' }}>🏗️ Ladder Structure</h4>
                       <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                         <li><strong>Format:</strong> Independent tournament series</li>
                         <li><strong>Divisions:</strong> 3 skill-based ladders</li>
@@ -538,8 +539,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     </div>
 
                     {/* Match Types */}
-                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: '10px', borderRadius: '8px' }}>
-                      <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: '1rem' }}>⚔️ Match Types</h4>
+                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: window.innerWidth <= 768 ? '8px' : '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem' }}>⚔️ Match Types</h4>
                       <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                         <li><strong>Challenge Match:</strong> Up to 4 spots above, switch positions</li>
                         <li><strong>SmackDown:</strong> Call out below, special positioning rules</li>
@@ -550,8 +551,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     </div>
 
                     {/* Payment Structure */}
-                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: '10px', borderRadius: '8px' }}>
-                      <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: '1rem' }}>💰 Payment Structure</h4>
+                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: window.innerWidth <= 768 ? '8px' : '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem' }}>💰 Payment Structure</h4>
                       <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                         <li><strong>Membership:</strong> $5/month (required)</li>
                         <li><strong>Match Fee:</strong> $5 per match (total)</li>
@@ -562,8 +563,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     </div>
 
                     {/* Special Rules */}
-                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: '10px', borderRadius: '8px' }}>
-                      <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: '1rem' }}>🛡️ Special Rules</h4>
+                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: window.innerWidth <= 768 ? '8px' : '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem' }}>🛡️ Special Rules</h4>
                       <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                         <li><strong>Immunity:</strong> 7 days after winning any match</li>
                         <li><strong>Top 5 Exception:</strong> Saturdays/Sundays at Legends only</li>
@@ -574,8 +575,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     </div>
 
                     {/* Key Features */}
-                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: '10px', borderRadius: '8px' }}>
-                      <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: '1rem' }}>🔑 Key Features</h4>
+                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: window.innerWidth <= 768 ? '8px' : '10px', borderRadius: '8px' }}>
+                      <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem' }}>🔑 Key Features</h4>
                       <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                         <li><strong>Independent:</strong> Not affiliated with any league</li>
                         <li><strong>Challenge-based:</strong> No mandatory match requirements</li>
@@ -593,13 +594,13 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                 background: 'rgba(76, 175, 80, 0.1)',
                 border: '2px solid #4CAF50',
                 borderRadius: '10px',
-                padding: '18px',
+                padding: window.innerWidth <= 768 ? '15px' : '18px',
                 marginBottom: '20px'
               }}>
                 <h3 style={{
                   margin: '0 0 15px 0',
                   color: '#4CAF50',
-                  fontSize: '1.2rem',
+                  fontSize: window.innerWidth <= 768 ? '1.1rem' : '1.2rem',
                   textAlign: 'center'
                 }}>
                   💡 Key Differences Summary
@@ -607,11 +608,11 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                 
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '20px'
+                  gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : '1fr 1fr',
+                  gap: window.innerWidth <= 768 ? '15px' : '20px'
                 }}>
                   <div>
-                    <h4 style={{ color: '#4CAF50', margin: '0 0 10px 0', fontSize: '1rem' }}>🎯 Singles League</h4>
+                    <h4 style={{ color: '#4CAF50', margin: '0 0 10px 0', fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem' }}>🎯 Singles League</h4>
                     <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                       <li><strong>Structure:</strong> Season-based with deadlines</li>
                       <li><strong>Requirements:</strong> 6+ mandatory matches per season</li>
@@ -622,7 +623,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                   </div>
                   
                   <div>
-                    <h4 style={{ color: '#a855f7', margin: '0 0 10px 0', fontSize: '1rem' }}>🏆 Ladder of Legends</h4>
+                    <h4 style={{ color: '#a855f7', margin: '0 0 10px 0', fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem' }}>🏆 Ladder of Legends</h4>
                     <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                       <li><strong>Structure:</strong> Challenge-based with no deadlines</li>
                       <li><strong>Requirements:</strong> No minimum matches required</li>
@@ -637,8 +638,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
               {/* Rules Buttons Section */}
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: '1fr 1fr 1fr',
-                gap: '15px',
+                gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : '1fr 1fr 1fr',
+                gap: window.innerWidth <= 768 ? '10px' : '15px',
                 marginTop: '20px'
               }}>
                 <button

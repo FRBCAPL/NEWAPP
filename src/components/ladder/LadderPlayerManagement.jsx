@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '../../config.js';
+import DraggableModal from '../modal/DraggableModal';
 import styles from './LadderPlayerManagement.module.css';
 
 export default function LadderPlayerManagement() {
@@ -65,6 +67,11 @@ export default function LadderPlayerManagement() {
   
   // Ladder selection state
   const [selectedLadder, setSelectedLadder] = useState('499-under');
+
+  // Helper function to render modals using portals
+  const renderModal = (modalContent) => {
+    return createPortal(modalContent, document.body);
+  };
 
 
 
@@ -423,15 +430,15 @@ export default function LadderPlayerManagement() {
       
       switch (createMatchFormData.matchType) {
         case 'challenge':
-          // Challenge: Lower position challenges higher position
-          if (challengerPos >= defenderPos) {
+          // Challenge: Lower position (higher number) challenges higher position (lower number)
+          if (challengerPos <= defenderPos) {
             alert('For Challenge Matches: Challenger must have a lower position number than defender');
             return;
           }
           break;
         case 'defense':
-          // Defense: Higher position defends against lower position
-          if (challengerPos <= defenderPos) {
+          // Defense: Higher position (lower number) defends against lower position (higher number)
+          if (challengerPos >= defenderPos) {
             alert('For Defense Matches: Challenger must have a higher position number than defender');
             return;
           }
@@ -597,11 +604,15 @@ export default function LadderPlayerManagement() {
       </div>
 
       {/* Add Player Form */}
-      {showAddForm && (
-        <div className={styles.formOverlay}>
-          <div className={styles.form}>
-            <h3>Add New Ladder Player</h3>
-            <form onSubmit={handleAddPlayer}>
+      {showAddForm && renderModal(
+        <DraggableModal
+          open={showAddForm}
+          onClose={() => setShowAddForm(false)}
+          title="Add New Ladder Player"
+          maxWidth="600px"
+          maxHeight="90vh"
+        >
+          <form onSubmit={handleAddPlayer}>
               <input
                 type="text"
                 name="firstName"
@@ -685,16 +696,19 @@ export default function LadderPlayerManagement() {
                   Cancel
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </DraggableModal>
       )}
 
                {/* Create Match Form */}
-        {showCreateMatchForm && (
-          <div className={styles.formOverlay}>
-            <div className={styles.form}>
-              <h3>Create New Match</h3>
+        {showCreateMatchForm && renderModal(
+          <DraggableModal
+            open={showCreateMatchForm}
+            onClose={() => setShowCreateMatchForm(false)}
+            title="Create New Match"
+            maxWidth="700px"
+            maxHeight="90vh"
+          >
               <form onSubmit={createMatch}>
                 <div className={styles.formRow}>
                   <div className={styles.formGroup}>
@@ -845,12 +859,11 @@ export default function LadderPlayerManagement() {
                  </button>
                </div>
              </form>
-           </div>
-         </div>
-       )}
+          </DraggableModal>
+        )}
 
       {/* Edit Player Form */}
-      {editingPlayer && (
+      {editingPlayer && renderModal(
         <div className={styles.formOverlay}>
           <div className={styles.form}>
             <h3>Edit Ladder Player: {editingPlayer.name}</h3>
@@ -944,10 +957,14 @@ export default function LadderPlayerManagement() {
       )}
 
       {/* Match Result Form */}
-      {showMatchForm && (
-        <div className={styles.formOverlay}>
-          <div className={styles.form}>
-            <h3>Report Match Result</h3>
+      {showMatchForm && renderModal(
+        <DraggableModal
+          open={showMatchForm}
+          onClose={() => setShowMatchForm(false)}
+          title="Report Match Result"
+          maxWidth="700px"
+          maxHeight="90vh"
+        >
             <form onSubmit={submitMatchResult}>
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
@@ -1117,8 +1134,7 @@ export default function LadderPlayerManagement() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </DraggableModal>
       )}
 
              {/* Players List - Single Ladder View */}

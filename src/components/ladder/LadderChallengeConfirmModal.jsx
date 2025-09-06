@@ -14,6 +14,7 @@ const LadderChallengeConfirmModal = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showCounterModal, setShowCounterModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
 
   const handleAccept = async () => {
     setLoading(true);
@@ -26,7 +27,8 @@ const LadderChallengeConfirmModal = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          note: userNote
+          note: userNote,
+          selectedDate: selectedDate
         }),
       });
 
@@ -47,7 +49,8 @@ const LadderChallengeConfirmModal = ({
         game_type: challenge.matchDetails.gameType,
         location: challenge.matchDetails.location,
         note: userNote,
-        challenge_id: challenge._id
+        challenge_id: challenge._id,
+        match_date: selectedDate
       });
 
       if (onChallengeResponse) {
@@ -240,21 +243,64 @@ const LadderChallengeConfirmModal = ({
           </div>
         )}
 
-        {/* Preferred Dates */}
+        {/* Preferred Dates Selection */}
         {challenge.matchDetails.preferredDates && challenge.matchDetails.preferredDates.length > 0 && (
           <div style={{ marginBottom: '20px' }}>
-            <h4 style={{ color: '#ffc107', marginBottom: '12px' }}>Preferred Dates</h4>
+            <h4 style={{ color: '#ffc107', marginBottom: '12px' }}>Select Match Date</h4>
             <div style={{ 
               background: 'rgba(0, 0, 0, 0.3)', 
               borderRadius: '8px', 
               padding: '12px',
               color: '#e0e0e0'
             }}>
+              <p style={{ marginBottom: '12px', fontSize: '0.9rem', color: '#ccc' }}>
+                Choose from the challenger's preferred dates:
+              </p>
               {challenge.matchDetails.preferredDates.map((date, index) => (
-                <div key={index} style={{ marginBottom: '4px' }}>
-                  • {new Date(date).toLocaleDateString()}
-                </div>
+                <label key={index} style={{ 
+                  display: 'block', 
+                  marginBottom: '8px',
+                  cursor: 'pointer',
+                  padding: '8px',
+                  borderRadius: '4px',
+                  background: selectedDate === date ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
+                  border: selectedDate === date ? '1px solid #10b981' : '1px solid transparent',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <input
+                    type="radio"
+                    name="selectedDate"
+                    value={date}
+                    checked={selectedDate === date}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    style={{ marginRight: '8px' }}
+                  />
+                  {new Date(date).toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </label>
               ))}
+              {selectedDate && (
+                <div style={{ 
+                  marginTop: '12px',
+                  padding: '8px',
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  borderRadius: '4px',
+                  color: '#10b981',
+                  fontSize: '0.9rem'
+                }}>
+                  ✅ Match scheduled for: {new Date(selectedDate).toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -334,19 +380,20 @@ const LadderChallengeConfirmModal = ({
             
             <button
               onClick={handleAccept}
-              disabled={loading}
+              disabled={loading || (challenge.matchDetails.preferredDates && challenge.matchDetails.preferredDates.length > 0 && !selectedDate)}
               style={{
                 padding: '12px 24px',
-                background: loading ? '#666' : 'linear-gradient(135deg, #10b981, #059669)',
+                background: loading || (challenge.matchDetails.preferredDates && challenge.matchDetails.preferredDates.length > 0 && !selectedDate) ? '#666' : 'linear-gradient(135deg, #10b981, #059669)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                cursor: loading ? 'not-allowed' : 'pointer',
+                cursor: loading || (challenge.matchDetails.preferredDates && challenge.matchDetails.preferredDates.length > 0 && !selectedDate) ? 'not-allowed' : 'pointer',
                 fontSize: '1rem',
                 fontWeight: 'bold'
               }}
             >
-              {loading ? 'Processing...' : 'Accept'}
+              {loading ? 'Processing...' : 
+               (challenge.matchDetails.preferredDates && challenge.matchDetails.preferredDates.length > 0 && !selectedDate) ? 'Select Date First' : 'Accept'}
             </button>
           </div>
         </div>

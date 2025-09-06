@@ -13,6 +13,7 @@ import LadderSmartMatchModal from './LadderSmartMatchModal';
 import LadderPrizePoolTracker from './LadderPrizePoolTracker';
 import LadderPrizePoolModal from './LadderPrizePoolModal';
 import LadderMatchReportingModal from './LadderMatchReportingModal';
+import PaymentDashboard from './PaymentDashboard';
 import './LadderApp.css';
 
 const LadderApp = ({ 
@@ -59,13 +60,19 @@ const LadderApp = ({
   const [challengeType, setChallengeType] = useState('challenge');
   const [pendingChallenges, setPendingChallenges] = useState([]);
   const [sentChallenges, setSentChallenges] = useState([]);
+  const [scheduledMatches, setScheduledMatches] = useState([]);
   const [showPrizePoolModal, setShowPrizePoolModal] = useState(false);
   const [showMatchReportingModal, setShowMatchReportingModal] = useState(false);
+  const [showPaymentDashboard, setShowPaymentDashboard] = useState(false);
   
   // Mobile player stats state
   const [selectedPlayerForStats, setSelectedPlayerForStats] = useState(null);
   const [showMobilePlayerStats, setShowMobilePlayerStats] = useState(false);
   const [lastMatchData, setLastMatchData] = useState(null);
+  
+  // My Matches state
+  const [playerMatches, setPlayerMatches] = useState([]);
+  const [matchesLoading, setMatchesLoading] = useState(false);
   
 
 
@@ -76,6 +83,20 @@ const LadderApp = ({
     loadChallenges();
     loadProfileData();
   }, [selectedLadder]);
+
+  // Load matches when matches view is accessed
+  useEffect(() => {
+    if (currentView === 'matches') {
+      loadPlayerMatches();
+    }
+  }, [currentView, userLadderData?.email]);
+
+  // Load challenges when challenges view is accessed
+  useEffect(() => {
+    if (currentView === 'challenges') {
+      loadChallenges();
+    }
+  }, [currentView, userLadderData?.email, selectedLadder]);
 
   // Auto-update selectedLadder when userLadderData changes (only initially)
   useEffect(() => {
@@ -588,7 +609,23 @@ const LadderApp = ({
       const sentResponse = await fetch(`${BACKEND_URL}/api/ladder/challenges/sent/${encodeURIComponent(senderEmail)}`);
       if (sentResponse.ok) {
         const sentData = await sentResponse.json();
-        setSentChallenges(sentData);
+        // Filter out admin-created challenges (entryFee: 0 and postContent contains 'Admin')
+        const filteredSentChallenges = sentData.filter(challenge => 
+          !(challenge.matchDetails?.entryFee === 0 && 
+            challenge.challengePost?.postContent?.toLowerCase().includes('admin'))
+        );
+        setSentChallenges(filteredSentChallenges);
+      }
+      
+      // Load scheduled matches (including admin-created ones)
+      const scheduledResponse = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${selectedLadder}/matches?status=scheduled`);
+      if (scheduledResponse.ok) {
+        const scheduledData = await scheduledResponse.json();
+        // Filter to only show matches where the current user is a player
+        const userScheduledMatches = scheduledData.matches?.filter(match => 
+          match.player1?.email === senderEmail || match.player2?.email === senderEmail
+        ) || [];
+        setScheduledMatches(userScheduledMatches);
       }
     } catch (error) {
       console.error('Error loading challenges:', error);
@@ -627,6 +664,30 @@ const LadderApp = ({
     } catch (error) {
       console.error('Error fetching last match data:', error);
       setLastMatchData(null);
+    }
+  };
+
+  const loadPlayerMatches = async () => {
+    if (!userLadderData?.email) {
+      setMatchesLoading(false);
+      return;
+    }
+
+    try {
+      setMatchesLoading(true);
+      const response = await fetch(`${BACKEND_URL}/api/ladder/player/${encodeURIComponent(userLadderData.email)}/matches`);
+      if (response.ok) {
+        const matches = await response.json();
+        setPlayerMatches(matches);
+      } else {
+        console.error('Failed to load player matches');
+        setPlayerMatches([]);
+      }
+    } catch (error) {
+      console.error('Error loading player matches:', error);
+      setPlayerMatches([]);
+    } finally {
+      setMatchesLoading(false);
     }
   };
 
@@ -1166,6 +1227,65 @@ const LadderApp = ({
           )}
         </div>
         
+        {/* Scheduled Matches */}
+        <div className="challenges-section">
+          <h3 style={{ color: '#28a745', marginBottom: '16px' }}>
+            Scheduled Matches ({scheduledMatches.length})
+          </h3>
+          
+          {scheduledMatches.length === 0 ? (
+            <div style={{ 
+              background: 'rgba(0, 0, 0, 0.3)', 
+              borderRadius: '8px', 
+              padding: '20px', 
+              textAlign: 'center',
+              color: '#ccc'
+            }}>
+              No scheduled matches to display.
+            </div>
+          ) : (
+            <div className="challenges-list">
+              {scheduledMatches.map((match) => (
+                <div key={match._id} className="challenge-card">
+                  <div className="challenge-header">
+                    <h4>{match.player1?.firstName} {match.player1?.lastName} vs {match.player2?.firstName} {match.player2?.lastName}</h4>
+                    <span className={`challenge-type challenge-${match.matchType}`}>
+                      {match.matchType.charAt(0).toUpperCase() + match.matchType.slice(1)} Match
+                    </span>
+                  </div>
+                  
+                  <div className="challenge-details">
+                    <p><strong>Status:</strong> <span className="status-scheduled">
+                      {match.challengeId ? 'Created by Admin' : 'Scheduled'}
+                    </span></p>
+                    <p><strong>Race Length:</strong> {match.raceLength}</p>
+                    <p><strong>Game Type:</strong> {match.gameType}</p>
+                    <p><strong>Table Size:</strong> {match.tableSize}</p>
+                    <p><strong>Scheduled Date:</strong> {new Date(match.scheduledDate).toLocaleDateString()}</p>
+                    {match.venue && <p><strong>Location:</strong> {match.venue}</p>}
+                  </div>
+                  
+                  <div className="challenge-actions">
+                    <button
+                      style={{
+                        background: '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      View Match Details
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        
         {!isPublicView && (
           <button onClick={() => setCurrentView('main')} className="back-btn">
             ← Back to Main Menu
@@ -1175,7 +1295,8 @@ const LadderApp = ({
     );
   };
 
-  const renderAllLaddersView = () => {
+  // Removed renderAllLaddersView function - no longer needed
+  const renderAllLaddersView_DISABLED = () => {
     const [allLaddersData, setAllLaddersData] = useState({});
     const [loadingAll, setLoadingAll] = useState(true);
 
@@ -1308,7 +1429,102 @@ const LadderApp = ({
     );
   };
 
+  const renderMatchesView = () => {
+    return (
+      <div className="matches-view">
+        <div className="view-header">
+          <h2>🎯 My Matches</h2>
+          <p>View your active and completed matches</p>
+        </div>
 
+        {matchesLoading ? (
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Loading your matches...</p>
+          </div>
+        ) : playerMatches.length === 0 ? (
+          <div className="no-matches">
+            <div className="no-matches-icon">🎱</div>
+            <h3>No Matches Yet</h3>
+            <p>You haven't played any matches yet. Challenge another player to get started!</p>
+            <button 
+              onClick={() => navigateToView('ladders')}
+              className="challenge-button"
+            >
+              View Ladder & Challenge Players
+            </button>
+          </div>
+        ) : (
+          <div className="matches-list">
+            {playerMatches.map((match, index) => (
+              <div key={match._id || index} className="match-card">
+                <div className="match-header">
+                  <div className="match-type">
+                    {match.matchType === 'challenge' ? '⚔️ Challenge' : 
+                     match.matchType === 'ladder-jump' ? '🚀 Ladder Jump' :
+                     match.matchType === 'smackdown' ? '💥 SmackDown' : '🎯 Match'}
+                  </div>
+                  <div className="match-status">
+                    {match.status === 'scheduled' ? '📅 Scheduled' :
+                     match.status === 'completed' ? '✅ Completed' :
+                     match.status === 'cancelled' ? '❌ Cancelled' : '⏳ Pending'}
+                  </div>
+                </div>
+                
+                <div className="match-players">
+                  <div className="player">
+                    <span className="player-name">
+                      {match.player1?.firstName} {match.player1?.lastName}
+                    </span>
+                    <span className="player-position">#{match.player1?.position}</span>
+                  </div>
+                  <div className="vs">VS</div>
+                  <div className="player">
+                    <span className="player-name">
+                      {match.player2?.firstName} {match.player2?.lastName}
+                    </span>
+                    <span className="player-position">#{match.player2?.position}</span>
+                  </div>
+                </div>
+
+                {match.status === 'completed' && (
+                  <div className="match-result">
+                    <div className="winner">
+                      🏆 Winner: {match.winner?.firstName} {match.winner?.lastName}
+                    </div>
+                    <div className="score">Score: {match.score}</div>
+                  </div>
+                )}
+
+                <div className="match-details">
+                  <div className="detail">
+                    <span className="label">Date:</span>
+                    <span className="value">
+                      {new Date(match.scheduledDate).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="detail">
+                    <span className="label">Game:</span>
+                    <span className="value">{match.gameType}</span>
+                  </div>
+                  <div className="detail">
+                    <span className="label">Race to:</span>
+                    <span className="value">{match.raceLength}</span>
+                  </div>
+                  {match.venue && (
+                    <div className="detail">
+                      <span className="label">Location:</span>
+                      <span className="value">{match.venue}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderMainView = () => {
     return (
@@ -1395,29 +1611,7 @@ const LadderApp = ({
                    <p>See all ladder positions and rankings</p>
                  </div>
                  
-                 <div className="nav-card" onClick={() => navigateToView('all-ladders')}>
-                   <div className="nav-icon">🏆</div>
-                   <h3>All Ladders</h3>
-                   <p>View all three ladder divisions at once</p>
-                 </div>
-               </>
-             )}
-             
-             <div className="nav-card" onClick={() => setShowPrizePoolModal(true)}>
-               <div className="nav-icon">💰</div>
-               <h3>Prize Pools</h3>
-               <p>View current prize pools and winners</p>
-             </div>
-              
-              {!isPublicView && (
-                <div className="nav-card" onClick={() => setShowMatchReportingModal(true)}>
-                  <div className="nav-icon">🏓</div>
-                  <h3>Report Match</h3>
-                  <p>Report match results and pay fees</p>
-                </div>
-              )}
-             
-             {!isPublicView && userLadderData?.canChallenge && (
+                 {userLadderData?.canChallenge && (
                <>
                  <div className="nav-card" onClick={handleSmartMatch}>
                    <div className="nav-icon">🧠</div>
@@ -1449,8 +1643,38 @@ const LadderApp = ({
                      </div>
                    )}
                  </div>
+                   </>
+                 )}
                </>
              )}
+             
+             {!isPublicView && (
+               <div className="nav-card" onClick={() => setShowMatchReportingModal(true)}>
+                 <div className="nav-icon">🏓</div>
+                 <h3>Report Match</h3>
+                 <p>Report match results and pay fees</p>
+               </div>
+             )}
+             
+             {!isPublicView && userLadderData?.playerId === 'ladder' && (
+               <div className="nav-card" onClick={() => navigateToView('matches')}>
+                 <div className="nav-icon">🎯</div>
+                 <h3>My Completed Matches</h3>
+                 <p>View your completed match history</p>
+               </div>
+             )}
+             
+             <div className="nav-card" onClick={() => setShowPaymentDashboard(true)}>
+               <div className="nav-icon">💳</div>
+               <h3>Payment Dashboard</h3>
+               <p>Manage credits, membership, and payments</p>
+             </div>
+             
+             <div className="nav-card" onClick={() => setShowPrizePoolModal(true)}>
+               <div className="nav-icon">💰</div>
+               <h3>Prize Pools</h3>
+               <p>View current prize pools and winners</p>
+             </div>
              
              {!userLadderData?.canChallenge && userLadderData?.playerId !== 'guest' && (
                <div className="nav-card" style={{ 
@@ -1479,13 +1703,6 @@ const LadderApp = ({
                </div>
              )}
              
-             {!isPublicView && userLadderData?.playerId === 'ladder' && (
-               <div className="nav-card" onClick={() => navigateToView('matches')}>
-                 <div className="nav-icon">🎯</div>
-                 <h3>My Matches</h3>
-                 <p>View your active and past matches</p>
-               </div>
-             )}
              
              <div className="nav-card" onClick={() => setShowRulesModal(true)}>
                <div className="nav-icon">📋</div>
@@ -1608,7 +1825,6 @@ const LadderApp = ({
       {/* Main Content */}
               {currentView === 'ladders' && renderLadderView()}
         {currentView === 'challenges' && renderChallengesView()}
-        {currentView === 'all-ladders' && renderAllLaddersView()}
       {currentView === 'challenge' && renderChallengeView()}
       {currentView === 'matches' && renderMatchesView()}
       {currentView === 'main' && renderMainView()}
@@ -1682,13 +1898,21 @@ const LadderApp = ({
           <LadderMatchReportingModal
             isOpen={showMatchReportingModal}
             onClose={() => setShowMatchReportingModal(false)}
-            playerName={`${playerName} ${playerLastName}`}
+            playerName={userLadderData?.email || `${playerName} ${playerLastName}`}
             selectedLadder={selectedLadder}
             onMatchReported={(matchData) => {
               // Refresh ladder data after match is reported
               loadData();
               loadChallenges();
             }}
+          />
+        )}
+        
+        {showPaymentDashboard && (
+          <PaymentDashboard
+            isOpen={showPaymentDashboard}
+            onClose={() => setShowPaymentDashboard(false)}
+            playerEmail={userLadderData?.email || `${playerName}@example.com`}
           />
         )}
 

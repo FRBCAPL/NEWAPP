@@ -109,6 +109,13 @@
   line-height: 1.2 !important;
 }
 
+/* Ladder-specific styling */
+.hub-navigation.ladder-app .app-title,
+.hub-navigation.ladder-app .nav-center .app-title {
+  text-shadow: 0 0 6px #6b46c188, 0 0 1px #fff, 0 2px 4px #000a !important;
+  filter: drop-shadow(0 0 2px #6b46c188) !important;
+}
+
 /* Button Styles - Now directly in nav-content */
 .admin-btn,
 .super-admin-btn,
