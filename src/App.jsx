@@ -19,6 +19,7 @@ import AppRouteWrapper from './components/hub/AppRouteWrapper';
 import LadderApp from './components/ladder/LadderApp';
 import LadderManagement from './components/ladder/LadderManagement';
 import LadderPlayerManagement from './components/ladder/LadderPlayerManagement';
+import PublicLadderEmbed from './components/ladder/PublicLadderEmbed';
 import PlayerManagement from './components/admin/PlayerManagement';
 import UserProfileModal from './components/modal/UserProfileModal';
 import adminAuthService from './services/adminAuthService.js';
@@ -579,6 +580,23 @@ function AppContent() {
                   ) : (
                     <Navigate to="/" />
                   )
+                }
+              />
+
+              {/* Public Ladder Embed Route - No authentication required */}
+              <Route
+                path="/ladder/embed/:ladderName?"
+                element={
+                  <div style={{ 
+                    position: 'relative', 
+                    minHeight: '100vh', 
+                    width: '100%', 
+                    background: '#000',
+                    padding: 0,
+                    margin: 0
+                  }}>
+                    <PublicLadderEmbed />
+                  </div>
                 }
               />
              

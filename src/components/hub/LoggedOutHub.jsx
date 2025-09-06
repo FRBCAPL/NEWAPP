@@ -310,31 +310,33 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
           backgroundColor: 'rgba(0, 0, 0, 0.8)',
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center',
+          alignItems: window.innerWidth <= 768 ? 'flex-start' : 'center',
           zIndex: 1000,
-          padding: window.innerWidth <= 768 ? '10px' : '20px'
+          padding: window.innerWidth <= 768 ? '120px 15px 20px 15px' : '20px',
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch'
         }}>
           <div style={{
             background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',
             border: '2px solid #f59e0b',
             borderRadius: '15px',
-            width: window.innerWidth <= 768 ? '95%' : '55%',
+            width: window.innerWidth <= 768 ? '90%' : '55%',
             maxWidth: window.innerWidth <= 768 ? '100%' : '700px',
             minWidth: window.innerWidth <= 768 ? 'auto' : '700px',
-            height: window.innerWidth <= 768 ? '95vh' : '90vh',
-            maxHeight: window.innerWidth <= 768 ? '95vh' : '800px',
+            height: window.innerWidth <= 768 ? 'auto' : '90vh',
+            maxHeight: window.innerWidth <= 768 ? 'calc(100dvh - 120px)' : '800px',
             display: 'flex',
             flexDirection: 'column',
             boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
             color: '#ffffff',
-            marginTop: window.innerWidth <= 768 ? '0' : '20px'
+            marginTop: window.innerWidth <= 768 ? '20px' : '20px'
           }}>
             <div style={{
               position: 'relative',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              padding: window.innerWidth <= 768 ? '12px' : '15px',
+              padding: window.innerWidth <= 768 ? '25px' : '15px',
               borderBottom: '2px solid #f59e0b',
               flexShrink: 0
             }}>
@@ -352,7 +354,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                 onClick={() => setShowFormatDifferencesModal(false)}
                 style={{
                   position: 'absolute',
-                  right: '25px',
+                  right: '85px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   background: 'none',
@@ -379,7 +381,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
             <div style={{
               flex: 1,
               overflowY: 'auto',
-              padding: window.innerWidth <= 768 ? '15px' : '20px',
+              padding: window.innerWidth <= 768 ? '80px 15px 15px 15px' : '20px',
               fontSize: window.innerWidth <= 768 ? '0.9rem' : '0.95rem',
               lineHeight: '1.4'
             }}>

@@ -295,17 +295,21 @@ export default function LadderPlayerManagement() {
   const selectPendingMatch = (match) => {
     setMatchFormData({
       matchId: match._id,
-      challengerId: match.challenger?._id || '',
-      challengerName: `${match.challenger?.firstName} ${match.challenger?.lastName}`,
-      challengerPosition: match.challenger?.position,
-      defenderId: match.defender?._id || '',
-      defenderName: `${match.defender?.firstName} ${match.defender?.lastName}`,
-      defenderPosition: match.defender?.position,
+      player1Id: match.challenger?._id || match.player1?._id || '',
+      player1Name: `${match.challenger?.firstName || match.player1?.firstName} ${match.challenger?.lastName || match.player1?.lastName}`,
+      challengerId: match.challenger?._id || match.player1?._id || '',
+      challengerName: `${match.challenger?.firstName || match.player1?.firstName} ${match.challenger?.lastName || match.player1?.lastName}`,
+      challengerPosition: match.challenger?.position || match.player1?.position,
+      player2Id: match.defender?._id || match.player2?._id || '',
+      player2Name: `${match.defender?.firstName || match.player2?.firstName} ${match.defender?.lastName || match.player2?.lastName}`,
+      defenderId: match.defender?._id || match.player2?._id || '',
+      defenderName: `${match.defender?.firstName || match.player2?.firstName} ${match.defender?.lastName || match.player2?.lastName}`,
+      defenderPosition: match.defender?.position || match.player2?.position,
       winnerId: '',
       score: '',
-      matchDate: new Date().toISOString().split('T')[0],
-      matchFormat: match.matchFormat || 'best-of-5',
-      location: match.location || '',
+      matchDate: match.scheduledDate ? new Date(match.scheduledDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      matchFormat: match.matchFormat || match.raceLength || 'best-of-5',
+      location: match.location || match.venue || '',
       notes: match.notes || ''
     });
     setShowMatchForm(true);
@@ -327,15 +331,40 @@ export default function LadderPlayerManagement() {
     try {
       setLoading(true);
 
-             const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches`, {
-        method: 'POST',
+      // If we have a matchId, we're updating an existing match, otherwise creating a new one
+      const isUpdating = matchFormData.matchId;
+      const url = isUpdating 
+        ? `${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches/${matchFormData.matchId}`
+        : `${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches`;
+      
+      const method = isUpdating ? 'PUT' : 'POST';
+      
+      const requestBody = isUpdating 
+        ? {
+            // For updating existing match with results
+            winner: matchFormData.winnerId,
+            score: matchFormData.score,
+            notes: matchFormData.notes,
+            completedDate: new Date().toISOString(),
+            reportedBy: matchFormData.winnerId // Admin reporting, use winner as reportedBy
+          }
+        : {
+            // For creating new match
+            challengerId: matchFormData.player1Id,
+            defenderId: matchFormData.player2Id,
+            matchType: 'challenge',
+            proposedDate: new Date(matchFormData.matchDate).toISOString(),
+            matchFormat: matchFormData.matchFormat,
+            location: matchFormData.location,
+            notes: matchFormData.notes
+          };
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...matchFormData,
-          matchDate: new Date(matchFormData.matchDate).toISOString()
-        })
+        body: JSON.stringify(requestBody)
       });
 
       const result = await response.json();
@@ -391,7 +420,7 @@ export default function LadderPlayerManagement() {
   const loadPendingMatches = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches?status=pending`);
+      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches?status=scheduled`);
       if (response.ok) {
         const data = await response.json();
         setPendingMatches(data.matches || []);
@@ -468,7 +497,7 @@ export default function LadderPlayerManagement() {
         },
         body: JSON.stringify({
           ...createMatchFormData,
-          status: 'pending',
+          status: 'scheduled',
           proposedDate: new Date(createMatchFormData.proposedDate).toISOString()
         })
       });
@@ -570,13 +599,11 @@ export default function LadderPlayerManagement() {
               <button 
                 className={styles.pendingMatchesButton}
                 onClick={() => {
-                  setShowPendingMatches(!showPendingMatches);
-                  if (!showPendingMatches) {
-                    loadPendingMatches();
-                  }
+                  setShowPendingMatches(true);
+                  loadPendingMatches();
                 }}
               >
-                {showPendingMatches ? 'Hide Pending Matches' : 'View Pending Matches'}
+                View Pending Matches
               </button>
                              <button 
                  className={styles.matchButton}
@@ -1137,6 +1164,87 @@ export default function LadderPlayerManagement() {
         </DraggableModal>
       )}
 
+      {/* Pending Matches Modal */}
+      {showPendingMatches && renderModal(
+        <DraggableModal
+          open={showPendingMatches}
+          onClose={() => setShowPendingMatches(false)}
+          title="Pending Matches"
+          maxWidth="65vw"
+        >
+          <div className={styles.pendingMatchesModal}>
+            {pendingMatches.length === 0 ? (
+              <div className={styles.noData}>No pending matches for this ladder.</div>
+            ) : (
+              <div className={styles.pendingMatchesTable}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Type</th>
+                      <th>Challenger</th>
+                      <th>Defender</th>
+                      <th>Format</th>
+                      <th>Location</th>
+                      <th>Notes</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingMatches.map((match, index) => (
+                      <tr key={match.id || index}>
+                        <td>{match.scheduledDate ? new Date(match.scheduledDate).toLocaleDateString() : 
+                             match.proposedDate ? new Date(match.proposedDate).toLocaleDateString() : 
+                             'TBD'}</td>
+                        <td>
+                          <span className={`${styles.matchType} ${styles[match.matchType || 'challenge']}`}>
+                            {match.matchType === 'challenge' ? 'Challenge' :
+                             match.matchType === 'smackdown' ? 'SmackDown' :
+                             match.matchType === 'smackback' ? 'SmackBack' : 'Challenge'}
+                          </span>
+                        </td>
+                        <td>
+                          <strong>{match.challenger?.firstName || match.player1?.firstName} {match.challenger?.lastName || match.player1?.lastName}</strong>
+                          {(match.challenger?.position || match.player1?.position) && ` (#${match.challenger?.position || match.player1?.position})`}
+                          <br />
+                          <small style={{color: '#06b6d4'}}>Challenger</small>
+                        </td>
+                        <td>
+                          <strong>{match.defender?.firstName || match.player2?.firstName} {match.defender?.lastName || match.player2?.lastName}</strong>
+                          {(match.defender?.position || match.player2?.position) && ` (#${match.defender?.position || match.player2?.position})`}
+                          <br />
+                          <small style={{color: '#f59e0b'}}>Defender</small>
+                        </td>
+                        <td>{match.matchFormat || match.raceLength || 'N/A'}</td>
+                        <td>{match.location || match.venue || 'N/A'}</td>
+                        <td>{match.notes || 'N/A'}</td>
+                        <td>
+                          <span className={`${styles.status} ${styles.pending}`}>
+                            Pending
+                          </span>
+                        </td>
+                        <td>
+                          <button 
+                            className={styles.reportResultButton}
+                            onClick={() => {
+                              selectPendingMatch(match);
+                              setShowPendingMatches(false); // Close the pending matches modal
+                            }}
+                          >
+                            Report Result
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </DraggableModal>
+      )}
+
              {/* Players List - Single Ladder View */}
        <div className={styles.ladderSection}>
          <h3 className={styles.ladderTitle}>
@@ -1200,75 +1308,6 @@ export default function LadderPlayerManagement() {
       </div>
        </div>
 
-       {/* Pending Matches Section */}
-       {showPendingMatches && (
-         <div className={styles.pendingMatchesSection}>
-           <h3>Pending Matches</h3>
-           {pendingMatches.length === 0 ? (
-             <div className={styles.noData}>No pending matches for this ladder.</div>
-           ) : (
-             <div className={styles.pendingMatchesTable}>
-               <table>
-                 <thead>
-                   <tr>
-                     <th>Date</th>
-                     <th>Type</th>
-                     <th>Challenger</th>
-                     <th>Defender</th>
-                     <th>Format</th>
-                     <th>Location</th>
-                     <th>Notes</th>
-                     <th>Status</th>
-                     <th>Actions</th>
-                   </tr>
-                 </thead>
-                 <tbody>
-                   {pendingMatches.map((match, index) => (
-                     <tr key={match.id || index}>
-                       <td>{new Date(match.proposedDate).toLocaleDateString()}</td>
-                                               <td>
-                          <span className={`${styles.matchType} ${styles[match.matchType || 'challenge']}`}>
-                            {match.matchType === 'challenge' ? 'Challenge' :
-                             match.matchType === 'smackdown' ? 'SmackDown' :
-                             match.matchType === 'smackback' ? 'SmackBack' : 'Challenge'}
-                          </span>
-                        </td>
-                       <td>
-                         <strong>{match.challenger?.firstName} {match.challenger?.lastName}</strong>
-                         {match.challenger?.position && ` (#${match.challenger.position})`}
-                         <br />
-                         <small style={{color: '#06b6d4'}}>Challenger</small>
-                       </td>
-                       <td>
-                         <strong>{match.defender?.firstName} {match.defender?.lastName}</strong>
-                         {match.defender?.position && ` (#${match.defender.position})`}
-                         <br />
-                         <small style={{color: '#f59e0b'}}>Defender</small>
-                       </td>
-                       <td>{match.matchFormat || 'N/A'}</td>
-                       <td>{match.location || 'N/A'}</td>
-                       <td>{match.notes || 'N/A'}</td>
-                       <td>
-                         <span className={`${styles.status} ${styles.pending}`}>
-                           Pending
-                         </span>
-                       </td>
-                       <td>
-                         <button 
-                           className={styles.reportResultButton}
-                           onClick={() => selectPendingMatch(match)}
-                         >
-                           Report Result
-                         </button>
-                       </td>
-                     </tr>
-                   ))}
-                 </tbody>
-               </table>
-             </div>
-           )}
-         </div>
-       )}
 
       {/* Match History Section */}
       {showMatchHistory && (
