@@ -20,6 +20,8 @@ import LadderApp from './components/ladder/LadderApp';
 import LadderManagement from './components/ladder/LadderManagement';
 import LadderPlayerManagement from './components/ladder/LadderPlayerManagement';
 import PublicLadderEmbed from './components/ladder/PublicLadderEmbed';
+import EmbedApp from './EmbedApp';
+import SimpleLadderEmbed from './components/ladder/SimpleLadderEmbed';
 import PlayerManagement from './components/admin/PlayerManagement';
 import UserProfileModal from './components/modal/UserProfileModal';
 import adminAuthService from './services/adminAuthService.js';
@@ -431,6 +433,25 @@ function AppContent() {
 
                  <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "200px" }}>
           <Routes>
+            {/* Embed routes - must be first to bypass all authentication */}
+            <Route
+              path="/ladder-embed"
+              element={
+                <div style={{ 
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  width: '100vw',
+                  height: '100vh',
+                  background: '#000',
+                  padding: 0,
+                  margin: 0,
+                  zIndex: 9999
+                }}>
+                  <SimpleLadderEmbed />
+                </div>
+              }
+            />
                          {/* Hub Route */}
              <Route
                path="/hub"
@@ -585,20 +606,10 @@ function AppContent() {
 
               {/* Public Ladder Embed Route - No authentication required */}
               <Route
-                path="/ladder/embed/:ladderName?"
-                element={
-                  <div style={{ 
-                    position: 'relative', 
-                    minHeight: '100vh', 
-                    width: '100%', 
-                    background: '#000',
-                    padding: 0,
-                    margin: 0
-                  }}>
-                    <PublicLadderEmbed />
-                  </div>
-                }
+                path="/embed/*"
+                element={<EmbedApp />}
               />
+
              
              {/* Admin Routes */}
              <Route
