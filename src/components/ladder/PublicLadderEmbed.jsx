@@ -9,7 +9,7 @@ const PublicLadderEmbed = () => {
       minHeight: '100vh',
       background: '#000',
       overflow: 'auto',
-      padding: '10px',
+      padding: '20px',
       margin: 0,
       position: 'relative',
       top: 0,

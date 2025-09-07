@@ -413,6 +413,24 @@ function AppContent() {
   // --- Main Router ---
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
+        {/* Public Ladder Embed - completely bypasses all navigation and layout */}
+        {location.pathname === '/ladder-embed' && (
+          <div style={{ 
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: '#000',
+            padding: 0,
+            margin: 0,
+            zIndex: 9999,
+            overflow: 'auto'
+          }}>
+            <PublicLadderEmbed />
+          </div>
+        )}
+
         {/* Only show global FloatingLogos when NOT on ladder routes */}
         {(() => {
           const isLadderRoute = location.pathname.startsWith('/ladder');
@@ -433,26 +451,6 @@ function AppContent() {
 
                  <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "200px" }}>
           <Routes>
-            {/* Public Ladder Embed - bypasses all authentication */}
-            <Route
-              path="/ladder-embed"
-              element={
-                <div style={{ 
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  width: '100vw',
-                  height: '100vh',
-                  background: '#000',
-                  padding: 0,
-                  margin: 0,
-                  zIndex: 9999,
-                  overflow: 'hidden'
-                }}>
-                  <PublicLadderEmbed />
-                </div>
-              }
-            />
                          {/* Hub Route */}
              <Route
                path="/hub"
