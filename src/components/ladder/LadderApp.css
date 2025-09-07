@@ -25,6 +25,12 @@
   position: relative;
 }
 
+/* Custom purple border for ladder modals only */
+.ladder-modal-purple-border {
+  border: 2px solid #8B5CF6 !important;
+  border-radius: 18px;
+}
+
 /* Header */
 .ladder-header {
   display: flex;

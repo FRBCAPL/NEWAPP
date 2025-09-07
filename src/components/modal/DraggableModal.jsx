@@ -6,7 +6,10 @@ export default function DraggableModal({
   children, 
   title = "Modal",
   maxWidth = "500px",
-  className = ""
+  className = "",
+  borderColor = "#e53e3e",
+  textColor = "#fff",
+  glowColor = "#e53e3e"
 }) {
   // Draggable state
   const [drag, setDrag] = useState({ x: 0, y: 0 });
@@ -84,9 +87,9 @@ export default function DraggableModal({
           cursor: dragging ? "grabbing" : "default",
           background: "linear-gradient(120deg, #232323 80%, #2a0909 100%)",
           color: "#fff",
-          border: "2px solid #e53e3e",
+          border: `2px solid ${borderColor}`,
           borderRadius: window.innerWidth <= 400 ? "0" : "1.2rem",
-          boxShadow: "0 0 32px #e53e3e, 0 0 40px rgba(0,0,0,0.85)",
+          boxShadow: `0 0 32px ${glowColor}, 0 0 40px rgba(0,0,0,0.85)`,
           width: window.innerWidth <= 400 ? "100vw" : maxWidth,
           maxWidth: window.innerWidth <= 400 ? "100vw" : maxWidth,
           minWidth: 0,
@@ -115,7 +118,7 @@ export default function DraggableModal({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "#e53e3e",
+            background: borderColor,
             padding: "0.05rem .05rem 0.05rem .05rem",
             borderTopLeftRadius: "1.2rem",
             borderTopRightRadius: "1.2rem",
@@ -133,7 +136,7 @@ export default function DraggableModal({
               top: 0,
               width: "100%",
               height: "5px",
-              background: "linear-gradient(90deg, #fff0 0%, #e53e3e 60%, #fff0 100%)",
+              background: `linear-gradient(90deg, #fff0 0%, ${borderColor} 60%, #fff0 100%)`,
               borderTopLeftRadius: "1.2rem",
               borderTopRightRadius: "1.2rem",
               pointerEvents: "none"
@@ -147,12 +150,12 @@ export default function DraggableModal({
               fontWeight: "bold",
               textAlign: "center",
               letterSpacing: "0.02em",
-              color: "#fff",
               textShadow: "0 1px 12px #000a",
               zIndex: 2,
               flex: 1,
               wordBreak: "break-word",
-              minWidth: 0
+              minWidth: 0,
+              color: textColor
             }}
           >
             {title}
@@ -227,7 +230,7 @@ export default function DraggableModal({
           width: 10px;
         }
         .modal-content::-webkit-scrollbar-thumb {
-          background: #e53e3e;
+          background: ${borderColor};
           border-radius: 6px;
         }
         .modal-content::-webkit-scrollbar-track {
@@ -236,7 +239,7 @@ export default function DraggableModal({
         }
         .modal-content {
           scrollbar-width: thin;
-          scrollbar-color: #e53e3e #232323;
+          scrollbar-color: ${borderColor} #232323;
         }
       `}</style>
     </div>

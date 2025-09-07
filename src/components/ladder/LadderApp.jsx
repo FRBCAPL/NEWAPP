@@ -660,8 +660,8 @@ const LadderApp = ({
       console.log('🔍 No email found in unifiedAccount, trying direct email...');
       if (!player.email) {
         console.log('🔍 No email found anywhere, cannot fetch last match data');
-        setLastMatchData(null);
-        return;
+      setLastMatchData(null);
+      return;
       }
     }
     
@@ -980,7 +980,17 @@ const LadderApp = ({
     return (
       <div className="ladder-view">
         <div className="ladder-header-section">
-          <h2>{getLadderDisplayName(selectedLadder)} Ladder</h2>
+          <h2 style={{ 
+            color: '#8B5CF6',
+            WebkitTextStroke: '1.5px #000000',
+            textShadow: '0 0 8px rgba(139, 92, 246, 0.7)',
+            fontWeight: 'bold',
+            letterSpacing: '2px',
+            textTransform: 'uppercase',
+            fontSize: '2rem',
+            marginBottom: '0.5rem',
+            fontFamily: '"Orbitron", "Exo 2", "Rajdhani", "Arial Black", sans-serif'
+          }}>{getLadderDisplayName(selectedLadder)} Ladder</h2>
           <p>Current rankings and positions</p>
           
           {/* Ladder Selector */}
@@ -1896,7 +1906,16 @@ const LadderApp = ({
       {/* Header */}
        <div className="ladder-header" style={{ flexDirection: 'column', textAlign: 'center' }}>
          <div className="ladder-title">
-           <h1>Ladder of Legends</h1>
+           <h1 style={{ 
+             color: '#000000',
+             WebkitTextStroke: '0.5px #8B5CF6',
+             textShadow: '0 0 10px rgba(139, 92, 246, 0.5)',
+             fontWeight: 'bold',
+             fontSize: '3rem',
+             letterSpacing: '3px',
+             fontFamily: '"Bebas Neue", "Orbitron", "Exo 2", "Arial Black", sans-serif',
+             textTransform: 'uppercase'
+           }}>Ladder of Legends</h1>
            <p>Tournament Series - Challenge-based ladder system with rankings</p>
          </div>
          
@@ -1944,7 +1963,7 @@ const LadderApp = ({
       <div className="ladder-footer">
         {isPublicView ? (
           <div style={{ textAlign: 'center', padding: '20px', color: '#fff' }}>
-            <h3 style={{ color: '#ffc107', marginBottom: '15px' }}>🏆 Ladder of Legends 🏆</h3>
+            <h3 style={{ color: '#8B5CF6', marginBottom: '15px' }}>🏆 Ladder of Legends 🏆</h3>
             <p style={{ marginBottom: '10px', fontSize: '16px' }}>
               <strong>Ready to join the competition?</strong>
             </p>
@@ -1956,7 +1975,7 @@ const LadderApp = ({
             </p>
           </div>
         ) : (
-          <p>Challenge your way to the top! 🏆</p>
+        <p>Challenge your way to the top! 🏆</p>
         )}
       </div>
 
@@ -2103,12 +2122,12 @@ const LadderApp = ({
                   >
                     🔄
                   </button>
-                  <button 
-                    className="stats-close-btn"
-                    onClick={() => setShowMobilePlayerStats(false)}
-                  >
-                    ×
-                  </button>
+                <button 
+                  className="stats-close-btn"
+                  onClick={() => setShowMobilePlayerStats(false)}
+                >
+                  ×
+                </button>
                 </div>
               </div>
               
@@ -2116,21 +2135,21 @@ const LadderApp = ({
                 <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
                   {/* Left Column - Basic Stats */}
                   <div style={{ flex: '1', minWidth: '200px' }}>
-                    <div className="stats-grid">
-                      <div className="stat-item">
-                        <div className="stat-label">Rank</div>
+                <div className="stats-grid">
+                  <div className="stat-item">
+                    <div className="stat-label">Rank</div>
                         <div className="stat-value">#{(updatedPlayerData || selectedPlayerForStats).position}</div>
-                      </div>
-                      
-                      <div className="stat-item">
-                        <div className="stat-label">FargoRate</div>
-                        <div className="stat-value">
+                  </div>
+                  
+                  <div className="stat-item">
+                    <div className="stat-label">FargoRate</div>
+                    <div className="stat-value">
                           {(updatedPlayerData || selectedPlayerForStats).fargoRate === 0 ? "No FargoRate" : (updatedPlayerData || selectedPlayerForStats).fargoRate}
-                        </div>
-                      </div>
-                      
-                      <div className="stat-item">
-                        <div className="stat-label">Wins</div>
+                    </div>
+                  </div>
+                  
+                  <div className="stat-item">
+                    <div className="stat-label">Wins</div>
                         <div className="stat-value wins">
                           {(() => {
                             const playerData = updatedPlayerData || selectedPlayerForStats;
@@ -2138,10 +2157,10 @@ const LadderApp = ({
                             return playerData.wins || 0;
                           })()}
                         </div>
-                      </div>
-                      
-                      <div className="stat-item">
-                        <div className="stat-label">Losses</div>
+                  </div>
+                  
+                  <div className="stat-item">
+                    <div className="stat-label">Losses</div>
                         <div className="stat-value losses">
                           {(() => {
                             const playerData = updatedPlayerData || selectedPlayerForStats;
@@ -2149,29 +2168,29 @@ const LadderApp = ({
                             return playerData.losses || 0;
                           })()}
                         </div>
-                      </div>
-                      
-                      <div className="stat-item">
-                        <div className="stat-label">Status</div>
-                        <div className="stat-value status">
-                          {!selectedPlayerForStats.isActive ? (
-                            <span className="inactive">Inactive</span>
-                          ) : selectedPlayerForStats.immunityUntil && new Date(selectedPlayerForStats.immunityUntil) > new Date() ? (
-                            <span className="immune">Immune</span>
-                          ) : (
-                            <span className="active">Active</span>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {selectedPlayerForStats.immunityUntil && new Date(selectedPlayerForStats.immunityUntil) > new Date() && (
-                        <div className="stat-item">
-                          <div className="stat-label">Immunity Until</div>
-                          <div className="stat-value">
-                            {new Date(selectedPlayerForStats.immunityUntil).toLocaleDateString()}
-                          </div>
-                        </div>
+                  </div>
+                  
+                  <div className="stat-item">
+                    <div className="stat-label">Status</div>
+                    <div className="stat-value status">
+                      {!selectedPlayerForStats.isActive ? (
+                        <span className="inactive">Inactive</span>
+                      ) : selectedPlayerForStats.immunityUntil && new Date(selectedPlayerForStats.immunityUntil) > new Date() ? (
+                        <span className="immune">Immune</span>
+                      ) : (
+                        <span className="active">Active</span>
                       )}
+                    </div>
+                  </div>
+                  
+                  {selectedPlayerForStats.immunityUntil && new Date(selectedPlayerForStats.immunityUntil) > new Date() && (
+                    <div className="stat-item">
+                      <div className="stat-label">Immunity Until</div>
+                      <div className="stat-value">
+                        {new Date(selectedPlayerForStats.immunityUntil).toLocaleDateString()}
+                      </div>
+                    </div>
+                  )}
                     </div>
                   </div>
                   
@@ -2249,6 +2268,7 @@ const LadderApp = ({
                                  onClick={() => {
                                    console.log('🔍 Show More button clicked! Setting showFullMatchHistory to true');
                                    console.log('🔍 Current showFullMatchHistory state:', showFullMatchHistory);
+                                   setShowMobilePlayerStats(false); // Close the player stats modal
                                    setShowFullMatchHistory(true);
                                    console.log('🔍 After setting showFullMatchHistory to true');
                                  }}
@@ -2291,17 +2311,18 @@ const LadderApp = ({
           
           const modalContent = (
           <div style={{
-            position: isPublicView ? 'absolute' : 'fixed',
+            position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            zIndex: 100000,
-            padding: '20px'
+            zIndex: 999999,
+            padding: '20px',
+            backdropFilter: 'blur(10px)'
           }}>
             <div style={{
               background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',
@@ -2328,7 +2349,10 @@ const LadderApp = ({
                   🏆 {selectedPlayerForStats.firstName} {selectedPlayerForStats.lastName} - Full Match History
                 </h2>
                 <button
-                  onClick={() => setShowFullMatchHistory(false)}
+                  onClick={() => {
+                    setShowFullMatchHistory(false);
+                    setShowMobilePlayerStats(true); // Reopen the player stats modal
+                  }}
                   style={{
                     background: 'none',
                     border: 'none',

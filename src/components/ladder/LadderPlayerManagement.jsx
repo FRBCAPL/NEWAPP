@@ -1318,53 +1318,140 @@ export default function LadderPlayerManagement() {
        </div>
 
 
-      {/* Match History Section */}
-      {showMatchHistory && (
-        <div className={styles.matchHistorySection}>
-          <h3>Match History</h3>
-          {loading ? (
-            <div className={styles.noData}>Loading match history...</div>
-          ) : matchHistory.length === 0 ? (
-            <div className={styles.noData}>No matches recorded yet.</div>
-          ) : (
-            <div className={styles.matchHistoryTable}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Winner</th>
-                    <th>Loser</th>
-                    <th>Score</th>
-                    <th>Format</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {matchHistory.map((match, index) => (
-                    <tr key={match.id || index}>
-                      <td>{new Date(match.completedDate || match.scheduledDate).toLocaleDateString()}</td>
-                      <td>
-                        <strong>{match.winner ? `${match.winner.firstName} ${match.winner.lastName}` : 'N/A'}</strong> {match.winner ? `(#${match.winner.position})` : ''}
-                      </td>
-                      <td>
-                        {match.loser ? `${match.loser.firstName} ${match.loser.lastName}` : 'N/A'} {match.loser ? `(#${match.loser.position})` : ''}
-                      </td>
-                      <td>{match.score}</td>
-                      <td>{match.matchFormat || 'N/A'}</td>
-                      <td>{match.venue || 'N/A'}</td>
-                      <td>
-                        <span className={`${styles.status} ${styles[match.status]}`}>
-                          {match.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {/* Match History Modal */}
+      {showMatchHistory && createPortal(
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 100000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',
+            border: '2px solid #8B5CF6',
+            borderRadius: '12px',
+            width: '90%',
+            maxWidth: '1200px',
+            maxHeight: '80vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+            color: '#ffffff'
+          }}>
+            {/* Header */}
+            <div style={{
+              padding: '20px',
+              borderBottom: '1px solid #8B5CF6',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h2 style={{ color: '#8B5CF6', margin: 0 }}>
+                🏆 Match History - {selectedLadder === '499-under' ? '499 & Under' : 
+                selectedLadder === '500-549' ? '500-549' : 
+                selectedLadder === '550-plus' ? '550+' : selectedLadder} Ladder
+              </h2>
+              <button
+                onClick={() => setShowMatchHistory(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#8B5CF6',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '5px'
+                }}
+              >
+                ×
+              </button>
             </div>
-          )}
-        </div>
+
+            {/* Content */}
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '20px'
+            }}>
+              {loading ? (
+                <div style={{ textAlign: 'center', color: '#ccc', padding: '40px', fontSize: '16px' }}>
+                  Loading match history...
+                </div>
+              ) : matchHistory.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#ccc', padding: '40px', fontSize: '16px' }}>
+                  No matches recorded yet.
+                </div>
+              ) : (
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '8px',
+                  overflow: 'hidden'
+                }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ background: 'rgba(139, 92, 246, 0.2)' }}>
+                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)' }}>Date</th>
+                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)' }}>Winner</th>
+                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)' }}>Loser</th>
+                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)' }}>Score</th>
+                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)' }}>Type</th>
+                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)' }}>Location</th>
+                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)' }}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {matchHistory.map((match, index) => (
+                        <tr key={match.id || index} style={{ 
+                          borderBottom: index < matchHistory.length - 1 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none'
+                        }}>
+                          <td style={{ padding: '12px' }}>{new Date(match.completedDate || match.scheduledDate).toLocaleDateString()}</td>
+                          <td style={{ padding: '12px' }}>
+                            <strong style={{ color: '#22c55e' }}>
+                              {match.winner ? `${match.winner.firstName} ${match.winner.lastName}` : 'N/A'}
+                            </strong> 
+                            {match.winner ? ` (#${match.winner.position})` : ''}
+                          </td>
+                          <td style={{ padding: '12px' }}>
+                            <span style={{ color: '#ef4444' }}>
+                              {match.loser ? `${match.loser.firstName} ${match.loser.lastName}` : 'N/A'}
+                            </span>
+                            {match.loser ? ` (#${match.loser.position})` : ''}
+                          </td>
+                          <td style={{ padding: '12px' }}>{match.score}</td>
+                          <td style={{ padding: '12px' }}>{match.matchType || 'N/A'}</td>
+                          <td style={{ padding: '12px' }}>{match.venue || 'N/A'}</td>
+                          <td style={{ padding: '12px' }}>
+                            <span style={{
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: 'bold',
+                              background: match.status === 'completed' ? 'rgba(34, 197, 94, 0.2)' : 
+                                         match.status === 'scheduled' ? 'rgba(59, 130, 246, 0.2)' : 
+                                         'rgba(107, 114, 128, 0.2)',
+                              color: match.status === 'completed' ? '#22c55e' : 
+                                     match.status === 'scheduled' ? '#3b82f6' : 
+                                     '#6b7280'
+                            }}>
+                              {match.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       
