@@ -1065,7 +1065,9 @@ const LadderApp = ({
         
         <div className="ladder-legend">
           {!isPublicView && <p><span className="no-account">*</span> = No unified account yet</p>}
-          <p>Players need a unified account to participate in challenges</p>
+          <p><strong>🏆 Welcome to the Ladder of Legends!</strong></p>
+          <p>This is a competitive pool ladder system where players challenge each other to climb the ranks. Players are organized by skill level (FargoRate) into three brackets: 499 & Under, 500-549, and 550+.</p>
+          <p><strong>How to Join:</strong> Visit <a href="https://frontrangepool.com" style={{color: '#ffc107', textDecoration: 'underline'}}>FrontRangePool.com</a> to create your account and start competing!</p>
           <p><strong>Challenge Rules:</strong> Standard challenges up to 4 positions above, SmackDown up to 5 positions below</p>
           <p><strong>Anyone can view the ladder - no account required!</strong></p>
           {!isPublicView && onClaimLadderPosition && (
@@ -1831,7 +1833,22 @@ const LadderApp = ({
 
       {/* Footer */}
       <div className="ladder-footer">
-        <p>Challenge your way to the top! 🏆</p>
+        {isPublicView ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: '#fff' }}>
+            <h3 style={{ color: '#ffc107', marginBottom: '15px' }}>🏆 Ladder of Legends 🏆</h3>
+            <p style={{ marginBottom: '10px', fontSize: '16px' }}>
+              <strong>Ready to join the competition?</strong>
+            </p>
+            <p style={{ marginBottom: '15px', fontSize: '14px', color: '#ccc' }}>
+              Challenge players, climb the ranks, and compete for prizes!
+            </p>
+            <p style={{ fontSize: '14px', color: '#ffc107' }}>
+              <strong>Visit <a href="https://frontrangepool.com" style={{ color: '#ffc107', textDecoration: 'underline' }}>FrontRangePool.com</a> to get started!</strong>
+            </p>
+          </div>
+        ) : (
+          <p>Challenge your way to the top! 🏆</p>
+        )}
       </div>
 
              {/* Claim Account Modal */}
