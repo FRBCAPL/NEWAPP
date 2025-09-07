@@ -401,16 +401,25 @@ export default function LadderPlayerManagement() {
     const loadMatchHistory = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches`);
+      console.log('🔍 Loading match history for ladder:', selectedLadder);
+      const url = `${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches`;
+      console.log('🔍 API URL:', url);
+      
+      const response = await fetch(url);
+      console.log('🔍 Response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('🔍 Match history data:', data);
         setMatchHistory(data.matches || []);
       } else {
-        alert('Failed to load match history');
+        const errorText = await response.text();
+        console.error('🔍 API Error:', response.status, errorText);
+        alert(`Failed to load match history: ${response.status} - ${errorText}`);
       }
     } catch (error) {
       console.error('Error loading match history:', error);
-      alert('Error loading match history');
+      alert(`Error loading match history: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -1313,7 +1322,9 @@ export default function LadderPlayerManagement() {
       {showMatchHistory && (
         <div className={styles.matchHistorySection}>
           <h3>Match History</h3>
-          {matchHistory.length === 0 ? (
+          {loading ? (
+            <div className={styles.noData}>Loading match history...</div>
+          ) : matchHistory.length === 0 ? (
             <div className={styles.noData}>No matches recorded yet.</div>
           ) : (
             <div className={styles.matchHistoryTable}>

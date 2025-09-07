@@ -69,6 +69,9 @@ const LadderApp = ({
   const [selectedPlayerForStats, setSelectedPlayerForStats] = useState(null);
   const [showMobilePlayerStats, setShowMobilePlayerStats] = useState(false);
   const [lastMatchData, setLastMatchData] = useState(null);
+  const [playerMatchHistory, setPlayerMatchHistory] = useState([]);
+  const [showFullMatchHistory, setShowFullMatchHistory] = useState(false);
+  const [updatedPlayerData, setUpdatedPlayerData] = useState(null);
   
   // My Matches state
   const [playerMatches, setPlayerMatches] = useState([]);
@@ -645,25 +648,131 @@ const LadderApp = ({
     setShowMobilePlayerStats(true);
     console.log('📊 Modal should now be visible');
     fetchLastMatchData(player);
+    fetchPlayerMatchHistory(player);
+    fetchUpdatedPlayerData(player);
   };
 
   const fetchLastMatchData = async (player) => {
+    console.log('🔍 Fetching last match data for player:', player);
+    console.log('🔍 Player unifiedAccount:', player.unifiedAccount);
+    
     if (!player.unifiedAccount?.email) {
-      setLastMatchData(null);
-      return;
+      console.log('🔍 No email found in unifiedAccount, trying direct email...');
+      if (!player.email) {
+        console.log('🔍 No email found anywhere, cannot fetch last match data');
+        setLastMatchData(null);
+        return;
+      }
     }
     
+    const emailToUse = player.unifiedAccount?.email || player.email;
+    console.log('🔍 Using email for last match:', emailToUse);
+    
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/matches/last-match/${encodeURIComponent(player.unifiedAccount.email)}`);
+      const url = `${BACKEND_URL}/api/ladder/matches/last-match/${encodeURIComponent(emailToUse)}`;
+      console.log('🔍 Last match API URL:', url);
+      
+      const response = await fetch(url);
+      console.log('🔍 Last match response status:', response.status);
+      
       if (response.ok) {
         const matchData = await response.json();
+        console.log('🔍 Last match data:', matchData);
         setLastMatchData(matchData);
       } else {
+        const errorText = await response.text();
+        console.error('🔍 Last match API Error:', response.status, errorText);
         setLastMatchData(null);
       }
     } catch (error) {
       console.error('Error fetching last match data:', error);
       setLastMatchData(null);
+    }
+  };
+
+  const fetchPlayerMatchHistory = async (player) => {
+    console.log('🔍 Fetching match history for player:', player);
+    console.log('🔍 Player unifiedAccount:', player.unifiedAccount);
+    
+    if (!player.unifiedAccount?.email) {
+      console.log('🔍 No email found in unifiedAccount, trying direct email...');
+      if (!player.email) {
+        console.log('🔍 No email found anywhere, cannot fetch match history');
+        setPlayerMatchHistory([]);
+        return;
+      }
+    }
+    
+    const emailToUse = player.unifiedAccount?.email || player.email;
+    console.log('🔍 Using email:', emailToUse);
+    
+    try {
+      const url = `${BACKEND_URL}/api/ladder/player/${encodeURIComponent(emailToUse)}/matches?limit=10`;
+      console.log('🔍 API URL:', url);
+      
+      const response = await fetch(url);
+      console.log('🔍 Response status:', response.status);
+      
+      if (response.ok) {
+        const matches = await response.json();
+        console.log('🔍 Match history data:', matches);
+        setPlayerMatchHistory(matches);
+      } else {
+        const errorText = await response.text();
+        console.error('🔍 API Error:', response.status, errorText);
+        setPlayerMatchHistory([]);
+      }
+    } catch (error) {
+      console.error('Error fetching player match history:', error);
+      setPlayerMatchHistory([]);
+    }
+  };
+
+  const fetchUpdatedPlayerData = async (player) => {
+    console.log('🔍 Fetching updated player data for:', player);
+    
+    // Try to get email from player data
+    const emailToUse = player.unifiedAccount?.email || player.email;
+    console.log('🔍 Using email for player data:', emailToUse);
+    
+    if (!emailToUse) {
+      console.log('🔍 No email found, using original player data');
+      setUpdatedPlayerData(player);
+      return;
+    }
+    
+    try {
+      // Fetch player data directly by email
+      const url = `${BACKEND_URL}/api/ladder/player/${encodeURIComponent(emailToUse)}`;
+      console.log('🔍 Fetching player data from:', url);
+      
+      const playerResponse = await fetch(url);
+      console.log('🔍 Player data response status:', playerResponse.status);
+      
+      if (playerResponse.ok) {
+        const playerData = await playerResponse.json();
+        console.log('🔍 Player data received:', playerData);
+        console.log('🔍 Updated wins:', playerData.wins);
+        console.log('🔍 Updated losses:', playerData.losses);
+        
+        // Merge with original player data to preserve other properties
+        const updatedPlayer = {
+          ...player,
+          ...playerData,
+          wins: playerData.wins,
+          losses: playerData.losses,
+          position: playerData.position
+        };
+        
+        setUpdatedPlayerData(updatedPlayer);
+      } else {
+        const errorText = await playerResponse.text();
+        console.log('🔍 Failed to fetch player data:', playerResponse.status, errorText);
+        setUpdatedPlayerData(player);
+      }
+    } catch (error) {
+      console.error('Error fetching updated player data:', error);
+      setUpdatedPlayerData(player);
     }
   };
 
@@ -1975,36 +2084,68 @@ const LadderApp = ({
             >
               <div className="player-stats-header">
                 <h3>{selectedPlayerForStats.firstName} {selectedPlayerForStats.lastName}</h3>
-                <button 
-                  className="stats-close-btn"
-                  onClick={() => setShowMobilePlayerStats(false)}
-                >
-                  ×
-                </button>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <button
+                    onClick={() => {
+                      console.log('🔄 Refreshing player data...');
+                      fetchUpdatedPlayerData(selectedPlayerForStats);
+                    }}
+                    style={{
+                      background: 'rgba(255, 68, 68, 0.2)',
+                      border: '1px solid #ff4444',
+                      color: '#ff4444',
+                      padding: '5px 10px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
+                    title="Refresh player stats"
+                  >
+                    🔄
+                  </button>
+                  <button 
+                    className="stats-close-btn"
+                    onClick={() => setShowMobilePlayerStats(false)}
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
               
               <div className="player-stats-body">
                 <div className="stats-grid">
                   <div className="stat-item">
                     <div className="stat-label">Rank</div>
-                    <div className="stat-value">#{selectedPlayerForStats.position}</div>
+                    <div className="stat-value">#{(updatedPlayerData || selectedPlayerForStats).position}</div>
                   </div>
                   
                   <div className="stat-item">
                     <div className="stat-label">FargoRate</div>
                     <div className="stat-value">
-                      {selectedPlayerForStats.fargoRate === 0 ? "No FargoRate" : selectedPlayerForStats.fargoRate}
+                      {(updatedPlayerData || selectedPlayerForStats).fargoRate === 0 ? "No FargoRate" : (updatedPlayerData || selectedPlayerForStats).fargoRate}
                     </div>
                   </div>
                   
                   <div className="stat-item">
                     <div className="stat-label">Wins</div>
-                    <div className="stat-value wins">{selectedPlayerForStats.wins || 0}</div>
+                    <div className="stat-value wins">
+                      {(() => {
+                        const playerData = updatedPlayerData || selectedPlayerForStats;
+                        console.log('🔍 Displaying wins for player:', playerData.firstName, playerData.lastName, 'wins:', playerData.wins);
+                        return playerData.wins || 0;
+                      })()}
+                    </div>
                   </div>
                   
                   <div className="stat-item">
                     <div className="stat-label">Losses</div>
-                    <div className="stat-value losses">{selectedPlayerForStats.losses || 0}</div>
+                    <div className="stat-value losses">
+                      {(() => {
+                        const playerData = updatedPlayerData || selectedPlayerForStats;
+                        console.log('🔍 Displaying losses for player:', playerData.firstName, playerData.lastName, 'losses:', playerData.losses);
+                        return playerData.losses || 0;
+                      })()}
+                    </div>
                   </div>
                   
                   <div className="stat-item">
@@ -2061,6 +2202,64 @@ const LadderApp = ({
                        )}
                      </div>
                    </div>
+                   
+                   {/* Match History Section */}
+                   <div className="stat-item">
+                     <div className="stat-label">Match History</div>
+                     <div className="stat-value">
+                       {playerMatchHistory.length > 1 ? (
+                         <div className="match-history-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                           {/* Show previous 2 matches (skip the first one since it's shown in Last Match) */}
+                           {playerMatchHistory.slice(1, 3).map((match, index) => (
+                             <div key={index} className="match-history-item" style={{ 
+                               padding: '8px', 
+                               borderBottom: '1px solid rgba(255,255,255,0.1)', 
+                               fontSize: '12px' 
+                             }}>
+                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                 <span className={`match-result ${match.result === 'W' ? 'win' : 'loss'}`}>
+                                   {match.result === 'W' ? 'W' : 'L'}
+                                 </span>
+                                 <span style={{ color: '#ccc' }}>
+                                   vs {match.opponentName}
+                                 </span>
+                                 <span style={{ color: '#888', fontSize: '10px' }}>
+                                   {new Date(match.matchDate).toLocaleDateString()}
+                                 </span>
+                               </div>
+                               <div style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>
+                                 {match.score} • {match.matchType}
+                               </div>
+                             </div>
+                           ))}
+                           
+                           {/* Show More button if there are more than 3 total matches */}
+                           {playerMatchHistory.length > 3 && (
+                             <div style={{ textAlign: 'center', padding: '8px' }}>
+                               <button 
+                                 onClick={() => setShowFullMatchHistory(true)}
+                                 style={{
+                                   background: 'rgba(255, 68, 68, 0.2)',
+                                   border: '1px solid #ff4444',
+                                   color: '#ff4444',
+                                   padding: '4px 8px',
+                                   borderRadius: '4px',
+                                   fontSize: '10px',
+                                   cursor: 'pointer'
+                                 }}
+                               >
+                                 Show More ({playerMatchHistory.length - 3} more)
+                               </button>
+                             </div>
+                           )}
+                         </div>
+                       ) : playerMatchHistory.length === 1 ? (
+                         <span className="no-match">No previous matches</span>
+                       ) : (
+                         <span className="no-match">No match history</span>
+                       )}
+                     </div>
+                   </div>
                 </div>
               </div>
             </div>
@@ -2068,6 +2267,120 @@ const LadderApp = ({
           document.body
         )}
 
+        {/* Full Match History Modal */}
+        {showFullMatchHistory && selectedPlayerForStats && createPortal(
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1001,
+            padding: '20px'
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',
+              border: '2px solid #ff4444',
+              borderRadius: '12px',
+              width: '90%',
+              maxWidth: '800px',
+              maxHeight: '80vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+              color: '#ffffff'
+            }}>
+              {/* Header */}
+              <div style={{
+                padding: '20px',
+                borderBottom: '1px solid #ff4444',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <h2 style={{ color: '#ff4444', margin: 0 }}>
+                  🏆 {selectedPlayerForStats.firstName} {selectedPlayerForStats.lastName} - Full Match History
+                </h2>
+                <button
+                  onClick={() => setShowFullMatchHistory(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#ff4444',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    padding: '5px'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Content */}
+              <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '20px'
+              }}>
+                {playerMatchHistory.length > 0 ? (
+                  <div style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
+                  }}>
+                    {playerMatchHistory.map((match, index) => (
+                      <div key={index} style={{
+                        padding: '15px',
+                        borderBottom: index < playerMatchHistory.length - 1 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+                            <span style={{
+                              background: match.result === 'W' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                              color: match.result === 'W' ? '#22c55e' : '#ef4444',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: 'bold'
+                            }}>
+                              {match.result === 'W' ? 'WIN' : 'LOSS'}
+                            </span>
+                            <span style={{ color: '#fff', fontWeight: 'bold' }}>
+                              vs {match.opponentName}
+                            </span>
+                          </div>
+                          <div style={{ color: '#ccc', fontSize: '14px' }}>
+                            {match.score} • {match.matchType} • {match.playerRole}
+                          </div>
+                        </div>
+                        <div style={{ color: '#888', fontSize: '12px' }}>
+                          {new Date(match.matchDate).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{
+                    textAlign: 'center',
+                    color: '#ccc',
+                    padding: '40px',
+                    fontSize: '16px'
+                  }}>
+                    No match history available
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
 
         
      </div>
