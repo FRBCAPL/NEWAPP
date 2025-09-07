@@ -2237,7 +2237,12 @@ const LadderApp = ({
                            {playerMatchHistory.length > 3 && (
                              <div style={{ textAlign: 'center', padding: '8px' }}>
                                <button 
-                                 onClick={() => setShowFullMatchHistory(true)}
+                                 onClick={() => {
+                                   console.log('🔍 Show More button clicked! Setting showFullMatchHistory to true');
+                                   console.log('🔍 Current showFullMatchHistory state:', showFullMatchHistory);
+                                   setShowFullMatchHistory(true);
+                                   console.log('🔍 After setting showFullMatchHistory to true');
+                                 }}
                                  style={{
                                    background: 'rgba(255, 68, 68, 0.2)',
                                    border: '1px solid #ff4444',
@@ -2268,9 +2273,15 @@ const LadderApp = ({
         )}
 
         {/* Full Match History Modal */}
-        {showFullMatchHistory && selectedPlayerForStats && createPortal(
+        {showFullMatchHistory && selectedPlayerForStats && (() => {
+          console.log('🔍 Rendering Full Match History Modal');
+          console.log('🔍 showFullMatchHistory:', showFullMatchHistory);
+          console.log('🔍 selectedPlayerForStats:', selectedPlayerForStats);
+          console.log('🔍 isPublicView:', isPublicView);
+          
+          const modalContent = (
           <div style={{
-            position: 'fixed',
+            position: isPublicView ? 'absolute' : 'fixed',
             top: 0,
             left: 0,
             right: 0,
@@ -2279,7 +2290,7 @@ const LadderApp = ({
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            zIndex: 1001,
+            zIndex: 100000,
             padding: '20px'
           }}>
             <div style={{
@@ -2378,9 +2389,16 @@ const LadderApp = ({
                 )}
               </div>
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+          );
+          
+          // For public view (embedded), render inline; for regular view, use portal
+          if (isPublicView) {
+            return modalContent;
+          } else {
+            return createPortal(modalContent, document.body);
+          }
+        })()}
 
         
      </div>
