@@ -446,22 +446,10 @@ function AppContent() {
                   background: '#000',
                   padding: 0,
                   margin: 0,
-                  zIndex: 9999
+                  zIndex: 9999,
+                  overflow: 'hidden'
                 }}>
-                  <LadderApp
-                    playerName="Guest"
-                    playerLastName="User"
-                    senderEmail="guest@frontrangepool.com"
-                    userPin="GUEST"
-                    onLogout={() => {}}
-                    isAdmin={false}
-                    showClaimForm={false}
-                    initialView="ladders"
-                    isPublicView={true}
-                    onClaimLadderPosition={() => {}}
-                    claimedPositions={[]}
-                    isPositionClaimed={() => false}
-                  />
+                  <PublicLadderEmbed />
                 </div>
               }
             />
