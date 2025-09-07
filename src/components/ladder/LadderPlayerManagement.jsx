@@ -1343,19 +1343,19 @@ export default function LadderPlayerManagement() {
                 <tbody>
                   {matchHistory.map((match, index) => (
                     <tr key={match.id || index}>
-                      <td>{new Date(match.matchDate).toLocaleDateString()}</td>
+                      <td>{new Date(match.completedDate || match.scheduledDate).toLocaleDateString()}</td>
                       <td>
-                        <strong>{match.winner.name}</strong> (#{match.winner.position})
+                        <strong>{match.winner ? `${match.winner.firstName} ${match.winner.lastName}` : 'N/A'}</strong> {match.winner ? `(#${match.winner.position})` : ''}
                       </td>
                       <td>
-                        {match.loser.name} (#{match.loser.position})
+                        {match.loser ? `${match.loser.firstName} ${match.loser.lastName}` : 'N/A'} {match.loser ? `(#${match.loser.position})` : ''}
                       </td>
                       <td>{match.score}</td>
                       <td>{match.matchFormat || 'N/A'}</td>
-                      <td>{match.location || 'N/A'}</td>
+                      <td>{match.venue || 'N/A'}</td>
                       <td>
-                        <span className={`${styles.status} ${styles[match.verificationStatus]}`}>
-                          {match.verificationStatus}
+                        <span className={`${styles.status} ${styles[match.status]}`}>
+                          {match.status}
                         </span>
                       </td>
                     </tr>

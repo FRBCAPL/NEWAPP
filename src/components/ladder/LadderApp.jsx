@@ -2071,9 +2071,9 @@ const LadderApp = ({
               style={{
                 background: 'rgba(35, 35, 42, 0.16)',
                 borderRadius: '18px',
-                maxWidth: '90vw',
-                width: window.innerWidth <= 768 ? '280px' : '400px',
-                maxHeight: '80vh',
+                maxWidth: '95vw',
+                width: window.innerWidth <= 768 ? '320px' : '600px',
+                maxHeight: '85vh',
                 overflowY: 'auto',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -2113,62 +2113,70 @@ const LadderApp = ({
               </div>
               
               <div className="player-stats-body">
-                <div className="stats-grid">
-                  <div className="stat-item">
-                    <div className="stat-label">Rank</div>
-                    <div className="stat-value">#{(updatedPlayerData || selectedPlayerForStats).position}</div>
-                  </div>
-                  
-                  <div className="stat-item">
-                    <div className="stat-label">FargoRate</div>
-                    <div className="stat-value">
-                      {(updatedPlayerData || selectedPlayerForStats).fargoRate === 0 ? "No FargoRate" : (updatedPlayerData || selectedPlayerForStats).fargoRate}
-                    </div>
-                  </div>
-                  
-                  <div className="stat-item">
-                    <div className="stat-label">Wins</div>
-                    <div className="stat-value wins">
-                      {(() => {
-                        const playerData = updatedPlayerData || selectedPlayerForStats;
-                        console.log('🔍 Displaying wins for player:', playerData.firstName, playerData.lastName, 'wins:', playerData.wins);
-                        return playerData.wins || 0;
-                      })()}
-                    </div>
-                  </div>
-                  
-                  <div className="stat-item">
-                    <div className="stat-label">Losses</div>
-                    <div className="stat-value losses">
-                      {(() => {
-                        const playerData = updatedPlayerData || selectedPlayerForStats;
-                        console.log('🔍 Displaying losses for player:', playerData.firstName, playerData.lastName, 'losses:', playerData.losses);
-                        return playerData.losses || 0;
-                      })()}
-                    </div>
-                  </div>
-                  
-                  <div className="stat-item">
-                    <div className="stat-label">Status</div>
-                    <div className="stat-value status">
-                      {!selectedPlayerForStats.isActive ? (
-                        <span className="inactive">Inactive</span>
-                      ) : selectedPlayerForStats.immunityUntil && new Date(selectedPlayerForStats.immunityUntil) > new Date() ? (
-                        <span className="immune">Immune</span>
-                      ) : (
-                        <span className="active">Active</span>
+                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                  {/* Left Column - Basic Stats */}
+                  <div style={{ flex: '1', minWidth: '200px' }}>
+                    <div className="stats-grid">
+                      <div className="stat-item">
+                        <div className="stat-label">Rank</div>
+                        <div className="stat-value">#{(updatedPlayerData || selectedPlayerForStats).position}</div>
+                      </div>
+                      
+                      <div className="stat-item">
+                        <div className="stat-label">FargoRate</div>
+                        <div className="stat-value">
+                          {(updatedPlayerData || selectedPlayerForStats).fargoRate === 0 ? "No FargoRate" : (updatedPlayerData || selectedPlayerForStats).fargoRate}
+                        </div>
+                      </div>
+                      
+                      <div className="stat-item">
+                        <div className="stat-label">Wins</div>
+                        <div className="stat-value wins">
+                          {(() => {
+                            const playerData = updatedPlayerData || selectedPlayerForStats;
+                            console.log('🔍 Displaying wins for player:', playerData.firstName, playerData.lastName, 'wins:', playerData.wins);
+                            return playerData.wins || 0;
+                          })()}
+                        </div>
+                      </div>
+                      
+                      <div className="stat-item">
+                        <div className="stat-label">Losses</div>
+                        <div className="stat-value losses">
+                          {(() => {
+                            const playerData = updatedPlayerData || selectedPlayerForStats;
+                            console.log('🔍 Displaying losses for player:', playerData.firstName, playerData.lastName, 'losses:', playerData.losses);
+                            return playerData.losses || 0;
+                          })()}
+                        </div>
+                      </div>
+                      
+                      <div className="stat-item">
+                        <div className="stat-label">Status</div>
+                        <div className="stat-value status">
+                          {!selectedPlayerForStats.isActive ? (
+                            <span className="inactive">Inactive</span>
+                          ) : selectedPlayerForStats.immunityUntil && new Date(selectedPlayerForStats.immunityUntil) > new Date() ? (
+                            <span className="immune">Immune</span>
+                          ) : (
+                            <span className="active">Active</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {selectedPlayerForStats.immunityUntil && new Date(selectedPlayerForStats.immunityUntil) > new Date() && (
+                        <div className="stat-item">
+                          <div className="stat-label">Immunity Until</div>
+                          <div className="stat-value">
+                            {new Date(selectedPlayerForStats.immunityUntil).toLocaleDateString()}
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>
                   
-                  {selectedPlayerForStats.immunityUntil && new Date(selectedPlayerForStats.immunityUntil) > new Date() && (
-                    <div className="stat-item">
-                      <div className="stat-label">Immunity Until</div>
-                      <div className="stat-value">
-                        {new Date(selectedPlayerForStats.immunityUntil).toLocaleDateString()}
-                      </div>
-                    </div>
-                  )}
+                  {/* Right Column - Match History */}
+                  <div style={{ flex: '1', minWidth: '200px' }}>
                   
                                      <div className="stat-item">
                      <div className="stat-label">Last Match</div>
@@ -2208,13 +2216,14 @@ const LadderApp = ({
                      <div className="stat-label">Match History</div>
                      <div className="stat-value">
                        {playerMatchHistory.length > 1 ? (
-                         <div className="match-history-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                         <div className="match-history-list" style={{ maxHeight: '150px', overflowY: 'auto' }}>
                            {/* Show previous 2 matches (skip the first one since it's shown in Last Match) */}
                            {playerMatchHistory.slice(1, 3).map((match, index) => (
                              <div key={index} className="match-history-item" style={{ 
-                               padding: '8px', 
+                               padding: '6px', 
                                borderBottom: '1px solid rgba(255,255,255,0.1)', 
-                               fontSize: '12px' 
+                               fontSize: '11px',
+                               marginBottom: '2px'
                              }}>
                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                  <span className={`match-result ${match.result === 'W' ? 'win' : 'loss'}`}>
@@ -2265,6 +2274,7 @@ const LadderApp = ({
                        )}
                      </div>
                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2295,10 +2305,11 @@ const LadderApp = ({
           }}>
             <div style={{
               background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',
-              border: '2px solid #ff4444',
+              border: '2px solid #8B5CF6',
               borderRadius: '12px',
-              width: '90%',
-              maxWidth: '800px',
+              width: 'auto',
+              maxWidth: '500px',
+              minWidth: '400px',
               maxHeight: '80vh',
               display: 'flex',
               flexDirection: 'column',
@@ -2343,39 +2354,65 @@ const LadderApp = ({
                     borderRadius: '8px',
                     overflow: 'hidden'
                   }}>
-                    {playerMatchHistory.map((match, index) => (
+                    {playerMatchHistory.map((match, index) => {
+                      console.log('🔍 Match data:', match);
+                      console.log('🔍 Match location:', match.location);
+                      console.log('🔍 Match positionBefore:', match.positionBefore);
+                      console.log('🔍 Match positionAfter:', match.positionAfter);
+                      console.log('🔍 All match keys:', Object.keys(match));
+                      console.log('🔍 Match venue (raw):', match.venue);
+                      console.log('🔍 Match player1OldPosition (raw):', match.player1OldPosition);
+                      console.log('🔍 Match player1NewPosition (raw):', match.player1NewPosition);
+                      return (
                       <div key={index} style={{
                         padding: '15px',
                         borderBottom: index < playerMatchHistory.length - 1 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
                         display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        gap: '15px'
                       }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
-                            <span style={{
-                              background: match.result === 'W' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                              color: match.result === 'W' ? '#22c55e' : '#ef4444',
-                              padding: '2px 8px',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              fontWeight: 'bold'
-                            }}>
-                              {match.result === 'W' ? 'WIN' : 'LOSS'}
-                            </span>
-                            <span style={{ color: '#fff', fontWeight: 'bold' }}>
-                              vs {match.opponentName}
-                            </span>
+                        {/* Left Column - WIN/LOSS Result */}
+                        <div style={{ minWidth: '60px' }}>
+                          <span style={{
+                            background: match.result === 'W' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                            color: match.result === 'W' ? '#22c55e' : '#ef4444',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            display: 'block',
+                            textAlign: 'center'
+                          }}>
+                            {match.result === 'W' ? 'WIN' : 'LOSS'}
+                          </span>
+                        </div>
+                        
+                        {/* Second Column - Opponent Name */}
+                        <div style={{ minWidth: '120px' }}>
+                          <div style={{ color: '#fff', fontWeight: 'bold' }}>
+                            vs {match.opponentName}
                           </div>
-                          <div style={{ color: '#ccc', fontSize: '14px' }}>
+                        </div>
+                        
+                        {/* Third Column - Match Details */}
+                        <div style={{ flex: 1, textAlign: 'center' }}>
+                          <div style={{ color: '#ccc', fontSize: '15px', marginBottom: '3px' }}>
                             {match.score} • {match.matchType} • {match.playerRole}
                           </div>
+                          <div style={{ color: '#999', fontSize: '13px' }}>
+                            {match.location || 'Location TBD'} • Pos {match.positionBefore || '?'} → {match.positionAfter || '?'}
+                          </div>
                         </div>
-                        <div style={{ color: '#888', fontSize: '12px' }}>
-                          {new Date(match.matchDate).toLocaleDateString()}
+                        
+                        {/* Right Column - Date */}
+                        <div style={{ minWidth: '80px', textAlign: 'right' }}>
+                          <div style={{ color: '#888', fontSize: '12px' }}>
+                            {new Date(match.matchDate).toLocaleDateString()}
+                          </div>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div style={{
