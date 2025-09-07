@@ -391,10 +391,31 @@
 
 /* Logged-in view gets its own scrollable area */
 .ladder-table-modal:has(.logged-in-view) {
-  height: 85vh;
+  height: 125vh;
   overflow-y: auto;
-  /* Ensure sticky positioning works within this container */
-  contain: layout style;
+  /* Custom purple scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #8B5CF6 rgba(255, 255, 255, 0.1);
+}
+
+/* Webkit scrollbar styling for purple scrollbar */
+.ladder-table-modal:has(.logged-in-view)::-webkit-scrollbar {
+  width: 12px;
+}
+
+.ladder-table-modal:has(.logged-in-view)::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+.ladder-table-modal:has(.logged-in-view)::-webkit-scrollbar-thumb {
+  background: #8B5CF6;
+  border-radius: 6px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.ladder-table-modal:has(.logged-in-view)::-webkit-scrollbar-thumb:hover {
+  background: #7C3AED;
 }
 
 /* Public view - make the entire modal sticky */
@@ -667,8 +688,12 @@ button.compact-claim-btn {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
   padding: 15px 20px;
+  margin-top: 40px;
   margin-bottom: 20px;
-  border: 1px solid var(--glass-border);
+  clear: both;
+  display: block;
+  position: relative;
+  z-index: 1;
 }
 
 .ladder-legend p {
@@ -679,20 +704,22 @@ button.compact-claim-btn {
 
 /* Back Button */
 .back-btn {
-  padding: 12px 25px;
-  background: linear-gradient(45deg, var(--accent-red), var(--accent-red-dark));
-  border: none;
-  border-radius: 25px;
-  color: var(--white);
-  font-weight: bold;
+  padding: 6px 12px;
+  background: transparent;
+  border: 2px solid #8B5CF6;
+  border-radius: 6px;
+  color: #8B5CF6;
+  font-weight: 600;
+  font-size: 0.8rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(107, 70, 193, 0.3);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
 .back-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(107, 70, 193, 0.4);
+  background: rgba(139, 92, 246, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
 }
 
 /* Challenges View */

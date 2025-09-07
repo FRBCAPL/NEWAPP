@@ -979,7 +979,55 @@ const LadderApp = ({
 
     return (
       <div className="ladder-view">
-        <div className="ladder-header-section">
+        <div className="ladder-header-section" style={{ position: 'relative' }}>
+          {/* Back to Ladder Home Button - Top Left */}
+          {!isPublicView && currentView !== 'main' && (
+            <button 
+              onClick={() => setCurrentView('main')}
+              style={{
+                position: 'absolute',
+                top: '5px',
+                left: '5px',
+                background: 'transparent',
+                color: '#8B5CF6',
+                border: '2px solid #8B5CF6',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                fontSize: '0.8rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(139, 92, 246, 0.3)',
+                zIndex: 10
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(139, 92, 246, 0.1)';
+                e.target.style.transform = 'translateY(-1px)';
+                e.target.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.3)';
+              }}
+            >
+              🏠 Back to Ladder Home
+            </button>
+          )}
+          
+          <h1 style={{ 
+            color: '#000000',
+            WebkitTextStroke: '0.5px #8B5CF6',
+            textShadow: '0 0 20px rgba(139, 92, 246, 0.8), 0 0 40px rgba(139, 92, 246, 0.6), 0 0 60px rgba(139, 92, 246, 0.4), 0 0 80px rgba(139, 92, 246, 0.2)',
+            fontWeight: 'bold',
+            fontSize: '3.5rem',
+            letterSpacing: '3px',
+            fontFamily: '"Bebas Neue", "Orbitron", "Exo 2", "Arial Black", sans-serif',
+            textTransform: 'uppercase',
+            marginBottom: '0rem'
+          }}>Ladder of Legends</h1>
+          <p style={{ marginBottom: '1.5rem', marginTop: '0rem', fontSize: '0.9rem' }}>Tournament Series</p>
+          
           <h2 style={{ 
             color: '#8B5CF6',
             WebkitTextStroke: '1.5px #000000',
@@ -990,8 +1038,8 @@ const LadderApp = ({
             fontSize: '2rem',
             marginBottom: '0.5rem',
             fontFamily: '"Orbitron", "Exo 2", "Rajdhani", "Arial Black", sans-serif'
-          }}>{getLadderDisplayName(selectedLadder)} Ladder</h2>
-          <p>Current rankings and positions</p>
+          }}>{getLadderDisplayName(selectedLadder)}</h2>
+          <p style={{ fontSize: '0.9rem' }}>Current rankings and positions</p>
           
           {/* Ladder Selector */}
           <div className="ladder-selector" style={{
@@ -1207,56 +1255,6 @@ const LadderApp = ({
          </div>
         </div> {/* End ladder-table-modal */}
         
-        <div className="ladder-legend">
-          {!isPublicView && <p><span className="no-account">*</span> = No unified account yet</p>}
-          <p><strong>🏆 Welcome to the Ladder of Legends!</strong></p>
-          <p>This is a competitive pool ladder system where players challenge each other to climb the ranks. Players are organized by skill level (FargoRate) into three brackets: 499 & Under, 500-549, and 550+.</p>
-          <p><strong>How to Join:</strong> Visit <a href="https://frontrangepool.com" style={{color: '#ffc107', textDecoration: 'underline'}}>FrontRangePool.com</a> to create your account and start competing!</p>
-          <p><strong>Challenge Rules:</strong> Standard challenges up to 4 positions above, SmackDown up to 5 positions below</p>
-          <p><strong>Anyone can view the ladder - no account required!</strong></p>
-          {!isPublicView && onClaimLadderPosition && (
-            <p style={{ 
-              color: '#4CAF50', 
-              fontWeight: 'bold',
-              marginTop: '8px',
-              padding: '8px',
-              background: 'rgba(76, 175, 80, 0.1)',
-              borderRadius: '4px'
-            }}>
-              🎯 <strong>Claim Available Positions:</strong> Click the green "Claim" button next to any position marked with * to claim it
-            </p>
-          )}
-          
-          {!isPublicView && !userLadderData?.canChallenge && (
-            <div style={{
-              marginTop: '16px',
-              padding: '12px',
-              background: 'rgba(255, 193, 7, 0.1)',
-              border: '1px solid rgba(255, 193, 7, 0.3)',
-              borderRadius: '8px',
-              color: '#ffc107'
-            }}>
-              <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🔒 Challenge Features Locked</p>
-              <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
-                To challenge other players, you need a unified account.
-              </p>
-              <button 
-                onClick={() => setShowClaimFormState(true)}
-                style={{
-                  background: '#ff4444',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '6px 12px',
-                  cursor: 'pointer',
-                  fontSize: '0.8rem'
-                }}
-              >
-                Get Unified Account
-              </button>
-            </div>
-          )}
-        </div>
         
         {!isPublicView && (
           <button onClick={() => setCurrentView('main')} className="back-btn">
@@ -1905,7 +1903,7 @@ const LadderApp = ({
         borderRadius: '8px',
         textAlign: 'center',
         maxWidth: '600px',
-        margin: '10px auto 30px auto',
+        margin: '5px auto 30px auto',
         boxShadow: '0 3px 12px rgba(255, 193, 7, 0.3)',
         position: 'relative',
         zIndex: 999,
@@ -1929,53 +1927,6 @@ const LadderApp = ({
       </div>
 
       {/* Header */}
-       <div className="ladder-header" style={{ flexDirection: 'column', textAlign: 'center' }}>
-         <div className="ladder-title">
-           <h1 style={{ 
-             color: '#000000',
-             WebkitTextStroke: '0.5px #8B5CF6',
-             textShadow: '0 0 10px rgba(139, 92, 246, 0.5)',
-             fontWeight: 'bold',
-             fontSize: '3rem',
-             letterSpacing: '3px',
-             fontFamily: '"Bebas Neue", "Orbitron", "Exo 2", "Arial Black", sans-serif',
-             textTransform: 'uppercase'
-           }}>Ladder of Legends</h1>
-           <p>Tournament Series - Challenge-based ladder system with rankings</p>
-         </div>
-         
-         {/* Back to Ladder Home Button */}
-         {!isPublicView && currentView !== 'main' && (
-           <button 
-             onClick={() => setCurrentView('main')}
-             style={{
-               background: 'linear-gradient(135deg, #e53e3e, #c53030)',
-               color: 'white',
-               border: 'none',
-               borderRadius: '8px',
-               padding: '8px 16px',
-               fontSize: '0.9rem',
-               fontWeight: '600',
-               cursor: 'pointer',
-               transition: 'all 0.2s ease',
-               boxShadow: '0 2px 8px rgba(229, 62, 62, 0.3)',
-               marginTop: '1rem'
-             }}
-             onMouseEnter={(e) => {
-               e.target.style.background = 'linear-gradient(135deg, #c53030, #a52a2a)';
-               e.target.style.transform = 'translateY(-1px)';
-               e.target.style.boxShadow = '0 4px 12px rgba(229, 62, 62, 0.4)';
-             }}
-             onMouseLeave={(e) => {
-               e.target.style.background = 'linear-gradient(135deg, #e53e3e, #c53030)';
-               e.target.style.transform = 'translateY(0)';
-               e.target.style.boxShadow = '0 2px 8px rgba(229, 62, 62, 0.3)';
-             }}
-           >
-             🏠 Back to Ladder Home
-           </button>
-         )}
-       </div>
 
       {/* Main Content */}
               {currentView === 'ladders' && renderLadderView()}
@@ -1983,6 +1934,58 @@ const LadderApp = ({
       {currentView === 'challenge' && renderChallengeView()}
       {currentView === 'matches' && renderMatchesView()}
       {currentView === 'main' && renderMainView()}
+
+      {/* Ladder Legend - Above Footer */}
+      <div className="ladder-legend">
+        {!isPublicView && <p><span className="no-account">*</span> = No unified account yet</p>}
+        <p><strong>🏆 Welcome to the Ladder of Legends!</strong></p>
+        <p>This is a competitive pool ladder system where players challenge each other to climb the ranks. Players are organized by skill level (FargoRate) into three brackets: 499 & Under, 500-549, and 550+.</p>
+        <p><strong>How to Join:</strong> Visit <a href="https://frontrangepool.com" style={{color: '#ffc107', textDecoration: 'underline'}}>FrontRangePool.com</a> to create your account and start competing!</p>
+        <p><strong>Challenge Rules:</strong> Standard challenges up to 4 positions above, SmackDown up to 5 positions below</p>
+        <p><strong>Anyone can view the ladder - no account required!</strong></p>
+        {!isPublicView && onClaimLadderPosition && (
+          <p style={{ 
+            color: '#4CAF50', 
+            fontWeight: 'bold',
+            marginTop: '8px',
+            padding: '8px',
+            background: 'rgba(76, 175, 80, 0.1)',
+            borderRadius: '4px'
+          }}>
+            🎯 <strong>Claim Available Positions:</strong> Click the green "Claim" button next to any position marked with * to claim it
+          </p>
+        )}
+        
+        {!isPublicView && !userLadderData?.canChallenge && (
+          <div style={{
+            marginTop: '16px',
+            padding: '12px',
+            background: 'rgba(255, 193, 7, 0.1)',
+            border: '1px solid rgba(255, 193, 7, 0.3)',
+            borderRadius: '8px',
+            color: '#ffc107'
+          }}>
+            <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🔒 Challenge Features Locked</p>
+            <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
+              To challenge other players, you need a unified account.
+            </p>
+            <button 
+              onClick={() => setShowClaimFormState(true)}
+              style={{
+                background: '#ff4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                cursor: 'pointer',
+                fontSize: '0.8rem'
+              }}
+            >
+              Get Unified Account
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Footer */}
       <div className="ladder-footer">

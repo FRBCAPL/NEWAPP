@@ -444,6 +444,32 @@ export default function LadderPlayerManagement() {
     }
   };
 
+  // Check if player is eligible for SmackBack (just won a SmackDown as defender)
+  const checkSmackBackEligibility = async (challengerId) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches?playerId=${challengerId}&limit=5`);
+      if (response.ok) {
+        const data = await response.json();
+        const recentMatches = data.matches || [];
+        
+        // Look for the most recent completed SmackDown match where this player was the defender (player2) and won
+        const recentSmackDownWin = recentMatches.find(match => 
+          match.status === 'completed' &&
+          match.matchType === 'smackdown' &&
+          match.player2?._id === challengerId &&
+          match.winner?._id === challengerId &&
+          new Date(match.completedDate) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Within last 7 days
+        );
+        
+        return !!recentSmackDownWin;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking SmackBack eligibility:', error);
+      return false;
+    }
+  };
+
   // Create a new match between two players
   const createMatch = async (e) => {
     e.preventDefault();
@@ -471,6 +497,27 @@ export default function LadderPlayerManagement() {
           // Challenge: Lower position (higher number) challenges higher position (lower number)
           if (challengerPos <= defenderPos) {
             alert('For Challenge Matches: Challenger must have a lower position number than defender');
+            return;
+          }
+          break;
+        case 'smackdown':
+          // SmackDown: Higher position (lower number) can challenge lower position (higher number) up to 5 positions below
+          if (challengerPos >= defenderPos || (defenderPos - challengerPos) > 5) {
+            alert('For SmackDown Matches: Challenger must have a higher position number than defender (up to 5 positions below)');
+            return;
+          }
+          break;
+        case 'smackback':
+          // SmackBack: Only a defender who just won a SmackDown can challenge the 1st place player
+          if (defenderPos !== 1) {
+            alert('For SmackBack Matches: Can only challenge the player in 1st place');
+            return;
+          }
+          
+          // Check if challenger is eligible for SmackBack (just won a SmackDown as defender)
+          const isEligible = await checkSmackBackEligibility(createMatchFormData.challengerId);
+          if (!isEligible) {
+            alert('For SmackBack Matches: Challenger must have just won a SmackDown match as a defender within the last 7 days');
             return;
           }
           break;
