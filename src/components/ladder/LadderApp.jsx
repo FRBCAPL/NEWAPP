@@ -1038,14 +1038,15 @@ const LadderApp = ({
           </div>
         </div>
         
-                 <div className="ladder-table" style={{ position: 'relative' }}>
+                 <div className={`ladder-table ${!isPublicView ? 'logged-in-view' : ''}`} style={{ position: 'relative' }}>
            <div className="table-header">
              <div className="header-cell">Rank</div>
-             <div className="header-cell">Player</div>
+             <div className="header-cell" style={{ paddingLeft: '40px' }}>Player</div>
              <div className="header-cell">FargoRate</div>
              <div className="header-cell">W</div>
              <div className="header-cell">L</div>
              <div className="header-cell">Status</div>
+             {!isPublicView && <div className="header-cell" style={{ whiteSpace: 'nowrap', wordBreak: 'keep-all', paddingLeft: '140px' }}>Last Match</div>}
            </div>
            
            {ladderData.map((player, index) => (
@@ -1176,6 +1177,27 @@ const LadderApp = ({
                    <span className="active">Active</span>
                  )}
                </div>
+               {!isPublicView && (
+                 <div className="table-cell last-match">
+                   {player.lastMatch ? (
+                     <div style={{ fontSize: '0.8rem', lineHeight: '1.2' }}>
+                       <div style={{ fontWeight: 'bold', color: player.lastMatch.result === 'W' ? '#4CAF50' : '#f44336' }}>
+                         {player.lastMatch.result === 'W' ? 'W' : 'L'} vs {player.lastMatch.opponent}
+                       </div>
+                       <div style={{ color: '#666', fontSize: '0.7rem' }}>
+                         {new Date(player.lastMatch.date).toLocaleDateString()}
+                       </div>
+                       {player.lastMatch.venue && (
+                         <div style={{ color: '#888', fontSize: '0.65rem' }}>
+                           {player.lastMatch.venue}
+                         </div>
+                       )}
+                     </div>
+                   ) : (
+                     <span style={{ color: '#999', fontSize: '0.8rem' }}>No matches</span>
+                   )}
+                 </div>
+               )}
              </div>
            ))}
 
