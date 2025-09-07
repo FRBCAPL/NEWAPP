@@ -433,7 +433,7 @@ function AppContent() {
 
                  <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "200px" }}>
           <Routes>
-            {/* Embed routes - must be first to bypass all authentication */}
+            {/* Public Ladder Embed - bypasses all authentication */}
             <Route
               path="/ladder-embed"
               element={
@@ -448,7 +448,20 @@ function AppContent() {
                   margin: 0,
                   zIndex: 9999
                 }}>
-                  <SimpleLadderEmbed />
+                  <LadderApp
+                    playerName="Guest"
+                    playerLastName="User"
+                    senderEmail="guest@frontrangepool.com"
+                    userPin="GUEST"
+                    onLogout={() => {}}
+                    isAdmin={false}
+                    showClaimForm={false}
+                    initialView="ladders"
+                    isPublicView={true}
+                    onClaimLadderPosition={() => {}}
+                    claimedPositions={[]}
+                    isPositionClaimed={() => false}
+                  />
                 </div>
               }
             />
