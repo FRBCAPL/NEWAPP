@@ -1038,7 +1038,9 @@ const LadderApp = ({
           </div>
         </div>
         
-                 <div className={`ladder-table ${!isPublicView ? 'logged-in-view' : ''}`} style={{ position: 'relative' }}>
+        {/* Ladder Table Modal Container */}
+        <div className="ladder-table-modal">
+          <div className={`ladder-table ${!isPublicView ? 'logged-in-view' : ''}`} style={{ position: 'relative' }}>
            <div className="table-header">
              <div className="header-cell">Rank</div>
              <div className="header-cell" style={{ paddingLeft: '40px' }}>Player</div>
@@ -1203,6 +1205,7 @@ const LadderApp = ({
 
            
          </div>
+        </div> {/* End ladder-table-modal */}
         
         <div className="ladder-legend">
           {!isPublicView && <p><span className="no-account">*</span> = No unified account yet</p>}
