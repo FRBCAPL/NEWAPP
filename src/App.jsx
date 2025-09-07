@@ -411,26 +411,29 @@ function AppContent() {
   };
 
   // --- Main Router ---
+  
+  // Special case: If we're on the embed route, render ONLY the embed component
+  if (location.pathname === '/ladder-embed') {
+    return (
+      <div style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        background: '#000',
+        padding: 0,
+        margin: 0,
+        zIndex: 9999,
+        overflow: 'auto'
+      }}>
+        <PublicLadderEmbed />
+      </div>
+    );
+  }
+
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
-        {/* Public Ladder Embed - completely bypasses all navigation and layout */}
-        {location.pathname === '/ladder-embed' && (
-          <div style={{ 
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            background: '#000',
-            padding: 0,
-            margin: 0,
-            zIndex: 9999,
-            overflow: 'auto'
-          }}>
-            <PublicLadderEmbed />
-          </div>
-        )}
-
         {/* Only show global FloatingLogos when NOT on ladder routes */}
         {(() => {
           const isLadderRoute = location.pathname.startsWith('/ladder');
