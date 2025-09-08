@@ -73,8 +73,9 @@ export default function DraggableModal({
         bottom: 0,
         background: "rgba(0,0,0,0.7)",
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "center",
+        paddingTop: window.innerWidth <= 768 ? "100px" : "120px",
         zIndex: 1000,
         backdropFilter: "blur(3px)",
         WebkitBackdropFilter: "blur(3px)"
@@ -88,19 +89,19 @@ export default function DraggableModal({
           background: "linear-gradient(120deg, #232323 80%, #2a0909 100%)",
           color: "#fff",
           border: `2px solid ${borderColor}`,
-          borderRadius: window.innerWidth <= 400 ? "0" : "1.2rem",
+          borderRadius: window.innerWidth <= 768 ? "0.5rem" : "1.2rem",
           boxShadow: `0 0 32px ${glowColor}, 0 0 40px rgba(0,0,0,0.85)`,
-          width: window.innerWidth <= 400 ? "100vw" : maxWidth,
-          maxWidth: window.innerWidth <= 400 ? "100vw" : maxWidth,
-          minWidth: 0,
+          width: window.innerWidth <= 768 ? "95vw" : maxWidth,
+          maxWidth: window.innerWidth <= 768 ? "95vw" : maxWidth,
+          minWidth: window.innerWidth <= 768 ? "320px" : "400px",
           margin: "0 auto",
           animation: "modalBounceIn 0.5s cubic-bezier(.21,1.02,.73,1.01)",
           padding: 0,
           position: "relative",
           fontFamily: "inherit",
           boxSizing: "border-box",
-          height: window.innerWidth <= 500 ? "75vh" : "auto",
-          maxHeight: window.innerWidth <= 500 ? "75vh" : "65vh",
+          height: window.innerWidth <= 768 ? "auto" : "auto",
+          maxHeight: window.innerWidth <= 768 ? "60vh" : "45vh",
           display: "flex",
           flexDirection: "column"
         }}
@@ -119,9 +120,9 @@ export default function DraggableModal({
             alignItems: "center",
             justifyContent: "space-between",
             background: borderColor,
-            padding: "0.05rem .05rem 0.05rem .05rem",
-            borderTopLeftRadius: "1.2rem",
-            borderTopRightRadius: "1.2rem",
+            padding: "0.03rem .03rem 0.03rem .03rem",
+            borderTopLeftRadius: window.innerWidth <= 768 ? "0.5rem" : "1.2rem",
+            borderTopRightRadius: window.innerWidth <= 768 ? "0.5rem" : "1.2rem",
             position: "relative",
             cursor: "grab",
             userSelect: "none",
@@ -137,8 +138,8 @@ export default function DraggableModal({
               width: "100%",
               height: "5px",
               background: `linear-gradient(90deg, #fff0 0%, ${borderColor} 60%, #fff0 100%)`,
-              borderTopLeftRadius: "1.2rem",
-              borderTopRightRadius: "1.2rem",
+              borderTopLeftRadius: window.innerWidth <= 768 ? "0.5rem" : "1.2rem",
+              borderTopRightRadius: window.innerWidth <= 768 ? "0.5rem" : "1.2rem",
               pointerEvents: "none"
             }}
           ></span>
@@ -146,7 +147,7 @@ export default function DraggableModal({
             className="modal-title"
             style={{
               margin: 0,
-              fontSize: window.innerWidth <= 500 ? "1rem" : "1.1rem",
+              fontSize: window.innerWidth <= 768 ? "1rem" : "1.1rem",
               fontWeight: "bold",
               textAlign: "center",
               letterSpacing: "0.02em",
@@ -195,10 +196,10 @@ export default function DraggableModal({
         <div 
           className="modal-content"
           style={{
-            ...(window.innerWidth <= 500
-              ? { flex: "1 1 auto", minHeight: 0, overflowY: "auto" }
-              : { overflowY: "auto" }),
-            padding: window.innerWidth <= 500 ? "1rem 1rem 0.8rem 1rem" : "1.4rem 1.5rem 1.2rem 1.5rem",
+            flex: "1 1 auto",
+            minHeight: 0,
+            overflowY: "auto",
+            padding: window.innerWidth <= 768 ? "0.8rem 0.8rem 0.6rem 0.8rem" : "1rem 1.2rem 0.8rem 1.2rem",
             background: "none"
           }}
         >
@@ -213,16 +214,42 @@ export default function DraggableModal({
           100% { opacity: 1; transform: scale(1) translateY(0);}
         }
         
-        @media (max-width: 500px) {
+        @media (max-width: 768px) {
+          .modal-overlay {
+            padding-top: 100px !important;
+          }
           .draggable-modal {
-            max-width: 99vw !important;
-            border-radius: 0.7rem !important;
+            max-width: 95vw !important;
+            border-radius: 0.5rem !important;
+            height: auto !important;
+            max-height: 60vh !important;
           }
           .modal-header {
-            padding: 0.7rem 0.7rem 0.5rem 0.7rem !important;
+            padding: 0.5rem 0.5rem 0.3rem 0.5rem !important;
           }
           .modal-content {
-            padding: 1rem 0.6rem 0.8rem 0.6rem !important;
+            padding: 0.8rem 0.6rem 0.6rem 0.6rem !important;
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .modal-overlay {
+            padding-top: 90px !important;
+          }
+          .draggable-modal {
+            max-width: 98vw !important;
+            border-radius: 0.3rem !important;
+            height: auto !important;
+            max-height: 65vh !important;
+          }
+          .modal-header {
+            padding: 0.4rem 0.4rem 0.2rem 0.4rem !important;
+          }
+          .modal-content {
+            padding: 0.6rem 0.5rem 0.5rem 0.5rem !important;
           }
         }
         /* Custom scrollbar for modal-content */

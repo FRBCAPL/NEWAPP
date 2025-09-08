@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmbeddedLoginForm from './EmbeddedLoginForm';
-import HubSignupForm from '../auth/LadderSignupForm';
+import UnifiedSignupForm from '../auth/UnifiedSignupForm';
 import Phase1RulesModal from '../modal/Phase1RulesModal';
 import Phase2RulesModal from '../modal/Phase2RulesModal';
 import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal';
@@ -302,7 +302,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
 
                      {/* Hub Signup Form Modal */}
         {showSignupForm && (
-          <HubSignupForm 
+          <UnifiedSignupForm 
             onClose={() => setShowSignupForm(false)}
             onSuccess={(data) => {
               console.log('Signup successful:', data);

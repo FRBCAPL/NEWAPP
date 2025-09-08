@@ -452,7 +452,7 @@ function AppContent() {
           onProfileClick={handleProfileClick}
         />
 
-                 <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "200px" }}>
+                 <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "20px" }}>
           <Routes>
                          {/* Hub Route */}
              <Route

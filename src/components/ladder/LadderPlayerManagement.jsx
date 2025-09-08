@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '../../config.js';
 import DraggableModal from '../modal/DraggableModal';
+import LadderApplicationsManager from '../admin/LadderApplicationsManager';
 import styles from './LadderPlayerManagement.module.css';
 
 export default function LadderPlayerManagement() {
@@ -67,6 +68,9 @@ export default function LadderPlayerManagement() {
   
   // Ladder selection state
   const [selectedLadder, setSelectedLadder] = useState('499-under');
+  
+  // Applications manager state
+  const [showApplicationsManager, setShowApplicationsManager] = useState(false);
 
   // Helper function to render modals using portals
   const renderModal = (modalContent) => {
@@ -98,7 +102,7 @@ export default function LadderPlayerManagement() {
   const fetchLadderPlayers = async () => {
     try {
       // Use the working endpoint that we know works
-      const response = await fetch(`${BACKEND_URL}/api/ladder/players`);
+      const response = await fetch(`${BACKEND_URL}/api/ladder/ladders/${selectedLadder}/players`);
       const data = await response.json();
       
       if (Array.isArray(data)) {
@@ -211,7 +215,7 @@ export default function LadderPlayerManagement() {
     setFormData({
       firstName: player.firstName || '',
       lastName: player.lastName || '',
-      email: player.email || '',
+      email: player.unifiedAccount?.email || '',
       phone: player.phone || '',
       fargoRate: player.fargoRate || '',
       location: player.location || '',
@@ -681,6 +685,24 @@ export default function LadderPlayerManagement() {
                 }}
               >
                 {showMatchHistory ? 'Hide Match History' : 'View Match History'}
+        </button>
+              <button 
+                className={styles.applicationsButton}
+                onClick={() => setShowApplicationsManager(true)}
+                style={{
+                  background: 'linear-gradient(135deg, #ff6b6b, #ee5a24)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 20px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease',
+                  margin: '5px'
+                }}
+              >
+                🏆 View Pending Applications
         </button>
             </div>
          </div>
@@ -1313,14 +1335,14 @@ export default function LadderPlayerManagement() {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Position</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Fargo Rate</th>
-              <th>Location</th>
-              <th>Status</th>
-              <th>Actions</th>
+              <th style={{width: '8%'}}>Position</th>
+              <th style={{width: '18%'}}>Name</th>
+              <th style={{width: '25%'}}>Email</th>
+              <th style={{width: '12%'}}>Phone</th>
+              <th style={{width: '10%'}}>Fargo Rate</th>
+              <th style={{width: '12%'}}>Location</th>
+              <th style={{width: '8%'}}>Status</th>
+              <th style={{width: '7%'}}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -1331,7 +1353,19 @@ export default function LadderPlayerManagement() {
               <tr key={player._id || player.email}>
                      <td>{player.position || index + 1}</td>
                 <td>{player.firstName} {player.lastName}</td>
-                <td>{player.email}</td>
+                <td style={{whiteSpace: 'normal', wordBreak: 'break-all'}}>
+                  {player.unifiedAccount?.email ? (
+                    <span style={{
+                      color: /@(ladder\.local|ladder\.temp|test|temp|local|fake|example|dummy)/i.test(player.unifiedAccount.email) 
+                        ? '#dc2626' 
+                        : 'inherit'
+                    }}>
+                      {player.unifiedAccount.email}
+                    </span>
+                  ) : (
+                    'No email'
+                  )}
+                </td>
                 <td>{player.phone}</td>
                 <td>{player.fargoRate}</td>
                 <td>{player.location}</td>
@@ -1499,6 +1533,19 @@ export default function LadderPlayerManagement() {
           </div>
         </div>,
         document.body
+      )}
+
+      {/* Ladder Applications Manager Modal */}
+      {showApplicationsManager && renderModal(
+        <DraggableModal
+          open={showApplicationsManager}
+          onClose={() => setShowApplicationsManager(false)}
+          title="Pending Ladder Applications"
+          maxWidth="90vw"
+          maxHeight="90vh"
+        >
+          <LadderApplicationsManager onClose={() => setShowApplicationsManager(false)} />
+        </DraggableModal>
       )}
 
       

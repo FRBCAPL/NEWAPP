@@ -233,7 +233,7 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
               e.target.style.color = '#FF6B35';
             }}
           >
-            🆕 First Time User? Apply for Access
+            🎯 Join Front Range Pool Hub
           </button>
           
           {message && (

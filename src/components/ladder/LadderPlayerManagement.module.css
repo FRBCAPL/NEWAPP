@@ -389,6 +389,7 @@
   background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
   overflow: hidden;
+  table-layout: fixed;
 }
 
 .table th,
@@ -396,6 +397,9 @@
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .table th {

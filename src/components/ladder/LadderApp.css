@@ -657,6 +657,18 @@
   text-shadow: 0 0 8px var(--admin-orange);
 }
 
+.status .proposal {
+  color: #ffc107;
+  text-shadow: 0 0 8px #ffc107;
+  font-weight: bold;
+}
+
+.status .scheduled {
+  color: #17a2b8;
+  text-shadow: 0 0 8px #17a2b8;
+  font-weight: bold;
+}
+
 .no-account {
   color: var(--accent-red);
   font-weight: bold;
@@ -1452,6 +1464,18 @@ button.compact-claim-btn {
 .stat-value.status .immune {
   color: var(--admin-orange);
   text-shadow: 0 0 8px var(--admin-orange);
+}
+
+.stat-value.status .proposal {
+  color: #ffc107;
+  text-shadow: 0 0 8px #ffc107;
+  font-weight: bold;
+}
+
+.stat-value.status .scheduled {
+  color: #17a2b8;
+  text-shadow: 0 0 8px #17a2b8;
+  font-weight: bold;
 }
 
 /* Last Match Info Styles */

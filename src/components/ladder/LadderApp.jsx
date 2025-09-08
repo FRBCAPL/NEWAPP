@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '../../config.js';
+import { checkPaymentStatus, showPaymentRequiredModal } from '../../utils/paymentStatus.js';
 import LadderApplicationsManager from '../admin/LadderApplicationsManager';
 import DraggableModal from '../modal/DraggableModal';
 import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal';
 import LadderFloatingLogos from './LadderFloatingLogos';
+import UnifiedSignupForm from '../auth/UnifiedSignupForm';
 
 import LadderChallengeModal from './LadderChallengeModal';
 import LadderChallengeConfirmModal from './LadderChallengeConfirmModal';
@@ -36,13 +38,6 @@ const LadderApp = ({
   const [ladderData, setLadderData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [playerStatus, setPlayerStatus] = useState(null);
-  const [showClaimFormState, setShowClaimFormState] = useState(false);
-  const [claimFormData, setClaimFormData] = useState({ firstName: '', lastName: '', email: '', pin: '' });
-  const [claiming, setClaiming] = useState(false);
-  const [showApplicationForm, setShowApplicationForm] = useState(false);
-  const [applicationFormData, setApplicationFormData] = useState({ firstName: '', lastName: '', email: '', phone: '' });
-  const [submittingApplication, setSubmittingApplication] = useState(false);
-  const [requiresApproval, setRequiresApproval] = useState(false);
   const [playerInfo, setPlayerInfo] = useState(null);
   const [showApplicationsManager, setShowApplicationsManager] = useState(false);
   const [selectedLadder, setSelectedLadder] = useState('499-under');
@@ -50,6 +45,7 @@ const LadderApp = ({
   const [hasManuallySelectedLadder, setHasManuallySelectedLadder] = useState(false);
 
   const [availableLocations, setAvailableLocations] = useState([]);
+  const [showUnifiedSignup, setShowUnifiedSignup] = useState(false);
   
   // Challenge system state
   const [showChallengeModal, setShowChallengeModal] = useState(false);
@@ -159,10 +155,10 @@ const LadderApp = ({
     }
   };
 
-  // Auto-show claim form if prop is true
+  // Auto-show unified signup if prop is true
   useEffect(() => {
     if (showClaimForm) {
-      setShowClaimFormState(true);
+      setShowUnifiedSignup(true);
     }
   }, [showClaimForm]);
 
@@ -326,7 +322,8 @@ const LadderApp = ({
           immunityUntil: null,
           activeChallenges: [],
           canChallenge: false,
-          needsClaim: true
+          needsClaim: true,
+          leagueInfo: status.leagueInfo
         });
       } else {
         // Not recognized - not in league system
@@ -349,141 +346,6 @@ const LadderApp = ({
     }
   };
 
-    const handleClaimAccount = async (e) => {
-    e.preventDefault();
-    
-    // Validate required fields
-    if (!claimFormData.firstName || !claimFormData.lastName) {
-      alert('Please enter both first and last name');
-      return;
-    }
-    
-         // Allow name-only access for ladder players who don't have email/PIN
-     if (!claimFormData.email && !claimFormData.pin) {
-       // This will be handled by the backend - it will check if the name matches a ladder player
-       console.log('Attempting name-only access for ladder player');
-     }
-     
-    setClaiming(true);
-    
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/claim-account`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(claimFormData),
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        // Show success message with player type
-        const message = `Access granted!\n\nYou are recognized as a ${result.message}.\n\nYou now have access to both league and ladder systems.\n\nThe system will automatically show the appropriate features for your player type.`;
-        alert(message);
-        
-                 // Update the user ladder data based on the response
-         if (result.playerInfo) {
-                       setUserLadderData({
-              playerId: result.playerType,
-              name: `${result.playerInfo.firstName} ${result.playerInfo.lastName}`,
-              firstName: result.playerInfo.firstName,
-              lastName: result.playerInfo.lastName,
-              email: result.playerInfo.email,
-              fargoRate: result.ladderInfo?.fargoRate || 450,
-              ladder: result.ladderInfo?.ladderName || '499-under',
-              position: result.ladderInfo?.position || result.message,
-              immunityUntil: result.ladderInfo?.immunityUntil || null,
-              activeChallenges: [],
-              canChallenge: (result.ladderInfo?.isActive || false) && !!result.unifiedAccount?.hasUnifiedAccount,
-              stats: result.ladderInfo?.stats || { wins: 0, losses: 0 },
-              needsClaim: false
-            });
-           
-           // Note: Use only ladder-specific data to maintain separation from league data
-         }
-        
-                 // Close the claim form
-         setShowClaimFormState(false);
-        setClaimFormData({ firstName: '', lastName: '', email: '', pin: '' });
-        
-        // If this is a guest user, trigger login success to give them full access
-        if (!senderEmail && result.playerInfo) {
-          // Trigger the login success callback to give user full access
-          // This will update the parent component and give access to both apps
-          const loginSuccessEvent = new CustomEvent('ladderLoginSuccess', {
-            detail: {
-              name: `${result.playerInfo.firstName} ${result.playerInfo.lastName}`,
-              email: result.playerInfo.email,
-              pin: result.playerInfo.pin || '',
-              userType: result.playerType
-            }
-          });
-          window.dispatchEvent(loginSuccessEvent);
-        }
-      } else if (result.requiresApproval) {
-        // Player found but requires admin approval
-        setRequiresApproval(true);
-        setPlayerInfo(result.playerInfo);
-        setApplicationFormData({
-          firstName: result.playerInfo.firstName,
-          lastName: result.playerInfo.lastName,
-          email: '',
-          phone: ''
-        });
-                 setShowClaimFormState(false);
-        setShowApplicationForm(true);
-      } else {
-        alert(result.error || 'Failed to access account');
-      }
-    } catch (error) {
-      console.error('Error accessing account:', error);
-      alert('Failed to access account');
-    } finally {
-      setClaiming(false);
-    }
-  };
-
-  const handleSubmitApplication = async (e) => {
-    e.preventDefault();
-    
-    // Validate required fields
-    if (!applicationFormData.email) {
-      alert('Please enter your email address');
-      return;
-    }
-    
-    setSubmittingApplication(true);
-    
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/apply-for-existing-ladder-account`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(applicationFormData),
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        alert(`Application submitted successfully!\n\nYou are recognized as ${applicationFormData.firstName} ${applicationFormData.lastName}, Position ${result.playerInfo.position} in the ${result.playerInfo.ladderName} ladder.\n\nAn admin will review your application and approve your access. You will be contacted at ${applicationFormData.email} once approved.`);
-        
-        // Close the application form
-        setShowApplicationForm(false);
-        setApplicationFormData({ firstName: '', lastName: '', email: '', phone: '' });
-        setRequiresApproval(false);
-        setPlayerInfo(null);
-      } else {
-        alert(result.error || 'Failed to submit application');
-      }
-    } catch (error) {
-      console.error('Error submitting application:', error);
-      alert('Failed to submit application');
-    } finally {
-      setSubmittingApplication(false);
-    }
-  };
 
 
 
@@ -639,6 +501,39 @@ const LadderApp = ({
     setSelectedDefender(defender);
     setChallengeType(type);
     setShowChallengeModal(true);
+  };
+
+  // Helper function to determine player status
+  const getPlayerStatus = (player) => {
+    if (!player.isActive) {
+      return { status: 'inactive', text: 'Inactive', className: 'inactive' };
+    }
+    
+    if (player.immunityUntil && new Date(player.immunityUntil) > new Date()) {
+      return { status: 'immune', text: 'Immune', className: 'immune' };
+    }
+    
+    // Check if player has an active proposal (pending challenge)
+    const hasActiveProposal = pendingChallenges.some(challenge => 
+      challenge.challenger.email === player.email || challenge.defender.email === player.email
+    ) || sentChallenges.some(challenge => 
+      challenge.challenger.email === player.email || challenge.defender.email === player.email
+    );
+    
+    if (hasActiveProposal) {
+      return { status: 'proposal', text: 'Proposal', className: 'proposal' };
+    }
+    
+    // Check if player has a scheduled match
+    const hasScheduledMatch = scheduledMatches.some(match => 
+      match.player1?.email === player.email || match.player2?.email === player.email
+    );
+    
+    if (hasScheduledMatch) {
+      return { status: 'scheduled', text: 'Scheduled', className: 'scheduled' };
+    }
+    
+    return { status: 'active', text: 'Active', className: 'active' };
   };
 
   const handlePlayerClick = (player) => {
@@ -825,147 +720,6 @@ const LadderApp = ({
     setShowChallengeConfirmModal(true);
   };
 
-       const renderClaimAccountForm = () => {
-    return (
-             <div className="claim-account-modal">
-         <div className="claim-account-content">
-                      <h3>First Time User Application</h3>
-                       <p>If you're a new user who wants to join the ladder system, please fill out this form. Your application will be sent to admin for approval. Existing users should use the login form above.</p>
-         
-         <form onSubmit={handleClaimAccount}>
-                        <div className="form-group">
-              <label>First Name:</label>
-              <input
-                type="text"
-                value={claimFormData.firstName || ''}
-                onChange={(e) => setClaimFormData({...claimFormData, firstName: e.target.value})}
-                placeholder="Enter your first name"
-                required
-              />
-            </div>
-            
-            <div className="form-group">
-              <label>Last Name:</label>
-              <input
-                type="text"
-                value={claimFormData.lastName || ''}
-                onChange={(e) => setClaimFormData({...claimFormData, lastName: e.target.value})}
-                placeholder="Enter your last name"
-                required
-              />
-            </div>
-            
-                                                   <div className="form-group">
-                <label>Email Address: *</label>
-                <input
-                  type="email"
-                  value={claimFormData.email || ''}
-                  onChange={(e) => setClaimFormData({...claimFormData, email: e.target.value})}
-                  placeholder="Enter your email address"
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Phone Number (Optional):</label>
-                <input
-                  type="tel"
-                  value={claimFormData.phone || ''}
-                  onChange={(e) => setClaimFormData({...claimFormData, phone: e.target.value})}
-                  placeholder="Enter your phone number (optional)"
-                />
-              </div>
-           
-                                               <div className="form-actions">
-                          <button type="submit" disabled={claiming} className="claim-btn">
-                {claiming ? 'Submitting...' : 'Submit Application'}
-              </button>
-                        <button 
-               type="button" 
-               onClick={() => setShowClaimFormState(false)}
-             className="cancel-btn"
-           >
-             Cancel
-           </button>
-         </div>
-       </form>
-     </div>
-   </div>
- );
- };
-
- const renderApplicationForm = () => {
-   return (
-     <div className="claim-account-modal">
-       <div className="claim-account-content">
-         <h3>Admin Approval Required</h3>
-         <p>We found you in our ladder system! You are <strong>{playerInfo?.firstName} {playerInfo?.lastName}</strong>, Position {playerInfo?.position} in the {playerInfo?.ladderName} ladder.</p>
-         <p>To access your account, please provide your email and optional phone number for admin approval.</p>
-         
-         <form onSubmit={handleSubmitApplication}>
-           <div className="form-group">
-             <label>First Name:</label>
-             <input
-               type="text"
-               value={applicationFormData.firstName || ''}
-               disabled
-               style={{ backgroundColor: '#f0f0f0', color: '#666' }}
-             />
-           </div>
-           
-           <div className="form-group">
-             <label>Last Name:</label>
-             <input
-               type="text"
-               value={applicationFormData.lastName || ''}
-               disabled
-               style={{ backgroundColor: '#f0f0f0', color: '#666' }}
-             />
-           </div>
-           
-           <div className="form-group">
-             <label>Email Address: *</label>
-             <input
-               type="email"
-               value={applicationFormData.email || ''}
-               onChange={(e) => setApplicationFormData({...applicationFormData, email: e.target.value})}
-               placeholder="Enter your email address"
-               required
-             />
-           </div>
-           
-           <div className="form-group">
-             <label>Phone Number (Optional):</label>
-             <input
-               type="tel"
-               value={applicationFormData.phone || ''}
-               onChange={(e) => setApplicationFormData({...applicationFormData, phone: e.target.value})}
-               placeholder="Enter your phone number (optional)"
-             />
-           </div>
-           
-           <div className="form-actions">
-             <button type="submit" disabled={submittingApplication} className="claim-btn">
-               {submittingApplication ? 'Submitting...' : 'Submit Application'}
-             </button>
-             <button 
-               type="button" 
-               onClick={() => {
-                 setShowApplicationForm(false);
-                 setRequiresApproval(false);
-                 setPlayerInfo(null);
-                 setApplicationFormData({ firstName: '', lastName: '', email: '', phone: '' });
-               }}
-               className="cancel-btn"
-             >
-               Cancel
-             </button>
-           </div>
-         </form>
-       </div>
-     </div>
-   );
- };
 
   const renderLadderView = () => {
     const getLadderDisplayName = (ladderName) => {
@@ -1219,13 +973,10 @@ const LadderApp = ({
                <div className="table-cell wins">{player.wins || 0}</div>
                <div className="table-cell losses">{player.losses || 0}</div>
                <div className="table-cell status">
-                 {!player.isActive ? (
-                   <span className="inactive">Inactive</span>
-                 ) : player.immunityUntil && new Date(player.immunityUntil) > new Date() ? (
-                   <span className="immune">Immune</span>
-                 ) : (
-                   <span className="active">Active</span>
-                 )}
+                 {(() => {
+                   const playerStatus = getPlayerStatus(player);
+                   return <span className={playerStatus.className}>{playerStatus.text}</span>;
+                 })()}
                </div>
                {!isPublicView && (
                  <div className="table-cell last-match">
@@ -1538,13 +1289,10 @@ const LadderApp = ({
                     <div className="table-cell wins">{player.wins || 0}</div>
                     <div className="table-cell losses">{player.losses || 0}</div>
                     <div className="table-cell status">
-                      {!player.isActive ? (
-                        <span className="inactive">Inactive</span>
-                      ) : player.immunityUntil && new Date(player.immunityUntil) > new Date() ? (
-                        <span className="immune">Immune</span>
-                      ) : (
-                        <span className="active">Active</span>
-                      )}
+                      {(() => {
+                        const playerStatus = getPlayerStatus(player);
+                        return <span className={playerStatus.className}>{playerStatus.text}</span>;
+                      })()}
                     </div>
                   </div>
                 ))}
@@ -1681,16 +1429,26 @@ const LadderApp = ({
             <div className="status-details">
               <div className="status-item">
                 <span className="label">Ladder:</span>
-                <span className="value">{userLadderData?.ladder === '499-under' ? '499 & Under' : 
-                  userLadderData?.ladder === '500-549' ? '500-549' : '550+'}</span>
+                <span className="value">
+                  {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? 'None' :
+                   userLadderData?.ladder === '499-under' ? '499 & Under' : 
+                   userLadderData?.ladder === '500-549' ? '500-549' : 
+                   userLadderData?.ladder === '550+' ? '550+' : 'None'}
+                </span>
               </div>
               <div className="status-item">
                 <span className="label">Position:</span>
-                <span className="value">{userLadderData?.position}</span>
+                <span className="value">
+                  {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? 'Not on ladder' :
+                   userLadderData?.position || 'Not on ladder'}
+                </span>
               </div>
               <div className="status-item">
                 <span className="label">FargoRate:</span>
-                <span className="value">{userLadderData?.fargoRate === 0 ? "No FargoRate" : userLadderData?.fargoRate}</span>
+                <span className="value">
+                  {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? 'N/A' :
+                   userLadderData?.fargoRate === 0 ? "No FargoRate" : userLadderData?.fargoRate || 'N/A'}
+                </span>
               </div>
               {userLadderData?.immunityUntil && (
                 <div className="status-item immunity">
@@ -1698,49 +1456,67 @@ const LadderApp = ({
                   <span className="value">{new Date(userLadderData.immunityUntil).toLocaleDateString()}</span>
                 </div>
               )}
-              {userLadderData?.needsClaim && (
-                <div className="status-item claim-notice">
-                  <span className="label">Account Status:</span>
-                  <span className="value">League Player - Claim your ladder account to participate!</span>
+              {userLadderData?.playerId === 'ladder' && (
+                <div className="status-item payment-status">
+                  <span className="label">Challenge Access:</span>
+                  <span 
+                    className="value" 
+                    style={{ color: '#ffc107', cursor: 'pointer' }}
+                    onClick={async () => {
+                      const paymentStatus = await checkPaymentStatus(userLadderData.email);
+                      if (paymentStatus.isCurrent) {
+                        alert(`✅ Payment Current!\n\nYour $5/month subscription is active.\nYou can participate in challenges and defenses.`);
+                      } else {
+                        showPaymentRequiredModal(
+                          () => navigate('/'),
+                          () => console.log('User cancelled payment')
+                        );
+                      }
+                    }}
+                  >
+                    💳 Payment Required - Click to verify status
+                  </span>
                 </div>
               )}
-                             {userLadderData?.playerId === 'unknown' && (
-                 <div className="status-item unknown-notice">
-                   <span className="label">Account Status:</span>
-                   <span className="value">Not recognized - Apply for ladder access below</span>
-                 </div>
-               )}
+              {userLadderData?.needsClaim && !isAdmin && (
+                <div 
+                  className="status-item claim-notice"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setShowUnifiedSignup(true)}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(33, 150, 243, 0.1)';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = '';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  <span className="label">Account Status:</span>
+                  <span className="value" style={{ color: '#2196F3' }}>Not Active - Click to join ladder</span>
+                </div>
+              )}
+              {userLadderData?.playerId === 'unknown' && (
+                <div 
+                  className="status-item unknown-notice"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setShowUnifiedSignup(true)}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 193, 7, 0.1)';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = '';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  <span className="label">Account Status:</span>
+                  <span className="value" style={{ color: '#ffc107' }}>Not Active - Click to join ladder</span>
+                </div>
+              )}
             </div>
             
-                         {/* Claim Account Button for League Players */}
-                            {!isPublicView && userLadderData?.needsClaim && (
-                 <div className="claim-account-section">
-                   <button 
-                     onClick={() => setShowClaimFormState(true)}
-                     className="claim-account-btn"
-                   >
-                     Login to Access Hub
-                   </button>
-                   <p className="claim-info">
-                     Enter your name and email OR PIN to login and access both league and ladder systems
-                   </p>
-                 </div>
-               )}
              
-             {/* Apply for Ladder Button for Unknown Players */}
-             {!isPublicView && userLadderData?.playerId === 'unknown' && (
-               <div className="claim-account-section">
-                 <button 
-                   onClick={() => navigate('/ladder/signup')}
-                   className="claim-account-btn"
-                 >
-                   Apply for Ladder Access
-                 </button>
-                 <p className="claim-info">
-                   Submit an application to join the ladder system
-                 </p>
-               </div>
-             )}
           </div>
         </div>
 
@@ -1830,7 +1606,7 @@ const LadderApp = ({
                  <h3>Challenge Features</h3>
                  <p>Login to access Smart Match and challenge other players</p>
                  <button 
-                   onClick={() => setShowClaimFormState(true)}
+                   onClick={() => setShowUnifiedSignup(true)}
                    style={{
                      background: '#ff4444',
                      color: 'white',
@@ -1895,15 +1671,15 @@ const LadderApp = ({
       
       {/* Independent Tournament Disclaimer */}
       <div style={{
-        marginTop: '10px',
-        marginBottom: '30px',
+        marginTop: '80px',
+        marginBottom: '80px',
         padding: '12px 16px',
         background: 'rgba(255, 193, 7, 0.2)',
         border: '2px solid #ffc107',
         borderRadius: '8px',
         textAlign: 'center',
         maxWidth: '600px',
-        margin: '5px auto 30px auto',
+        margin: '80px auto 80px auto',
         boxShadow: '0 3px 12px rgba(255, 193, 7, 0.3)',
         position: 'relative',
         zIndex: 999,
@@ -2007,11 +1783,31 @@ const LadderApp = ({
         )}
       </div>
 
-             {/* Claim Account Modal */}
-       {showClaimFormState && renderClaimAccountForm()}
-
-       {/* Application Form Modal */}
-       {showApplicationForm && renderApplicationForm()}
+             {/* Unified Signup Modal */}
+       {showUnifiedSignup && (
+         <UnifiedSignupForm 
+           onClose={() => setShowUnifiedSignup(false)}
+           onSuccess={(data) => {
+             console.log('Signup successful:', data);
+             setShowUnifiedSignup(false);
+             // Refresh the page to show updated status
+             window.location.reload();
+           }}
+           userContext={{
+             isLeaguePlayer: userLadderData?.needsClaim || false,
+             isUnknownUser: userLadderData?.playerId === 'unknown',
+             currentEmail: senderEmail,
+             currentName: playerName ? `${playerName} ${playerLastName}` : null,
+             purpose: userLadderData?.needsClaim ? 'ladder_access' : 'new_membership',
+             leagueInfo: userLadderData?.leagueInfo || null,
+             prefillData: {
+               firstName: playerName || '',
+               lastName: playerLastName || '',
+               email: senderEmail || ''
+             }
+           }}
+         />
+       )}
 
                {/* Applications Manager Modal */}
         {showApplicationsManager && (
@@ -2201,13 +1997,10 @@ const LadderApp = ({
                   <div className="stat-item">
                     <div className="stat-label">Status</div>
                     <div className="stat-value status">
-                      {!selectedPlayerForStats.isActive ? (
-                        <span className="inactive">Inactive</span>
-                      ) : selectedPlayerForStats.immunityUntil && new Date(selectedPlayerForStats.immunityUntil) > new Date() ? (
-                        <span className="immune">Immune</span>
-                      ) : (
-                        <span className="active">Active</span>
-                      )}
+                      {(() => {
+                        const playerStatus = getPlayerStatus(selectedPlayerForStats);
+                        return <span className={playerStatus.className}>{playerStatus.text}</span>;
+                      })()}
                     </div>
                   </div>
                   

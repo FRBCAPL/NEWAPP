@@ -18,7 +18,7 @@ const LadderApplicationsManager = ({ onClose }) => {
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/applications`);
+      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/signup-applications/pending`);
       const data = await response.json();
       
       if (response.ok) {
@@ -46,7 +46,7 @@ const LadderApplicationsManager = ({ onClose }) => {
   const handleApprove = async (applicationId) => {
     try {
       setProcessing(true);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/applications/${applicationId}/approve`, {
+      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/signup-applications/${applicationId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +102,7 @@ const LadderApplicationsManager = ({ onClose }) => {
   const handleReject = async (applicationId, reason) => {
     try {
       setProcessing(true);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/applications/${applicationId}/reject`, {
+      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/signup-applications/${applicationId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -150,7 +150,7 @@ const LadderApplicationsManager = ({ onClose }) => {
     <DraggableModal
       open={true}
       onClose={onClose}
-      title="📋 Ladder Applications Manager"
+      title="📋 Pending Ladder Applications"
       maxWidth="900px"
     >
       <div style={{ padding: '1rem' }}>
@@ -184,13 +184,13 @@ const LadderApplicationsManager = ({ onClose }) => {
             color: '#ccc',
             fontSize: '1.1rem'
           }}>
-            No ladder applications found.
+            No pending ladder applications found.
           </div>
         ) : (
           <div>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 1fr 1fr 1fr auto',
+              gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr auto',
               gap: '1rem',
               padding: '0.8rem',
               background: 'rgba(255, 255, 255, 0.05)',
@@ -203,6 +203,8 @@ const LadderApplicationsManager = ({ onClose }) => {
               <div>Name</div>
               <div>Email</div>
               <div>Experience</div>
+              <div>League</div>
+              <div>Payment</div>
               <div>Status</div>
               <div>Actions</div>
             </div>
@@ -210,7 +212,7 @@ const LadderApplicationsManager = ({ onClose }) => {
             {applications.map((app) => (
               <div key={app._id} style={{
                 display: 'grid',
-                gridTemplateColumns: '1fr 1fr 1fr 1fr auto',
+                gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr auto',
                 gap: '1rem',
                 padding: '0.8rem',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -225,6 +227,51 @@ const LadderApplicationsManager = ({ onClose }) => {
                 <div style={{ color: '#ccc' }}>{app.email}</div>
                 <div style={{ color: '#ccc', textTransform: 'capitalize' }}>
                   {app.experience}
+                </div>
+                <div style={{ 
+                  color: app.currentLeague && app.currentLeague !== 'Not provided' ? '#4CAF50' : '#ff9800',
+                  fontWeight: 'bold',
+                  fontSize: '0.85rem'
+                }}>
+                  {app.currentLeague && app.currentLeague !== 'Not provided' ? (
+                    <div style={{ fontSize: '0.8rem' }}>
+                      🏆 {app.currentLeague}
+                    </div>
+                  ) : (
+                    <div>
+                      ❌ No League
+                    </div>
+                  )}
+                </div>
+                <div style={{ 
+                  color: app.payNow ? '#4CAF50' : (app.payNow === undefined ? '#ff9800' : '#ff9800'),
+                  fontWeight: 'bold',
+                  fontSize: '0.85rem'
+                }}>
+                  {app.payNow === undefined ? (
+                    <div style={{ color: '#ff9800' }}>
+                      <div>⚠️ Unknown</div>
+                      <div style={{ fontSize: '0.7rem' }}>Older App</div>
+                    </div>
+                  ) : app.payNow ? (
+                    <div>
+                      <div>✅ $5/month</div>
+                      {app.paymentMethod && (
+                        <div style={{ fontSize: '0.75rem', color: '#ccc' }}>
+                          {app.paymentMethod === 'venmo' && '💜 Venmo'}
+                          {app.paymentMethod === 'cashapp' && '💚 Cash App'}
+                          {app.paymentMethod === 'creditCard' && '💳 Card'}
+                          {app.paymentMethod === 'applePay' && '🍎 Apple Pay'}
+                          {app.paymentMethod === 'googlePay' && '📱 Google Pay'}
+                          {app.paymentMethod === 'cash' && '💵 Cash'}
+                          {app.paymentMethod === 'check' && '📝 Check'}
+                          {!['venmo', 'cashapp', 'creditCard', 'applePay', 'googlePay', 'cash', 'check'].includes(app.paymentMethod) && app.paymentMethod}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    '❌ Free'
+                  )}
                 </div>
                 <div style={{ 
                   color: getStatusColor(app.status),
@@ -285,9 +332,65 @@ const LadderApplicationsManager = ({ onClose }) => {
                 <div style={{ marginTop: '0.5rem', color: '#ccc' }}>
                   <div><strong>Experience:</strong> {selectedApplication.experience}</div>
                   <div><strong>Fargo Rate:</strong> {selectedApplication.fargoRate || 'Not provided'}</div>
-                  <div><strong>Current League:</strong> {selectedApplication.currentLeague || 'Not provided'}</div>
+                  <div><strong>League Divisions:</strong> 
+                    {selectedApplication.currentLeague && selectedApplication.currentLeague !== 'Not provided' ? (
+                      <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>
+                        {selectedApplication.currentLeague}
+                      </span>
+                    ) : (
+                      <span style={{ color: '#ff9800' }}>Not provided</span>
+                    )}
+                  </div>
                   <div><strong>Current Ranking:</strong> {selectedApplication.currentRanking || 'Not provided'}</div>
                 </div>
+              </div>
+            </div>
+
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              padding: '1rem',
+              borderRadius: '8px',
+              marginBottom: '1.5rem'
+            }}>
+              <strong style={{ color: '#2196F3' }}>Payment Information:</strong>
+              <div style={{ marginTop: '0.5rem', color: '#ccc' }}>
+                <div><strong>Payment Required:</strong> 
+                  <span style={{ 
+                    color: selectedApplication.payNow ? '#4CAF50' : '#ff9800',
+                    fontWeight: 'bold',
+                    marginLeft: '0.5rem'
+                  }}>
+                    {selectedApplication.payNow ? '✅ Yes - $5/month' : '❌ No - Free Access'}
+                  </span>
+                </div>
+                {selectedApplication.payNow && selectedApplication.paymentMethod && (
+                  <div><strong>Payment Method:</strong> 
+                    <span style={{ 
+                      color: '#4CAF50',
+                      fontWeight: 'bold',
+                      marginLeft: '0.5rem'
+                    }}>
+                      {selectedApplication.paymentMethod === 'venmo' && '💜 Venmo'}
+                      {selectedApplication.paymentMethod === 'cashapp' && '💚 Cash App'}
+                      {selectedApplication.paymentMethod === 'creditCard' && '💳 Credit/Debit Card'}
+                      {selectedApplication.paymentMethod === 'applePay' && '🍎 Apple Pay'}
+                      {selectedApplication.paymentMethod === 'googlePay' && '📱 Google Pay'}
+                      {selectedApplication.paymentMethod === 'cash' && '💵 Cash'}
+                      {selectedApplication.paymentMethod === 'check' && '📝 Check'}
+                      {!['venmo', 'cashapp', 'creditCard', 'applePay', 'googlePay', 'cash', 'check'].includes(selectedApplication.paymentMethod) && selectedApplication.paymentMethod}
+                    </span>
+                  </div>
+                )}
+                {selectedApplication.payNow && !selectedApplication.paymentMethod && (
+                  <div style={{ color: '#ff6b6b' }}>
+                    <strong>⚠️ Payment method not specified</strong>
+                  </div>
+                )}
+                {selectedApplication.payNow === undefined && selectedApplication.paymentMethod === undefined && (
+                  <div style={{ color: '#ff9800' }}>
+                    <strong>⚠️ Payment information not available (older application)</strong>
+                  </div>
+                )}
               </div>
             </div>
 

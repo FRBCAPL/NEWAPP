@@ -10,6 +10,7 @@ import LocationManagement from "./LocationManagement.jsx";
 import PaymentConfiguration from "./PaymentConfiguration.jsx";
 import PaymentTracker from "./PaymentTracker.jsx";
 import LeagueManagement from "./LeagueManagement.jsx";
+import LadderApplicationsManager from "../admin/LadderApplicationsManager.jsx";
 import unifiedAdminService from '../../services/unifiedAdminService.js';
 import { 
   FaSyncAlt, 
@@ -1906,6 +1907,13 @@ export default function AdminDashboard() {
               >
                 <FaCog /> System Status
               </button>
+              
+        <button 
+          className={styles.quickActionButton}
+          onClick={() => setActiveSection('ladder-applications')}
+        >
+          🏆 Pending Applications
+        </button>
             </div>
           </div>
         );
@@ -1939,6 +1947,9 @@ export default function AdminDashboard() {
       
       case 'unified-users':
         return <UnifiedUsersWorkflow backendUrl={BACKEND_URL} />;
+      
+      case 'ladder-applications':
+        return <LadderApplicationsManager onClose={() => setActiveSection('overview')} />;
       
       default:
         return null;
@@ -2040,6 +2051,13 @@ export default function AdminDashboard() {
            >
              👥 Unified Users
            </button>
+           
+        <button 
+          className={`${styles.sectionButton} ${activeSection === 'ladder-applications' ? styles.active : ''}`}
+          onClick={() => setActiveSection('ladder-applications')}
+        >
+          🏆 Pending Applications
+        </button>
         </div>
 
         {/* Active Section Content */}
