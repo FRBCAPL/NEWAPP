@@ -1,12 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '../../config.js';
 import { checkPaymentStatus, showPaymentRequiredModal } from '../../utils/paymentStatus.js';
+import { 
+  sanitizeInput, 
+  sanitizeEmail, 
+  createSecureHeaders, 
+  sanitizeChallengeData,
+  sanitizePlayerData 
+} from '../../utils/security.js';
 import LadderApplicationsManager from '../admin/LadderApplicationsManager';
 import DraggableModal from '../modal/DraggableModal';
 import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal';
 import LadderFloatingLogos from './LadderFloatingLogos';
+import LadderHeader from './LadderHeader';
+import LadderTable from './LadderTable';
+import NavigationMenu from './NavigationMenu';
+import PlayerStatsModal from './PlayerStatsModal';
+import FullMatchHistoryModal from './FullMatchHistoryModal';
+import UserStatusCard from './UserStatusCard';
+import LadderErrorBoundary from './LadderErrorBoundary';
 import UnifiedSignupForm from '../auth/UnifiedSignupForm';
 
 import LadderChallengeModal from './LadderChallengeModal';
@@ -46,6 +60,7 @@ const LadderApp = ({
 
   const [availableLocations, setAvailableLocations] = useState([]);
   const [showUnifiedSignup, setShowUnifiedSignup] = useState(false);
+  const [showProfileCompletionPrompt, setShowProfileCompletionPrompt] = useState(false);
   
   // Challenge system state
   const [showChallengeModal, setShowChallengeModal] = useState(false);
@@ -73,7 +88,85 @@ const LadderApp = ({
   const [playerMatches, setPlayerMatches] = useState([]);
   const [matchesLoading, setMatchesLoading] = useState(false);
   
-
+  // Debounced loadData function - moved to top to avoid hoisting issues
+  const loadDataTimeoutRef = useRef(null);
+  
+  const loadData = useCallback(async () => {
+    // Clear existing timeout
+    if (loadDataTimeoutRef.current) {
+      clearTimeout(loadDataTimeoutRef.current);
+    }
+    
+    // Set new timeout for debouncing
+    loadDataTimeoutRef.current = setTimeout(async () => {
+      try {
+        setLoading(true);
+        
+        // Load ladder rankings for selected ladder
+        const ladderResponse = await fetch(`${BACKEND_URL}/api/ladder/ladders/${sanitizeInput(selectedLadder)}/players`, {
+          headers: createSecureHeaders(userPin)
+        });
+        
+        if (!ladderResponse.ok) {
+          throw new Error(`Failed to load ladder data: ${ladderResponse.status} ${ladderResponse.statusText}`);
+        }
+        
+        const ladderResult = await ladderResponse.json();
+        
+        console.log('Ladder API response:', ladderResult);
+        
+        if (ladderResult && Array.isArray(ladderResult)) {
+          setLadderData(ladderResult);
+          console.log(`Loaded ${ladderResult.length} players from ${selectedLadder} ladder`);
+        } else {
+          console.error('Invalid ladder data format:', ladderResult);
+          setLadderData([]); // Set empty array as fallback
+        }
+      
+      // Check if we have unified user data with ladder profile
+      const unifiedUserData = localStorage.getItem("unifiedUserData");
+      if (unifiedUserData) {
+        try {
+          const userData = JSON.parse(unifiedUserData);
+          console.log('🔍 Found unified user data:', userData);
+          
+          if (userData.ladderProfile) {
+            // User has ladder profile - use it directly
+            const ladderProfile = userData.ladderProfile;
+            setUserLadderData({
+              playerId: 'ladder',
+              name: `${userData.firstName} ${userData.lastName}`,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              email: userData.email,
+              fargoRate: ladderProfile.fargoRate,
+              ladder: ladderProfile.ladderName,
+              position: ladderProfile.position,
+              immunityUntil: ladderProfile.immunityUntil,
+              activeChallenges: ladderProfile.activeChallenges || [],
+              canChallenge: ladderProfile.canChallenge || true
+            });
+          } else {
+            // User doesn't have ladder profile - check if they can claim account
+            await checkPlayerStatus(userData.email);
+          }
+        } catch (error) {
+          console.error('Error parsing unified user data:', error);
+          await checkPlayerStatus(email);
+        }
+      } else {
+        // No unified user data - check player status
+        await checkPlayerStatus(email, '', '');
+      }
+      
+      } catch (error) {
+        console.error('Error loading ladder data:', error);
+        setLadderData([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 300); // Debounce by 300ms
+  }, [selectedLadder, userPin, senderEmail]);
 
   useEffect(() => {
     // Load user's ladder data and ladder rankings
@@ -81,7 +174,14 @@ const LadderApp = ({
     loadLocations();
     loadChallenges();
     loadProfileData();
-  }, [selectedLadder]);
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (loadDataTimeoutRef.current) {
+        clearTimeout(loadDataTimeoutRef.current);
+      }
+    };
+  }, [selectedLadder, loadData]);
 
   // Load matches when matches view is accessed
   useEffect(() => {
@@ -115,7 +215,10 @@ const LadderApp = ({
     console.log('Loading profile data for email:', senderEmail);
     
     try {
-      const response = await fetch(`${BACKEND_URL}/api/unified-auth/profile-data?email=${encodeURIComponent(senderEmail)}&appType=ladder&t=${Date.now()}`);
+      const sanitizedEmail = sanitizeEmail(senderEmail);
+      const response = await fetch(`${BACKEND_URL}/api/unified-auth/profile-data?email=${encodeURIComponent(sanitizedEmail)}&appType=ladder&t=${Date.now()}`, {
+        headers: createSecureHeaders(userPin)
+      });
       console.log('Profile data response status:', response.status);
       
       if (response.ok) {
@@ -162,22 +265,70 @@ const LadderApp = ({
     }
   }, [showClaimForm]);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
+  // Check if user needs to complete their profile after approval
+  useEffect(() => {
+    const checkProfileCompletion = async () => {
+      if (!senderEmail || !userLadderData?.canChallenge) return;
       
-      // Load ladder rankings for selected ladder
-      const ladderResponse = await fetch(`${BACKEND_URL}/api/ladder/ladders/${selectedLadder}/players`);
-      const ladderResult = await ladderResponse.json();
-      
-      console.log('Ladder API response:', ladderResult);
-      
-      if (ladderResult && Array.isArray(ladderResult)) {
-        setLadderData(ladderResult);
-        console.log(`Loaded ${ladderResult.length} players from ${selectedLadder} ladder`);
-      } else {
-        console.error('Invalid ladder data format:', ladderResult);
+      try {
+        const sanitizedEmail = sanitizeEmail(senderEmail);
+        const response = await fetch(`${BACKEND_URL}/api/unified-auth/profile-data?email=${encodeURIComponent(sanitizedEmail)}&appType=ladder&t=${Date.now()}`, {
+          headers: createSecureHeaders(userPin)
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.profile) {
+            // Check if profile is incomplete
+            const hasPhone = data.profile.phone && data.profile.phone.trim() !== '';
+            const hasLocations = data.profile.locations && data.profile.locations.trim() !== '';
+            const hasAvailability = data.profile.availability && Object.keys(data.profile.availability).length > 0;
+            
+            // If any required profile fields are missing, show profile completion prompt
+            if (!hasPhone || !hasLocations || !hasAvailability) {
+              console.log('Profile incomplete, showing completion prompt');
+              setShowProfileCompletionPrompt(true);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking profile completion:', error);
       }
+    };
+
+    checkProfileCompletion();
+  }, [senderEmail, userLadderData?.canChallenge]);
+
+  useEffect(() => {
+    // Clear existing timeout
+    if (loadDataTimeoutRef.current) {
+      clearTimeout(loadDataTimeoutRef.current);
+    }
+    
+    // Set new timeout for debouncing
+    loadDataTimeoutRef.current = setTimeout(async () => {
+      try {
+        setLoading(true);
+        
+        // Load ladder rankings for selected ladder
+        const ladderResponse = await fetch(`${BACKEND_URL}/api/ladder/ladders/${sanitizeInput(selectedLadder)}/players`, {
+          headers: createSecureHeaders(userPin)
+        });
+        
+        if (!ladderResponse.ok) {
+          throw new Error(`Failed to load ladder data: ${ladderResponse.status} ${ladderResponse.statusText}`);
+        }
+        
+        const ladderResult = await ladderResponse.json();
+        
+        console.log('Ladder API response:', ladderResult);
+        
+        if (ladderResult && Array.isArray(ladderResult)) {
+          setLadderData(ladderResult);
+          console.log(`Loaded ${ladderResult.length} players from ${selectedLadder} ladder`);
+        } else {
+          console.error('Invalid ladder data format:', ladderResult);
+          setLadderData([]); // Set empty array as fallback
+        }
       
       // Check if we have unified user data with ladder profile
       const unifiedUserData = localStorage.getItem("unifiedUserData");
@@ -224,14 +375,33 @@ const LadderApp = ({
       if (senderEmail) {
         console.log('🚀 Calling checkPlayerStatus for:', senderEmail);
         await checkPlayerStatus(senderEmail);
-      } else {
-        // No email, show as guest
+        } else {
+          // No email, show as guest
+          setUserLadderData({
+            playerId: 'guest',
+            name: `${playerName} ${playerLastName}`,
+            firstName: playerName,
+            lastName: playerLastName,
+            email: null,
+            fargoRate: 450,
+            ladder: '499-under',
+            position: 'Guest',
+            immunityUntil: null,
+            activeChallenges: [],
+            canChallenge: false
+          });
+        }
+      } catch (error) {
+        console.error('Error loading ladder data:', error);
+        
+        // Set fallback data for graceful degradation
+        setLadderData([]); // Empty ladder data
         setUserLadderData({
           playerId: 'guest',
           name: `${playerName} ${playerLastName}`,
           firstName: playerName,
           lastName: playerLastName,
-          email: null,
+          email: senderEmail,
           fargoRate: 450,
           ladder: '499-under',
           position: 'Guest',
@@ -239,27 +409,14 @@ const LadderApp = ({
           activeChallenges: [],
           canChallenge: false
         });
+        
+        // Show user-friendly error message (optional - could be a toast notification)
+        console.warn('Ladder data could not be loaded. Please check your connection and try again.');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading ladder data:', error);
-      // Set fallback data
-      setUserLadderData({
-        playerId: 'guest',
-        name: `${playerName} ${playerLastName}`,
-        firstName: playerName,
-        lastName: playerLastName,
-        email: senderEmail,
-        fargoRate: 450,
-        ladder: '499-under',
-        position: 'Guest',
-        immunityUntil: null,
-        activeChallenges: [],
-        canChallenge: false
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    }, 300); // 300ms debounce delay
+  }, [selectedLadder, userPin, senderEmail]);
 
   const loadLocations = async () => {
     // Use the same hardcoded locations as the League app
@@ -280,7 +437,10 @@ const LadderApp = ({
   const checkPlayerStatus = async (email) => {
     try {
       console.log('🔍 Checking player status for email:', email);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/player-status/${email}`);
+      const sanitizedEmail = sanitizeEmail(email);
+      const response = await fetch(`${BACKEND_URL}/api/ladder/player-status/${encodeURIComponent(sanitizedEmail)}`, {
+        headers: createSecureHeaders(userPin)
+      });
       const status = await response.json();
       
       console.log('📋 Player status response:', status);
@@ -349,113 +509,135 @@ const LadderApp = ({
 
 
 
-  const navigateToView = (view) => {
+  const navigateToView = useCallback((view) => {
     setCurrentView(view);
-  };
+  }, []);
+
+  // Memoize computed values
+  const ladderDisplayName = useMemo(() => {
+    switch (selectedLadder) {
+      case '499-under': return '499 & Under';
+      case '500-549': return '500-549';
+      case '550-plus': return '550+';
+      default: return selectedLadder;
+    }
+  }, [selectedLadder]);
 
 
 
   // Challenge eligibility rules based on ladder position
   const canChallengePlayer = (challenger, defender) => {
+    // Sanitize input data
+    const sanitizedChallenger = sanitizePlayerData(challenger);
+    const sanitizedDefender = sanitizePlayerData(defender);
+    
     // Debug: Log the ladder values being compared
-    console.log(`🔍 Ladder comparison: Challenger ${challenger.firstName} ${challenger.lastName} ladder="${challenger.ladder}", Defender ${defender.firstName} ${defender.lastName} ladderName="${defender.ladderName}"`);
+    console.log(`🔍 Ladder comparison: Challenger ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} ladder="${sanitizedChallenger.ladder}", Defender ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} ladderName="${sanitizedDefender.ladderName}"`);
     
     // Debug: Log unified account status for challenger and defender
-    console.log(`🔍 Challenger unifiedAccount:`, challenger.unifiedAccount);
-    console.log(`🔍 Defender unifiedAccount:`, defender.unifiedAccount);
-    console.log(`🔍 Challenger canChallenge:`, challenger.canChallenge);
-    console.log(`🔍 Defender hasUnifiedAccount:`, defender.unifiedAccount?.hasUnifiedAccount);
+    console.log(`🔍 Challenger unifiedAccount:`, sanitizedChallenger.unifiedAccount);
+    console.log(`🔍 Defender unifiedAccount:`, sanitizedDefender.unifiedAccount);
+    console.log(`🔍 Challenger canChallenge:`, sanitizedChallenger.canChallenge);
+    console.log(`🔍 Defender hasUnifiedAccount:`, sanitizedDefender.unifiedAccount?.hasUnifiedAccount);
     
     // Both players must be on the same ladder
     // Note: challenger.ladder is the user's ladder, defender.ladderName is the player's ladder
-    if (challenger.ladder !== defender.ladderName) {
-      console.log(`🚫 Challenge blocked: ${challenger.firstName} ${challenger.lastName} (${challenger.ladder}) cannot challenge ${defender.firstName} ${defender.lastName} (${defender.ladderName}) - Different ladder`);
+    if (sanitizedChallenger.ladder !== sanitizedDefender.ladderName) {
+      console.log(`🚫 Challenge blocked: ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} (${sanitizedChallenger.ladder}) cannot challenge ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} (${sanitizedDefender.ladderName}) - Different ladder`);
       return false;
     }
     
     // Both players must have unified accounts
-    if (!challenger.unifiedAccount?.hasUnifiedAccount || !defender.unifiedAccount?.hasUnifiedAccount) {
-      console.log(`🚫 Challenge blocked: ${challenger.firstName} ${challenger.lastName} cannot challenge ${defender.firstName} ${defender.lastName} - Unified account required`);
+    if (!sanitizedChallenger.unifiedAccount?.hasUnifiedAccount || !sanitizedDefender.unifiedAccount?.hasUnifiedAccount) {
+      console.log(`🚫 Challenge blocked: ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} cannot challenge ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} - Unified account required`);
       return false;
     }
     
     // Can't challenge yourself
-    if (challenger.email === defender.unifiedAccount?.email) {
-      console.log(`🚫 Challenge blocked: ${challenger.firstName} ${challenger.lastName} cannot challenge themselves`);
+    if (sanitizedChallenger.email === sanitizedDefender.unifiedAccount?.email) {
+      console.log(`🚫 Challenge blocked: ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} cannot challenge themselves`);
       return false;
     }
     
     // Can't challenge if you're not active
-    if (!challenger.isActive) {
-      console.log(`🚫 Challenge blocked: ${challenger.firstName} ${challenger.lastName} is not active`);
+    if (!sanitizedChallenger.isActive) {
+      console.log(`🚫 Challenge blocked: ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} is not active`);
       return false;
     }
     
     // Can't challenge if defender is not active
-    if (!defender.isActive) {
-      console.log(`🚫 Challenge blocked: ${defender.firstName} ${defender.lastName} is not active`);
+    if (!sanitizedDefender.isActive) {
+      console.log(`🚫 Challenge blocked: ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} is not active`);
       return false;
     }
     
     // Can't challenge if defender has immunity
-    if (defender.immunityUntil && new Date(defender.immunityUntil) > new Date()) {
-      console.log(`🚫 Challenge blocked: ${defender.firstName} ${defender.lastName} has immunity until ${defender.immunityUntil}`);
+    if (sanitizedDefender.immunityUntil && new Date(sanitizedDefender.immunityUntil) > new Date()) {
+      console.log(`🚫 Challenge blocked: ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} has immunity until ${sanitizedDefender.immunityUntil}`);
       return false;
     }
     
     // Position-based challenge rules (following official rules):
     // - Standard Challenge: Can challenge players up to 4 positions above you
     // - SmackDown: Can challenge players no more than 5 positions below you
-    const challengerPosition = challenger.position;
-    const defenderPosition = defender.position;
+    const challengerPosition = sanitizeNumber(sanitizedChallenger.position);
+    const defenderPosition = sanitizeNumber(sanitizedDefender.position);
     const positionDifference = challengerPosition - defenderPosition;
     
     // Standard Challenge: Can challenge players above you (up to 4 positions)
     if (positionDifference >= -4 && positionDifference <= 0) {
-      console.log(`✅ Standard Challenge allowed: ${challenger.firstName} ${challenger.lastName} (Position ${challengerPosition}) can challenge ${defender.firstName} ${defender.lastName} (Position ${defenderPosition}) - ${Math.abs(positionDifference)} positions above`);
+      console.log(`✅ Standard Challenge allowed: ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} (Position ${challengerPosition}) can challenge ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} (Position ${defenderPosition}) - ${Math.abs(positionDifference)} positions above`);
       return true;
     }
     
     // SmackDown: Can challenge players below you (up to 5 positions)
     if (positionDifference > 0 && positionDifference <= 5) {
-      console.log(`✅ SmackDown allowed: ${challenger.firstName} ${challenger.lastName} (Position ${challengerPosition}) can challenge ${defender.firstName} ${defender.lastName} (Position ${defenderPosition}) - ${positionDifference} positions below`);
+      console.log(`✅ SmackDown allowed: ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} (Position ${challengerPosition}) can challenge ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} (Position ${defenderPosition}) - ${positionDifference} positions below`);
       return true;
     }
     
-    console.log(`🚫 Challenge blocked: ${challenger.firstName} ${challenger.lastName} (Position ${challengerPosition}) cannot challenge ${defender.firstName} ${defender.lastName} (Position ${defenderPosition}) - Position difference ${positionDifference} is outside allowed range (-4 to +5)`);
+    console.log(`🚫 Challenge blocked: ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} (Position ${challengerPosition}) cannot challenge ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} (Position ${defenderPosition}) - Position difference ${positionDifference} is outside allowed range (-4 to +5)`);
     return false;
   };
 
   // Helper function to get challenge reason (for debugging)
   const getChallengeReason = (challenger, defender) => {
-    if (!challenger.unifiedAccount?.hasUnifiedAccount || !defender.unifiedAccount?.hasUnifiedAccount) {
-      return 'No unified account';
+    try {
+      const sanitizedChallenger = sanitizePlayerData(challenger);
+      const sanitizedDefender = sanitizePlayerData(defender);
+      
+      if (!sanitizedChallenger.unifiedAccount?.hasUnifiedAccount || !sanitizedDefender.unifiedAccount?.hasUnifiedAccount) {
+        return 'No unified account';
+      }
+      if (sanitizedChallenger.email === sanitizedDefender.unifiedAccount?.email) {
+        return 'Same player';
+      }
+      if (!sanitizedChallenger.isActive) {
+        return 'Challenger inactive';
+      }
+      if (!sanitizedDefender.isActive) {
+        return 'Defender inactive';
+      }
+      if (sanitizedDefender.immunityUntil && new Date(sanitizedDefender.immunityUntil) > new Date()) {
+        return 'Defender immune';
+      }
+      
+      const challengerPosition = sanitizeNumber(sanitizedChallenger.position);
+      const defenderPosition = sanitizeNumber(sanitizedDefender.position);
+      const positionDifference = challengerPosition - defenderPosition;
+      
+      if (positionDifference < -4) {
+        return `Too far above (${Math.abs(positionDifference)} positions) - Max 4 positions above allowed`;
+      }
+      if (positionDifference > 5) {
+        return `Too far below (${positionDifference} positions) - Max 5 positions below allowed for SmackDown`;
+      }
+      
+      return 'Eligible';
+    } catch (error) {
+      console.error('Error in getChallengeReason:', error);
+      return 'Invalid data';
     }
-    if (challenger.email === defender.unifiedAccount?.email) {
-      return 'Same player';
-    }
-    if (!challenger.isActive) {
-      return 'Challenger inactive';
-    }
-    if (!defender.isActive) {
-      return 'Defender inactive';
-    }
-    if (defender.immunityUntil && new Date(defender.immunityUntil) > new Date()) {
-      return 'Defender immune';
-    }
-    
-    const challengerPosition = challenger.position;
-    const defenderPosition = defender.position;
-    const positionDifference = challengerPosition - defenderPosition;
-    
-    if (positionDifference < -4) {
-      return `Too far above (${Math.abs(positionDifference)} positions) - Max 4 positions above allowed`;
-    }
-    if (positionDifference > 5) {
-      return `Too far below (${positionDifference} positions) - Max 5 positions below allowed for SmackDown`;
-    }
-    
-    return 'Eligible';
   };
 
   // Challenge system functions
@@ -464,14 +646,19 @@ const LadderApp = ({
     
     try {
       // Load pending challenges (received)
-      const pendingResponse = await fetch(`${BACKEND_URL}/api/ladder/challenges/pending/${encodeURIComponent(senderEmail)}`);
+      const sanitizedEmail = sanitizeEmail(senderEmail);
+      const pendingResponse = await fetch(`${BACKEND_URL}/api/ladder/challenges/pending/${encodeURIComponent(sanitizedEmail)}`, {
+        headers: createSecureHeaders(userPin)
+      });
       if (pendingResponse.ok) {
         const pendingData = await pendingResponse.json();
         setPendingChallenges(pendingData);
       }
       
       // Load sent challenges
-      const sentResponse = await fetch(`${BACKEND_URL}/api/ladder/challenges/sent/${encodeURIComponent(senderEmail)}`);
+      const sentResponse = await fetch(`${BACKEND_URL}/api/ladder/challenges/sent/${encodeURIComponent(sanitizedEmail)}`, {
+        headers: createSecureHeaders(userPin)
+      });
       if (sentResponse.ok) {
         const sentData = await sentResponse.json();
         // Filter out admin-created challenges (entryFee: 0 and postContent contains 'Admin')
@@ -483,12 +670,14 @@ const LadderApp = ({
       }
       
       // Load scheduled matches (including admin-created ones)
-      const scheduledResponse = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${selectedLadder}/matches?status=scheduled`);
+      const scheduledResponse = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${sanitizeInput(selectedLadder)}/matches?status=scheduled`, {
+        headers: createSecureHeaders(userPin)
+      });
       if (scheduledResponse.ok) {
         const scheduledData = await scheduledResponse.json();
         // Filter to only show matches where the current user is a player
         const userScheduledMatches = scheduledData.matches?.filter(match => 
-          match.player1?.email === senderEmail || match.player2?.email === senderEmail
+          match.player1?.email === sanitizedEmail || match.player2?.email === sanitizedEmail
         ) || [];
         setScheduledMatches(userScheduledMatches);
       }
@@ -497,11 +686,11 @@ const LadderApp = ({
     }
   };
 
-  const handleChallengePlayer = (defender, type = 'challenge') => {
+  const handleChallengePlayer = useCallback((defender, type = 'challenge') => {
     setSelectedDefender(defender);
     setChallengeType(type);
     setShowChallengeModal(true);
-  };
+  }, []);
 
   // Helper function to determine player status
   const getPlayerStatus = (player) => {
@@ -536,7 +725,7 @@ const LadderApp = ({
     return { status: 'active', text: 'Active', className: 'active' };
   };
 
-  const handlePlayerClick = (player) => {
+  const handlePlayerClick = useCallback((player) => {
     console.log('🎯 Player clicked:', player);
     console.log('📊 Setting modal state...');
     setSelectedPlayerForStats(player);
@@ -545,7 +734,7 @@ const LadderApp = ({
     fetchLastMatchData(player);
     fetchPlayerMatchHistory(player);
     fetchUpdatedPlayerData(player);
-  };
+  }, []);
 
   const fetchLastMatchData = async (player) => {
     console.log('🔍 Fetching last match data for player:', player);
@@ -564,10 +753,13 @@ const LadderApp = ({
     console.log('🔍 Using email for last match:', emailToUse);
     
     try {
-      const url = `${BACKEND_URL}/api/ladder/matches/last-match/${encodeURIComponent(emailToUse)}`;
+      const sanitizedEmail = sanitizeEmail(emailToUse);
+      const url = `${BACKEND_URL}/api/ladder/matches/last-match/${encodeURIComponent(sanitizedEmail)}`;
       console.log('🔍 Last match API URL:', url);
       
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: createSecureHeaders(userPin)
+      });
       console.log('🔍 Last match response status:', response.status);
       
       if (response.ok) {
@@ -602,10 +794,13 @@ const LadderApp = ({
     console.log('🔍 Using email:', emailToUse);
     
     try {
-      const url = `${BACKEND_URL}/api/ladder/player/${encodeURIComponent(emailToUse)}/matches?limit=10`;
+      const sanitizedEmail = sanitizeEmail(emailToUse);
+      const url = `${BACKEND_URL}/api/ladder/player/${encodeURIComponent(sanitizedEmail)}/matches?limit=10`;
       console.log('🔍 API URL:', url);
       
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: createSecureHeaders(userPin)
+      });
       console.log('🔍 Response status:', response.status);
       
       if (response.ok) {
@@ -638,10 +833,13 @@ const LadderApp = ({
     
     try {
       // Fetch player data directly by email
-      const url = `${BACKEND_URL}/api/ladder/player/${encodeURIComponent(emailToUse)}`;
+      const sanitizedEmail = sanitizeEmail(emailToUse);
+      const url = `${BACKEND_URL}/api/ladder/player/${encodeURIComponent(sanitizedEmail)}`;
       console.log('🔍 Fetching player data from:', url);
       
-      const playerResponse = await fetch(url);
+      const playerResponse = await fetch(url, {
+        headers: createSecureHeaders(userPin)
+      });
       console.log('🔍 Player data response status:', playerResponse.status);
       
       if (playerResponse.ok) {
@@ -679,7 +877,10 @@ const LadderApp = ({
 
     try {
       setMatchesLoading(true);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/player/${encodeURIComponent(userLadderData.email)}/matches`);
+      const sanitizedEmail = sanitizeEmail(userLadderData.email);
+      const response = await fetch(`${BACKEND_URL}/api/ladder/player/${encodeURIComponent(sanitizedEmail)}/matches`, {
+        headers: createSecureHeaders(userPin)
+      });
       if (response.ok) {
         const matches = await response.json();
         setPlayerMatches(matches);
@@ -695,317 +896,68 @@ const LadderApp = ({
     }
   };
 
-  const handleSmartMatch = () => {
+  // Memoize available defenders for Smart Match
+  const availableDefenders = useMemo(() => {
+    return ladderData.filter(player => 
+      player.unifiedAccount?.hasUnifiedAccount && 
+      player.unifiedAccount?.email !== userLadderData?.email
+    );
+  }, [ladderData, userLadderData?.email]);
+
+  const handleSmartMatch = useCallback(() => {
     console.log('🧠 Smart Match clicked');
     console.log('📊 Current ladder data:', ladderData);
     console.log('👤 User ladder data:', userLadderData);
-    console.log('🎯 Available defenders:', ladderData.filter(player => player.unifiedAccount?.hasUnifiedAccount && player.unifiedAccount?.email !== userLadderData?.email));
+    console.log('🎯 Available defenders:', availableDefenders);
     setShowSmartMatchModal(true);
-  };
+  }, [ladderData, userLadderData, availableDefenders]);
 
-  const handleChallengeComplete = (result) => {
+  const handleChallengeComplete = useCallback((result) => {
     // Refresh challenges and ladder data
     loadChallenges();
     loadData();
-  };
+  }, []);
 
-  const handleChallengeResponse = (response, result) => {
+  const handleChallengeResponse = useCallback((response, result) => {
     // Refresh challenges and ladder data
     loadChallenges();
     loadData();
-  };
+  }, []);
 
-  const handleViewChallenge = (challenge) => {
+  const handleViewChallenge = useCallback((challenge) => {
     setSelectedChallenge(challenge);
     setShowChallengeConfirmModal(true);
-  };
+  }, []);
 
 
   const renderLadderView = () => {
-    const getLadderDisplayName = (ladderName) => {
-      switch (ladderName) {
-        case '499-under': return '499 & Under';
-        case '500-549': return '500-549';
-        case '550-plus': return '550+';
-        default: return ladderName;
-      }
-    };
-
     return (
       <div className="ladder-view">
-        <div className="ladder-header-section" style={{ position: 'relative' }}>
-          {/* Back to Ladder Home Button - Top Left */}
-          {!isPublicView && currentView !== 'main' && (
-            <button 
-              onClick={() => setCurrentView('main')}
-              style={{
-                position: 'absolute',
-                top: '5px',
-                left: '5px',
-                background: 'transparent',
-                color: '#8B5CF6',
-                border: '2px solid #8B5CF6',
-                borderRadius: '6px',
-                padding: '6px 12px',
-                fontSize: '0.8rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 8px rgba(139, 92, 246, 0.3)',
-                zIndex: 10
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = 'rgba(139, 92, 246, 0.1)';
-                e.target.style.transform = 'translateY(-1px)';
-                e.target.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'transparent';
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.3)';
-              }}
-            >
-              🏠 Back to Ladder Home
-            </button>
-          )}
-          
-          <h1 style={{ 
-            color: '#000000',
-            WebkitTextStroke: '0.5px #8B5CF6',
-            textShadow: '0 0 20px rgba(139, 92, 246, 0.8), 0 0 40px rgba(139, 92, 246, 0.6), 0 0 60px rgba(139, 92, 246, 0.4), 0 0 80px rgba(139, 92, 246, 0.2)',
-            fontWeight: 'bold',
-            fontSize: '3.5rem',
-            letterSpacing: '3px',
-            fontFamily: '"Bebas Neue", "Orbitron", "Exo 2", "Arial Black", sans-serif',
-            textTransform: 'uppercase',
-            marginBottom: '0rem'
-          }}>Ladder of Legends</h1>
-          <p style={{ marginBottom: '1.5rem', marginTop: '0rem', fontSize: '0.9rem' }}>Tournament Series</p>
-          
-          <h2 style={{ 
-            color: '#8B5CF6',
-            WebkitTextStroke: '1.5px #000000',
-            textShadow: '0 0 8px rgba(139, 92, 246, 0.7)',
-            fontWeight: 'bold',
-            letterSpacing: '2px',
-            textTransform: 'uppercase',
-            fontSize: '2rem',
-            marginBottom: '0.5rem',
-            fontFamily: '"Orbitron", "Exo 2", "Rajdhani", "Arial Black", sans-serif'
-          }}>{getLadderDisplayName(selectedLadder)}</h2>
-          <p style={{ fontSize: '0.9rem' }}>Current rankings and positions</p>
-          
-          {/* Ladder Selector */}
-          <div className="ladder-selector" style={{
-            marginTop: '1rem',
-            padding: '1rem',
-            background: 'rgba(0, 0, 0, 0.3)',
-            borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            display: 'flex',
-            gap: '1rem',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexWrap: 'wrap'
-          }}>
-            <label style={{ 
-              color: '#fff', 
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-              fontSize: '0.9rem'
-            }}>Select Ladder:</label>
-            <select 
-              value={selectedLadder} 
-              onChange={(e) => {
-                setSelectedLadder(e.target.value);
-                setHasManuallySelectedLadder(true);
-              }}
-              style={{
-                background: 'rgba(0, 0, 0, 0.8)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                color: 'white',
-                padding: '0.5rem 0.8rem',
-                borderRadius: '8px',
-                fontSize: '0.9rem',
-                cursor: 'pointer',
-                minWidth: '120px',
-                flexShrink: 0
-              }}
-            >
-              <option value="499-under">499 & Under</option>
-              <option value="500-549">500-549</option>
-              <option value="550-plus">550+</option>
-            </select>
-          </div>
-        </div>
+        <LadderErrorBoundary>
+          <LadderHeader 
+            selectedLadder={selectedLadder}
+            setSelectedLadder={setSelectedLadder}
+            setHasManuallySelectedLadder={setHasManuallySelectedLadder}
+            currentView={currentView}
+            setCurrentView={setCurrentView}
+            isPublicView={isPublicView}
+          />
+        </LadderErrorBoundary>
         
-        {/* Ladder Table Modal Container */}
-        <div className="ladder-table-modal">
-          <div className={`ladder-table ${!isPublicView ? 'logged-in-view' : ''}`} style={{ position: 'relative' }}>
-           <div className="table-header">
-             <div className="header-cell">Rank</div>
-             <div className="header-cell" style={{ paddingLeft: '40px' }}>Player</div>
-             <div className="header-cell">FargoRate</div>
-             <div className="header-cell">W</div>
-             <div className="header-cell">L</div>
-             <div className="header-cell">Status</div>
-             {!isPublicView && <div className="header-cell" style={{ whiteSpace: 'nowrap', wordBreak: 'keep-all', paddingLeft: '140px' }}>Last Match</div>}
-           </div>
-           
-           {ladderData.map((player, index) => (
-             <div key={player._id || index} className="table-row">
-               <div className="table-cell rank">#{player.position}</div>
-               <div className="table-cell name">
-                 <div 
-                   className="player-name-clickable"
-                   onClick={() => handlePlayerClick(player)}
-                 >
-                   {player.firstName} {player.lastName}
-                   {!isPublicView && !player.unifiedAccount?.hasUnifiedAccount && <span className="no-account">*</span>}
-                 </div>
-                 
-                 {/* Claim Button - Show for positions that need claiming (only when not in public view) */}
-                 {!isPublicView && onClaimLadderPosition && !player.unifiedAccount?.hasUnifiedAccount && !isPositionClaimed({
-                   ladder: selectedLadder,
-                   position: player.position
-                 }) && (
-                   <div style={{
-                     display: 'inline-block',
-                     width: 'fit-content',
-                     flexShrink: '0'
-                   }}>
-                     <button
-                       className="compact-claim-btn"
-                       onClick={() => onClaimLadderPosition({
-                         firstName: player.firstName,
-                         lastName: player.lastName,
-                         fargoRate: player.fargoRate,
-                         ladder: selectedLadder,
-                         position: player.position
-                       })}
-                     >
-                       🎯 Claim
-                     </button>
-                   </div>
-                 )}
-                 
-                 {/* Show claimed status for positions that have been claimed (only when not in public view) */}
-                 {!isPublicView && isPositionClaimed({
-                   ladder: selectedLadder,
-                   position: player.position
-                 }) && (
-                   <div style={{
-                     display: 'inline-block',
-                     width: 'fit-content',
-                     flexShrink: '0'
-                   }}>
-                     <div style={{
-                       background: '#4CAF50',
-                       color: 'white',
-                       borderRadius: '1px',
-                       padding: '0px',
-                       fontSize: '0.6rem',
-                       marginTop: '0px',
-                       fontWeight: '400',
-                       textAlign: 'center',
-                       height: '12px',
-                       lineHeight: '12px',
-                       display: 'block',
-                       whiteSpace: 'nowrap',
-                       width: '45px',
-                       boxSizing: 'border-box',
-                       overflow: 'hidden'
-                     }}>
-                       ✅ Claimed
-                     </div>
-                   </div>
-                 )}
-                 
-                 {userLadderData?.canChallenge && (
-                   <div style={{ marginTop: '4px' }}>
-                     {canChallengePlayer(userLadderData, player) ? (
-                       <>
-                         <button
-                           onClick={() => handleChallengePlayer(player, 'challenge')}
-                           style={{
-                             background: '#ff4444',
-                             color: 'white',
-                             border: 'none',
-                             borderRadius: '4px',
-                             padding: '2px 6px',
-                             fontSize: '0.7rem',
-                             cursor: 'pointer',
-                             marginRight: '4px'
-                           }}
-                         >
-                           Challenge
-                         </button>
-                         <button
-                           onClick={() => handleChallengePlayer(player, 'smackdown')}
-                           style={{
-                             background: '#f59e0b',
-                             color: 'white',
-                             border: 'none',
-                             borderRadius: '4px',
-                             padding: '2px 6px',
-                             fontSize: '0.7rem',
-                             cursor: 'pointer'
-                           }}
-                         >
-                           SmackDown
-                         </button>
-                       </>
-                     ) : (
-                       <div style={{
-                         fontSize: '0.6rem',
-                         color: '#888',
-                         fontStyle: 'italic',
-                         marginTop: '2px'
-                       }}>
-                         {getChallengeReason(userLadderData, player)}
-                       </div>
-                     )}
-                   </div>
-                 )}
-               </div>
-               <div className="table-cell fargo">{player.fargoRate === 0 ? "No FargoRate" : player.fargoRate}</div>
-               <div className="table-cell wins">{player.wins || 0}</div>
-               <div className="table-cell losses">{player.losses || 0}</div>
-               <div className="table-cell status">
-                 {(() => {
-                   const playerStatus = getPlayerStatus(player);
-                   return <span className={playerStatus.className}>{playerStatus.text}</span>;
-                 })()}
-               </div>
-               {!isPublicView && (
-                 <div className="table-cell last-match">
-                   {player.lastMatch ? (
-                     <div style={{ fontSize: '0.8rem', lineHeight: '1.2' }}>
-                       <div style={{ fontWeight: 'bold', color: player.lastMatch.result === 'W' ? '#4CAF50' : '#f44336' }}>
-                         {player.lastMatch.result === 'W' ? 'W' : 'L'} vs {player.lastMatch.opponent}
-                       </div>
-                       <div style={{ color: '#666', fontSize: '0.7rem' }}>
-                         {new Date(player.lastMatch.date).toLocaleDateString()}
-                       </div>
-                       {player.lastMatch.venue && (
-                         <div style={{ color: '#888', fontSize: '0.65rem' }}>
-                           {player.lastMatch.venue}
-                         </div>
-                       )}
-                     </div>
-                   ) : (
-                     <span style={{ color: '#999', fontSize: '0.8rem' }}>No matches</span>
-                   )}
-                 </div>
-               )}
-             </div>
-           ))}
-
-           
-         </div>
-        </div> {/* End ladder-table-modal */}
-        
+        <LadderErrorBoundary>
+          <LadderTable
+            ladderData={ladderData}
+            isPublicView={isPublicView}
+            userLadderData={userLadderData}
+            canChallengePlayer={canChallengePlayer}
+            getChallengeReason={getChallengeReason}
+            handleChallengePlayer={handleChallengePlayer}
+            handlePlayerClick={handlePlayerClick}
+            getPlayerStatus={getPlayerStatus}
+            isPositionClaimed={isPositionClaimed}
+            selectedLadder={selectedLadder}
+          />
+        </LadderErrorBoundary>
         
         {!isPublicView && (
           <button onClick={() => setCurrentView('main')} className="back-btn">
@@ -1421,234 +1373,31 @@ const LadderApp = ({
   const renderMainView = () => {
     return (
       <>
+        <LadderErrorBoundary>
+          <UserStatusCard 
+            userLadderData={userLadderData}
+            setShowUnifiedSignup={setShowUnifiedSignup}
+            isAdmin={isAdmin}
+          />
+        </LadderErrorBoundary>
 
-        {/* User Status Card */}
-        <div className="user-status-card">
-          <div className="status-info">
-            <h3>Your Ladder Status</h3>
-            <div className="status-details">
-              <div className="status-item">
-                <span className="label">Ladder:</span>
-                <span className="value">
-                  {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? 'None' :
-                   userLadderData?.ladder === '499-under' ? '499 & Under' : 
-                   userLadderData?.ladder === '500-549' ? '500-549' : 
-                   userLadderData?.ladder === '550+' ? '550+' : 'None'}
-                </span>
-              </div>
-              <div className="status-item">
-                <span className="label">Position:</span>
-                <span className="value">
-                  {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? 'Not on ladder' :
-                   userLadderData?.position || 'Not on ladder'}
-                </span>
-              </div>
-              <div className="status-item">
-                <span className="label">FargoRate:</span>
-                <span className="value">
-                  {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? 'N/A' :
-                   userLadderData?.fargoRate === 0 ? "No FargoRate" : userLadderData?.fargoRate || 'N/A'}
-                </span>
-              </div>
-              {userLadderData?.immunityUntil && (
-                <div className="status-item immunity">
-                  <span className="label">Immunity Until:</span>
-                  <span className="value">{new Date(userLadderData.immunityUntil).toLocaleDateString()}</span>
-                </div>
-              )}
-              {userLadderData?.playerId === 'ladder' && (
-                <div className="status-item payment-status">
-                  <span className="label">Challenge Access:</span>
-                  <span 
-                    className="value" 
-                    style={{ color: '#ffc107', cursor: 'pointer' }}
-                    onClick={async () => {
-                      const paymentStatus = await checkPaymentStatus(userLadderData.email);
-                      if (paymentStatus.isCurrent) {
-                        alert(`✅ Payment Current!\n\nYour $5/month subscription is active.\nYou can participate in challenges and defenses.`);
-                      } else {
-                        showPaymentRequiredModal(
-                          () => navigate('/'),
-                          () => console.log('User cancelled payment')
-                        );
-                      }
-                    }}
-                  >
-                    💳 Payment Required - Click to verify status
-                  </span>
-                </div>
-              )}
-              {userLadderData?.needsClaim && !isAdmin && (
-                <div 
-                  className="status-item claim-notice"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setShowUnifiedSignup(true)}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(33, 150, 243, 0.1)';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = '';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  <span className="label">Account Status:</span>
-                  <span className="value" style={{ color: '#2196F3' }}>Not Active - Click to join ladder</span>
-                </div>
-              )}
-              {userLadderData?.playerId === 'unknown' && (
-                <div 
-                  className="status-item unknown-notice"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setShowUnifiedSignup(true)}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 193, 7, 0.1)';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = '';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  <span className="label">Account Status:</span>
-                  <span className="value" style={{ color: '#ffc107' }}>Not Active - Click to join ladder</span>
-                </div>
-              )}
-            </div>
-            
-             
-          </div>
-        </div>
-
-                 {/* Main Navigation */}
-         <div className="ladder-navigation">
-           <div className="nav-grid">
-             {!isPublicView && (
-               <>
-                 <div className="nav-card" onClick={() => navigateToView('ladders')}>
-                   <div className="nav-icon">📊</div>
-                   <h3>View Ladders</h3>
-                   <p>See all ladder positions and rankings</p>
-                 </div>
-                 
-                 {userLadderData?.canChallenge && (
-               <>
-                 <div className="nav-card" onClick={handleSmartMatch}>
-                   <div className="nav-icon">🧠</div>
-                   <h3>Smart Match</h3>
-                   <p>AI-powered challenge suggestions</p>
-                 </div>
-                 
-                 <div className="nav-card" onClick={() => setCurrentView('challenges')}>
-                   <div className="nav-icon">⚔️</div>
-                   <h3>My Challenges</h3>
-                   <p>Manage your challenges and responses</p>
-                   {pendingChallenges.length > 0 && (
-                     <div style={{
-                       position: 'absolute',
-                       top: '-8px',
-                       right: '-8px',
-                       background: '#ff4444',
-                       color: 'white',
-                       borderRadius: '50%',
-                       width: '24px',
-                       height: '24px',
-                       display: 'flex',
-                       alignItems: 'center',
-                       justifyContent: 'center',
-                       fontSize: '0.8rem',
-                       fontWeight: 'bold'
-                     }}>
-                       {pendingChallenges.length}
-                     </div>
-                   )}
-                 </div>
-                   </>
-                 )}
-               </>
-             )}
-             
-             {!isPublicView && (
-               <div className="nav-card" onClick={() => setShowMatchReportingModal(true)}>
-                 <div className="nav-icon">🏓</div>
-                 <h3>Report Match</h3>
-                 <p>Report match results and pay fees</p>
-               </div>
-             )}
-             
-             {!isPublicView && userLadderData?.playerId === 'ladder' && (
-               <div className="nav-card" onClick={() => navigateToView('matches')}>
-                 <div className="nav-icon">🎯</div>
-                 <h3>My Completed Matches</h3>
-                 <p>View your completed match history</p>
-               </div>
-             )}
-             
-             <div className="nav-card" onClick={() => setShowPaymentDashboard(true)}>
-               <div className="nav-icon">💳</div>
-               <h3>Payment Dashboard</h3>
-               <p>Manage credits, membership, and payments</p>
-             </div>
-             
-             <div className="nav-card" onClick={() => setShowPrizePoolModal(true)}>
-               <div className="nav-icon">💰</div>
-               <h3>Prize Pools</h3>
-               <p>View current prize pools and winners</p>
-             </div>
-             
-             {!userLadderData?.canChallenge && userLadderData?.playerId !== 'guest' && (
-               <div className="nav-card" style={{ 
-                 background: 'rgba(255, 193, 7, 0.1)', 
-                 border: '1px solid rgba(255, 193, 7, 0.3)',
-                 cursor: 'default'
-               }}>
-                 <div className="nav-icon">🔒</div>
-                 <h3>Challenge Features</h3>
-                 <p>Login to access Smart Match and challenge other players</p>
-                 <button 
-                   onClick={() => setShowUnifiedSignup(true)}
-                   style={{
-                     background: '#ff4444',
-                     color: 'white',
-                     border: 'none',
-                     borderRadius: '6px',
-                     padding: '8px 16px',
-                     marginTop: '8px',
-                     cursor: 'pointer',
-                     fontSize: '0.9rem'
-                   }}
-                 >
-                   Login Now
-                 </button>
-               </div>
-             )}
-             
-             
-             <div className="nav-card" onClick={() => setShowRulesModal(true)}>
-               <div className="nav-icon">📋</div>
-               <h3>Ladder Rules</h3>
-               <p>Read the complete ladder rules</p>
-             </div>
-             
-
-             
-             {/* Admin Buttons */}
-             {isAdmin && (
-               <>
-                 <div className="nav-card admin-card" onClick={() => setShowApplicationsManager(true)}>
-                   <div className="nav-icon">📋</div>
-                   <h3>Applications</h3>
-                   <p>Review ladder signup applications</p>
-                 </div>
-                 <div className="nav-card admin-card" onClick={() => navigate('/ladder/admin')}>
-                   <div className="nav-icon">⚙️</div>
-                   <h3>Ladder Admin</h3>
-                   <p>Manage ladder players and settings</p>
-                 </div>
-               </>
-             )}
-           </div>
-         </div>
+        <LadderErrorBoundary>
+          <NavigationMenu
+            isPublicView={isPublicView}
+            navigateToView={navigateToView}
+            userLadderData={userLadderData}
+            handleSmartMatch={handleSmartMatch}
+            setCurrentView={setCurrentView}
+            pendingChallenges={pendingChallenges}
+            setShowMatchReportingModal={setShowMatchReportingModal}
+            setShowPaymentDashboard={setShowPaymentDashboard}
+            setShowPrizePoolModal={setShowPrizePoolModal}
+            setShowUnifiedSignup={setShowUnifiedSignup}
+            setShowRulesModal={setShowRulesModal}
+            isAdmin={isAdmin}
+            setShowApplicationsManager={setShowApplicationsManager}
+          />
+        </LadderErrorBoundary>
       </>
     );
   };
@@ -1713,7 +1462,7 @@ const LadderApp = ({
 
       {/* Ladder Legend - Above Footer */}
       <div className="ladder-legend">
-        {!isPublicView && <p><span className="no-account">*</span> = No unified account yet</p>}
+        {!isPublicView && <p><span className="no-account">*</span> = Complete profile verification and subscribe for full ladder access</p>}
         <p><strong>🏆 Welcome to the Ladder of Legends!</strong></p>
         <p>This is a competitive pool ladder system where players challenge each other to climb the ranks. Players are organized by skill level (FargoRate) into three brackets: 499 & Under, 500-549, and 550+.</p>
         <p><strong>How to Join:</strong> Visit <a href="https://frontrangepool.com" style={{color: '#ffc107', textDecoration: 'underline'}}>FrontRangePool.com</a> to create your account and start competing!</p>
@@ -1794,19 +1543,96 @@ const LadderApp = ({
              window.location.reload();
            }}
            userContext={{
-             isLeaguePlayer: userLadderData?.needsClaim || false,
-             isUnknownUser: userLadderData?.playerId === 'unknown',
+             isLadderPlayer: true,
+             isLeaguePlayer: false,
+             isUnknownUser: false,
              currentEmail: senderEmail,
              currentName: playerName ? `${playerName} ${playerLastName}` : null,
-             purpose: userLadderData?.needsClaim ? 'ladder_access' : 'new_membership',
-             leagueInfo: userLadderData?.leagueInfo || null,
+             purpose: 'profile_verification',
+             requiresEmailVerification: true,
+             ladderInfo: {
+               firstName: selectedPlayerForStats?.firstName || playerName,
+               lastName: selectedPlayerForStats?.lastName || playerLastName,
+               position: selectedPlayerForStats?.position,
+               fargoRate: selectedPlayerForStats?.fargoRate,
+               ladder: selectedLadder,
+               currentEmail: selectedPlayerForStats?.email || senderEmail
+             },
              prefillData: {
-               firstName: playerName || '',
-               lastName: playerLastName || '',
-               email: senderEmail || ''
+               firstName: selectedPlayerForStats?.firstName || playerName || '',
+               lastName: selectedPlayerForStats?.lastName || playerLastName || '',
+               email: selectedPlayerForStats?.email || senderEmail || '',
+               fargoRate: selectedPlayerForStats?.fargoRate || ''
              }
            }}
          />
+       )}
+
+       {/* Profile Completion Prompt */}
+       {showProfileCompletionPrompt && (
+         <div style={{
+           position: 'fixed',
+           top: 0,
+           left: 0,
+           right: 0,
+           bottom: 0,
+           background: 'rgba(0, 0, 0, 0.8)',
+           display: 'flex',
+           alignItems: 'center',
+           justifyContent: 'center',
+           zIndex: 99999,
+           padding: '20px'
+         }}>
+           <div style={{
+             background: 'white',
+             borderRadius: '12px',
+             padding: '30px',
+             maxWidth: '500px',
+             width: '100%',
+             textAlign: 'center',
+             boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+           }}>
+             <h2 style={{ margin: '0 0 16px 0', color: '#333' }}>
+               📝 Complete Your Profile
+             </h2>
+             <p style={{ margin: '0 0 24px 0', color: '#666', lineHeight: '1.5' }}>
+               Please complete your profile with contact information, availability, and preferred locations to get full ladder access.
+             </p>
+             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+               <button
+                 onClick={() => setShowProfileCompletionPrompt(false)}
+                 style={{
+                   padding: '12px 24px',
+                   border: '1px solid #ddd',
+                   borderRadius: '6px',
+                   background: '#f5f5f5',
+                   cursor: 'pointer',
+                   fontSize: '14px'
+                 }}
+               >
+                 Later
+               </button>
+               <button
+                 onClick={() => {
+                   setShowProfileCompletionPrompt(false);
+                   setShowUnifiedSignup(true);
+                 }}
+                 style={{
+                   padding: '12px 24px',
+                   border: 'none',
+                   borderRadius: '6px',
+                   background: '#4CAF50',
+                   color: 'white',
+                   cursor: 'pointer',
+                   fontSize: '14px',
+                   fontWeight: 'bold'
+                 }}
+               >
+                 Complete Profile
+               </button>
+             </div>
+           </div>
+         </div>
        )}
 
                {/* Applications Manager Modal */}
@@ -1850,7 +1676,7 @@ const LadderApp = ({
            isOpen={showSmartMatchModal}
            onClose={() => setShowSmartMatchModal(false)}
            challenger={userLadderData}
-           availableDefenders={ladderData.filter(player => player.unifiedAccount?.hasUnifiedAccount && player.unifiedAccount?.email !== userLadderData?.email)}
+           availableDefenders={availableDefenders}
            onChallengeComplete={handleChallengeComplete}
          />
        )}
@@ -1885,406 +1711,37 @@ const LadderApp = ({
           />
         )}
 
-        {/* Player Stats Modal - Rendered via Portal */}
-        {showMobilePlayerStats && selectedPlayerForStats && createPortal(
-          <div 
-            className="player-stats-modal"
-            style={{
-              position: 'fixed',
-              top: '0',
-              left: '0',
-              right: '0',
-              bottom: '0',
-              width: '100vw',
-              height: '100vh',
-              background: 'rgba(0, 0, 0, 0.8)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 99999,
-              backdropFilter: 'blur(5px)',
-              padding: '10px',
-              boxSizing: 'border-box',
-              overflow: 'hidden',
-              transform: 'none'
-            }}
-          >
-            <div 
-              className="player-stats-content"
-              style={{
-                background: 'rgba(35, 35, 42, 0.16)',
-                borderRadius: '18px',
-                maxWidth: '95vw',
-                width: window.innerWidth <= 768 ? '320px' : '600px',
-                maxHeight: '85vh',
-                overflowY: 'auto',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                boxShadow: '0 4px 32px #e53e3e22, 0 0 16px #e53e3e11',
-                boxSizing: 'border-box',
-                position: 'relative'
-              }}
-            >
-              <div className="player-stats-header">
-                <h3>{selectedPlayerForStats.firstName} {selectedPlayerForStats.lastName}</h3>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <button
-                    onClick={() => {
-                      console.log('🔄 Refreshing player data...');
-                      fetchUpdatedPlayerData(selectedPlayerForStats);
-                    }}
-                    style={{
-                      background: 'rgba(255, 68, 68, 0.2)',
-                      border: '1px solid #ff4444',
-                      color: '#ff4444',
-                      padding: '5px 10px',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      cursor: 'pointer'
-                    }}
-                    title="Refresh player stats"
-                  >
-                    🔄
-                  </button>
-                <button 
-                  className="stats-close-btn"
-                  onClick={() => setShowMobilePlayerStats(false)}
-                >
-                  ×
-                </button>
-                </div>
-              </div>
-              
-              <div className="player-stats-body">
-                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                  {/* Left Column - Basic Stats */}
-                  <div style={{ flex: '1', minWidth: '200px' }}>
-                <div className="stats-grid">
-                  <div className="stat-item">
-                    <div className="stat-label">Rank</div>
-                        <div className="stat-value">#{(updatedPlayerData || selectedPlayerForStats).position}</div>
-                  </div>
-                  
-                  <div className="stat-item">
-                    <div className="stat-label">FargoRate</div>
-                    <div className="stat-value">
-                          {(updatedPlayerData || selectedPlayerForStats).fargoRate === 0 ? "No FargoRate" : (updatedPlayerData || selectedPlayerForStats).fargoRate}
-                    </div>
-                  </div>
-                  
-                  <div className="stat-item">
-                    <div className="stat-label">Wins</div>
-                        <div className="stat-value wins">
-                          {(() => {
-                            const playerData = updatedPlayerData || selectedPlayerForStats;
-                            console.log('🔍 Displaying wins for player:', playerData.firstName, playerData.lastName, 'wins:', playerData.wins);
-                            return playerData.wins || 0;
-                          })()}
-                        </div>
-                  </div>
-                  
-                  <div className="stat-item">
-                    <div className="stat-label">Losses</div>
-                        <div className="stat-value losses">
-                          {(() => {
-                            const playerData = updatedPlayerData || selectedPlayerForStats;
-                            console.log('🔍 Displaying losses for player:', playerData.firstName, playerData.lastName, 'losses:', playerData.losses);
-                            return playerData.losses || 0;
-                          })()}
-                        </div>
-                  </div>
-                  
-                  <div className="stat-item">
-                    <div className="stat-label">Status</div>
-                    <div className="stat-value status">
-                      {(() => {
-                        const playerStatus = getPlayerStatus(selectedPlayerForStats);
-                        return <span className={playerStatus.className}>{playerStatus.text}</span>;
-                      })()}
-                    </div>
-                  </div>
-                  
-                  {selectedPlayerForStats.immunityUntil && new Date(selectedPlayerForStats.immunityUntil) > new Date() && (
-                    <div className="stat-item">
-                      <div className="stat-label">Immunity Until</div>
-                      <div className="stat-value">
-                        {new Date(selectedPlayerForStats.immunityUntil).toLocaleDateString()}
-                      </div>
-                    </div>
-                  )}
-                    </div>
-                  </div>
-                  
-                  {/* Right Column - Match History */}
-                  <div style={{ flex: '1', minWidth: '200px' }}>
-                  
-                                     <div className="stat-item">
-                     <div className="stat-label">Last Match</div>
-                     <div className="stat-value">
-                       {lastMatchData ? (
-                         <div className="last-match-info">
-                           <div className="match-opponent">
-                             vs {lastMatchData.opponentName}
-                           </div>
-                           <div className={`match-result ${lastMatchData.result === 'W' ? 'win' : 'loss'}`}>
-                             {lastMatchData.result === 'W' ? 'Won' : 'Lost'} {lastMatchData.score}
-                           </div>
-                           <div className="match-type">
-                             {lastMatchData.matchType === 'challenge' ? 'Challenge Match' :
-                              lastMatchData.matchType === 'ladder-jump' ? 'Ladder Jump' :
-                              lastMatchData.matchType === 'smackdown' ? 'SmackDown' :
-                              lastMatchData.matchType === 'smackback' ? 'SmackBack' :
-                              lastMatchData.matchType}
-                           </div>
-                           <div className="player-role">
-                             {lastMatchData.playerRole === 'challenger' ? 'Challenger' :
-                              lastMatchData.playerRole === 'defender' ? 'Defender' :
-                              'Player'}
-                           </div>
-                           <div className="match-date">
-                             {new Date(lastMatchData.matchDate).toLocaleDateString()}
-                           </div>
-                         </div>
-                       ) : (
-                         <span className="no-match">No recent matches</span>
-                       )}
-                     </div>
-                   </div>
-                   
-                   {/* Match History Section */}
-                   <div className="stat-item">
-                     <div className="stat-label">Match History</div>
-                     <div className="stat-value">
-                       {playerMatchHistory.length > 1 ? (
-                         <div className="match-history-list" style={{ maxHeight: '150px', overflowY: 'auto' }}>
-                           {/* Show previous 2 matches (skip the first one since it's shown in Last Match) */}
-                           {playerMatchHistory.slice(1, 3).map((match, index) => (
-                             <div key={index} className="match-history-item" style={{ 
-                               padding: '6px', 
-                               borderBottom: '1px solid rgba(255,255,255,0.1)', 
-                               fontSize: '11px',
-                               marginBottom: '2px'
-                             }}>
-                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                 <span className={`match-result ${match.result === 'W' ? 'win' : 'loss'}`}>
-                                   {match.result === 'W' ? 'W' : 'L'}
-                                 </span>
-                                 <span style={{ color: '#ccc' }}>
-                                   vs {match.opponentName}
-                                 </span>
-                                 <span style={{ color: '#888', fontSize: '10px' }}>
-                                   {new Date(match.matchDate).toLocaleDateString()}
-                                 </span>
-                               </div>
-                               <div style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>
-                                 {match.score} • {match.matchType}
-                               </div>
-                             </div>
-                           ))}
-                           
-                           {/* Show More button if there are more than 3 total matches */}
-                           {playerMatchHistory.length > 3 && (
-                             <div style={{ textAlign: 'center', padding: '8px' }}>
-                               <button 
-                                 onClick={() => {
-                                   console.log('🔍 Show More button clicked! Setting showFullMatchHistory to true');
-                                   console.log('🔍 Current showFullMatchHistory state:', showFullMatchHistory);
-                                   setShowMobilePlayerStats(false); // Close the player stats modal
-                                   setShowFullMatchHistory(true);
-                                   console.log('🔍 After setting showFullMatchHistory to true');
-                                 }}
-                                 style={{
-                                   background: 'rgba(255, 68, 68, 0.2)',
-                                   border: '1px solid #ff4444',
-                                   color: '#ff4444',
-                                   padding: '4px 8px',
-                                   borderRadius: '4px',
-                                   fontSize: '10px',
-                                   cursor: 'pointer'
-                                 }}
-                               >
-                                 Show More ({playerMatchHistory.length - 3} more)
-                               </button>
-                             </div>
-                           )}
-                         </div>
-                       ) : playerMatchHistory.length === 1 ? (
-                         <span className="no-match">No previous matches</span>
-                       ) : (
-                         <span className="no-match">No match history</span>
-                       )}
-                     </div>
-                   </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+        <LadderErrorBoundary>
+          <PlayerStatsModal
+            showMobilePlayerStats={showMobilePlayerStats}
+            selectedPlayerForStats={selectedPlayerForStats}
+            setShowMobilePlayerStats={setShowMobilePlayerStats}
+            updatedPlayerData={updatedPlayerData}
+            lastMatchData={lastMatchData}
+            playerMatchHistory={playerMatchHistory}
+            showFullMatchHistory={showFullMatchHistory}
+            setShowFullMatchHistory={setShowFullMatchHistory}
+            getPlayerStatus={getPlayerStatus}
+            fetchUpdatedPlayerData={fetchUpdatedPlayerData}
+            setShowUnifiedSignup={setShowUnifiedSignup}
+            isPublicView={isPublicView}
+          />
+        </LadderErrorBoundary>
 
-        {/* Full Match History Modal */}
-        {showFullMatchHistory && selectedPlayerForStats && (() => {
-          console.log('🔍 Rendering Full Match History Modal');
-          console.log('🔍 showFullMatchHistory:', showFullMatchHistory);
-          console.log('🔍 selectedPlayerForStats:', selectedPlayerForStats);
-          console.log('🔍 isPublicView:', isPublicView);
-          
-          const modalContent = (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.9)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 999999,
-            padding: '20px',
-            backdropFilter: 'blur(10px)'
-          }}>
-            <div style={{
-              background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',
-              border: '2px solid #8B5CF6',
-              borderRadius: '12px',
-              width: 'auto',
-              maxWidth: '500px',
-              minWidth: '400px',
-              maxHeight: '80vh',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-              color: '#ffffff'
-            }}>
-              {/* Header */}
-              <div style={{
-                padding: '20px',
-                borderBottom: '1px solid #ff4444',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <h2 style={{ color: '#ff4444', margin: 0 }}>
-                  🏆 {selectedPlayerForStats.firstName} {selectedPlayerForStats.lastName} - Full Match History
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowFullMatchHistory(false);
-                    setShowMobilePlayerStats(true); // Reopen the player stats modal
-                  }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#ff4444',
-                    fontSize: '24px',
-                    cursor: 'pointer',
-                    padding: '5px'
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-
-              {/* Content */}
-              <div style={{
-                flex: 1,
-                overflowY: 'auto',
-                padding: '20px'
-              }}>
-                {playerMatchHistory.length > 0 ? (
-                  <div style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '8px',
-                    overflow: 'hidden'
-                  }}>
-                    {playerMatchHistory.map((match, index) => {
-                      console.log('🔍 Match data:', match);
-                      console.log('🔍 Match location:', match.location);
-                      console.log('🔍 Match positionBefore:', match.positionBefore);
-                      console.log('🔍 Match positionAfter:', match.positionAfter);
-                      console.log('🔍 All match keys:', Object.keys(match));
-                      console.log('🔍 Match venue (raw):', match.venue);
-                      console.log('🔍 Match player1OldPosition (raw):', match.player1OldPosition);
-                      console.log('🔍 Match player1NewPosition (raw):', match.player1NewPosition);
-                      return (
-                      <div key={index} style={{
-                        padding: '15px',
-                        borderBottom: index < playerMatchHistory.length - 1 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '15px'
-                      }}>
-                        {/* Left Column - WIN/LOSS Result */}
-                        <div style={{ minWidth: '60px' }}>
-                          <span style={{
-                            background: match.result === 'W' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                            color: match.result === 'W' ? '#22c55e' : '#ef4444',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            display: 'block',
-                            textAlign: 'center'
-                          }}>
-                            {match.result === 'W' ? 'WIN' : 'LOSS'}
-                          </span>
-                        </div>
-                        
-                        {/* Second Column - Opponent Name */}
-                        <div style={{ minWidth: '120px' }}>
-                          <div style={{ color: '#fff', fontWeight: 'bold' }}>
-                            vs {match.opponentName}
-                          </div>
-                        </div>
-                        
-                        {/* Third Column - Match Details */}
-                        <div style={{ flex: 1, textAlign: 'center' }}>
-                          <div style={{ color: '#ccc', fontSize: '15px', marginBottom: '3px' }}>
-                            {match.score} • {match.matchType} • {match.playerRole}
-                          </div>
-                          <div style={{ color: '#999', fontSize: '13px' }}>
-                            {match.location || 'Location TBD'} • Pos {match.positionBefore || '?'} → {match.positionAfter || '?'}
-                          </div>
-                        </div>
-                        
-                        {/* Right Column - Date */}
-                        <div style={{ minWidth: '80px', textAlign: 'right' }}>
-                          <div style={{ color: '#888', fontSize: '12px' }}>
-                            {new Date(match.matchDate).toLocaleDateString()}
-                          </div>
-                        </div>
-                      </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div style={{
-                    textAlign: 'center',
-                    color: '#ccc',
-                    padding: '40px',
-                    fontSize: '16px'
-                  }}>
-                    No match history available
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          );
-          
-          // For public view (embedded), render inline; for regular view, use portal
-          if (isPublicView) {
-            return modalContent;
-          } else {
-            return createPortal(modalContent, document.body);
-          }
-        })()}
+        <LadderErrorBoundary>
+          <FullMatchHistoryModal
+            showFullMatchHistory={showFullMatchHistory}
+            selectedPlayerForStats={selectedPlayerForStats}
+            setShowFullMatchHistory={setShowFullMatchHistory}
+            setShowMobilePlayerStats={setShowMobilePlayerStats}
+            playerMatchHistory={playerMatchHistory}
+            isPublicView={isPublicView}
+          />
+        </LadderErrorBoundary>
 
         
      </div>
    );
- };
+};
 
 export default LadderApp;

@@ -410,6 +410,13 @@ function AppContent() {
     localStorage.removeItem("isAuthenticated");
   };
 
+  // --- Ladder position claim handler ---
+  const handleClaimLadderPosition = (ladderPosition) => {
+    console.log('Claiming ladder position:', ladderPosition);
+    // The UnifiedSignupForm in LadderApp will handle the claim process
+    // This function is kept for compatibility but the actual work is done in LadderApp
+  };
+
   // --- Main Router ---
   
   // Special case: If we're on the embed route, render ONLY the embed component
@@ -537,6 +544,7 @@ function AppContent() {
                           userPin={userPin}
                           isAdmin={isAdminState}
                           userType={userType}
+                          onClaimLadderPosition={handleClaimLadderPosition}
                         />
                       </main>
                     </AppRouteWrapper>
@@ -719,6 +727,7 @@ function AppContent() {
             }}
           />
         )}
+
       </div>
   );
 }
