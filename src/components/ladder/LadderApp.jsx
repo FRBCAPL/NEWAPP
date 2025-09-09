@@ -30,6 +30,8 @@ import LadderPrizePoolTracker from './LadderPrizePoolTracker';
 import LadderPrizePoolModal from './LadderPrizePoolModal';
 import LadderMatchReportingModal from './LadderMatchReportingModal';
 import PaymentDashboard from './PaymentDashboard';
+import NotificationPermissionModal from '../notifications/NotificationPermissionModal';
+import notificationService from '../../services/notificationService';
 import './LadderApp.css';
 
 const LadderApp = ({ 
@@ -87,6 +89,10 @@ const LadderApp = ({
   // My Matches state
   const [playerMatches, setPlayerMatches] = useState([]);
   const [matchesLoading, setMatchesLoading] = useState(false);
+  
+  // Notification state
+  const [showNotificationPermission, setShowNotificationPermission] = useState(false);
+  const [notificationPermissionRequested, setNotificationPermissionRequested] = useState(false);
   
   // Debounced loadData function - moved to top to avoid hoisting issues
   const loadDataTimeoutRef = useRef(null);
@@ -297,6 +303,24 @@ const LadderApp = ({
 
     checkProfileCompletion();
   }, [senderEmail, userLadderData?.canChallenge]);
+
+  // Check notification permission on app load
+  useEffect(() => {
+    const checkNotificationPermission = () => {
+      if (!notificationPermissionRequested && userLadderData?.canChallenge) {
+        const status = notificationService.getStatus();
+        
+        // Show permission modal if notifications are supported but not yet requested
+        if (status.isSupported && status.permission === 'default') {
+          setShowNotificationPermission(true);
+        }
+        
+        setNotificationPermissionRequested(true);
+      }
+    };
+
+    checkNotificationPermission();
+  }, [userLadderData?.canChallenge, notificationPermissionRequested]);
 
   useEffect(() => {
     // Clear existing timeout
@@ -1006,10 +1030,19 @@ const LadderApp = ({
   }, []);
 
   const handleChallengeResponse = useCallback((response, result) => {
+    // Show notification based on response type
+    if (response === 'accepted' && selectedChallenge) {
+      notificationService.showChallengeAcceptedNotification(selectedChallenge);
+    } else if (response === 'declined' && selectedChallenge) {
+      notificationService.showChallengeDeclinedNotification(selectedChallenge);
+    } else if (response === 'counter-proposed' && selectedChallenge) {
+      notificationService.showCounterProposalNotification(selectedChallenge);
+    }
+    
     // Refresh challenges and ladder data
     loadChallenges();
     loadData();
-  }, []);
+  }, [selectedChallenge]);
 
   const handleViewChallenge = useCallback((challenge) => {
     setSelectedChallenge(challenge);
@@ -1802,9 +1835,20 @@ const LadderApp = ({
           />
         </LadderErrorBoundary>
 
+        {/* Notification Permission Modal */}
+        {showNotificationPermission && (
+          <NotificationPermissionModal
+            isOpen={showNotificationPermission}
+            onClose={() => setShowNotificationPermission(false)}
+            onPermissionGranted={() => {
+              setShowNotificationPermission(false);
+              console.log('✅ Notification permission granted!');
+            }}
+          />
+        )}
         
      </div>
    );
-};
+ };
 
 export default LadderApp;

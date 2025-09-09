@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import DraggableModal from '../modal/DraggableModal';
+import LadderCounterProposalModal from './LadderCounterProposalModal';
 import { BACKEND_URL } from '../../config.js';
 import './LadderChallengeConfirmModal.css';
 
@@ -412,6 +413,15 @@ const LadderChallengeConfirmModal = ({
           ⏰ This challenge expires on {new Date(challenge.deadline).toLocaleDateString()}
         </div>
       </div>
+      
+      {/* Counter-Proposal Modal */}
+      <LadderCounterProposalModal
+        isOpen={showCounterModal}
+        onClose={() => setShowCounterModal(false)}
+        challenge={challenge}
+        currentUser={currentUser}
+        onCounterProposalSubmitted={onChallengeResponse}
+      />
     </DraggableModal>
   );
 };
