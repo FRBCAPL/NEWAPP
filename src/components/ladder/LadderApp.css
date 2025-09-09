@@ -1720,17 +1720,22 @@ button.compact-claim-btn {
   bottom: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.8) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   z-index: 99999 !important;
-  backdrop-filter: blur(5px);
-  padding: 10px;
-  box-sizing: border-box;
-  overflow: hidden;
-  animation: fadeIn 0.3s ease;
+  backdrop-filter: blur(5px) !important;
+  padding: 10px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  animation: fadeIn 0.3s ease !important;
   transform: none !important;
+  margin: 0 !important;
+  /* Ensure no parent positioning affects this */
+  inset: 0 !important;
+  /* Override any potential parent transforms */
+  will-change: auto !important;
 }
 
 .player-stats-content {

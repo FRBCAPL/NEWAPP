@@ -194,6 +194,8 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
               <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '1.25rem' }}>
                <li><strong>Ladder Membership:</strong> $5/month (required to participate)</li>
                <li><strong>Match Fees:</strong> $5 per match (total, not per player)</li>
+               <li><strong>Who Pays:</strong> The WINNER reports the match and pays the $5 fee</li>
+               <li><strong>Important:</strong> Only ONE $5 fee per match - not per player!</li>
                <li><strong>Fee Distribution:</strong> $3 to prize pool, $2 to platform</li>
                <li><strong>Payment Methods:</strong> Credit card (Stripe) or manual payment</li>
                <li><strong>Billing:</strong> Monthly automatic renewal for membership</li>

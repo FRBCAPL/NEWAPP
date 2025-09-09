@@ -22,9 +22,11 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
   const [paymentConfig, setPaymentConfig] = useState(null);
   const [userStatus, setUserStatus] = useState(null);
   const [detecting, setDetecting] = useState(false);
+  const [promotionalConfig, setPromotionalConfig] = useState(null);
 
   // Load payment configuration
   const loadPaymentConfig = async () => {
@@ -39,8 +41,22 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
     }
   };
 
+  // Load promotional configuration
+  const loadPromotionalConfig = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/monetization/promotional-config`);
+      if (response.ok) {
+        const data = await response.json();
+        setPromotionalConfig(data.config);
+      }
+    } catch (error) {
+      console.error('Error loading promotional config:', error);
+    }
+  };
+
   useEffect(() => {
     loadPaymentConfig();
+    loadPromotionalConfig();
   }, []);
 
   const handleInputChange = (e) => {
@@ -84,6 +100,11 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
         player.firstName?.toLowerCase() === formData.firstName.toLowerCase() &&
         player.lastName?.toLowerCase() === formData.lastName.toLowerCase()
       );
+      
+      // If we found a ladder player, use their actual name instead of the form data
+      if (existingLadderPlayer) {
+        console.log('Found ladder player:', existingLadderPlayer);
+      }
 
       setUserStatus({
         isLeaguePlayer: leagueStatus.isLeaguePlayer || false,
@@ -115,7 +136,7 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
         // Handle existing user
         if ((userContext.isLeaguePlayer || userStatus?.isLeaguePlayer) && !userStatus?.isLadderPlayer) {
           // League player - they can choose to join ladder or just keep league access
-          if (formData.payNow && formData.paymentMethod) {
+          if (formData.payNow && (formData.paymentMethod || promotionalConfig?.isPromotionalPeriod)) {
             // They want to join the ladder - create payment session
             const paymentResponse = await fetch(`${BACKEND_URL}/api/monetization/create-membership-payment`, {
               method: 'POST',
@@ -125,8 +146,8 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
               body: JSON.stringify({
                 playerName: `${formData.firstName} ${formData.lastName}`,
                 playerEmail: formData.email,
-                paymentMethod: formData.paymentMethod,
-                amount: 5.00,
+                paymentMethod: formData.paymentMethod || (promotionalConfig?.isPromotionalPeriod ? 'free' : ''),
+                amount: promotionalConfig?.isPromotionalPeriod ? 0.00 : 5.00,
                 purpose: 'ladder_access'
               })
             });
@@ -179,18 +200,26 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
             }
           } else {
             // They just want to keep their existing league access - no action needed
-            successMessage = `🎉 Welcome back, ${formData.firstName}!\n\nYou have full league access. You can view ladder standings as a guest.\n\nTo join the ladder and participate in challenges, you can pay the $5/month fee anytime.`;
+            if (promotionalConfig?.isPromotionalPeriod) {
+              successMessage = `🎉 Welcome back, ${formData.firstName}!\n\nYou have full league access. You can view ladder standings as a guest.\n\n🎉 FREE Monthly Membership until October 1st, 2025! Join the ladder now with no monthly fee - only $5 per match when you play!`;
+            } else {
+              successMessage = `🎉 Welcome back, ${formData.firstName}!\n\nYou have full league access. You can view ladder standings as a guest.\n\nTo join the ladder and participate in challenges, you can pay the $5/month fee anytime.`;
+            }
           }
         } else if (userStatus?.isLadderPlayer) {
           // Existing ladder player - they have account access but need current payment for challenges
-          successMessage = `🎉 Welcome back, ${formData.firstName}!\n\nYou have access to your ladder account and can view standings. To participate in challenges and defenses, you'll need to ensure your $5/month payment is current.`;
+          if (promotionalConfig?.isPromotionalPeriod) {
+            successMessage = `🎉 Welcome back, ${formData.firstName}!\n\nYou have access to your ladder account and can view standings.\n\n🎉 FREE Monthly Membership until October 1st, 2025! You can participate in challenges and defenses with no monthly fee - only $5 per match when you play!`;
+          } else {
+            successMessage = `🎉 Welcome back, ${formData.firstName}!\n\nYou have access to your ladder account and can view standings. To participate in challenges and defenses, you'll need to ensure your $5/month payment is current.`;
+          }
         } else if (userStatus?.isLeaguePlayer) {
           // League player only - they get free access to league features
-          successMessage = `🎉 Welcome back, ${formData.firstName}!\n\nYou have access to league features and can check your ladder status. You can view ladder standings as a guest, but need to pay $5/month to participate in ladder challenges.`;
+          successMessage = `🎉 Welcome back, ${formData.firstName}!\n\nYou have access to league features and can check your ladder status. You can view ladder standings as a guest, but need to ${promotionalConfig?.isPromotionalPeriod ? 'join during our FREE membership promotion' : 'pay $5/month'} to participate in ladder challenges.`;
         }
       } else {
         // New user signup
-        if (formData.payNow && formData.paymentMethod) {
+        if (formData.payNow && (formData.paymentMethod || promotionalConfig?.isPromotionalPeriod)) {
           // Create payment session for new user
           const paymentResponse = await fetch(`${BACKEND_URL}/api/monetization/create-membership-payment`, {
             method: 'POST',
@@ -200,8 +229,8 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
             body: JSON.stringify({
               playerName: `${formData.firstName} ${formData.lastName}`,
               playerEmail: formData.email,
-              paymentMethod: formData.paymentMethod,
-              amount: 5.00,
+              paymentMethod: formData.paymentMethod || (promotionalConfig?.isPromotionalPeriod ? 'free' : ''),
+              amount: promotionalConfig?.isPromotionalPeriod ? 0.00 : 5.00,
               purpose: 'new_membership'
             })
           });
@@ -242,24 +271,33 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
         }
 
         if (formData.payNow && formData.paymentMethod) {
-          if (userContext.isUnknownUser) {
-            successMessage = `🎉 Welcome to Front Range Pool Hub!\n\nYour application has been submitted and payment is being processed.\n\nYou'll have full ladder access once payment is confirmed. We'll contact you at ${formData.email} within 24-48 hours!`;
+          if (promotionalConfig?.isPromotionalPeriod) {
+            successMessage = `🎉 Welcome to Front Range Pool Hub!\n\nYour application has been submitted!\n\n🎉 FREE Monthly Membership until October 1st, 2025! You'll have full ladder access with no monthly fee - only $5 per match when you play! We'll contact you at ${formData.email} within 24-48 hours!`;
           } else {
-            successMessage = `🎉 Welcome to Front Range Pool Hub!\n\nYour application has been submitted and payment is being processed.\n\nYou'll have full ladder access once payment is confirmed. We'll contact you at ${formData.email} within 24-48 hours!`;
+            if (userContext.isUnknownUser) {
+              successMessage = `🎉 Welcome to Front Range Pool Hub!\n\nYour application has been submitted and payment is being processed.\n\nYou'll have full ladder access once payment is confirmed. We'll contact you at ${formData.email} within 24-48 hours!`;
+            } else {
+              successMessage = `🎉 Welcome to Front Range Pool Hub!\n\nYour application has been submitted and payment is being processed.\n\nYou'll have full ladder access once payment is confirmed. We'll contact you at ${formData.email} within 24-48 hours!`;
+            }
           }
         } else {
-          if (userContext.isUnknownUser) {
-            successMessage = `📋 Application submitted!\n\nThank you for your interest in joining Front Range Pool Hub!\n\nYou'll have guest access to view standings. We'll contact you at ${formData.email} within 24-48 hours to set up your account.`;
+          if (promotionalConfig?.isPromotionalPeriod) {
+            successMessage = `📋 Application submitted!\n\nThank you for your interest in joining Front Range Pool Hub!\n\n🎉 FREE Monthly Membership until October 1st, 2025! You'll have guest access to view standings, and can join the ladder with no monthly fee - only $5 per match when you play! We'll contact you at ${formData.email} within 24-48 hours to set up your account.`;
           } else {
-            successMessage = `📋 Application submitted!\n\nThank you for your interest in joining Front Range Pool Hub!\n\nYou'll have guest access to view standings. We'll contact you at ${formData.email} within 24-48 hours to set up your account.`;
+            if (userContext.isUnknownUser) {
+              successMessage = `📋 Application submitted!\n\nThank you for your interest in joining Front Range Pool Hub!\n\nYou'll have guest access to view standings. We'll contact you at ${formData.email} within 24-48 hours to set up your account.`;
+            } else {
+              successMessage = `📋 Application submitted!\n\nThank you for your interest in joining Front Range Pool Hub!\n\nYou'll have guest access to view standings. We'll contact you at ${formData.email} within 24-48 hours to set up your account.`;
+            }
           }
         }
       }
       
       setMessage(successMessage);
+      setShowSuccess(true);
       
       // Don't auto-close - let user read the message and close manually
-      onSuccess && onSuccess({ ...formData, userStatus });
+      // onSuccess && onSuccess({ ...formData, userStatus }); // Commented out to prevent auto-closing
     } catch (error) {
       console.error('Signup error:', error);
       setError(error.message || 'Network error. Please check your connection and try again.');
@@ -410,6 +448,26 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
          userStatus?.existingUser ? '🎉 We Found You!' : '👋 Welcome!'}
       </h3>
 
+      {/* Promotional Banner */}
+      {promotionalConfig?.isPromotionalPeriod && (
+        <div style={{
+          background: 'linear-gradient(135deg, #10b981, #059669)',
+          color: 'white',
+          borderRadius: '8px',
+          padding: '12px',
+          marginBottom: '1rem',
+          textAlign: 'center',
+          border: '1px solid rgba(16, 185, 129, 0.3)'
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+            🎉 {promotionalConfig.promotionalMessage}
+          </div>
+          <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+            Match fees apply. {promotionalConfig.daysUntilPromotionEnds > 0 && `${promotionalConfig.daysUntilPromotionEnds} days left!`}
+          </div>
+        </div>
+      )}
+
       {userContext.isLeaguePlayer ? (
         <div style={{
           background: 'rgba(33, 150, 243, 0.1)',
@@ -466,7 +524,7 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
           )}
           {userStatus.isLadderPlayer && (
             <p style={{ color: '#ccc', margin: '0 0 0.5rem 0', fontSize: '14px' }}>
-              🎯 Ladder Player: Position #{userStatus.ladderInfo?.position} in {userStatus.ladderInfo?.ladderName}
+              🎯 Ladder Player: {userStatus.ladderInfo?.firstName} {userStatus.ladderInfo?.lastName} - Position #{userStatus.ladderInfo?.position} in {userStatus.ladderInfo?.ladderName}
             </p>
           )}
           {userStatus.isLeaguePlayer && !userStatus.isLadderPlayer && (
@@ -594,7 +652,7 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
                 checked={formData.payNow}
                 onChange={() => setFormData(prev => ({ ...prev, payNow: !prev.payNow }))}
               />
-              💳 Pay $5/month - Join the Ladder + Challenge Access
+              💳 {promotionalConfig?.isPromotionalPeriod ? 'FREE Monthly Membership' : 'Pay $5/month'} - Join the Ladder + Challenge Access
             </label>
           ) : userContext.isUnknownUser ? (
             <>
@@ -617,7 +675,7 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
                   checked={formData.payNow}
                   onChange={() => setFormData(prev => ({ ...prev, payNow: true }))}
                 />
-                💳 Pay $5/month - Full Ladder Access + Challenges
+                💳 {promotionalConfig?.isPromotionalPeriod ? 'FREE Monthly Membership' : 'Pay $5/month'} - Full Ladder Access + Challenges
               </label>
               <label style={{ 
                 display: 'flex', 
@@ -662,7 +720,7 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
                   checked={formData.payNow}
                   onChange={() => setFormData(prev => ({ ...prev, payNow: true }))}
                 />
-                💳 Pay $5/month - Ladder Account + Challenge Access
+                💳 {promotionalConfig?.isPromotionalPeriod ? 'FREE Monthly Membership' : 'Pay $5/month'} - Ladder Account + Challenge Access
               </label>
               <label style={{ 
                 display: 'flex', 
@@ -707,7 +765,7 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
                   checked={formData.payNow}
                   onChange={() => setFormData(prev => ({ ...prev, payNow: true }))}
                 />
-                💳 Pay $5/month - Ladder Account + Challenge Access
+                💳 {promotionalConfig?.isPromotionalPeriod ? 'FREE Monthly Membership' : 'Pay $5/month'} - Ladder Account + Challenge Access
               </label>
               <label style={{ 
                 display: 'flex', 
@@ -849,22 +907,48 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
           </div>
         )}
 
-        {message && (
-          <div style={{
-            background: 'rgba(76, 175, 80, 0.1)',
-            border: '1px solid rgba(76, 175, 80, 0.3)',
-            borderRadius: '6px',
-            padding: '12px',
-            marginBottom: '0.6rem',
-            color: '#4caf50'
-          }}>
-            ✅ {message}
-          </div>
-        )}
 
-        <form onSubmit={handleSubmit}>
-          {currentStep === 1 ? renderStep1() : renderStep2()}
-        </form>
+        {showSuccess ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <div style={{
+              background: 'rgba(76, 175, 80, 0.1)',
+              border: '1px solid rgba(76, 175, 80, 0.3)',
+              borderRadius: '8px',
+              padding: '2rem',
+              marginBottom: '1rem',
+              color: '#4caf50'
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
+              <div style={{ 
+                fontSize: '1.1rem', 
+                lineHeight: '1.6',
+                whiteSpace: 'pre-line'
+              }}>
+                {message}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                padding: '12px 24px',
+                borderRadius: '6px',
+                border: 'none',
+                background: '#4CAF50',
+                color: 'white',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer'
+              }}
+            >
+              Close
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            {currentStep === 1 ? renderStep1() : renderStep2()}
+          </form>
+        )}
       </div>
     </DraggableModal>
   );

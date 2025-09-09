@@ -70,7 +70,10 @@ const PlayerStatsModal = memo(({
         padding: '10px',
         boxSizing: 'border-box',
         overflow: 'hidden',
-        transform: 'none'
+        transform: 'none',
+        margin: '0',
+        inset: '0',
+        willChange: 'auto'
       }}
     >
       <div 
@@ -302,20 +305,15 @@ const PlayerStatsModal = memo(({
     </div>
   );
 
-  // For public view (embedded), render inline; for regular view, use portal
-  if (isPublicView) {
+  // Always render directly to document.body to avoid positioning issues
+  const portalTarget = document.body;
+  
+  if (!portalTarget) {
+    console.error('🔍 No portal target found, rendering inline');
     return modalContent;
-  } else {
-    // Try to find a better portal target
-    const portalTarget = document.getElementById('root') || document.body;
-    
-    if (!portalTarget) {
-      console.error('🔍 No portal target found, rendering inline');
-      return modalContent;
-    }
-    
-    return createPortal(modalContent, portalTarget);
   }
+  
+  return createPortal(modalContent, portalTarget);
 });
 
 PlayerStatsModal.displayName = 'PlayerStatsModal';

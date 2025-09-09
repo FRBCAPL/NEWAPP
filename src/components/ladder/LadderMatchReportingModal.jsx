@@ -544,6 +544,25 @@ const LadderMatchReportingModal = ({
                     </div>
                   </div>
 
+                  {/* Match Fee Information */}
+                  <div style={{
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    marginBottom: '1.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ color: '#10b981', fontWeight: 'bold', marginBottom: '4px' }}>
+                      💰 Match Fee Information
+                    </div>
+                    <div style={{ color: '#e0e0e0', fontSize: '0.9rem' }}>
+                      The <strong>winner</strong> reports the match and pays the <strong>$5 match fee</strong>.
+                      <br />
+                      <em>Only one $5 fee per match - not per player!</em>
+                    </div>
+                  </div>
+
                   {/* Reporting Form */}
                   <form onSubmit={handleSubmitResult}>
                     <div style={{ marginBottom: '1rem' }}>

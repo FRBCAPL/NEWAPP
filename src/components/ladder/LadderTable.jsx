@@ -25,6 +25,25 @@ const LadderTable = memo(({
           {!isPublicView && <div className="header-cell" style={{ whiteSpace: 'nowrap', wordBreak: 'keep-all', paddingLeft: '140px' }}>Last Match</div>}
         </div>
         
+        {/* Match Fee Information */}
+        {!isPublicView && (
+          <div style={{
+            background: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: '6px',
+            padding: '8px 12px',
+            margin: '8px 0',
+            textAlign: 'center',
+            fontSize: '0.85rem',
+            color: '#e0e0e0'
+          }}>
+            <span style={{ color: '#10b981', fontWeight: 'bold' }}>💰 Match Fee Info:</span>
+            <span style={{ marginLeft: '8px' }}>
+              Winner reports match and pays <strong>$5 match fee</strong> (one fee per match, not per player)
+            </span>
+          </div>
+        )}
+        
         {ladderData.map((player, index) => (
           <div key={player._id || index} className="table-row">
             <div className="table-cell rank">#{player.position}</div>

@@ -32,6 +32,7 @@ import LadderMatchReportingModal from './LadderMatchReportingModal';
 import PaymentDashboard from './PaymentDashboard';
 import NotificationPermissionModal from '../notifications/NotificationPermissionModal';
 import notificationService from '../../services/notificationService';
+import PromotionalPricingBanner from './PromotionalPricingBanner';
 import './LadderApp.css';
 
 const LadderApp = ({ 
@@ -1063,6 +1064,9 @@ const LadderApp = ({
             isPublicView={isPublicView}
           />
         </LadderErrorBoundary>
+        
+        {/* Promotional Pricing Banner */}
+        <PromotionalPricingBanner />
         
         <LadderErrorBoundary>
           <LadderTable
