@@ -76,7 +76,7 @@ export default function DraggableModal({
         alignItems: "flex-start",
         justifyContent: "center",
         paddingTop: window.innerWidth <= 768 ? "100px" : "120px",
-        zIndex: 1000,
+        zIndex: 100000,
         backdropFilter: "blur(3px)",
         WebkitBackdropFilter: "blur(3px)"
       }}

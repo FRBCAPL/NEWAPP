@@ -260,7 +260,10 @@ const UnifiedSignupForm = ({ onClose, onSuccess, userContext = {} }) => {
             currentLeague: formData.currentLeague || '',
             interests: formData.interests || [],
             payNow: formData.payNow,
-            paymentMethod: formData.paymentMethod || ''
+            paymentMethod: formData.paymentMethod || '',
+            // Include ladder position info if claiming a ladder position
+            ladderName: userStatus?.ladderInfo?.ladderName || null,
+            position: userStatus?.ladderInfo?.position || null
           })
         });
 

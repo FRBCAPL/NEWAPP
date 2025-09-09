@@ -111,7 +111,10 @@ const PlayerStatsModal = memo(({
             textAlign: 'center'
           }}>
             <button
-              onClick={() => setShowUnifiedSignup(true)}
+              onClick={() => {
+                setShowMobilePlayerStats(false); // Close the player stats modal first
+                setShowUnifiedSignup(true); // Then open the signup modal
+              }}
               style={{
                 background: '#4CAF50',
                 color: 'white',
