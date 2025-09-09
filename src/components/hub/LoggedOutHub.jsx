@@ -8,6 +8,7 @@ import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal';
 import GuestLadderApp from '../guest/GuestLadderApp';
 import DraggableModal from '../modal/DraggableModal';
 import LadderApp from '../ladder/LadderApp';
+import LadderMatchCalendar from '../ladder/LadderMatchCalendar';
 
 import './LoggedOutHub.css';
 
@@ -19,6 +20,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
   const [showPhase2Rules, setShowPhase2Rules] = useState(false);
   const [showLadderRules, setShowLadderRules] = useState(false);
   const [showPublicLadderView, setShowPublicLadderView] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     singlesLeague: false,
     ladderOfLegends: false,
@@ -226,6 +228,67 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                 className={`app-card ${app.status} logged-out ${app.id === 'ladder' ? 'ladder-card' : ''}`}
                 style={{ '--app-color': app.color }}
               >
+                {app.id === 'ladder' && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginBottom: '10px'
+                  }}>
+                    <button
+                      className="view-ladder-btn"
+                      onClick={handlePublicView}
+                      style={{
+                        background: 'transparent',
+                        color: '#4CAF50',
+                        border: '2px solid #4CAF50',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.8rem',
+                        fontWeight: 'bold',
+                        transition: 'all 0.3s ease',
+                        whiteSpace: 'nowrap'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = '#4CAF50';
+                        e.target.style.color = 'white';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'transparent';
+                        e.target.style.color = '#4CAF50';
+                      }}
+                    >
+                      👀 View Ladder
+                    </button>
+                    <button
+                      className="calendar-btn"
+                      onClick={() => setShowCalendar(true)}
+                      style={{
+                        background: 'transparent',
+                        color: '#6b46c1',
+                        border: '2px solid #6b46c1',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.8rem',
+                        fontWeight: 'bold',
+                        transition: 'all 0.3s ease',
+                        whiteSpace: 'nowrap'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = '#6b46c1';
+                        e.target.style.color = 'white';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'transparent';
+                        e.target.style.color = '#6b46c1';
+                      }}
+                    >
+                      📅 Calendar
+                    </button>
+                  </div>
+                )}
                 <div className="app-icon">{app.icon}</div>
                 <div className="app-info">
                   <h3>
@@ -267,42 +330,6 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                       >
                         👀 Access as Guest
                       </button>
-                      
-                                             {/* Public View Button - Only for Ladder */}
-                       {app.id === 'ladder' && (
-                         <button
-                           className="public-view-btn"
-                           onClick={handlePublicView}
-                           style={{
-                             background: '#4CAF50',
-                             color: 'white',
-                             border: '2px solid #4CAF50',
-                             padding: '3px 16px',
-                             borderRadius: '6px',
-                             cursor: 'pointer',
-                             fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.9rem',
-                             fontWeight: 'bold',
-                             marginTop: '7px',
-                             marginLeft: '7px',
-                             transition: 'all 0.3s ease',
-                             whiteSpace: 'nowrap',
-                             minWidth: '120px',
-                             textAlign: 'center'
-                           }}
-                           onMouseEnter={(e) => {
-                             e.target.style.background = '#45a049';
-                             e.target.style.borderColor = '#45a049';
-                             e.target.style.transform = 'translateY(-2px)';
-                           }}
-                           onMouseLeave={(e) => {
-                             e.target.style.background = '#4CAF50';
-                             e.target.style.borderColor = '#4CAF50';
-                             e.target.style.transform = 'translateY(0)';
-                           }}
-                         >
-                           View Ladder 👀
-                         </button>
-                       )}
                      
                                            
                    </div>
@@ -872,6 +899,12 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
             </div>
           </DraggableModal>
         )}
+
+        {/* Calendar Modal */}
+        <LadderMatchCalendar
+          isOpen={showCalendar}
+          onClose={() => setShowCalendar(false)}
+        />
        
     </div>
   );

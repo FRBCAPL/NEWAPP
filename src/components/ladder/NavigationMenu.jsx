@@ -14,7 +14,8 @@ const NavigationMenu = memo(({
   setShowUnifiedSignup,
   setShowRulesModal,
   isAdmin,
-  setShowApplicationsManager
+  setShowApplicationsManager,
+  setShowMatchCalendar
 }) => {
   const navigate = useNavigate();
   return (
@@ -72,6 +73,12 @@ const NavigationMenu = memo(({
             <p>Report match results and pay fees</p>
           </div>
         )}
+        
+        <div className="nav-card" onClick={() => setShowMatchCalendar(true)}>
+          <div className="nav-icon">📅</div>
+          <h3>Match Calendar</h3>
+          <p>View confirmed matches and schedule</p>
+        </div>
         
         {!isPublicView && userLadderData?.playerId === 'ladder' && (
           <div className="nav-card" onClick={() => navigateToView('matches')}>

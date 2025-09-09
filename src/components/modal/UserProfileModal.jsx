@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import LocationSelectionModal from './LocationSelectionModal.jsx';
+import notificationService from '../../services/notificationService.js';
 
 const UserProfileModal = ({ 
   isOpen, 
@@ -1289,6 +1290,110 @@ const UserProfileModal = ({
                                    )}
                                  </div>
                                </div>
+              </div>
+            </div>
+
+            {/* Notification Preferences */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              padding: isMobile ? '6px' : '8px',
+              borderRadius: '6px',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <div style={{
+                fontWeight: 'bold',
+                color: '#ffffff',
+                marginBottom: '4px',
+                fontSize: isMobile ? '0.9rem' : '1rem'
+              }}>
+                🔔 Notification Preferences
+              </div>
+              
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '8px 0'
+              }}>
+                <div style={{
+                  color: '#cccccc',
+                  fontSize: isMobile ? '0.85rem' : '0.9rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span>🔔 Browser Notifications:</span>
+                  <span style={{
+                    color: notificationService.isNotificationEnabled() ? '#4CAF50' : '#f44336',
+                    fontWeight: 'bold'
+                  }}>
+                    {notificationService.isNotificationEnabled() ? 'Enabled' : 'Disabled'}
+                  </span>
+                </div>
+                
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {notificationService.isNotificationEnabled() ? (
+                    <button
+                      onClick={async () => {
+                        notificationService.disableNotifications();
+                        // Force re-render by updating a dummy state
+                        setRefreshTrigger(prev => prev + 1);
+                      }}
+                      style={{
+                        background: 'rgba(244, 67, 54, 0.2)',
+                        border: '1px solid rgba(244, 67, 54, 0.4)',
+                        color: '#f44336',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: isMobile ? '0.7rem' : '0.8rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => e.target.style.background = 'rgba(244, 67, 54, 0.3)'}
+                      onMouseLeave={(e) => e.target.style.background = 'rgba(244, 67, 54, 0.2)'}
+                    >
+                      🔕 Disable
+                    </button>
+                  ) : (
+                    <button
+                      onClick={async () => {
+                        const enabled = await notificationService.enableNotifications();
+                        if (enabled) {
+                          // Force re-render by updating a dummy state
+                          setRefreshTrigger(prev => prev + 1);
+                        }
+                      }}
+                      style={{
+                        background: 'rgba(76, 175, 80, 0.2)',
+                        border: '1px solid rgba(76, 175, 80, 0.4)',
+                        color: '#4CAF50',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: isMobile ? '0.7rem' : '0.8rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.3)'}
+                      onMouseLeave={(e) => e.target.style.background = 'rgba(76, 175, 80, 0.2)'}
+                    >
+                      🔔 Enable
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              <div style={{
+                color: '#9ca3af',
+                fontSize: isMobile ? '0.75rem' : '0.8rem',
+                fontStyle: 'italic',
+                marginTop: '4px'
+              }}>
+                {notificationService.getStatus().permission === 'denied' 
+                  ? '⚠️ Notifications are blocked by your browser. Check your browser settings to enable them.'
+                  : notificationService.getStatus().permission === 'default'
+                  ? '💡 Click "Enable" to allow browser notifications for match updates and challenges.'
+                  : '✅ You\'ll receive instant alerts for challenges, match updates, and ladder changes.'
+                }
               </div>
             </div>
 

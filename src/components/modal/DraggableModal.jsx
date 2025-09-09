@@ -6,6 +6,7 @@ export default function DraggableModal({
   children, 
   title = "Modal",
   maxWidth = "500px",
+  maxHeight = null,
   className = "",
   borderColor = "#e53e3e",
   textColor = "#fff",
@@ -100,8 +101,8 @@ export default function DraggableModal({
           position: "relative",
           fontFamily: "inherit",
           boxSizing: "border-box",
-          height: window.innerWidth <= 768 ? "auto" : "auto",
-          maxHeight: window.innerWidth <= 768 ? "60vh" : "45vh",
+          height: maxHeight || (window.innerWidth <= 768 ? "auto" : "auto"),
+          maxHeight: maxHeight || "400px",
           display: "flex",
           flexDirection: "column"
         }}
@@ -222,7 +223,6 @@ export default function DraggableModal({
             max-width: 95vw !important;
             border-radius: 0.5rem !important;
             height: auto !important;
-            max-height: 60vh !important;
           }
           .modal-header {
             padding: 0.5rem 0.5rem 0.3rem 0.5rem !important;
@@ -243,7 +243,6 @@ export default function DraggableModal({
             max-width: 98vw !important;
             border-radius: 0.3rem !important;
             height: auto !important;
-            max-height: 65vh !important;
           }
           .modal-header {
             padding: 0.4rem 0.4rem 0.2rem 0.4rem !important;

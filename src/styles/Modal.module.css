@@ -40,7 +40,7 @@
   width: 100%;
   min-width: 320px;
   margin: 0 auto;
-  height: 70vh;
+  height: 400px;
   display: flex;
   flex-direction: column;
   animation: modalBounceIn 0.5s cubic-bezier(.21,1.02,.73,1.01);

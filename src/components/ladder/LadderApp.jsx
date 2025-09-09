@@ -15,6 +15,7 @@ import DraggableModal from '../modal/DraggableModal';
 import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal';
 import LadderFloatingLogos from './LadderFloatingLogos';
 import LadderHeader from './LadderHeader';
+import LadderMatchCalendar from './LadderMatchCalendar';
 import LadderTable from './LadderTable';
 import NavigationMenu from './NavigationMenu';
 import PlayerStatsModal from './PlayerStatsModal';
@@ -78,6 +79,7 @@ const LadderApp = ({
   const [showPrizePoolModal, setShowPrizePoolModal] = useState(false);
   const [showMatchReportingModal, setShowMatchReportingModal] = useState(false);
   const [showPaymentDashboard, setShowPaymentDashboard] = useState(false);
+  const [showMatchCalendar, setShowMatchCalendar] = useState(false);
   
   // Mobile player stats state
   const [selectedPlayerForStats, setSelectedPlayerForStats] = useState(null);
@@ -1062,6 +1064,7 @@ const LadderApp = ({
             currentView={currentView}
             setCurrentView={setCurrentView}
             isPublicView={isPublicView}
+            setShowMatchCalendar={setShowMatchCalendar}
           />
         </LadderErrorBoundary>
         
@@ -1520,6 +1523,7 @@ const LadderApp = ({
             setShowRulesModal={setShowRulesModal}
             isAdmin={isAdmin}
             setShowApplicationsManager={setShowApplicationsManager}
+            setShowMatchCalendar={setShowMatchCalendar}
           />
         </LadderErrorBoundary>
       </>
@@ -1808,6 +1812,13 @@ const LadderApp = ({
             isOpen={showPaymentDashboard}
             onClose={() => setShowPaymentDashboard(false)}
             playerEmail={userLadderData?.email || `${playerName}@example.com`}
+          />
+        )}
+
+        {showMatchCalendar && (
+          <LadderMatchCalendar
+            isOpen={showMatchCalendar}
+            onClose={() => setShowMatchCalendar(false)}
           />
         )}
 

@@ -6,7 +6,8 @@ const LadderHeader = memo(({
   setHasManuallySelectedLadder,
   currentView,
   setCurrentView,
-  isPublicView 
+  isPublicView,
+  setShowMatchCalendar
 }) => {
   const getLadderDisplayName = (ladderName) => {
     switch (ladderName) {
@@ -53,6 +54,39 @@ const LadderHeader = memo(({
           🏠 Back to Ladder Home
         </button>
       )}
+      
+      {/* Calendar Button - Top Right */}
+      <button 
+        onClick={() => setShowMatchCalendar(true)}
+        style={{
+          position: 'absolute',
+          top: '5px',
+          right: '5px',
+          background: 'transparent',
+          color: '#10b981',
+          border: '2px solid #10b981',
+          borderRadius: '6px',
+          padding: '6px 12px',
+          fontSize: '0.8rem',
+          fontWeight: '600',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+          zIndex: 10
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.background = 'rgba(16, 185, 129, 0.1)';
+          e.target.style.transform = 'translateY(-1px)';
+          e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.background = 'transparent';
+          e.target.style.transform = 'translateY(0)';
+          e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)';
+        }}
+      >
+        📅 Match Calendar
+      </button>
       
       <h1 style={{ 
         color: '#000000',

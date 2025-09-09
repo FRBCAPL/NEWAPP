@@ -55,7 +55,7 @@ const NotificationPermissionModal = ({
       open={true}
       onClose={onClose}
       title="🔔 Enable Notifications"
-      maxWidth="500px"
+      maxWidth="400px"
     >
       <div className="notification-permission-modal">
         <div className="notification-header">
