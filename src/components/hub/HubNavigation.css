@@ -83,6 +83,9 @@
   align-items: center;
   justify-content: center;
   flex: 1;
+  position: relative;
+  left: 0;
+  right: 0;
 }
 
 .nav-center .app-title,

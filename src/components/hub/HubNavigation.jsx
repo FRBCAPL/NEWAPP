@@ -41,7 +41,13 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   return (
     <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''}`}>
       <div className="nav-content">
-        <div className="nav-left">
+        <div className="nav-left" style={{ 
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          flex: '0 0 auto',
+          minWidth: '200px'
+        }}>
           <div 
             className={`hub-brand ${userFirstName ? 'hub-brand-clickable' : ''}`}
             onClick={userFirstName ? handleReturnToHub : undefined}
@@ -56,7 +62,14 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
         </div>
         
         <div className="nav-center">
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ 
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%'
+          }}>
             <span className="app-title" style={{
               color: 'white',
               fontSize: '1.8rem',
@@ -83,10 +96,11 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
             {userFirstName && (
               <div style={{
                 color: 'white',
-                fontSize: '2.0rem',
+                fontSize: '1.5rem',
                 fontWeight: '600',
-                marginTop: '0.5rem',
-                opacity: 0.9
+                marginTop: '0.3rem',
+                opacity: 0.9,
+                lineHeight: '1.1'
               }}>
                 Welcome to the Hub, {userFirstName} {userLastName}
               </div>
@@ -96,11 +110,26 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
         
         {/* Buttons placed directly without container */}
         {!userFirstName ? (
-          <div className="login-nav-info">
-            🎯  Front Range Pool Hub
+          <div className="nav-right" style={{ 
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            flex: '0 0 auto',
+            minWidth: '200px'
+          }}>
+            <div className="login-nav-info" style={{ display: 'none' }}>
+              🎯  Front Range Pool Hub
+            </div>
           </div>
         ) : (
-          <>
+          <div className="nav-right" style={{ 
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            flex: '0 0 auto',
+            minWidth: '200px',
+            gap: '0.5rem'
+          }}>
             {/* Admin buttons */}
             {isAdmin && (
               <>
@@ -129,7 +158,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
             <button onClick={handleLogout} className="logout-btn">
               🚪 Logout
             </button>
-          </>
+          </div>
         )}
       </div>
     </div>

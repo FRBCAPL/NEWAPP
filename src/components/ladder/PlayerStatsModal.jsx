@@ -1,4 +1,5 @@
-import React, { createPortal, memo } from 'react';
+import React, { memo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 const PlayerStatsModal = memo(({
   showMobilePlayerStats,
@@ -14,7 +15,40 @@ const PlayerStatsModal = memo(({
   setShowUnifiedSignup,
   isPublicView
 }) => {
-  if (!showMobilePlayerStats || !selectedPlayerForStats) return null;
+  if (!showMobilePlayerStats || !selectedPlayerForStats) {
+    return null;
+  }
+  
+  // Defensive programming - ensure we have safe data to work with
+  const safePlayerData = updatedPlayerData || selectedPlayerForStats;
+  const safeLastMatchData = lastMatchData || null;
+  const safeMatchHistory = playerMatchHistory || [];
+  
+  // Transform lastMatch data to match expected format
+  const transformedLastMatch = safeLastMatchData ? {
+    result: safeLastMatchData.result,
+    opponentName: safeLastMatchData.opponent,
+    matchDate: safeLastMatchData.date,
+    venue: safeLastMatchData.venue,
+    matchType: safeLastMatchData.matchType || 'challenge',
+    playerRole: safeLastMatchData.playerRole || 'player',
+    score: safeLastMatchData.score || 'N/A'
+  } : null;
+  
+  // Transform match history data to match expected format
+  const transformedMatchHistory = safeMatchHistory.map(match => ({
+    result: match.result,
+    opponentName: match.opponent,
+    matchDate: match.date,
+    venue: match.venue,
+    matchType: match.matchType || 'challenge',
+    playerRole: match.playerRole || 'player',
+    score: match.score || 'N/A'
+  }));
+  
+  console.log('🔍 PlayerStatsModal - safeMatchHistory:', safeMatchHistory);
+  console.log('🔍 PlayerStatsModal - transformedMatchHistory:', transformedMatchHistory);
+  console.log('🔍 PlayerStatsModal - transformedMatchHistory.length:', transformedMatchHistory.length);
 
   const modalContent = (
     <div 
@@ -58,24 +92,6 @@ const PlayerStatsModal = memo(({
         <div className="player-stats-header">
           <h3>{selectedPlayerForStats.firstName} {selectedPlayerForStats.lastName}</h3>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <button
-              onClick={() => {
-                console.log('🔄 Refreshing player data...');
-                fetchUpdatedPlayerData(selectedPlayerForStats);
-              }}
-              style={{
-                background: 'rgba(255, 68, 68, 0.2)',
-                border: '1px solid #ff4444',
-                color: '#ff4444',
-                padding: '5px 10px',
-                borderRadius: '4px',
-                fontSize: '12px',
-                cursor: 'pointer'
-              }}
-              title="Refresh player stats"
-            >
-              🔄
-            </button>
             <button 
               className="stats-close-btn"
               onClick={() => setShowMobilePlayerStats(false)}
@@ -134,35 +150,27 @@ const PlayerStatsModal = memo(({
               <div className="stats-grid">
                 <div className="stat-item">
                   <div className="stat-label">Rank</div>
-                  <div className="stat-value">#{(updatedPlayerData || selectedPlayerForStats).position}</div>
+                  <div className="stat-value">#{safePlayerData.position || 'N/A'}</div>
                 </div>
                 
                 <div className="stat-item">
                   <div className="stat-label">FargoRate</div>
                   <div className="stat-value">
-                    {(updatedPlayerData || selectedPlayerForStats).fargoRate === 0 ? "No FargoRate" : (updatedPlayerData || selectedPlayerForStats).fargoRate}
+                    {safePlayerData.fargoRate === 0 ? "No FargoRate" : (safePlayerData.fargoRate || 'N/A')}
                   </div>
                 </div>
                 
                 <div className="stat-item">
                   <div className="stat-label">Wins</div>
                   <div className="stat-value wins">
-                    {(() => {
-                      const playerData = updatedPlayerData || selectedPlayerForStats;
-                      console.log('🔍 Displaying wins for player:', playerData.firstName, playerData.lastName, 'wins:', playerData.wins);
-                      return playerData.wins || 0;
-                    })()}
+                    {safePlayerData.wins || 0}
                   </div>
                 </div>
                 
                 <div className="stat-item">
                   <div className="stat-label">Losses</div>
                   <div className="stat-value losses">
-                    {(() => {
-                      const playerData = updatedPlayerData || selectedPlayerForStats;
-                      console.log('🔍 Displaying losses for player:', playerData.firstName, playerData.lastName, 'losses:', playerData.losses);
-                      return playerData.losses || 0;
-                    })()}
+                    {safePlayerData.losses || 0}
                   </div>
                 </div>
                 
@@ -192,28 +200,28 @@ const PlayerStatsModal = memo(({
               <div className="stat-item">
                 <div className="stat-label">Last Match</div>
                 <div className="stat-value">
-                  {lastMatchData ? (
+                  {transformedLastMatch ? (
                     <div className="last-match-info">
                       <div className="match-opponent">
-                        vs {lastMatchData.opponentName}
+                        vs {transformedLastMatch.opponentName}
                       </div>
-                      <div className={`match-result ${lastMatchData.result === 'W' ? 'win' : 'loss'}`}>
-                        {lastMatchData.result === 'W' ? 'Won' : 'Lost'} {lastMatchData.score}
+                      <div className={`match-result ${transformedLastMatch.result === 'W' ? 'win' : 'loss'}`}>
+                        {transformedLastMatch.result === 'W' ? 'Won' : 'Lost'} {transformedLastMatch.score}
                       </div>
                       <div className="match-type">
-                        {lastMatchData.matchType === 'challenge' ? 'Challenge Match' :
-                         lastMatchData.matchType === 'ladder-jump' ? 'Ladder Jump' :
-                         lastMatchData.matchType === 'smackdown' ? 'SmackDown' :
-                         lastMatchData.matchType === 'smackback' ? 'SmackBack' :
-                         lastMatchData.matchType}
+                        {transformedLastMatch.matchType === 'challenge' ? 'Challenge Match' :
+                         transformedLastMatch.matchType === 'ladder-jump' ? 'Ladder Jump' :
+                         transformedLastMatch.matchType === 'smackdown' ? 'SmackDown' :
+                         transformedLastMatch.matchType === 'smackback' ? 'SmackBack' :
+                         transformedLastMatch.matchType}
                       </div>
                       <div className="player-role">
-                        {lastMatchData.playerRole === 'challenger' ? 'Challenger' :
-                         lastMatchData.playerRole === 'defender' ? 'Defender' :
+                        {transformedLastMatch.playerRole === 'challenger' ? 'Challenger' :
+                         transformedLastMatch.playerRole === 'defender' ? 'Defender' :
                          'Player'}
                       </div>
                       <div className="match-date">
-                        {new Date(lastMatchData.matchDate).toLocaleDateString()}
+                        {new Date(transformedLastMatch.matchDate).toLocaleDateString()}
                       </div>
                     </div>
                   ) : (
@@ -226,10 +234,11 @@ const PlayerStatsModal = memo(({
               <div className="stat-item">
                 <div className="stat-label">Match History</div>
                 <div className="stat-value">
-                  {playerMatchHistory.length > 1 ? (
+                  {transformedMatchHistory.length > 1 ? (
                     <div className="match-history-list" style={{ maxHeight: '150px', overflowY: 'auto' }}>
                       {/* Show previous 2 matches (skip the first one since it's shown in Last Match) */}
-                      {playerMatchHistory.slice(1, 3).map((match, index) => (
+                      {console.log('🔍 Rendering match history, slice(1,3):', transformedMatchHistory.slice(1, 3))}
+                      {transformedMatchHistory.slice(1, 3).map((match, index) => (
                         <div key={index} className="match-history-item" style={{ 
                           padding: '6px', 
                           borderBottom: '1px solid rgba(255,255,255,0.1)', 
@@ -248,13 +257,13 @@ const PlayerStatsModal = memo(({
                             </span>
                           </div>
                           <div style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>
-                            {match.score} • {match.matchType}
+                            {match.score} • {match.matchType} • {new Date(match.matchDate).toLocaleTimeString()}
                           </div>
                         </div>
                       ))}
                       
                       {/* Show More button if there are more than 3 total matches */}
-                      {playerMatchHistory.length > 3 && (
+                      {transformedMatchHistory.length > 3 && (
                         <div style={{ textAlign: 'center', padding: '8px' }}>
                           <button 
                             onClick={() => {
@@ -274,15 +283,15 @@ const PlayerStatsModal = memo(({
                               cursor: 'pointer'
                             }}
                           >
-                            Show More ({playerMatchHistory.length - 3} more)
+                            Show More ({transformedMatchHistory.length - 3} more)
                           </button>
                         </div>
                       )}
                     </div>
-                  ) : playerMatchHistory.length === 1 ? (
+                  ) : transformedMatchHistory.length === 1 ? (
                     <span className="no-match">No previous matches</span>
                   ) : (
-                    <span className="no-match">No match history</span>
+                    <span className="no-match">No match history available</span>
                   )}
                 </div>
               </div>
@@ -297,7 +306,15 @@ const PlayerStatsModal = memo(({
   if (isPublicView) {
     return modalContent;
   } else {
-    return createPortal(modalContent, document.body);
+    // Try to find a better portal target
+    const portalTarget = document.getElementById('root') || document.body;
+    
+    if (!portalTarget) {
+      console.error('🔍 No portal target found, rendering inline');
+      return modalContent;
+    }
+    
+    return createPortal(modalContent, portalTarget);
   }
 });
 

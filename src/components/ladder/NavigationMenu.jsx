@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const NavigationMenu = memo(({
   isPublicView,
@@ -15,6 +16,7 @@ const NavigationMenu = memo(({
   isAdmin,
   setShowApplicationsManager
 }) => {
+  const navigate = useNavigate();
   return (
     <div className="ladder-navigation">
       <div className="nav-grid">

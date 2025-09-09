@@ -92,7 +92,7 @@ const AppHub = ({
       id: 'ladder',
       name: 'Ladder App',
       description: 'Challenge-based ladder system with rankings',
-      icon: '📈',
+      icon: '⚔️',
       color: '#2196F3',
       status: 'active',
       route: '/ladder'

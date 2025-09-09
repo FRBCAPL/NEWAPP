@@ -179,6 +179,12 @@ const LadderManagement = ({ userEmail, userPin }) => {
     window.URL.revokeObjectURL(url);
   };
 
+  const openFargoUpdater = () => {
+    // Open the Fargo updater in a new window/tab
+    const fargoUpdaterUrl = `${BACKEND_URL.replace('/api', '')}/static/fargo-updater.html`;
+    window.open(fargoUpdaterUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+  };
+
   // Match result functions
   const handleMatchInputChange = (e) => {
     const { name, value } = e.target;
@@ -402,6 +408,9 @@ const LadderManagement = ({ userEmail, userPin }) => {
             </button>
             <button onClick={handleUpdatePositions} disabled={loading} className="update-btn">
               {loading ? 'Updating...' : 'Update Positions'}
+            </button>
+            <button onClick={openFargoUpdater} className="fargo-btn">
+              🎯 Update Fargo Ratings
             </button>
           </div>
         </div>

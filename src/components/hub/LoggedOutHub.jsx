@@ -47,7 +47,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
       id: 'ladder',
       name: 'Ladder of Legends Tournament Series',
       description: 'Independently run, challenge-based ladder system',
-      icon: '📈',
+      icon: '⚔️',
       color: '#2196F3',
       status: 'active'
     }
@@ -171,20 +171,33 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
         </div>
 
         {/* Format Differences Button - Under Simulation Section */}
-        <div style={{ textAlign: 'center', marginTop: '30px', marginBottom: '20px' }}>
+        <div style={{ 
+          textAlign: 'center', 
+          marginTop: '10px', 
+          marginBottom: '55px',
+          padding: '0 10px',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}>
           <button
             onClick={() => setShowFormatDifferencesModal(true)}
             style={{
               background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
               color: 'white',
               border: 'none',
-              padding: '15px 30px',
-              borderRadius: '10px',
+              padding: window.innerWidth <= 768 ? '8px 12px' : '12px 24px',
+              borderRadius: '8px',
               cursor: 'pointer',
-              fontSize: '1.1rem',
+              fontSize: window.innerWidth <= 768 ? '0.8rem' : '1.2rem',
               fontWeight: 'bold',
               boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              maxWidth: window.innerWidth <= 768 ? 'calc(100vw - 40px)' : '400px',
+              width: window.innerWidth <= 768 ? '100%' : 'auto',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              boxSizing: 'border-box'
             }}
             onMouseEnter={(e) => {
               e.target.style.transform = 'translateY(-2px)';
@@ -195,7 +208,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
               e.target.style.boxShadow = '0 4px 15px rgba(245, 158, 11, 0.3)';
             }}
           >
-                         ❓ Singles League vs Ladder of Legends - What's the Difference  ❓ 
+                         ❓   Singles League vs Ladder of Legends - What's the Difference    ❓ 
           </button>
         </div>
 
@@ -210,7 +223,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
             {availableApps.filter(app => app.status === 'active').map((app) => (
               <div
                 key={app.id}
-                className={`app-card ${app.status} logged-out`}
+                className={`app-card ${app.status} logged-out ${app.id === 'ladder' ? 'ladder-card' : ''}`}
                 style={{ '--app-color': app.color }}
               >
                 <div className="app-icon">{app.icon}</div>
@@ -264,14 +277,17 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                              background: '#4CAF50',
                              color: 'white',
                              border: '2px solid #4CAF50',
-                             padding: '8px 16px',
+                             padding: '3px 16px',
                              borderRadius: '6px',
                              cursor: 'pointer',
                              fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.9rem',
                              fontWeight: 'bold',
-                             marginTop: '8px',
-                             marginLeft: '8px',
-                             transition: 'all 0.3s ease'
+                             marginTop: '7px',
+                             marginLeft: '7px',
+                             transition: 'all 0.3s ease',
+                             whiteSpace: 'nowrap',
+                             minWidth: '120px',
+                             textAlign: 'center'
                            }}
                            onMouseEnter={(e) => {
                              e.target.style.background = '#45a049';

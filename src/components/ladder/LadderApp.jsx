@@ -727,35 +727,87 @@ const LadderApp = ({
 
   const handlePlayerClick = useCallback((player) => {
     console.log('🎯 Player clicked:', player);
+    console.log('🎯 Player has unified account:', player.unifiedAccount?.hasUnifiedAccount);
+    console.log('🎯 Player unified account email:', player.unifiedAccount?.email);
+    console.log('🎯 Player direct email:', player.email);
+    console.log('🎯 Player lastMatch:', player.lastMatch);
+    console.log('🎯 Full player object:', JSON.stringify(player, null, 2));
     console.log('📊 Setting modal state...');
+    console.log('📊 Current showMobilePlayerStats state:', showMobilePlayerStats);
+    console.log('📊 Current selectedPlayerForStats state:', selectedPlayerForStats);
+    
     setSelectedPlayerForStats(player);
     setShowMobilePlayerStats(true);
     console.log('📊 Modal should now be visible');
-    fetchLastMatchData(player);
-    fetchPlayerMatchHistory(player);
+    console.log('📊 New showMobilePlayerStats state should be true');
+    
+    // Use the lastMatch data that's already in the player object
+    if (player.lastMatch) {
+      console.log('🔍 Using existing lastMatch data from player object:', player.lastMatch);
+      setLastMatchData(player.lastMatch);
+    } else {
+      console.log('🔍 No lastMatch data in player object, trying to fetch...');
+      fetchLastMatchData(player);
+    }
+    
+    // Use the recentMatches data that's now included in the player object
+    if (player.recentMatches && player.recentMatches.length > 0) {
+      console.log('🔍 Using existing recentMatches data from player object:', player.recentMatches);
+      console.log('🔍 Number of recent matches:', player.recentMatches.length);
+      setPlayerMatchHistory(player.recentMatches);
+    } else {
+      console.log('🔍 No recentMatches data in player object, trying to fetch...');
+      fetchPlayerMatchHistory(player);
+    }
+    
     fetchUpdatedPlayerData(player);
-  }, []);
+  }, [showMobilePlayerStats, selectedPlayerForStats]);
 
   const fetchLastMatchData = async (player) => {
     console.log('🔍 Fetching last match data for player:', player);
     console.log('🔍 Player unifiedAccount:', player.unifiedAccount);
+    console.log('🔍 Player email:', player.email);
+    console.log('🔍 Player firstName:', player.firstName);
+    console.log('🔍 Player lastName:', player.lastName);
+    console.log('🔍 Player _id:', player._id);
     
-    if (!player.unifiedAccount?.email) {
-      console.log('🔍 No email found in unifiedAccount, trying direct email...');
-      if (!player.email) {
-        console.log('🔍 No email found anywhere, cannot fetch last match data');
-      setLastMatchData(null);
-      return;
-      }
-    }
-    
+    // Try to get email from unified account first, then fall back to direct email
     const emailToUse = player.unifiedAccount?.email || player.email;
     console.log('🔍 Using email for last match:', emailToUse);
     
+    if (!emailToUse) {
+      console.log('🔍 No email found anywhere, cannot fetch last match data');
+      setLastMatchData(null);
+      return;
+    }
+    
     try {
+      // Try using player ID first if available
+      if (player._id) {
+        console.log('🔍 Trying to fetch match data by player ID:', player._id);
+        const url = `${BACKEND_URL}/api/ladder/player/${player._id}/matches?limit=1`;
+        console.log('🔍 Last match API URL by ID:', url);
+        
+        const response = await fetch(url, {
+          headers: createSecureHeaders(userPin)
+        });
+        
+        if (response.ok) {
+          const matches = await response.json();
+          if (matches && matches.length > 0) {
+            console.log('🔍 Found match data by ID:', matches[0]);
+            setLastMatchData(matches[0]);
+            return;
+          }
+        }
+      }
+      
+      // Fallback to email-based API
       const sanitizedEmail = sanitizeEmail(emailToUse);
       const url = `${BACKEND_URL}/api/ladder/matches/last-match/${encodeURIComponent(sanitizedEmail)}`;
-      console.log('🔍 Last match API URL:', url);
+      console.log('🔍 Last match API URL by email:', url);
+      console.log('🔍 Original email:', emailToUse);
+      console.log('🔍 Sanitized email:', sanitizedEmail);
       
       const response = await fetch(url, {
         headers: createSecureHeaders(userPin)
@@ -781,22 +833,39 @@ const LadderApp = ({
     console.log('🔍 Fetching match history for player:', player);
     console.log('🔍 Player unifiedAccount:', player.unifiedAccount);
     
-    if (!player.unifiedAccount?.email) {
-      console.log('🔍 No email found in unifiedAccount, trying direct email...');
-      if (!player.email) {
-        console.log('🔍 No email found anywhere, cannot fetch match history');
-        setPlayerMatchHistory([]);
-        return;
-      }
-    }
-    
+    // Try to get email from unified account first, then fall back to direct email
     const emailToUse = player.unifiedAccount?.email || player.email;
     console.log('🔍 Using email:', emailToUse);
     
+    if (!emailToUse) {
+      console.log('🔍 No email found anywhere, cannot fetch match history');
+      setPlayerMatchHistory([]);
+      return;
+    }
+    
     try {
+      // Try using player ID first if available
+      if (player._id) {
+        console.log('🔍 Trying to fetch match history by player ID:', player._id);
+        const url = `${BACKEND_URL}/api/ladder/player/${player._id}/matches?limit=10`;
+        console.log('🔍 Match history API URL by ID:', url);
+        
+        const response = await fetch(url, {
+          headers: createSecureHeaders(userPin)
+        });
+        
+        if (response.ok) {
+          const matches = await response.json();
+          console.log('🔍 Found match history by ID:', matches);
+          setPlayerMatchHistory(matches);
+          return;
+        }
+      }
+      
+      // Fallback to email-based API
       const sanitizedEmail = sanitizeEmail(emailToUse);
       const url = `${BACKEND_URL}/api/ladder/player/${encodeURIComponent(sanitizedEmail)}/matches?limit=10`;
-      console.log('🔍 API URL:', url);
+      console.log('🔍 Match history API URL by email:', url);
       
       const response = await fetch(url, {
         headers: createSecureHeaders(userPin)
@@ -821,21 +890,39 @@ const LadderApp = ({
   const fetchUpdatedPlayerData = async (player) => {
     console.log('🔍 Fetching updated player data for:', player);
     
-    // Try to get email from player data
+    // Try to get email from unified account first, then fall back to direct email
     const emailToUse = player.unifiedAccount?.email || player.email;
     console.log('🔍 Using email for player data:', emailToUse);
     
     if (!emailToUse) {
-      console.log('🔍 No email found, using original player data');
+      console.log('🔍 No email found anywhere, using original player data');
       setUpdatedPlayerData(player);
       return;
     }
     
     try {
-      // Fetch player data directly by email
+      // Try using player ID first if available
+      if (player._id) {
+        console.log('🔍 Trying to fetch updated player data by ID:', player._id);
+        const url = `${BACKEND_URL}/api/ladder/player/${player._id}`;
+        console.log('🔍 Player data API URL by ID:', url);
+        
+        const response = await fetch(url, {
+          headers: createSecureHeaders(userPin)
+        });
+        
+        if (response.ok) {
+          const playerData = await response.json();
+          console.log('🔍 Found updated player data by ID:', playerData);
+          setUpdatedPlayerData(playerData);
+          return;
+        }
+      }
+      
+      // Fallback to email-based API
       const sanitizedEmail = sanitizeEmail(emailToUse);
       const url = `${BACKEND_URL}/api/ladder/player/${encodeURIComponent(sanitizedEmail)}`;
-      console.log('🔍 Fetching player data from:', url);
+      console.log('🔍 Player data API URL by email:', url);
       
       const playerResponse = await fetch(url, {
         headers: createSecureHeaders(userPin)
@@ -1419,34 +1506,10 @@ const LadderApp = ({
       <LadderFloatingLogos />
       
       {/* Independent Tournament Disclaimer */}
-      <div style={{
-        marginTop: '80px',
-        marginBottom: '80px',
-        padding: '12px 16px',
-        background: 'rgba(255, 193, 7, 0.2)',
-        border: '2px solid #ffc107',
-        borderRadius: '8px',
-        textAlign: 'center',
-        maxWidth: '600px',
-        margin: '80px auto 80px auto',
-        boxShadow: '0 3px 12px rgba(255, 193, 7, 0.3)',
-        position: 'relative',
-        zIndex: 999,
-        display: 'block',
-        visibility: 'visible',
-        opacity: 1
-      }}>
-        <p style={{ 
-          margin: '0', 
-          color: '#ffc107', 
-          fontSize: '0.9rem',
-          fontWeight: '600',
-          lineHeight: '1.4',
-          textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)'
-        }}>
+      <div className="tournament-disclaimer">
+        <p>
           <strong>⚠️ INDEPENDENT TOURNAMENT SERIES ⚠️</strong><br/>
-          This ladder system is <strong>NOT</strong> affiliated with, endorsed by, or sanctioned by the Front Range Pool League,<br>
-          </br> CueSports International, BCA Pool League, or USA Pool League.<br/>
+          This ladder system is <strong>NOT</strong> affiliated with, endorsed by, or sanctioned by the Front Range Pool League, CueSports International, BCA Pool League, or USA Pool League.<br/>
           It is an independent tournament series operated by <strong>Legends Brews and Cues</strong>.
         </p>
       </div>

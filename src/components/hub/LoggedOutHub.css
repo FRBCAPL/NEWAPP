@@ -7,6 +7,7 @@
   color: white;
   overflow-x: hidden;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .logged-out-hub-header {
@@ -35,7 +36,7 @@
 }
 
 .login-section {
-  margin: 1rem auto 10rem auto;
+  margin: 1rem auto 3rem auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -109,6 +110,45 @@
 .app-card.logged-out:hover {
   transform: none;
   box-shadow: none;
+}
+
+/* Ladder card with watermark background */
+.app-card.ladder-card {
+  position: relative;
+}
+
+.app-card.ladder-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(17, 17, 17, 0.7);
+  border-radius: 20px;
+  z-index: 1;
+}
+
+.app-card.ladder-card::after {
+  content: '';
+  position: absolute;
+  top: -5%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 100%;
+  background-image: url('../../assets/LBC logo with address.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.25 !important;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.app-card.ladder-card > * {
+  position: relative;
+  z-index: 2;
 }
 
 .app-card.guest-mode {
@@ -296,10 +336,10 @@
     margin-bottom: 1rem;
   }
   
-  /* App cards - side by side but more compact */
+  /* App cards - stack vertically on mobile for better readability */
   .apps-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 0.8rem;
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
   
   .app-card {
@@ -329,6 +369,25 @@
     min-height: 36px;
     min-width: 36px;
   }
+  
+  /* Stack buttons vertically on mobile */
+  .app-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+  
+  .app-actions button {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+  
+  /* Ensure differences button doesn't cause horizontal scroll */
+  .logged-out-hub-container {
+    padding: 0.5rem;
+    overflow-x: hidden;
+  }
 }
 
 @media (max-width: 480px) {
@@ -354,8 +413,8 @@
   }
   
   .apps-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 0.6rem;
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
   }
   
   .app-card {
@@ -384,5 +443,24 @@
     font-size: 0.75rem;
     min-height: 32px;
     min-width: 32px;
+  }
+  
+  /* Stack buttons vertically on small mobile */
+  .app-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+  }
+  
+  .app-actions button {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+  
+  /* Ensure differences button doesn't cause horizontal scroll on small mobile */
+  .logged-out-hub-container {
+    padding: 0.3rem;
+    overflow-x: hidden;
   }
 }

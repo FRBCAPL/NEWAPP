@@ -614,6 +614,18 @@ export default function LadderPlayerManagement() {
     }));
   };
 
+  const openFargoUpdater = () => {
+    // Open the Fargo updater in a new window/tab
+    const fargoUpdaterUrl = `${BACKEND_URL.replace('/api', '')}/static/fargo-updater.html`;
+    window.open(fargoUpdaterUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+  };
+
+  const openLadderPromotion = () => {
+    // Open the ladder promotion tool in a new window/tab
+    const promotionUrl = `${BACKEND_URL.replace('/api', '')}/static/ladder-promotion.html`;
+    window.open(promotionUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+  };
+
   if (loading) {
     return <div className={styles.container}>Loading ladder players...</div>;
   }
@@ -703,6 +715,40 @@ export default function LadderPlayerManagement() {
                 }}
               >
                 🏆 View Pending Applications
+        </button>
+              <button 
+                onClick={openFargoUpdater}
+                style={{
+                  background: 'linear-gradient(135deg, #ff6b6b, #ee5a24)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 20px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease',
+                  margin: '5px'
+                }}
+              >
+                🎯 Update Fargo Ratings
+        </button>
+              <button 
+                onClick={openLadderPromotion}
+                style={{
+                  background: 'linear-gradient(135deg, #28a745, #20c997)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 20px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease',
+                  margin: '5px'
+                }}
+              >
+                ⬆️ Promote Players
         </button>
             </div>
          </div>

@@ -5,7 +5,8 @@ class LadderErrorBoundary extends Component {
     super(props);
     this.state = { 
       hasError: false, 
-      error: null 
+      error: null,
+      errorInfo: null
     };
   }
 
@@ -14,14 +15,18 @@ class LadderErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('LadderErrorBoundary caught an error:', error, errorInfo);
-    this.setState({ error });
+    console.error('LadderErrorBoundary caught an error:', error);
+    console.error('Error message:', error?.message);
+    console.error('Error stack:', error?.stack);
+    console.error('Component stack:', errorInfo?.componentStack);
+    this.setState({ error, errorInfo });
   }
 
   handleRetry = () => {
     this.setState({ 
       hasError: false, 
-      error: null 
+      error: null,
+      errorInfo: null
     });
   };
 
@@ -43,6 +48,33 @@ class LadderErrorBoundary extends Component {
           <p style={{ margin: '0 0 16px 0', color: '#666' }}>
             There was an issue loading the ladder data. This won't affect other parts of the app.
           </p>
+          {process.env.NODE_ENV === 'development' && this.state.error && (
+            <div style={{ 
+              margin: '10px 0', 
+              padding: '10px', 
+              backgroundColor: '#fff', 
+              border: '1px solid #ddd', 
+              borderRadius: '4px',
+              fontSize: '12px',
+              fontFamily: 'monospace',
+              textAlign: 'left'
+            }}>
+              <strong>Error Details:</strong><br/>
+              <strong>Message:</strong> {this.state.error.message}<br/>
+              <strong>Stack:</strong><br/>
+              <pre style={{ whiteSpace: 'pre-wrap', margin: '5px 0' }}>
+                {this.state.error.stack}
+              </pre>
+              {this.state.errorInfo?.componentStack && (
+                <>
+                  <strong>Component Stack:</strong><br/>
+                  <pre style={{ whiteSpace: 'pre-wrap', margin: '5px 0' }}>
+                    {this.state.errorInfo.componentStack}
+                  </pre>
+                </>
+              )}
+            </div>
+          )}
           <button
             onClick={this.handleRetry}
             style={{
