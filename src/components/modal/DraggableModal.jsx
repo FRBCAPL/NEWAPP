@@ -160,7 +160,7 @@ export default function DraggableModal({
               color: textColor
             }}
           >
-            {title}
+            {typeof title === 'string' ? title : title}
           </h2>
           {/* Close button moved here for flex layout */}
           <button 

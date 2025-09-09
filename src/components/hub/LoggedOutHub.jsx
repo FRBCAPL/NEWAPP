@@ -24,7 +24,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
   const [expandedSections, setExpandedSections] = useState({
     singlesLeague: false,
     ladderOfLegends: false,
-    keyDifferences: false
+    keyDifferences: false,
+    instructions: false
   });
 
   const navigate = useNavigate();
@@ -167,7 +168,184 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
   // Regular logged out view
   return (
     <div className="logged-out-hub-container">
-                     {/* Login Section First */}
+        {/* Instructions Section */}
+        <div style={{
+          position: 'relative',
+          zIndex: 9999,
+          background: 'linear-gradient(135deg, rgba(33, 150, 243, 0.3), rgba(21, 101, 192, 0.3))',
+          border: '2px solid rgba(33, 150, 243, 0.3)',
+          borderRadius: '12px',
+          padding: window.innerWidth <= 768 ? '8px' : '10px',
+          margin: '20px auto',
+          width: window.innerWidth <= 768 ? '90vw' : '220px',
+          maxWidth: '90vw',
+          color: '#ffffff',
+          boxShadow: '0 4px 15px rgba(33, 150, 243, 0.2)'
+        }}>
+          <div 
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              marginBottom: expandedSections.instructions ? '12px' : '0'
+            }}
+            onClick={() => toggleSection('instructions')}
+          >
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              flex: 1
+            }}>
+              <span style={{ fontSize: '1.2rem' }}>📋</span>
+              <h3 style={{
+                margin: 0,
+                fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem',
+                fontWeight: 'bold',
+                color: '#64B5F6'
+              }}>
+                How to Get Started
+              </h3>
+            </div>
+            <span style={{
+              fontSize: '1rem',
+              color: '#64B5F6',
+              transition: 'transform 0.3s ease',
+              transform: expandedSections.instructions ? 'rotate(180deg)' : 'rotate(0deg)'
+            }}>
+              ▼
+            </span>
+          </div>
+          
+          {expandedSections.instructions && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: window.innerWidth <= 768 ? '90vw' : '920px',
+              maxWidth: '90vw',
+              background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(30, 30, 30, 0.95))',
+              border: '2px solid rgba(33, 150, 243, 0.5)',
+              borderRadius: '12px',
+              padding: window.innerWidth <= 768 ? '12px' : '16px',
+              margin: '10px',
+              color: '#ffffff',
+              boxShadow: '0 8px 25px rgba(33, 150, 243, 0.4)',
+              backdropFilter: 'blur(10px)',
+              zIndex: 9999,
+              textAlign: 'center'
+            }}>
+              <div style={{
+                display: 'grid',
+                gap: '8px',
+                fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem',
+                lineHeight: '1.4',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  padding: '8px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                  <span style={{ fontSize: '1.2rem', marginTop: '2px' }}>🔑</span>
+                  <div>
+                    <strong style={{ color: '#4CAF50' }}>Already have an account? <br></br>(Beta Users)</strong>
+                    
+                    <div style={{ color: '#e0e0e0', marginTop: '4px' }}>
+                      Use your email OR PIN to sign in. You only need one of them to log in.<br></br>
+                      One log in grants access to all apps.
+                    </div>
+                  </div>
+                </div>
+                
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  padding: '8px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                  <span style={{ fontSize: '1.2rem', marginTop: '2px' }}>👤</span>
+                  <div>
+                    <strong style={{ color: '#9C27B0' }}>Current ladder player?</strong>
+                    <div style={{ color: '#e0e0e0', marginTop: '4px' }}>
+                      If you're already on the ladder, but NOT a Beta user, you need to claim your position. <br></br>
+                       <br /><strong>You can either:</strong><br></br>
+                      • Click your name on the ladder(marked with *). In your stats screen that will open, click the green "Claim" button.<br></br>
+                      • Use the "Sign Up" process to check your status.<br></br>
+                      An admin will review your registration.
+                    </div>
+                  </div>
+                </div>
+                
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  padding: '8px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                  <span style={{ fontSize: '1.2rem', marginTop: '2px' }}>🆕</span>
+                  <div>
+                   <strong style={{ color: '#FF9800' }}>New to the system?</strong>
+                    <div style={{ color: '#e0e0e0', marginTop: '4px' }}>
+                      Click "Sign Up" to create a new account. You'll provide your contact information and other details.<br></br> 
+                      The system will assign you a PIN and and admin will review your registration.
+                    </div>
+                  </div>
+                </div>
+                
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  padding: '8px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                  <span style={{ fontSize: '1.2rem', marginTop: '2px' }}>👀</span>
+                  <div>
+                    <strong style={{ color: '#2196F3' }}>Just want to look around?</strong>
+                    <div style={{ color: '#e0e0e0', marginTop: '4px' }}>
+                      Use the "Guest Access" buttons below to preview the ladder and apps without creating an account.<br></br> Anyone can view the ladder rankings!
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div style={{
+                marginTop: '12px',
+                padding: '8px 12px',
+                background: 'rgba(33, 150, 243, 0.1)',
+                borderRadius: '6px',
+                border: '1px solid rgba(33, 150, 243, 0.2)',
+                fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.9rem',
+                color: '#B3E5FC',
+                textAlign: 'center'
+              }}>
+                💡 <strong>Need help?</strong> Contact the Front Range Pool Hub administrators for assistance with account setup or technical issues.
+              </div>
+            </div>
+          )}
+        </div>
+
+                     {/* Login Section */}
         <div className="login-section">
           <EmbeddedLoginForm onSuccess={handleLoginSuccess} onShowSignup={() => setShowSignupForm(true)} />
         </div>
@@ -232,7 +410,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                   <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'flex-start',
+                    alignItems: 'center',
                     marginBottom: '10px'
                   }}>
                     <button

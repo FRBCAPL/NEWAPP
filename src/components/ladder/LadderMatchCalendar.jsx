@@ -16,11 +16,13 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/matches/confirmed`);
+      // Try the ladder-specific endpoint that includes position data
+      const response = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/499-under/matches`);
       if (!response.ok) {
         throw new Error('Failed to fetch matches');
       }
       const data = await response.json();
+      console.log('Calendar matches data:', data.matches);
       setMatches(data.matches || []);
     } catch (err) {
       setError('Failed to load matches');
@@ -60,10 +62,12 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
   // Get matches for a specific date
   const getMatchesForDate = (date) => {
     const dateStr = date.toISOString().split('T')[0];
-    return matches.filter(match => {
+    const dayMatches = matches.filter(match => {
       const matchDate = new Date(match.scheduledDate || match.completedDate);
       return matchDate.toISOString().split('T')[0] === dateStr;
     });
+    console.log('Matches for date:', dateStr, dayMatches);
+    return dayMatches;
   };
 
   // Navigate months
@@ -90,14 +94,32 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
     <DraggableModal
       open={isOpen}
       onClose={onClose}
-      title="📅 Ladder Match Calendar"
-      maxWidth="720px"
-      maxHeight="800px"
+      title={
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <img 
+            src="/src/assets/LBC logo with address.png" 
+            alt="LEGENDS" 
+            style={{ 
+              height: '32px', 
+              width: 'auto',
+              verticalAlign: 'middle'
+            }} 
+          />
+          <span>Ladder Match Calendar</span>
+          <span style={{ fontSize: '24px' }}>⚔️</span>
+        </div>
+      }
+      maxWidth="1100px"
+      maxHeight="750px"
+      borderColor="#064e3b"
+      glowColor="#8B5CF6"
+      textColor="#FFD700"
+      className="glossy-calendar-modal"
     >
       <div
         className="ladder-match-calendar"
         style={{
-          maxHeight: 'calc(800px - 100px)',
+          maxHeight: 'calc(750px - 100px)',
           overflowY: 'auto'
         }}
       >
@@ -150,6 +172,23 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
                       <span className="match-count">{dayMatches.length}</span>
                     </div>
                   )}
+                  {dayMatches.length > 0 && (
+                    <div className="match-players">
+                      {dayMatches.slice(0, 4).map((match, matchIndex) => {
+                        // Check if either player is ranked in the top 5 of the ladder
+                        const isTop5 = (match.player1?.ladderRank && match.player1.ladderRank <= 5) || 
+                                      (match.player2?.ladderRank && match.player2.ladderRank <= 5);
+                        return (
+                          <div key={matchIndex} className={`player-names ${isTop5 ? 'top5-match' : ''}`}>
+                            {isTop5 && <span className="crown-icon">👑</span>}
+                            <div className="player-name">{match.player1?.firstName || 'TBD'}</div>
+                            <div className="vs">vs</div>
+                            <div className="player-name">{match.player2?.firstName || 'TBD'}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -193,9 +232,27 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
       <DraggableModal
         open={showMatchesModal}
         onClose={() => setShowMatchesModal(false)}
-        title={`📅 Matches for ${selectedDate ? formatDate(selectedDate) : ''}`}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <img 
+              src="/src/assets/LBC logo with address.png" 
+              alt="LEGENDS" 
+              style={{ 
+                height: '50px', 
+                width: 'auto',
+                verticalAlign: 'middle'
+              }} 
+            />
+            <span>Matches for {selectedDate ? formatDate(selectedDate) : ''}</span>
+            <span style={{ fontSize: '24px' }}>⚔️</span>
+          </div>
+        }
         maxWidth="600px"
         maxHeight="500px"
+        borderColor="#064e3b"
+        glowColor="#8B5CF6"
+        textColor="#FFD700"
+        className="glossy-calendar-modal"
       >
         <div className="day-matches-modal">
           {selectedDate && (
@@ -205,9 +262,21 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
                   {getMatchesForDate(selectedDate).map((match, index) => (
                     <div key={index} className="match-item">
                       <div className="match-players">
-                        <span className="player1">{match.player1?.firstName} {match.player1?.lastName}</span>
+                        <div className="player-section">
+                          <span className="player-role challenger">⚔️ Challenger</span>
+                          <div className="player-name-row">
+                            <span className="player-name">{match.player1?.firstName} {match.player1?.lastName}</span>
+                            <span className="player-rank">#{match.player1?.position || 'N/A'}</span>
+                          </div>
+                        </div>
                         <span className="vs">vs</span>
-                        <span className="player2">{match.player2?.firstName} {match.player2?.lastName}</span>
+                        <div className="player-section">
+                          <span className="player-role defender">🛡️ Defender</span>
+                          <div className="player-name-row">
+                            <span className="player-name">{match.player2?.firstName} {match.player2?.lastName}</span>
+                            <span className="player-rank">#{match.player2?.position || 'N/A'}</span>
+                          </div>
+                        </div>
                       </div>
                       <div className="match-details">
                         <span className="match-type">{match.matchType}</span>
