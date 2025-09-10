@@ -114,12 +114,16 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                 transition: 'all 0.3s ease'
               }}
               onMouseEnter={(e) => {
-                e.target.style.background = '#e53e3e';
-                e.target.style.color = 'white';
+                if (window.innerWidth > 768) {
+                  e.target.style.background = '#e53e3e';
+                  e.target.style.color = 'white';
+                }
               }}
               onMouseLeave={(e) => {
-                e.target.style.background = 'transparent';
-                e.target.style.color = '#e53e3e';
+                if (window.innerWidth > 768) {
+                  e.target.style.background = 'transparent';
+                  e.target.style.color = '#e53e3e';
+                }
               }}
             >
               ← Back to Login
@@ -183,12 +187,16 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                           transition: 'all 0.3s ease'
                         }}
                         onMouseEnter={(e) => {
-                          e.target.style.background = app.id === 'ladder' ? '#4CAF50' : app.color;
-                          e.target.style.color = 'white';
+                          if (window.innerWidth > 768) {
+                            e.target.style.background = app.id === 'ladder' ? '#4CAF50' : app.color;
+                            e.target.style.color = 'white';
+                          }
                         }}
                         onMouseLeave={(e) => {
-                          e.target.style.background = 'transparent';
-                          e.target.style.color = app.id === 'ladder' ? '#4CAF50' : app.color;
+                          if (window.innerWidth > 768) {
+                            e.target.style.background = 'transparent';
+                            e.target.style.color = app.id === 'ladder' ? '#4CAF50' : app.color;
+                          }
                         }}
                       >
                         👀 Access as Guest

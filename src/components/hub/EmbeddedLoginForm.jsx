@@ -222,12 +222,16 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
               minHeight: isMobile ? '24px' : 'auto' // Much smaller height on mobile
             }}
             onMouseEnter={(e) => {
-              e.target.style.background = '#FF6B35';
-              e.target.style.color = 'white';
+              if (window.innerWidth > 768) {
+                e.target.style.background = '#FF6B35';
+                e.target.style.color = 'white';
+              }
             }}
             onMouseLeave={(e) => {
-              e.target.style.background = 'transparent';
-              e.target.style.color = '#FF6B35';
+              if (window.innerWidth > 768) {
+                e.target.style.background = 'transparent';
+                e.target.style.color = '#FF6B35';
+              }
             }}
           >
             🆕 First Time User? Apply for Access
