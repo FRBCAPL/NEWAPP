@@ -73,7 +73,7 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
   }
 
   return (
-    <div style={{ 
+    <div className="embedded-login-frame" style={{ 
       position: 'relative',
       width: '100%',
       height: isMobile ? '350px' : '450px',
@@ -102,8 +102,8 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
       {/* Login Form Overlay - PERFECTLY CENTERED on pool table, SMALLER on mobile */}
       <div style={{
         position: 'absolute',
-        top: isMobile ? '50%' : '50%', // Center vertically on both mobile and PC
-        left: '50%', // Center horizontally on both mobile and PC
+        top: '50%', // Center vertically
+        left: '50%', // Center horizontally
         transform: 'translate(-50%, -50%)', // Perfect centering
         zIndex: 10,
         width: isMobile ? '180px' : '420px', // Wide on PC, small on mobile
@@ -117,7 +117,18 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
         // Prevent zoom on input focus
         transformOrigin: 'center center',
         backfaceVisibility: 'hidden',
-        WebkitBackfaceVisibility: 'hidden'
+        WebkitBackfaceVisibility: 'hidden',
+        // CRITICAL: Prevent any movement while preserving centering
+        willChange: 'auto',
+        transition: 'none',
+        animation: 'none',
+        // Force stability with vendor prefixes
+        WebkitTransform: 'translate(-50%, -50%)',
+        MozTransform: 'translate(-50%, -50%)',
+        msTransform: 'translate(-50%, -50%)',
+        OTransform: 'translate(-50%, -50%)',
+        // Prevent jumping during resize
+        contain: 'layout style paint'
       }}>
         <div style={{ 
           padding: isMobile ? '8px' : '24px', // Much smaller padding on mobile
@@ -147,7 +158,6 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Enter Email or PIN"
-              autoFocus
               disabled={loading}
               style={{
                 width: '100%',
@@ -158,7 +168,9 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
                 color: '#fff',
                 fontSize: isMobile ? '16px' : '1rem',
                 boxSizing: 'border-box',
-                minHeight: isMobile ? '28px' : 'auto' // Much smaller height on mobile
+                minHeight: isMobile ? '28px' : 'auto', // Much smaller height on mobile
+                transition: 'none',
+                outline: 'none'
               }}
             />
             <button
@@ -200,7 +212,9 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
               cursor: 'pointer',
               fontWeight: 'bold',
               marginBottom: isMobile ? '3px' : '12px',
-              minHeight: isMobile ? '28px' : 'auto' // Much smaller height on mobile
+              minHeight: isMobile ? '28px' : 'auto', // Much smaller height on mobile
+              transition: 'none',
+              outline: 'none'
             }}
           >
             {loading ? "Verifying..." : "Login to Access Hub"}
@@ -221,16 +235,9 @@ export default function EmbeddedLoginForm({ onSuccess, onShowSignup }) {
               cursor: 'pointer',
               fontWeight: 'bold',
               marginBottom: isMobile ? '3px' : '16px',
-              transition: 'all 0.3s ease',
-              minHeight: isMobile ? '24px' : 'auto' // Much smaller height on mobile
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = '#FF6B35';
-              e.target.style.color = 'white';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = 'transparent';
-              e.target.style.color = '#FF6B35';
+              transition: 'none',
+              minHeight: isMobile ? '24px' : 'auto', // Much smaller height on mobile
+              outline: 'none'
             }}
           >
             🎯 Join Front Range Pool Hub

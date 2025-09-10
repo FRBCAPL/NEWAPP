@@ -126,11 +126,11 @@ button.compact-claim-btn {
 
 /* Mobile-specific touch feedback */
 .mobile-touch-feedback {
-  transition: transform 0.2s ease-out;
+  /* Disabled to prevent movement on mobile */
 }
 
 .mobile-touch-feedback:active {
-  transform: scale(0.98);
+  /* Disabled to prevent movement on mobile */
 }
 
 /* Mobile-optimized animations */
@@ -615,7 +615,47 @@ body {
   
   /* Better touch feedback */
   button:active, a:active, [role="button"]:active {
-    transform: scale(0.98);
+    /* Disabled to prevent movement on mobile */
+  }
+  
+  /* SPECIFIC FIX: Prevent login form movement while preserving centering */
+  .embedded-login-frame {
+    transition: none !important;
+    animation: none !important;
+  }
+  
+  /* Preserve the centering transform for the main container */
+  .embedded-login-frame > div:first-of-type {
+    transition: none !important;
+    animation: none !important;
+    transform: translate(-50%, -50%) !important;
+  }
+  
+  /* Prevent movement on form elements but don't override their positioning */
+  .embedded-login-frame button,
+  .embedded-login-frame input {
+    transition: none !important;
+    animation: none !important;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+  }
+  
+  /* Prevent any focus/active state changes but preserve positioning */
+  .embedded-login-frame input:focus,
+  .embedded-login-frame button:focus,
+  .embedded-login-frame button:active,
+  .embedded-login-frame input:active,
+  .embedded-login-frame input:hover,
+  .embedded-login-frame button:hover {
+    transition: none !important;
+    animation: none !important;
+    outline: none !important;
+    /* Don't override transform - let elements stay in their natural position */
   }
 }
 

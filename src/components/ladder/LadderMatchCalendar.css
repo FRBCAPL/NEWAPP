@@ -501,55 +501,119 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  /* Calendar Modal Mobile Adjustments */
+  .glossy-calendar-modal {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    height: 90vh !important;
+    max-height: 90vh !important;
+    margin: 2.5vh auto !important;
+  }
+  
   .calendar-header {
-    padding: 0 0.5rem;
+    padding: 0 0.3rem;
+    margin-bottom: 0.1rem;
   }
   
   .month-year {
-    font-size: 1.2rem;
-  }
-  
-  .nav-button {
-    padding: 0.4rem 0.8rem;
     font-size: 1rem;
   }
   
+  .nav-button {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  
   .calendar-grid {
-    padding: 0.3rem;
+    padding: 0.1rem;
+    max-width: 95%;
+    margin: 0 auto 0.1rem auto;
+  }
+  
+  .calendar-days {
+    gap: 0.02rem;
   }
   
   .calendar-day {
-    min-height: 30px;
+    min-height: 25px;
+    max-height: 35px;
+    padding: 1px;
+    aspect-ratio: 1.1;
   }
   
   .day-number {
-    font-size: 0.9rem;
+    font-size: 0.6rem;
+  }
+  
+  /* Hide Player Names in Calendar Date Boxes Mobile - Only Show Indicators */
+  .calendar-day .match-players {
+    display: none;
+  }
+  
+  .calendar-day .player-names {
+    display: none;
+  }
+  
+  .calendar-day .player-name {
+    display: none;
+  }
+  
+  .calendar-day .vs {
+    display: none;
   }
   
   .match-indicator {
-    width: 12px;
-    height: 12px;
-    font-size: 0.5rem;
+    width: 10px;
+    height: 10px;
+    font-size: 0.4rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
   
+  /* Match Details Modal Mobile */
   .day-matches-modal .match-players {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.3rem;
+  }
+  
+  .player-section {
+    gap: 0.1rem;
+  }
+  
+  .player-name-row {
+    gap: 0.2rem;
+  }
+  
+  .day-matches-modal .player-name {
+    font-size: 0.8rem;
+  }
+  
+  .player-rank {
+    font-size: 0.8rem;
+  }
+  
+  .player-role {
+    font-size: 0.2rem;
+    padding: 0.01rem 0.1rem 0.01rem 0.03rem;
   }
   
   .vs {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
   }
   
   .match-details {
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.3rem;
+    font-size: 0.7rem;
   }
   
   .calendar-legend {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.3rem;
     align-items: center;
+    font-size: 0.7rem;
   }
 }

@@ -11,6 +11,53 @@
   min-height: 500px;
 }
 
+/* CRITICAL: Prevent login form movement on click/touch while preserving centering */
+.embedded-login-frame {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Preserve the centering transform for the pool table container */
+.embedded-login-frame > div:first-of-type {
+  transition: none !important;
+  animation: none !important;
+  /* Keep the centering transform for pool table */
+  transform: translate(-50%, -50%) !important;
+}
+
+/* Preserve the centering transform for the login form container */
+.embedded-login-frame > div:nth-of-type(2) {
+  transition: none !important;
+  animation: none !important;
+  /* Keep the centering transform for login form */
+  transform: translate(-50%, -50%) !important;
+}
+
+/* Prevent movement on form elements but preserve their layout */
+.embedded-login-frame input,
+.embedded-login-frame button {
+  transition: none !important;
+  animation: none !important;
+  /* Don't override transform here - let them stay in place */
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+.embedded-login-frame input:focus,
+.embedded-login-frame button:focus,
+.embedded-login-frame button:active,
+.embedded-login-frame input:active {
+  transition: none !important;
+  animation: none !important;
+  outline: none !important;
+  /* Don't override transform on focus/active - keep them stable */
+}
+
 .simulationOuterWrapper {
   width: 100%;
   display: flex;
@@ -135,7 +182,7 @@
 
 .pinLoginBtn:hover:not(:disabled) {
   background: linear-gradient(45deg, #c53030, #e53e3e);
-  transform: translateY(-2px);
+  transform: none;
   box-shadow: 0 4px 15px rgba(229, 62, 62, 0.4);
 }
 
