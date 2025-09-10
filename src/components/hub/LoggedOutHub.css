@@ -334,15 +334,15 @@
 .instruction-modal {
   position: absolute;
   top: 100%;
-  left: 0;
-  right: 0;
-  width: auto;
-  max-width: none;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  max-width: 900px;
   background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(30, 30, 30, 0.95));
   border: 2px solid rgba(33, 150, 243, 0.5);
   border-radius: 12px;
   padding: 16px;
-  margin: 10px;
+  margin: 10px 0;
   color: #ffffff;
   box-shadow: 0 8px 25px rgba(33, 150, 243, 0.4);
   backdrop-filter: blur(10px);
@@ -410,10 +410,13 @@
   }
   
   .instruction-modal {
-    width: 85vw;
-    max-width: 85vw;
+    width: 85vw !important;
+    max-width: 85vw !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
     padding: 12px;
-    margin: 8px;
+    margin: 8px 0;
   }
   
   .instruction-modal-content {
@@ -448,10 +451,13 @@
   }
   
   .instruction-modal {
-    width: 85vw;
-    max-width: 85vw;
+    width: 85vw !important;
+    max-width: 85vw !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
     padding: 10px;
-    margin: 6px;
+    margin: 6px 0 !important;
   }
   
   .instruction-modal-content {

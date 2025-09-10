@@ -94,7 +94,9 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
       <div className="logged-out-hub-container">
         {/* Guest Header */}
         <div className="logged-out-hub-header">
-          <div className="hub-title">
+          <div className="hub-title" style={{
+            textAlign: window.innerWidth <= 768 ? 'center' : 'center'
+          }}>
             <h1>Front Range Pool Hub</h1>
             <p>Guest Preview Mode</p>
             <div style={{ 
