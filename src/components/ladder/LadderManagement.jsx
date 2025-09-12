@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatDateForMountainTime } from '../../utils/dateUtils';
 import { csvToJson, getSampleCSV, validatePlayerData } from '../../utils/csvToJson';
 import { BACKEND_URL } from '../../config.js';
 import './LadderManagement.css';
@@ -450,7 +451,7 @@ const LadderManagement = ({ userEmail, userPin }) => {
                     </td>
                     <td>
                       {player.immunityUntil ? 
-                        new Date(player.immunityUntil).toLocaleDateString() : 
+                        formatDateForMountainTime(player.immunityUntil) : 
                         'None'
                       }
                     </td>
@@ -671,7 +672,7 @@ const LadderManagement = ({ userEmail, userPin }) => {
                   <tbody>
                     {matchHistory.map((match, index) => (
                       <tr key={match.id || index}>
-                        <td>{new Date(match.matchDate).toLocaleDateString()}</td>
+                        <td>{formatDateForMountainTime(match.matchDate)}</td>
                         <td>
                           <strong>{match.winner.name}</strong> (#{match.winner.position})
                         </td>

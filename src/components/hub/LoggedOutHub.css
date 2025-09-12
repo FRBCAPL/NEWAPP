@@ -151,6 +151,19 @@
   z-index: 2;
 }
 
+.app-card.ladder-card:hover {
+  background: linear-gradient(135deg, rgba(156, 39, 176, 0.2), rgba(123, 31, 162, 0.15)) !important;
+  border-color: rgba(156, 39, 176, 0.6) !important;
+  box-shadow: 0 16px 48px rgba(156, 39, 176, 0.3), 0 0 32px rgba(156, 39, 176, 0.2) !important;
+}
+
+/* League app specific hover effect - faint red */
+.app-card:not(.ladder-card):hover {
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(198, 40, 40, 0.15)) !important;
+  border-color: rgba(244, 67, 54, 0.6) !important;
+  box-shadow: 0 16px 48px rgba(244, 67, 54, 0.3), 0 0 32px rgba(244, 67, 54, 0.2) !important;
+}
+
 .app-card.guest-mode {
   cursor: pointer;
   opacity: 1;

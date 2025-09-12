@@ -1240,7 +1240,6 @@ const GuestLadderApp = () => {
             open={showLadderModal}
             onClose={() => setShowLadderModal(false)}
             title="📊 Ladder Rankings - Public View"
-            maxWidth="1000px"
             maxHeight="90vh"
             borderColor="#8A8A8A"
             textColor="#000000"

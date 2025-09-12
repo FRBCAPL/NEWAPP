@@ -308,62 +308,9 @@
 .public-ladder-view .ladder-table {
   width: 100%;
   overflow-x: auto;
-  display: table;
-  border-collapse: collapse;
 }
 
-.public-ladder-view .table-header,
-.public-ladder-view .table-row {
-  min-width: 650px;
-  display: table-row;
-}
-
-.public-ladder-view .header-cell,
-.public-ladder-view .table-cell {
-  padding: 8px 12px;
-  font-size: 0.95rem;
-  display: table-cell;
-  vertical-align: middle;
-  text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Ensure proper column widths for alignment */
-.public-ladder-view .header-cell:nth-child(1),
-.public-ladder-view .table-cell:nth-child(1) {
-  width: 70px; /* Rank */
-  text-align: center;
-}
-
-.public-ladder-view .header-cell:nth-child(2),
-.public-ladder-view .table-cell:nth-child(2) {
-  width: 220px; /* Player Name */
-  text-align: left;
-}
-
-.public-ladder-view .header-cell:nth-child(3),
-.public-ladder-view .table-cell:nth-child(3) {
-  width: 90px; /* Fargo Rate */
-  text-align: center;
-}
-
-.public-ladder-view .header-cell:nth-child(4),
-.public-ladder-view .table-cell:nth-child(4) {
-  width: 60px; /* Wins */
-  text-align: center;
-}
-
-.public-ladder-view .header-cell:nth-child(5),
-.public-ladder-view .table-cell:nth-child(5) {
-  width: 60px; /* Losses */
-  text-align: center;
-}
-
-.public-ladder-view .header-cell:nth-child(6),
-.public-ladder-view .table-cell:nth-child(6) {
-  width: 90px; /* Status */
-  text-align: center;
-}
+/* Public view uses unified ladder structure - no custom column widths needed */
 
 /* Make the ladder much more compact in the modal */
 .public-ladder-view .ladder-container {

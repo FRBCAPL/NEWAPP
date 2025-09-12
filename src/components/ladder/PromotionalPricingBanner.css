@@ -173,57 +173,154 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .promotional-pricing-banner {
-    margin: 12px;
+    margin: 8px;
     border-radius: 8px;
   }
   
   .promotional-content {
-    padding: 12px 16px;
-    gap: 12px;
-  }
-  
-  .promotional-icon {
-    font-size: 24px;
-  }
-  
-  .promotional-title {
-    font-size: 1rem;
-  }
-  
-  .pricing-info {
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
-  }
-  
-  .free-membership,
-  .match-fee {
-    font-size: 0.8rem;
-  }
-  
-  .promotional-footer {
-    padding: 6px 16px;
-  }
-  
-  .prize-pool-info {
-    font-size: 0.8rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .promotional-content {
+    padding: 10px 12px;
     flex-direction: column;
     text-align: center;
     gap: 8px;
   }
   
-  .promotional-actions {
-    align-self: flex-end;
+  .promotional-icon {
+    font-size: 20px;
+  }
+  
+  .promotional-title {
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+  
+  .match-fees-note {
+    font-size: 0.8rem;
+    margin: 4px 0;
   }
   
   .pricing-info {
     flex-direction: row;
+    gap: 6px;
     justify-content: center;
-    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .free-membership,
+  .match-fee {
+    font-size: 0.75rem;
+    padding: 3px 6px;
+    white-space: nowrap;
+  }
+  
+  .countdown {
+    font-size: 0.75rem;
+    margin-top: 4px;
+  }
+  
+  .days-left {
+    padding: 2px 4px;
+    font-size: 0.7rem;
+  }
+  
+  .promotional-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+  
+  .dismiss-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+  
+  .promotional-footer {
+    padding: 4px 12px;
+  }
+  
+  .prize-pool-info {
+    font-size: 0.75rem;
+  }
+  
+  .prize-pool-countdown,
+  .prize-pool-active {
+    padding: 2px 6px;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .promotional-pricing-banner {
+    margin: 6px;
+    border-radius: 6px;
+  }
+  
+  .promotional-content {
+    padding: 8px 10px;
+    flex-direction: column;
+    text-align: center;
+    gap: 6px;
+  }
+  
+  .promotional-title {
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+    line-height: 1.1;
+  }
+  
+  .match-fees-note {
+    font-size: 0.7rem;
+    margin: 2px 0;
+  }
+  
+  .pricing-info {
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+  }
+  
+  .free-membership,
+  .match-fee {
+    font-size: 0.7rem;
+    padding: 2px 4px;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .countdown {
+    font-size: 0.7rem;
+    margin-top: 2px;
+  }
+  
+  .days-left {
+    padding: 1px 3px;
+    font-size: 0.65rem;
+  }
+  
+  .promotional-actions {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+  }
+  
+  .dismiss-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+  
+  .promotional-footer {
+    padding: 3px 10px;
+  }
+  
+  .prize-pool-info {
+    font-size: 0.7rem;
+  }
+  
+  .prize-pool-countdown,
+  .prize-pool-active {
+    padding: 1px 4px;
+    font-size: 0.65rem;
   }
 }

@@ -1,5 +1,6 @@
 import React, { memo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { formatDateForMountainTime, formatTimeForMountainTime } from '../../utils/dateUtils';
 
 const PlayerStatsModal = memo(({
   showMobilePlayerStats,
@@ -93,7 +94,13 @@ const PlayerStatsModal = memo(({
         }}
       >
         <div className="player-stats-header">
-          <h3>{selectedPlayerForStats.firstName} {selectedPlayerForStats.lastName}</h3>
+          <h3>
+            {isPublicView ? (
+              `${selectedPlayerForStats.firstName} ${selectedPlayerForStats.lastName ? selectedPlayerForStats.lastName.charAt(0) + '.' : ''}`
+            ) : (
+              `${selectedPlayerForStats.firstName} ${selectedPlayerForStats.lastName}`
+            )}
+          </h3>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <button 
               className="stats-close-btn"
@@ -194,7 +201,7 @@ const PlayerStatsModal = memo(({
                   <div className="stat-item">
                     <div className="stat-label">Immunity Until</div>
                     <div className="stat-value">
-                      {new Date(selectedPlayerForStats.immunityUntil).toLocaleDateString()}
+                      {formatDateForMountainTime(selectedPlayerForStats.immunityUntil)}
                     </div>
                   </div>
                 )}
@@ -209,7 +216,16 @@ const PlayerStatsModal = memo(({
                   {transformedLastMatch ? (
                     <div className="last-match-info">
                       <div className="match-opponent">
-                        vs {transformedLastMatch.opponentName}
+                        vs {isPublicView ? 
+                          (() => {
+                            const parts = transformedLastMatch.opponentName.split(' ');
+                            if (parts.length >= 2) {
+                              return parts[0] + ' ' + parts[1].charAt(0) + '.';
+                            }
+                            return transformedLastMatch.opponentName;
+                          })() :
+                          transformedLastMatch.opponentName
+                        }
                       </div>
                       <div className={`match-result ${transformedLastMatch.result === 'W' ? 'win' : 'loss'}`}>
                         {transformedLastMatch.result === 'W' ? 'Won' : 'Lost'} {transformedLastMatch.score}
@@ -227,7 +243,7 @@ const PlayerStatsModal = memo(({
                          'Player'}
                       </div>
                       <div className="match-date">
-                        {new Date(transformedLastMatch.matchDate).toLocaleDateString()}
+                        {formatDateForMountainTime(transformedLastMatch.matchDate)}
                       </div>
                     </div>
                   ) : (
@@ -256,14 +272,23 @@ const PlayerStatsModal = memo(({
                               {match.result === 'W' ? 'W' : 'L'}
                             </span>
                             <span style={{ color: '#ccc' }}>
-                              vs {match.opponentName}
+                              vs {isPublicView ? 
+                                (() => {
+                                  const parts = match.opponentName.split(' ');
+                                  if (parts.length >= 2) {
+                                    return parts[0] + ' ' + parts[1].charAt(0) + '.';
+                                  }
+                                  return match.opponentName;
+                                })() :
+                                match.opponentName
+                              }
                             </span>
                             <span style={{ color: '#888', fontSize: '10px' }}>
-                              {new Date(match.matchDate).toLocaleDateString()}
+                              {formatDateForMountainTime(match.matchDate)}
                             </span>
                           </div>
                           <div style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>
-                            {match.score} • {match.matchType} • {new Date(match.matchDate).toLocaleTimeString()}
+                            {match.score} • {match.matchType} • {formatTimeForMountainTime(match.matchDate)}
                           </div>
                         </div>
                       ))}

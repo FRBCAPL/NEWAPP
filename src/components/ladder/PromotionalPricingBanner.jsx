@@ -27,17 +27,11 @@ const PromotionalPricingBanner = () => {
 
   const handleDismiss = () => {
     setIsVisible(false);
-    // Store dismissal in localStorage for this session
-    localStorage.setItem('promotionalBannerDismissed', 'true');
+    // Only hide for this session, not permanently
   };
 
   // Don't show if dismissed or not in promotional period
   if (loading || !promotionalConfig || !promotionalConfig.isPromotionalPeriod || !isVisible) {
-    return null;
-  }
-
-  // Check if user has dismissed this session
-  if (localStorage.getItem('promotionalBannerDismissed') === 'true') {
     return null;
   }
 

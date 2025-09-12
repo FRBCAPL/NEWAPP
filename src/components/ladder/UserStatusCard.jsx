@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { checkPaymentStatus, showPaymentRequiredModal } from '../../utils/paymentStatus.js';
+import { formatDateForMountainTime } from '../../utils/dateUtils';
 
 const UserStatusCard = memo(({ 
   userLadderData, 
@@ -40,7 +41,7 @@ const UserStatusCard = memo(({
           {userLadderData?.immunityUntil && (
             <div className="status-item immunity">
               <span className="label">Immunity Until:</span>
-              <span className="value">{new Date(userLadderData.immunityUntil).toLocaleDateString()}</span>
+              <span className="value">{formatDateForMountainTime(userLadderData.immunityUntil)}</span>
             </div>
           )}
           {userLadderData?.playerId === 'ladder' && (

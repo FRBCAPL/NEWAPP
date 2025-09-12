@@ -1349,7 +1349,11 @@ const LadderApp = ({
                   <div className="header-cell">FargoRate</div>
                   <div className="header-cell">W</div>
                   <div className="header-cell">L</div>
-                  <div className="header-cell">Status</div>
+                  {isPublicView ? (
+                    <div className="header-cell">Last Match</div>
+                  ) : (
+                    <div className="header-cell">Status</div>
+                  )}
                 </div>
                 
                 {allLaddersData[ladderName]?.map((player, index) => (
@@ -1367,12 +1371,34 @@ const LadderApp = ({
                     <div className="table-cell fargo">{player.fargoRate === 0 ? "No FargoRate" : player.fargoRate}</div>
                     <div className="table-cell wins">{player.wins || 0}</div>
                     <div className="table-cell losses">{player.losses || 0}</div>
-                    <div className="table-cell status">
-                      {(() => {
-                        const playerStatus = getPlayerStatus(player);
-                        return <span className={playerStatus.className}>{playerStatus.text}</span>;
-                      })()}
-                    </div>
+                    {isPublicView ? (
+                      <div className="table-cell last-match">
+                        {player.lastMatch ? (
+                          <div style={{ fontSize: '0.8rem', lineHeight: '1.2' }}>
+                            <div style={{ fontWeight: 'bold', color: player.lastMatch.result === 'W' ? '#4CAF50' : '#f44336' }}>
+                              {player.lastMatch.result === 'W' ? 'W' : 'L'} vs {player.lastMatch.opponent}
+                            </div>
+                            <div style={{ color: '#666', fontSize: '0.7rem' }}>
+                              {new Date(player.lastMatch.date).toLocaleDateString()}
+                            </div>
+                            {player.lastMatch.venue && (
+                              <div style={{ color: '#888', fontSize: '0.65rem' }}>
+                                {player.lastMatch.venue}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span style={{ color: '#999', fontSize: '0.8rem' }}>No matches</span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="table-cell status">
+                        {(() => {
+                          const playerStatus = getPlayerStatus(player);
+                          return <span className={playerStatus.className}>{playerStatus.text}</span>;
+                        })()}
+                      </div>
+                    )}
                   </div>
                 ))}
                 
@@ -1549,7 +1575,7 @@ const LadderApp = ({
       {/* Independent Tournament Disclaimer */}
       <div className="tournament-disclaimer">
         <p>
-          <strong>⚠️ INDEPENDENT TOURNAMENT SERIES ⚠️</strong><br/>
+          <strong>▲ INDEPENDENT TOURNAMENT SERIES ▲</strong><br/>
           This ladder system is <strong>NOT</strong> affiliated with, endorsed by, or sanctioned by the Front Range Pool League, CueSports International, BCA Pool League, or USA Pool League.<br/>
           It is an independent tournament series operated by <strong>Legends Brews and Cues</strong>.
         </p>

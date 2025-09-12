@@ -41,12 +41,13 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   return (
     <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''}`}>
       <div className="nav-content">
+        {/* Mobile layout: 8/9/10 ball button above title */}
         <div className="nav-left" style={{ 
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-start',
+          justifyContent: 'center',
           flex: '0 0 auto',
-          minWidth: '200px'
+          order: 1
         }}>
           <div 
             className={`hub-brand ${userFirstName ? 'hub-brand-clickable' : ''}`}
@@ -61,7 +62,8 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
           </div>
         </div>
         
-        <div className="nav-center">
+        {/* Mobile layout: Title and welcome message */}
+        <div className="nav-center" style={{ order: 2 }}>
           <div style={{ 
             textAlign: 'center',
             display: 'flex',
@@ -72,7 +74,6 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
           }}>
             <span className="app-title" style={{
               color: 'white',
-              fontSize: '1.8rem',
               fontWeight: 'bold',
               textAlign: 'center',
               textShadow: (location.pathname === '/guest/ladder' || location.pathname === '/ladder' || currentAppName === 'Ladder of Legends') 
@@ -108,14 +109,14 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
           </div>
         </div>
         
-        {/* Buttons placed directly without container */}
+        {/* Mobile layout: Buttons below welcome message */}
         {!userFirstName ? (
           <div className="nav-right" style={{ 
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'flex-end',
+            justifyContent: 'center',
             flex: '0 0 auto',
-            minWidth: '200px'
+            order: 3
           }}>
             <div className="login-nav-info" style={{ display: 'none' }}>
               🎯  Front Range Pool Hub
@@ -125,10 +126,10 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
           <div className="nav-right" style={{ 
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'flex-end',
+            justifyContent: 'center',
             flex: '0 0 auto',
-            minWidth: '200px',
-            gap: '0.5rem'
+            gap: '0.5rem',
+            order: 3
           }}>
             {/* Admin buttons */}
             {isAdmin && (

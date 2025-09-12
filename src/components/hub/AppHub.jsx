@@ -80,15 +80,6 @@ const AppHub = ({
 
   const availableApps = [
     {
-      id: 'league',
-      name: 'League App',
-      description: 'Manage league matches, schedules, and standings',
-      icon: '🏆',
-      color: '#4CAF50',
-      status: 'active',
-      route: '/league'
-    },
-    {
       id: 'ladder',
       name: 'Ladder App',
       description: 'Challenge-based ladder system with rankings',
@@ -96,6 +87,15 @@ const AppHub = ({
       color: '#2196F3',
       status: 'active',
       route: '/ladder'
+    },
+    {
+      id: 'league',
+      name: 'League App',
+      description: 'Manage league matches, schedules, and standings',
+      icon: '🏆',
+      color: '#4CAF50',
+      status: 'active',
+      route: '/league'
     }
   ];
 
@@ -165,12 +165,14 @@ const AppHub = ({
       {/* Content Overlay */}
       <div className="app-hub-content">
         <div className="app-hub-header">
+          {isAuthenticated && (
+            <div style={{ fontSize: '1.4rem', fontWeight: '600', color: 'white', marginBottom: '0.3rem', textAlign: 'center', textShadow: '0 2px 4px rgba(0,0,0,0.3)', paddingTop: '0.5rem' }}>
+              Hello, {userFirstName}
+            </div>
+          )}
                      {isAuthenticated && (
                          <div className="user-info">
-              <div style={{ fontSize: '1.8rem', fontWeight: '600', color: 'white', marginBottom: '0.3rem', textAlign: 'center', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
-                Hello, {userFirstName}
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.95)', fontSize: '1.1rem', fontWeight: '500', textAlign: 'center', letterSpacing: '0.2px', textShadow: '0 1px 2px rgba(0,0,0,0.2)', marginBottom: '0.8rem' }}>
+              <div style={{ color: 'rgba(255,255,255,0.95)', fontSize: '0.9rem', fontWeight: '500', textAlign: 'center', letterSpacing: '0.2px', textShadow: '0 1px 2px rgba(0,0,0,0.2)', marginBottom: '0.4rem' }}>
                 {isLoadingPlayerType ? (
                   'Detecting your player type...'
                 ) : (
@@ -226,7 +228,7 @@ const AppHub = ({
            )}
            
                        <div className="hub-subtitle">
-              <p style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'white', marginTop: '0.4rem' }}>Where would you like to go today?</p>
+              <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'white', marginTop: '0.1rem', marginBottom: '0rem'  }}>Where would you like to go today?</p>
             </div>
 
           {/* Active Apps Row */}
@@ -235,9 +237,10 @@ const AppHub = ({
               {availableApps.map((app) => (
                 <div
                   key={app.id}
-                  className={`app-card ${app.status}`}
+                  className={`app-card ${app.status} ${app.id === 'league' ? 'league-app' : ''}`}
                   onClick={() => handleAppSelect(app)}
                   style={{ '--app-color': app.color }}
+                  data-app-id={app.id}
                 >
                   <div className="app-icon">{app.icon}</div>
                   <div className="app-info">

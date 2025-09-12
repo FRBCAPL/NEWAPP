@@ -73,16 +73,80 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .notification-test {
-    margin: 10px;
-    padding: 16px;
+    margin: 8px;
+    padding: 12px;
+    max-width: 95vw;
+  }
+  
+  .notification-test h3 {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
   }
   
   .test-controls {
-    gap: 8px;
+    gap: 6px;
+    margin-bottom: 16px;
   }
   
   .test-btn {
-    padding: 8px 12px;
+    padding: 10px 12px;
     font-size: 0.85rem;
+    min-height: 44px;
+    touch-action: manipulation;
+    text-align: center;
+  }
+  
+  .test-btn.primary {
+    font-weight: 600;
+  }
+  
+  .status-display {
+    padding: 12px;
+  }
+  
+  .status-display h4 {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+  }
+  
+  .status-display li {
+    font-size: 0.8rem;
+    padding: 3px 0;
+    line-height: 1.4;
+  }
+}
+
+@media (max-width: 480px) {
+  .notification-test {
+    margin: 6px;
+    padding: 10px;
+  }
+  
+  .notification-test h3 {
+    font-size: 1rem;
+    margin-bottom: 14px;
+  }
+  
+  .test-controls {
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+  
+  .test-btn {
+    padding: 12px 10px;
+    font-size: 0.8rem;
+    min-height: 48px;
+  }
+  
+  .status-display {
+    padding: 10px;
+  }
+  
+  .status-display h4 {
+    font-size: 0.85rem;
+  }
+  
+  .status-display li {
+    font-size: 0.75rem;
   }
 }

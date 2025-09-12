@@ -39,19 +39,19 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
 
   const availableApps = [
     {
-      id: 'league',
-      name: 'Front Range BCAPL Singles League',
-      description: 'Manage league matches, schedules, and standings',
-      icon: '🏆',
-      color: '#4CAF50',
-      status: 'active'
-    },
-    {
       id: 'ladder',
       name: 'Ladder of Legends Tournament Series',
       description: 'Independently run, challenge-based ladder system',
       icon: '⚔️',
       color: '#2196F3',
+      status: 'active'
+    },
+    {
+      id: 'league',
+      name: 'Front Range BCAPL Singles League',
+      description: 'Manage league matches, schedules, and standings',
+      icon: '🏆',
+      color: '#4CAF50',
       status: 'active'
     }
   ];
@@ -95,7 +95,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
         {/* Guest Header */}
         <div className="logged-out-hub-header">
           <div className="hub-title" style={{
-            textAlign: window.innerWidth <= 768 ? 'center' : 'center'
+            textAlign: window.innerWidth <= 768 ? 'center' : 'left'
           }}>
             <h1>Front Range Pool Hub</h1>
             <p>Guest Preview Mode</p>
@@ -367,9 +367,21 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     </button>
                   </div>
                 )}
-                <div className="app-icon">{app.icon}</div>
+                <div className="app-icon" style={{
+                  fontSize: window.innerWidth <= 768 ? '1.5rem' : '3rem',
+                  marginBottom: window.innerWidth <= 768 ? '0.5rem' : '1rem',
+                  textAlign: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: window.innerWidth <= 768 ? '2rem' : '4rem'
+                }}>{app.icon}</div>
                 <div className="app-info">
-                  <h3>
+                  <h3 style={{
+                    fontSize: window.innerWidth <= 768 ? '0.9rem' : '1.5rem',
+                    lineHeight: window.innerWidth <= 768 ? '1.2' : '1.3',
+                    marginBottom: window.innerWidth <= 768 ? '0.3rem' : '0.5rem'
+                  }}>
                     {app.id === 'ladder' ? (
                       <>
                         Ladder of Legends<br />
@@ -379,7 +391,11 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                       app.name
                     )}
                   </h3>
-                  <p>{app.description}</p>
+                  <p style={{
+                    fontSize: window.innerWidth <= 768 ? '0.8rem' : '1rem',
+                    lineHeight: window.innerWidth <= 768 ? '1.3' : '1.4',
+                    marginBottom: window.innerWidth <= 768 ? '0.5rem' : '1rem'
+                  }}>{app.description}</p>
                                      <div className="app-actions">
                                            <button
                         className="guest-access-btn"
