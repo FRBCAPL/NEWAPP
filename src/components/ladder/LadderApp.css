@@ -510,15 +510,13 @@
     text-align: center !important;
   }
   
-  /* Center W and L columns on mobile */
+  /* Center W/L column on mobile */
   .ladder-table:not(.logged-in-view) .table-header .header-cell:nth-child(4),
-  .ladder-table:not(.logged-in-view) .table-header .header-cell:nth-child(5),
-  .ladder-table:not(.logged-in-view) .table-row .table-cell.wins,
-  .ladder-table:not(.logged-in-view) .table-row .table-cell.losses {
+  .ladder-table:not(.logged-in-view) .table-row .table-cell.wins-losses-combined {
     text-align: center !important;
     justify-content: center !important;
-    min-width: 25px;
-    width: 25px;
+    min-width: 50px;
+    width: 50px;
   }
   
 }
@@ -1731,8 +1729,8 @@ button.compact-claim-btn {
 @media (max-width: 768px) {
   /* Make the ladder table more compact on mobile */
   .ladder-table:not(.logged-in-view) .table-header {
-    grid-template-columns: 25px 0.4fr 40px 25px 25px 1fr;
-    gap: 3px;
+    grid-template-columns: 30px 0.5fr 50px 50px 1.5fr;
+    gap: 4px;
     padding: 15px;
     margin: 0 -15px 0 -15px !important;
     position: sticky !important;
@@ -1746,58 +1744,63 @@ button.compact-claim-btn {
   }
   
   .ladder-table:not(.logged-in-view) .table-row {
-    grid-template-columns: 25px 0.4fr 40px 25px 25px 1fr;
-    gap: 3px;
+    grid-template-columns: 30px 0.5fr 50px 50px 1.5fr;
+    gap: 4px;
     padding: 6px 0;
     margin: 0 -6px 0 -6px !important;
   }
   
-  /* Move Rank header to the left */
-  .ladder-table:not(.logged-in-view) .table-header .header-cell:first-child {
-    transform: translateX(-11px) !important;
-    margin-left: 0 !important;
-    padding-left: 0 !important;
-    margin-right: 0 !important;
-    padding-right: 0 !important;
-  }
-  
-  /* Move Player header to the left */
-  .ladder-table:not(.logged-in-view) .table-header .header-cell:nth-child(2) {
-    transform: translateX(5px) !important;
-    margin-left: 0 !important;
-    padding-left: 0 !important;
-    margin-right: 0 !important;
-    padding-right: 0 !important;
-  }
-  
-  /* Center Fargo header over the data */
-  .ladder-table:not(.logged-in-view) .table-header .header-cell:nth-child(3) {
-    transform: translateX(35px) !important;
-    margin-left: 0 !important;
-    padding-left: 0 !important;
-    margin-right: 0 !important;
-    padding-right: 0 !important;
-    text-align: center !important;
-  }
-  
-  /* Position W header over the data */
-  .ladder-table:not(.logged-in-view) .table-header .header-cell:nth-child(4) {
-    transform: translateX(30px) !important;
-    margin-left: 0 !important;
-    padding-left: 0 !important;
-    margin-right: 0 !important;
-    padding-right: 0 !important;
-    text-align: center !important;
-  }
-  
-  /* Position L header over the data */
-  .ladder-table:not(.logged-in-view) .table-header .header-cell:nth-child(5) {
-    transform: translateX(30px) !important;
-    margin-left: 0 !important;
-    padding-left: 0 !important;
-    margin-right: 0 !important;
-    padding-right: 0 !important;
-    text-align: center !important;
+  /* All header positioning rules inside media query for 5-column layout */
+  @media (max-width: 768px) {
+    /* Position Rank header over the data */
+    .ladder-table:not(.logged-in-view) .table-header .header-cell:first-child {
+      transform: translateX(-10px) !important;
+      margin-left: 0 !important;
+      padding-left: 0 !important;
+      margin-right: 0 !important;
+      padding-right: 0 !important;
+      text-align: center !important;
+    }
+    
+    /* Position Player header over the data */
+    .ladder-table:not(.logged-in-view) .table-header .header-cell:nth-child(2) {
+      transform: translateX(0px) !important;
+      margin-left: 0 !important;
+      padding-left: 0 !important;
+      margin-right: 0 !important;
+      padding-right: 0 !important;
+      text-align: left !important;
+    }
+    
+    /* Position Fargo header over the data - Updated for 5-column layout */
+    .ladder-table:not(.logged-in-view) .table-header .header-cell:nth-child(3) {
+      transform: translateX(25px) !important;
+      margin-left: 0 !important;
+      padding-left: 0 !important;
+      margin-right: 0 !important;
+      padding-right: 0 !important;
+      text-align: center !important;
+    }
+    
+    /* Position W/L header over the data - Updated for 5-column layout */
+    .ladder-table:not(.logged-in-view) .table-header .header-cell:nth-child(4) {
+      transform: translateX(5px) !important;
+      margin-left: 0 !important;
+      padding-left: 0 !important;
+      margin-right: 0 !important;
+      padding-right: 0 !important;
+      text-align: center !important;
+    }
+    
+    /* Position Last Match header over the data - Updated for 5-column layout */
+    .ladder-table:not(.logged-in-view) .table-header .header-cell:nth-child(5) {
+      transform: translateX(25px) !important;
+      margin-left: 0 !important;
+      padding-left: 0 !important;
+      margin-right: 0 !important;
+      padding-right: 0 !important;
+      text-align: left !important;
+    }
   }
   
   .ladder-table.logged-in-view .table-header {
@@ -1861,6 +1864,21 @@ button.compact-claim-btn {
   .ladder-table .no-matches-mobile {
     font-size: 0.6rem;
     color: #999;
+  }
+  
+  /* Ensure Last Match column doesn't wrap */
+  .ladder-table:not(.logged-in-view) .table-cell.last-match-mobile {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+  }
+  
+  .ladder-table:not(.logged-in-view) .last-match-mobile-details {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
   }
   
   /* Extra small screens mobile last match styling */

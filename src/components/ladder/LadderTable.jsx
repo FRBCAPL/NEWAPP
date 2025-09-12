@@ -17,45 +17,33 @@ const LadderTable = memo(({
     <div className="ladder-table-modal">
       <div className={`ladder-table ${!isPublicView ? 'logged-in-view' : ''}`} style={{ position: 'relative' }}>
         <div className="table-header">
-          <div className="header-cell" style={window.innerWidth <= 768 ? { 
-           transform: 'translateX(-8px) !important', 
-           marginLeft: '0px !important', 
-           paddingLeft: '0px !important',
-           marginRight: '0px !important',
-           paddingRight: '0px !important',
-           position: 'relative !important'
-         } : {}}>Rank</div>
-        <div className="header-cell" style={{ paddingLeft: window.innerWidth <= 768 ? '10px' : '40px' }}>Player</div>
-        <div className="header-cell" style={window.innerWidth <= 768 ? { 
-          transform: 'translateX(18px)', 
-          marginLeft: '12px', 
-          paddingLeft: '12px',
-          position: 'relative'
-        } : {}}>Fargo</div>
-        <div className="header-cell" style={window.innerWidth <= 768 ? { 
-          transform: 'translateX(18px)', 
-          marginLeft: '12px', 
-          paddingLeft: '12px',
-          position: 'relative',
-          textAlign: 'center'
-        } : {}}>W</div>
-        <div className="header-cell" style={window.innerWidth <= 768 ? { 
-          transform: 'translateX(18px)', 
-          marginLeft: '12px', 
-          paddingLeft: '12px',
-          position: 'relative',
-          textAlign: 'center'
-        } : {}}>L</div>
+          <div className="header-cell">Rank</div>
+        <div className="header-cell">Player</div>
+        <div className="header-cell">Fargo</div>
+        {isPublicView && window.innerWidth <= 768 ? (
+          <div className="header-cell">W/L</div>
+        ) : (
+          <>
+            <div className="header-cell" style={window.innerWidth <= 768 ? { 
+              transform: 'translateX(18px)', 
+              marginLeft: '12px', 
+              paddingLeft: '12px',
+              position: 'relative',
+              textAlign: 'center'
+            } : {}}>W</div>
+            <div className="header-cell" style={window.innerWidth <= 768 ? { 
+              transform: 'translateX(18px)', 
+              marginLeft: '12px', 
+              paddingLeft: '12px',
+              position: 'relative',
+              textAlign: 'center'
+            } : {}}>L</div>
+          </>
+        )}
         {isPublicView && window.innerWidth > 768 ? (
           <div className="header-cell">Last Match</div>
         ) : isPublicView && window.innerWidth <= 768 ? (
-           <div className="header-cell" style={{
-             transform: 'translateX(-20px)',
-             marginLeft: '-15px',
-             paddingLeft: '2px',
-             position: 'relative',
-             textAlign: 'left'
-           }}>Last Match</div>
+           <div className="header-cell">Last Match</div>
         ) : (
           <div className="header-cell">Status</div>
         )}
@@ -202,20 +190,32 @@ const LadderTable = memo(({
               paddingLeft: '10px',
               position: 'relative'
             } : {}}>{player.fargoRate === 0 ? "No FargoRate" : player.fargoRate}</div>
-            <div className="table-cell wins" style={window.innerWidth <= 768 ? { 
-              transform: 'translateX(12px)', 
-              marginLeft: '8px', 
-              paddingLeft: '8px',
-              position: 'relative',
-              textAlign: 'center'
-            } : {}}>{player.wins || 0}</div>
-            <div className="table-cell losses" style={window.innerWidth <= 768 ? { 
-              transform: 'translateX(12px)', 
-              marginLeft: '8px', 
-              paddingLeft: '8px',
-              position: 'relative',
-              textAlign: 'center'
-            } : {}}>{player.losses || 0}</div>
+            {isPublicView && window.innerWidth <= 768 ? (
+              <div className="table-cell wins-losses-combined" style={{ 
+                transform: 'translateX(-5px)', 
+                marginLeft: '8px', 
+                paddingLeft: '8px',
+                position: 'relative',
+                textAlign: 'center'
+              }}>{player.wins || 0}/{player.losses || 0}</div>
+            ) : (
+              <>
+                <div className="table-cell wins" style={window.innerWidth <= 768 ? { 
+                  transform: 'translateX(12px)', 
+                  marginLeft: '8px', 
+                  paddingLeft: '8px',
+                  position: 'relative',
+                  textAlign: 'center'
+                } : {}}>{player.wins || 0}</div>
+                <div className="table-cell losses" style={window.innerWidth <= 768 ? { 
+                  transform: 'translateX(12px)', 
+                  marginLeft: '8px', 
+                  paddingLeft: '8px',
+                  position: 'relative',
+                  textAlign: 'center'
+                } : {}}>{player.losses || 0}</div>
+              </>
+            )}
             {isPublicView && window.innerWidth > 768 ? (
               <div className="table-cell last-match">
                 {player.lastMatch ? (
@@ -239,14 +239,27 @@ const LadderTable = memo(({
              ) : isPublicView && window.innerWidth <= 768 ? (
                <div className="table-cell last-match-mobile" style={{
                  padding: '0 3px',
-                 fontSize: '0.5rem'
+                 fontSize: '0.6rem',
+                 whiteSpace: 'nowrap',
+                 overflow: 'hidden',
+                 textOverflow: 'ellipsis',
+                 maxWidth: '100%'
                }}>
                  {player.lastMatch && player.lastMatch.opponent ? (
-                   <div className="last-match-mobile-details">
+                   <div className="last-match-mobile-details" style={{
+                     whiteSpace: 'nowrap',
+                     overflow: 'hidden',
+                     textOverflow: 'ellipsis',
+                     maxWidth: '100%'
+                   }}>
                      <div className="last-match-result-mobile" style={{
                        fontWeight: 'bold',
                        color: player.lastMatch.result === 'W' ? '#4CAF50' : '#f44336',
-                       fontSize: '0.5rem'
+                       fontSize: '0.6rem',
+                       whiteSpace: 'nowrap',
+                       overflow: 'hidden',
+                       textOverflow: 'ellipsis',
+                       maxWidth: '100%'
                      }}>
                        {player.lastMatch.result === 'W' ? 'W' : 'L'} vs {
                          isPublicView ?
