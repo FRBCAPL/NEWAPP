@@ -812,13 +812,15 @@
   }
   
   .guest-app-header h1 {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     margin-bottom: 0.3rem;
+    line-height: 1.2;
   }
   
   .guest-app-header p {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     margin-bottom: 0.5rem;
+    line-height: 1.3;
   }
   
   .guest-badge {
@@ -829,11 +831,30 @@
   
   .guest-actions {
     gap: 0.5rem;
+    flex-direction: column;
+    align-items: center;
   }
   
-  .back-btn, .join-btn {
+  .guest-actions-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .back-btn, .info-btn, .app-btn, .view-ladder-btn {
     padding: 8px 16px;
     font-size: 0.8rem;
+    width: 100%;
+  }
+  
+  .join-btn {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    width: 100%;
+    max-width: 200px;
   }
   
   .standings-header, .standings-row, .rankings-header, .rankings-row {
@@ -909,27 +930,58 @@
     grid-template-columns: 1fr;
     gap: 1rem;
     margin-bottom: 2rem;
+    padding: 0 0.5rem;
   }
   
   .info-card {
     padding: 1rem;
     border-radius: 10px;
+    margin-bottom: 0.5rem;
   }
   
   .info-card h3 {
-    font-size: 1.1rem;
+    font-size: 1rem;
     margin-bottom: 0.4rem;
+    line-height: 1.2;
   }
   
   .info-card p {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     margin-bottom: 0.8rem;
+    line-height: 1.3;
   }
   
   .info-card li {
-    font-size: 0.85rem;
-    margin-bottom: 0.3rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.4rem;
     padding-left: 0.8rem;
+    line-height: 1.3;
+  }
+  
+  .info-section h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  
+  .join-section {
+    padding: 1.5rem;
+    margin-top: 2rem;
+  }
+  
+  .join-section h3 {
+    font-size: 1.3rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .join-section p {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  
+  .join-btn-large {
+    padding: 12px 24px;
+    font-size: 1rem;
   }
 }
 
@@ -946,13 +998,15 @@
   }
   
   .guest-app-header h1 {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     margin-bottom: 0.2rem;
+    line-height: 1.1;
   }
   
   .guest-app-header p {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     margin-bottom: 0.4rem;
+    line-height: 1.2;
   }
   
   .guest-badge {
@@ -963,14 +1017,28 @@
   
   .guest-actions {
     gap: 0.4rem;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
   }
   
-  .back-btn, .join-btn {
+  .guest-actions-top {
+    max-width: 360px;
+    gap: 0.4rem;
+    margin-bottom: 0.4rem;
+  }
+  
+  .back-btn, .info-btn, .app-btn, .view-ladder-btn {
     padding: 6px 12px;
     font-size: 0.75rem;
+    width: 100%;
+  }
+  
+  .join-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    width: 100%;
+    max-width: 180px;
   }
   
   /* Guest notice section - even more compact for small phones */
@@ -1010,27 +1078,58 @@
     grid-template-columns: 1fr;
     gap: 0.8rem;
     margin-bottom: 1.5rem;
+    padding: 0 0.3rem;
   }
   
   .info-card {
     padding: 0.8rem;
     border-radius: 8px;
-  }
-  
-  .info-card h3 {
-    font-size: 1rem;
     margin-bottom: 0.3rem;
   }
   
+  .info-card h3 {
+    font-size: 0.95rem;
+    margin-bottom: 0.3rem;
+    line-height: 1.1;
+  }
+  
   .info-card p {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     margin-bottom: 0.6rem;
+    line-height: 1.2;
   }
   
   .info-card li {
-    font-size: 0.75rem;
-    margin-bottom: 0.2rem;
+    font-size: 0.7rem;
+    margin-bottom: 0.3rem;
     padding-left: 0.6rem;
+    line-height: 1.2;
+  }
+  
+  .info-section h2 {
+    font-size: 1.1rem;
+    margin-bottom: 0.8rem;
+    text-align: center;
+  }
+  
+  .join-section {
+    padding: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  .join-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.6rem;
+  }
+  
+  .join-section p {
+    font-size: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .join-btn-large {
+    padding: 10px 20px;
+    font-size: 0.9rem;
   }
   
   /* Mobile responsive text for public view notice and disclaimer */

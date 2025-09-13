@@ -465,34 +465,36 @@ const GuestLadderApp = () => {
         <div className="guest-badge">👀 Guest Mode - Limited Access</div>
         
         <div className="guest-actions">
-          <button 
-            type="button"
-            onClick={handleBackToHub} 
-            className="back-btn"
-          >
-            ← Back to Hub
-          </button>
-          <button 
-            type="button"
-            onClick={() => setCurrentView('info')} 
-            className="info-btn"
-          >
-            ℹ️ Ladder Info
-          </button>
-          <button 
-            type="button"
-            onClick={() => setCurrentView('app')} 
-            className="app-btn"
-          >
-            🎮 Try App Interface
-          </button>
-          <button 
-            type="button"
-            onClick={() => setShowLadderModal(true)} 
-            className="view-ladder-btn"
-          >
-            View Ladder
-          </button>
+          <div className="guest-actions-top">
+            <button 
+              type="button"
+              onClick={handleBackToHub} 
+              className="back-btn"
+            >
+              ← Back to Hub
+            </button>
+            <button 
+              type="button"
+              onClick={() => setShowLadderModal(true)} 
+              className="view-ladder-btn"
+            >
+              View Ladder
+            </button>
+            <button 
+              type="button"
+              onClick={() => setCurrentView('info')} 
+              className="info-btn"
+            >
+              ℹ️ Ladder Info
+            </button>
+            <button 
+              type="button"
+              onClick={() => setCurrentView('app')} 
+              className="app-btn"
+            >
+              🎮 Try App Interface
+            </button>
+          </div>
           <button 
             type="button"
             onClick={handleJoinLadder} 
