@@ -74,9 +74,9 @@ export default function DraggableModal({
         bottom: 0,
         background: "rgba(0,0,0,0.7)",
         display: "flex",
-        alignItems: "flex-start",
+        alignItems: "center",
         justifyContent: "center",
-        paddingTop: window.innerWidth <= 768 ? "150px" : "120px",
+        paddingTop: window.innerWidth <= 768 ? "60px" : "40px",
         zIndex: 100000,
         backdropFilter: "blur(3px)",
         WebkitBackdropFilter: "blur(3px)"
@@ -217,12 +217,14 @@ export default function DraggableModal({
         
         @media (max-width: 768px) {
           .modal-overlay {
-            padding-top: 100px !important;
+            padding-top: 70px !important;
+            align-items: flex-start !important;
           }
           .draggable-modal {
             max-width: 95vw !important;
             border-radius: 0.5rem !important;
             height: auto !important;
+            max-height: 90vh !important;
           }
           .modal-header {
             padding: 0.5rem 0.5rem 0.3rem 0.5rem !important;
@@ -232,17 +234,23 @@ export default function DraggableModal({
             flex: 1 1 auto !important;
             min-height: 0 !important;
             overflow-y: auto !important;
+            max-height: calc(90vh - 60px) !important;
           }
         }
         
         @media (max-width: 480px) {
           .modal-overlay {
-            padding-top: 90px !important;
+            padding-top: 60px !important;
+            align-items: flex-start !important;
           }
           .draggable-modal {
             max-width: 98vw !important;
             border-radius: 0.3rem !important;
             height: auto !important;
+            max-height: 95vh !important;
+          }
+          .modal-content {
+            max-height: calc(95vh - 50px) !important;
           }
           .modal-header {
             padding: 0.4rem 0.4rem 0.2rem 0.4rem !important;

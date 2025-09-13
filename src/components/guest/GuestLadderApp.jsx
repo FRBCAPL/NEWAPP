@@ -89,7 +89,12 @@ const GuestLadderApp = () => {
       const response = await fetch(`${BACKEND_URL}/api/payment-config`);
       if (response.ok) {
         const config = await response.json();
+        console.log('Payment config loaded:', config);
+        console.log('Config structure:', config.config);
+        console.log('Promotional message:', config.promotionalMessage);
         setPaymentConfig(config);
+      } else {
+        console.error('Failed to load payment config:', response.status);
       }
     } catch (error) {
       console.error('Error loading payment config:', error);
@@ -672,9 +677,11 @@ const GuestLadderApp = () => {
           onClose={() => setShowJoinModal(false)}
           title={isClaimMode ? "🎯 Claim Ladder Position" : "📈 Join Ladder of Legends"}
           maxWidth="700px"
-          maxHeight="85vh"
+          maxHeight="90vh"
+          borderColor="#5B21B6"
+          glowColor="#5B21B6"
           style={{
-            maxHeight: '85vh',
+            maxHeight: '90vh',
             overflowY: 'auto'
           }}
         >
@@ -726,7 +733,7 @@ const GuestLadderApp = () => {
             </div>
           )}
 
-          <form onSubmit={handleJoinSubmit} style={{ maxHeight: '65vh', overflowY: 'auto' }}>
+          <form onSubmit={handleJoinSubmit} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
             <div style={{ 
               display: 'grid', 
               gridTemplateColumns: '1fr 1fr', 
@@ -1039,49 +1046,50 @@ const GuestLadderApp = () => {
               />
             </div>
 
-            {/* Payment Section */}
-            <div style={{ 
-              marginBottom: '0.8rem',
-              padding: '0.6rem',
-              background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.12) 0%, rgba(76, 175, 80, 0.06) 100%)',
-              border: '1px solid rgba(76, 175, 80, 0.35)',
-              borderRadius: '8px',
-              boxShadow: '0 2px 6px rgba(76, 175, 80, 0.15)'
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                marginBottom: '0.4rem'
+            {/* Payment Section - Only show if no promotional period */}
+            {!paymentConfig?.promotionalMessage && (
+              <div style={{ 
+                marginBottom: '0.8rem',
+                padding: '0.6rem',
+                background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.12) 0%, rgba(76, 175, 80, 0.06) 100%)',
+                border: '1px solid rgba(76, 175, 80, 0.35)',
+                borderRadius: '8px',
+                boxShadow: '0 2px 6px rgba(76, 175, 80, 0.15)'
               }}>
-                <input
-                  type="checkbox"
-                  checked={joinFormData.payNow}
-                  onChange={(e) => setJoinFormData({...joinFormData, payNow: e.target.checked})}
-                  style={{ 
-                    cursor: 'pointer',
-                    width: '16px',
-                    height: '16px',
-                    margin: '0',
-                    accentColor: '#4CAF50'
-                  }}
-                />
-                <label style={{ color: '#4caf50', fontWeight: '600', fontSize: '0.85rem' }}>
-                  💳 Pay $5 Monthly Fee Now (Optional)
-                </label>
-              </div>
-              <p style={{ 
-                color: '#b0b0b0', 
-                fontSize: '0.75rem', 
-                margin: '0',
-                fontStyle: 'italic',
-                lineHeight: '1.3'
-              }}>
-                If you pay now, you'll be added to the ladder immediately after approval.<br></br> If not, you'll need to pay before being added to the ladder system.
-              </p>
-              
-              {/* Payment Method Selection - Only show if payNow is checked */}
-              {joinFormData.payNow && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  marginBottom: '0.4rem'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={joinFormData.payNow}
+                    onChange={(e) => setJoinFormData({...joinFormData, payNow: e.target.checked})}
+                    style={{ 
+                      cursor: 'pointer',
+                      width: '16px',
+                      height: '16px',
+                      margin: '0',
+                      accentColor: '#4CAF50'
+                    }}
+                  />
+                  <label style={{ color: '#4caf50', fontWeight: '600', fontSize: '0.85rem' }}>
+                    💳 Pay $5 Monthly Fee Now (Optional)
+                  </label>
+                </div>
+                <p style={{ 
+                  color: '#b0b0b0', 
+                  fontSize: '0.75rem', 
+                  margin: '0',
+                  fontStyle: 'italic',
+                  lineHeight: '1.3'
+                }}>
+                  If you pay now, you'll be added to the ladder immediately after approval.<br></br> If not, you'll need to pay before being added to the ladder system.
+                </p>
+                
+                {/* Payment Method Selection - Only show if payNow is checked */}
+                {joinFormData.payNow && (
                 <div style={{ marginTop: '0.5rem' }}>
                   <label style={{
                     display: 'block',
@@ -1154,6 +1162,40 @@ const GuestLadderApp = () => {
                 </div>
               )}
             </div>
+            )}
+            
+            {/* Promotional Message - Show during promotional period */}
+            {paymentConfig?.promotionalMessage && (
+              <div style={{
+                marginBottom: '0.8rem',
+                padding: '0.8rem',
+                background: 'rgba(255, 215, 0, 0.15)',
+                border: '1px solid rgba(255, 215, 0, 0.4)',
+                borderRadius: '8px',
+                textAlign: 'center',
+                boxShadow: '0 2px 8px rgba(255, 215, 0, 0.2)'
+              }}>
+                <p style={{
+                  color: '#ffd700',
+                  fontSize: '0.8rem',
+                  margin: '0',
+                  fontWeight: '600',
+                  lineHeight: '1.3'
+                }}>
+                  🎉 {paymentConfig.promotionalMessage}
+                </p>
+                <p style={{
+                  color: '#ffd700',
+                  fontSize: '0.65rem',
+                  margin: '0.3rem 0 0 0',
+                  fontWeight: '400',
+                  opacity: 0.9
+                }}>
+                  No membership fee required during promotional period!<br/>
+                  Match fees still apply.
+                </p>
+              </div>
+            )}
 
             <div style={{
               display: 'flex',
