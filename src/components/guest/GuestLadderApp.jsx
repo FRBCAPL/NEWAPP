@@ -619,24 +619,23 @@ const GuestLadderApp = () => {
                </div>
 
                {/* Third Row - Disclaimer */}
-               <div className="info-card">
-                 <h3 style={{ 
+               <div className="info-card disclaimer-section">
+                 <h3 className="disclaimer-title" style={{ 
                    fontSize: '1.2rem', 
                    lineHeight: '1.3', 
                    marginBottom: '0.5rem',
                    wordWrap: 'break-word'
                  }}>
-                   ⚠️ Independent<br>
-                   </br>Tournament Series ⚠️
+                   ⚠️ Independent<br></br>Tournament Series ⚠️
                  </h3>
-                 <p style={{ 
+                 <p className="disclaimer-subtitle" style={{ 
                    fontSize: '0.9rem', 
                    marginBottom: '0.75rem',
                    fontStyle: 'italic'
                  }}>
                    Important legal disclaimer
                  </p>
-                 <ul style={{ 
+                 <ul className="disclaimer-list" style={{ 
                    fontSize: '0.85rem', 
                    lineHeight: '1.4',
                    paddingLeft: '1.2rem'
@@ -1252,7 +1251,7 @@ const GuestLadderApp = () => {
           >
                        <div className="public-ladder-view">
               {/* Public View Notice */}
-              <div style={{
+              <div className="public-view-notice" style={{
                 background: 'rgba(229, 62, 62, 0.1)',
                 border: '1px solid rgba(229, 62, 62, 0.3)',
                 borderRadius: '8px',
@@ -1260,10 +1259,9 @@ const GuestLadderApp = () => {
                 marginBottom: '16px',
                 textAlign: 'center'
               }}>
-                <span style={{
+                <span className="public-view-text" style={{
                   color: '#e53e3e',
-                  fontWeight: '600',
-                  fontSize: '0.9rem'
+                  fontWeight: '600'
                 }}>
                   👁️ Public View - Anyone can view the ladder rankings
                 </span>

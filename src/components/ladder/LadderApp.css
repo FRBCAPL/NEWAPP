@@ -519,6 +519,53 @@
     width: 50px;
   }
   
+  /* Mobile responsive ladder header */
+  .ladder-main-title {
+    font-size: 2.5rem !important;
+    letter-spacing: 2px !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .ladder-subtitle {
+    font-size: 0.8rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .ladder-selection-title {
+    font-size: 1.5rem !important;
+    letter-spacing: 1px !important;
+    margin-bottom: 0.3rem !important;
+  }
+  
+  .ladder-selection-subtitle {
+    font-size: 0.8rem !important;
+  }
+  
+  .calendar-button-container {
+    margin-bottom: 0.8rem !important;
+  }
+  
+  .calendar-button {
+    padding: 8px 16px !important;
+    font-size: 0.8rem !important;
+    min-width: 140px !important;
+  }
+  
+  .ladder-selector {
+    margin-top: 0.8rem !important;
+    padding: 0.8rem !important;
+    gap: 0.8rem !important;
+  }
+  
+  .ladder-selector label {
+    font-size: 0.8rem !important;
+  }
+  
+  .ladder-selector select {
+    padding: 0.4rem 0.6rem !important;
+    font-size: 0.8rem !important;
+    min-width: 100px !important;
+  }
 }
 
 .ladder-table:not(.logged-in-view) .table-cell.last-match {

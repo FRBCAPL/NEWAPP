@@ -55,40 +55,44 @@ const LadderHeader = memo(({
         </button>
       )}
       
-      {/* Calendar Button - Top Right */}
-      <button 
-        onClick={() => setShowMatchCalendar(true)}
-        style={{
-          position: 'absolute',
-          top: '5px',
-          right: '5px',
-          background: 'transparent',
-          color: '#10b981',
-          border: '2px solid #10b981',
-          borderRadius: '6px',
-          padding: '6px 12px',
-          fontSize: '0.8rem',
-          fontWeight: '600',
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
-          zIndex: 10
-        }}
+      {/* Calendar Button - Above Title */}
+      <div className="calendar-button-container" style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        marginBottom: '1rem' 
+      }}>
+        <button 
+          className="calendar-button"
+          onClick={() => setShowMatchCalendar(true)}
+          style={{
+            background: 'transparent',
+            color: '#10b981',
+            border: '2px solid #10b981',
+            borderRadius: '6px',
+            padding: '6px 12px',
+            fontSize: '0.8rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+            zIndex: 10
+          }}
         onMouseEnter={(e) => {
           e.target.style.background = 'rgba(16, 185, 129, 0.1)';
           e.target.style.transform = 'translateY(-1px)';
           e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)';
         }}
-        onMouseLeave={(e) => {
-          e.target.style.background = 'transparent';
-          e.target.style.transform = 'translateY(0)';
-          e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)';
-        }}
-      >
-        📅 Match Calendar
-      </button>
+          onMouseLeave={(e) => {
+            e.target.style.background = 'transparent';
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)';
+          }}
+        >
+          📅 Match Calendar
+        </button>
+      </div>
       
-      <h1 style={{ 
+      <h1 className="ladder-main-title" style={{ 
         color: '#000000',
         WebkitTextStroke: '0.5px #8B5CF6',
         textShadow: '0 0 20px rgba(139, 92, 246, 0.8), 0 0 40px rgba(139, 92, 246, 0.6), 0 0 60px rgba(139, 92, 246, 0.4), 0 0 80px rgba(139, 92, 246, 0.2)',
@@ -99,9 +103,9 @@ const LadderHeader = memo(({
         textTransform: 'uppercase',
         marginBottom: '0rem'
       }}>Ladder of Legends</h1>
-      <p style={{ marginBottom: '1.5rem', marginTop: '0rem', fontSize: '0.9rem' }}>Tournament Series</p>
+      <p className="ladder-subtitle" style={{ marginBottom: '1.5rem', marginTop: '0rem', fontSize: '0.9rem' }}>Tournament Series</p>
       
-      <h2 style={{ 
+      <h2 className="ladder-selection-title" style={{ 
         color: '#8B5CF6',
         WebkitTextStroke: '1.5px #000000',
         textShadow: '0 0 8px rgba(139, 92, 246, 0.7)',
@@ -112,7 +116,7 @@ const LadderHeader = memo(({
         marginBottom: '0.5rem',
         fontFamily: '"Orbitron", "Exo 2", "Rajdhani", "Arial Black", sans-serif'
       }}>{getLadderDisplayName(selectedLadder)}</h2>
-      <p style={{ fontSize: '0.9rem' }}>Current rankings and positions</p>
+      <p className="ladder-selection-subtitle" style={{ fontSize: '0.9rem' }}>Current rankings and positions</p>
       
       {/* Ladder Selector */}
       <div className="ladder-selector" style={{

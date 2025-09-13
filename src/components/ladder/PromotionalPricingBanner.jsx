@@ -54,13 +54,6 @@ const PromotionalPricingBanner = () => {
               <span className="match-fee">$5 per match only</span>
             </div>
             
-            <div className="countdown">
-              {promotionalConfig.daysUntilPromotionEnds > 0 && (
-                <span className="days-left">
-                  {promotionalConfig.daysUntilPromotionEnds} days left!
-                </span>
-              )}
-            </div>
           </div>
         </div>
         
