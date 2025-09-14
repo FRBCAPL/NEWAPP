@@ -127,12 +127,14 @@ const PlayerStatsModal = memo(({
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '12px 24px',
-                fontSize: '16px',
+                padding: window.innerWidth <= 768 ? '10px 16px' : '12px 24px',
+                fontSize: window.innerWidth <= 768 ? '14px' : '16px',
                 fontWeight: 'bold',
                 cursor: 'pointer',
                 boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                width: window.innerWidth <= 768 ? '100%' : 'auto',
+                boxSizing: 'border-box'
               }}
               onMouseOver={(e) => {
                 e.target.style.background = '#45a049';
@@ -146,10 +148,11 @@ const PlayerStatsModal = memo(({
               ✅ Complete Profile & Subscribe ($5/month)
             </button>
             <p style={{ 
-              fontSize: '12px', 
+              fontSize: window.innerWidth <= 768 ? '10px' : '12px', 
               color: '#888', 
-              margin: '8px 0 0 0',
-              fontStyle: 'italic'
+              margin: window.innerWidth <= 768 ? '6px 0 0 0' : '8px 0 0 0',
+              fontStyle: 'italic',
+              lineHeight: window.innerWidth <= 768 ? '1.3' : 'normal'
             }}>
               Verify your profile details and subscribe for full ladder access
             </p>

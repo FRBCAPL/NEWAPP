@@ -3,10 +3,13 @@
   background: linear-gradient(135deg, #10b981, #059669);
   color: white;
   border-radius: 12px;
+  position: relative;
+  z-index: 50;
   margin: 16px;
   box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
   overflow: hidden;
   animation: slideInDown 0.5s ease-out;
+  position: relative;
 }
 
 @keyframes slideInDown {
@@ -147,26 +150,43 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .promotional-pricing-banner {
-    margin: 6px !important;
+    margin: 0 6px 12px 6px !important;
     border-radius: 8px;
   }
   
   .promotional-content {
-    padding: 8px 10px !important;
+    padding: 10px 45px 10px 12px !important;
     flex-direction: column;
     text-align: center;
-    gap: 6px;
+    gap: 8px;
   }
   
   .promotional-icon {
-    font-size: 18px;
+    font-size: 16px;
   }
   
   .promotional-title {
-    font-size: 0.85rem !important;
-    margin-bottom: 4px !important;
-    line-height: 1.2;
+    font-size: 0.8rem !important;
+    margin-bottom: 6px !important;
+    line-height: 1.3;
     word-wrap: break-word;
+    font-weight: 600 !important;
+  }
+  
+  .match-fees-note {
+    font-size: 0.7rem !important;
+    margin-bottom: 6px !important;
+    line-height: 1.2;
+  }
+  
+  .pricing-info {
+    gap: 8px !important;
+  }
+  
+  .free-membership, .match-fee {
+    font-size: 0.7rem !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
   }
   
   .match-fees-note {
@@ -195,8 +215,8 @@
   
   .promotional-actions {
     position: absolute;
-    top: 6px;
-    right: 6px;
+    top: 8px;
+    right: 8px;
   }
   
   .dismiss-btn {
@@ -225,22 +245,42 @@
 
 @media (max-width: 480px) {
   .promotional-pricing-banner {
-    margin: 4px !important;
+    margin: 0 4px 10px 4px !important;
     border-radius: 6px;
   }
   
   .promotional-content {
-    padding: 6px 8px !important;
+    padding: 8px 40px 8px 10px !important;
     flex-direction: column;
     text-align: center;
-    gap: 4px;
+    gap: 6px;
   }
   
   .promotional-title {
-    font-size: 0.75rem !important;
-    margin-bottom: 3px !important;
-    line-height: 1.1;
+    font-size: 0.7rem !important;
+    margin-bottom: 4px !important;
+    line-height: 1.2;
     word-wrap: break-word;
+    font-weight: 600 !important;
+  }
+  
+  .match-fees-note {
+    font-size: 0.65rem !important;
+    margin-bottom: 4px !important;
+    line-height: 1.1;
+  }
+  
+  .pricing-info {
+    gap: 6px !important;
+    flex-direction: column !important;
+  }
+  
+  .free-membership, .match-fee {
+    font-size: 0.65rem !important;
+    padding: 3px 6px !important;
+    border-radius: 3px !important;
+    width: 100% !important;
+    text-align: center !important;
   }
   
   .match-fees-note {
@@ -269,8 +309,8 @@
   
   .promotional-actions {
     position: absolute;
-    top: 4px;
-    right: 4px;
+    top: 6px;
+    right: 6px;
   }
   
   .dismiss-btn {

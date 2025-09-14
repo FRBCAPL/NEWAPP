@@ -1,288 +1,97 @@
+/* Purple theme for modal header background - matching SmartMatch modal */
+.ladder-challenge-modal .modal-header {
+  background: rgba(91, 33, 182, 0.1) !important;
+  border: 1px solid rgba(91, 33, 182, 0.3) !important;
+  border-radius: 6px !important;
+  position: relative !important;
+}
+
+/* Force close button to top-right corner of header */
+
+/* Fix modal height and scrolling */
 .ladder-challenge-modal {
-  background: linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98));
-  border: 2px solid #ff4444;
-  border-radius: 12px;
-  color: #ffffff;
+  max-height: 80vh !important;
+  height: auto !important;
 }
 
-.ladder-challenge-header {
-  background: rgba(255, 68, 68, 0.1);
-  border: 1px solid rgba(255, 68, 68, 0.3);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
+.ladder-challenge-modal .modal-content {
+  max-height: calc(80vh - 40px) !important;
+  overflow-y: auto !important;
+  padding: 10px !important;
 }
 
-.ladder-challenge-title {
-  color: #ff4444;
-  margin: 0 0 12px 0;
-  text-align: center;
-  font-size: 1.3rem;
-  font-weight: bold;
+.ladder-challenge-modal .modal-close-btn {
+  position: absolute !important;
+  top: 5px !important;
+  right: 5px !important;
+  left: auto !important;
+  bottom: auto !important;
+  margin: 0 !important;
+  transform: none !important;
+  align-self: unset !important;
+  order: unset !important;
+  flex: none !important;
+  width: auto !important;
+  height: auto !important;
+  text-align: center !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 10 !important;
 }
 
-.ladder-challenge-players {
-  display: flex;
-  justify-content: space-around;
-  color: #e0e0e0;
-  align-items: center;
-}
-
-.ladder-challenge-vs {
-  font-size: 24px;
-  color: #ff4444;
-  margin: 0 16px;
-}
-
-.ladder-challenge-player {
-  text-align: center;
-}
-
-.ladder-challenge-player strong {
-  color: #ffc107;
-}
-
-.ladder-challenge-section {
-  margin-bottom: 20px;
-}
-
-.ladder-challenge-section h4 {
-  color: #ffc107;
-  margin-bottom: 12px;
-  font-size: 1.1rem;
-}
-
-.ladder-challenge-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.ladder-challenge-input-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.ladder-challenge-label {
-  color: #e0e0e0;
-  display: block;
-  margin-bottom: 4px;
-  font-size: 0.9rem;
-}
-
-.ladder-challenge-input,
-.ladder-challenge-select,
-.ladder-challenge-textarea {
-  width: 100%;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #444;
-  background: #333;
-  color: #fff;
-  font-size: 0.9rem;
-}
-
-.ladder-challenge-input:focus,
-.ladder-challenge-select:focus,
-.ladder-challenge-textarea:focus {
-  outline: none;
-  border-color: #ff4444;
-  box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.2);
-}
-
-.ladder-challenge-date-section {
-  margin-bottom: 20px;
-}
-
-.ladder-challenge-date-input {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.ladder-challenge-date-input input {
-  flex: 1;
-}
-
-.ladder-challenge-add-btn {
-  padding: 8px 16px;
-  background: #ff4444;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.2s ease;
-}
-
-.ladder-challenge-add-btn:hover {
-  background: #cc3333;
-}
-
-.ladder-challenge-dates-list {
-  margin-top: 8px;
-}
-
-.ladder-challenge-date-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 8px;
-  background: rgba(255, 68, 68, 0.1);
-  border-radius: 4px;
-  margin-bottom: 4px;
-}
-
-.ladder-challenge-date-text {
-  color: #e0e0e0;
-  font-size: 0.9rem;
-}
-
-.ladder-challenge-remove-btn {
-  background: none;
-  border: none;
-  color: #ff4444;
-  cursor: pointer;
-  font-size: 16px;
-  padding: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s ease;
-}
-
-.ladder-challenge-remove-btn:hover {
-  color: #cc3333;
-}
-
-.ladder-challenge-error {
-  background: rgba(255, 0, 0, 0.1);
-  border: 1px solid #ff0000;
-  border-radius: 4px;
-  padding: 8px;
-  margin-bottom: 16px;
-  color: #ff6666;
-  font-size: 0.9rem;
-}
-
-.ladder-challenge-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-
-.ladder-challenge-cancel-btn {
-  padding: 12px 24px;
-  background: #666;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.2s ease;
-}
-
-.ladder-challenge-cancel-btn:hover {
-  background: #555;
-}
-
-.ladder-challenge-submit-btn {
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #ff4444, #cc3333);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: bold;
-  transition: all 0.2s ease;
-}
-
-.ladder-challenge-submit-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #cc3333, #aa2222);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(255, 68, 68, 0.3);
-}
-
-.ladder-challenge-submit-btn:disabled {
-  background: #666;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.ladder-challenge-confirmation {
-  text-align: center;
-  padding: 20px;
-}
-
-.ladder-challenge-confirmation-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-}
-
-.ladder-challenge-confirmation-title {
-  color: #ff4444;
-  margin-bottom: 16px;
-  font-size: 1.3rem;
-  font-weight: bold;
-}
-
-.ladder-challenge-confirmation-message {
-  color: #e0e0e0;
-  margin-bottom: 20px;
-  line-height: 1.5;
-}
-
-.ladder-challenge-confirmation-note {
-  color: #ccc;
-  font-size: 0.9rem;
-  margin-bottom: 20px;
-  line-height: 1.4;
-}
-
-.ladder-challenge-close-btn {
-  background: linear-gradient(135deg, #ff4444, #cc3333);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 12px 24px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.ladder-challenge-close-btn:hover {
-  background: linear-gradient(135deg, #cc3333, #aa2222);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(255, 68, 68, 0.3);
-}
-
-/* Responsive design */
+/* Mobile responsive adjustments */
 @media (max-width: 768px) {
-  .ladder-challenge-grid {
-    grid-template-columns: 1fr;
+  .ladder-challenge-modal {
+    max-height: 70vh !important;
+    width: 98vw !important;
+    max-width: 98vw !important;
+    margin: 0 !important;
   }
   
-  .ladder-challenge-players {
-    flex-direction: column;
-    gap: 12px;
+  .ladder-challenge-modal .modal-content {
+    max-height: calc(70vh - 25px) !important;
+    padding: 1px !important;
   }
   
-  .ladder-challenge-vs {
-    margin: 8px 0;
+  /* Create 2-column layout for form fields */
+  .ladder-challenge-modal .form-row {
+    display: flex !important;
+    gap: 10px !important;
+    margin-bottom: 8px !important;
   }
   
-  .ladder-challenge-actions {
-    flex-direction: column;
+  .ladder-challenge-modal .form-column {
+    flex: 1 !important;
+    min-width: 0 !important;
   }
   
-  .ladder-challenge-actions button {
-    width: 100%;
+  /* Make form fields more compact on mobile */
+  .ladder-challenge-modal input,
+  .ladder-challenge-modal select,
+  .ladder-challenge-modal textarea {
+    padding: 6px !important;
+    font-size: 0.9rem !important;
+    width: 100% !important;
+  }
+  
+  /* Center text in dropdowns and entry fee input */
+  .ladder-challenge-modal select {
+    text-align: center !important;
+  }
+  
+  .ladder-challenge-modal input[name="entryFee"] {
+    text-align: center !important;
+  }
+  
+  /* Reduce spacing between form elements */
+  .ladder-challenge-modal div[style*="margin-bottom"] {
+    margin-bottom: 8px !important;
+  }
+  
+  /* Make labels smaller */
+  .ladder-challenge-modal label {
+    font-size: 0.85rem !important;
+    margin-bottom: 2px !important;
   }
 }

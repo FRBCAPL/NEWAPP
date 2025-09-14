@@ -15,6 +15,7 @@ export default function DraggableModal({
   // Draggable state
   const [drag, setDrag] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const dragStart = useRef({ x: 0, y: 0 });
 
   // Reset position when modal opens
@@ -23,6 +24,16 @@ export default function DraggableModal({
       setDrag({ x: 0, y: 0 });
     }
   }, [open]);
+
+  // Handle window resize for mobile detection
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const onMouseDown = (e) => {
     setDragging(true);
@@ -74,9 +85,10 @@ export default function DraggableModal({
         bottom: 0,
         background: "rgba(0,0,0,0.7)",
         display: "flex",
-        alignItems: "center",
+        alignItems: isMobile ? "flex-start" : "center",
         justifyContent: "center",
-        paddingTop: window.innerWidth <= 768 ? "60px" : "40px",
+        paddingTop: isMobile ? "0" : "40px",
+        top: isMobile ? "120px" : "0",
         zIndex: 100000,
         backdropFilter: "blur(3px)",
         WebkitBackdropFilter: "blur(3px)"
@@ -118,16 +130,16 @@ export default function DraggableModal({
           onMouseDown={onMouseDown}
           style={{
             display: "flex",
-            alignItems: "center",
+            alignItems: "flex-start",
             justifyContent: "space-between",
             background: borderColor,
-            padding: "0.03rem .03rem 0.03rem .03rem",
+            padding: window.innerWidth <= 768 ? "0.3rem 0.5rem" : "0.4rem 0.6rem",
             borderTopLeftRadius: window.innerWidth <= 768 ? "0.5rem" : "1.2rem",
             borderTopRightRadius: window.innerWidth <= 768 ? "0.5rem" : "1.2rem",
             position: "relative",
             cursor: "grab",
             userSelect: "none",
-            gap: "1rem"
+            gap: window.innerWidth <= 768 ? "0.3rem" : "0.4rem"
           }}
         >
           <span 
@@ -148,7 +160,7 @@ export default function DraggableModal({
             className="modal-title"
             style={{
               margin: 0,
-              fontSize: window.innerWidth <= 768 ? "1rem" : "1.1rem",
+              fontSize: window.innerWidth <= 768 ? "1.1rem" : "1.3rem",
               fontWeight: "bold",
               textAlign: "center",
               letterSpacing: "0.02em",
@@ -171,10 +183,12 @@ export default function DraggableModal({
               background: "none",
               border: "none",
               color: "#fff",
-              fontSize: "2em",
+              fontSize: window.innerWidth <= 768 ? "1.2em" : "1.5em",
               fontWeight: "bold",
               cursor: "pointer",
               zIndex: 10,
+              alignSelf: "flex-start",
+              marginTop: "0",
               lineHeight: 1,
               transition: "color 0.2s, transform 0.2s",
               padding: 0,
@@ -208,7 +222,7 @@ export default function DraggableModal({
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes modalBounceIn {
           0% { opacity: 0; transform: scale(0.95) translateY(-40px);}
           70% { opacity: 1; transform: scale(1.02) translateY(8px);}
@@ -217,7 +231,7 @@ export default function DraggableModal({
         
         @media (max-width: 768px) {
           .modal-overlay {
-            padding-top: 70px !important;
+            padding-top: 120px !important;
             align-items: flex-start !important;
           }
           .draggable-modal {

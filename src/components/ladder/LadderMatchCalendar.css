@@ -507,7 +507,7 @@
     max-width: 95vw !important;
     height: 90vh !important;
     max-height: 90vh !important;
-    margin: 2.5vh auto !important;
+    margin: 15vh auto 2.5vh auto !important;
   }
   
   .calendar-header {

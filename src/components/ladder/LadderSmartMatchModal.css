@@ -1,31 +1,49 @@
 .ladder-smart-match-modal {
   background: linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98));
-  border: 2px solid #ff4444;
+  border: 2px solid #5b21b6;
   border-radius: 12px;
   color: #ffffff;
 }
 
 .ladder-smart-match-header {
-  background: rgba(255, 68, 68, 0.1);
-  border: 1px solid rgba(255, 68, 68, 0.3);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
+  background: rgba(91, 33, 182, 0.1);
+  border: 1px solid rgba(91, 33, 182, 0.3);
+  border-radius: 6px;
+  padding: 6px;
+  margin-bottom: 8px;
+}
+
+/* Desktop: more compact header */
+@media (min-width: 769px) {
+  .ladder-smart-match-header {
+    padding: 2px;
+    margin-bottom: 2px;
+  }
+  
+  .ladder-smart-match-title {
+    font-size: 1.1rem !important;
+    margin-bottom: 2px !important;
+  }
+  
+  .ladder-smart-match-subtitle {
+    font-size: 0.8rem !important;
+  }
 }
 
 .ladder-smart-match-title {
-  color: #ff4444;
-  margin: 0 0 8px 0;
+  color: #ffffff;
+  margin: 0 0 2px 0;
   text-align: center;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   font-weight: bold;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .ladder-smart-match-subtitle {
   color: #e0e0e0;
   text-align: center;
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .ladder-smart-match-loading {
@@ -35,7 +53,7 @@
 
 .ladder-smart-match-spinner {
   border: 4px solid #333;
-  border-top: 4px solid #ff4444;
+  border-top: 4px solid #5b21b6;
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -80,25 +98,32 @@
 }
 
 .ladder-smart-match-suggestion:hover {
-  background: rgba(255, 68, 68, 0.1);
-  border-color: #ff4444;
+  background: rgba(91, 33, 182, 0.1);
+  border-color: #5b21b6;
 }
 
 .ladder-smart-match-suggestion-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 8px;
+  gap: 12px;
+  text-align: center;
 }
 
 .ladder-smart-match-suggestion-info {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  text-align: center;
 }
 
 .ladder-smart-match-suggestion-icon {
   font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .ladder-smart-match-suggestion-name {
@@ -115,7 +140,7 @@
 }
 
 .ladder-smart-match-confidence {
-  text-align: right;
+  text-align: center;
 }
 
 .ladder-smart-match-confidence-badge {
@@ -221,20 +246,273 @@
   100% { transform: rotate(360deg); }
 }
 
+/* Content wrapper */
+.ladder-smart-match-content {
+  padding: 12px;
+}
+
+/* Suggestions container */
+.ladder-smart-match-suggestions-title {
+  color: #a855f7;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.ladder-smart-match-suggestions-list {
+  max-height: 400px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+/* Desktop: 2-column layout */
+@media (min-width: 769px) {
+  .ladder-smart-match-suggestions-list {
+    grid-template-columns: 1fr 1fr;
+    max-height: 160px;
+    gap: 2px;
+  }
+}
+
+/* Individual suggestion card */
+.ladder-smart-match-suggestion {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Desktop: more compact cards */
+@media (min-width: 769px) {
+  .ladder-smart-match-suggestion {
+    padding: 3px;
+  }
+  
+  .ladder-smart-match-suggestion-title {
+    font-size: 0.85rem !important;
+    margin-bottom: 2px !important;
+  }
+  
+  .ladder-smart-match-suggestion-details {
+    font-size: 0.75rem !important;
+    margin-bottom: 2px !important;
+  }
+  
+  .ladder-smart-match-suggestion-reason {
+    font-size: 0.7rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  /* Reduce overall modal content padding */
+  .ladder-smart-match-modal .modal-content {
+    padding: 4px !important;
+  }
+  
+  .ladder-smart-match-content {
+    padding: 8px !important;
+  }
+}
+
+.ladder-smart-match-suggestion:hover {
+  background: rgba(91, 33, 182, 0.1);
+  border-color: #5b21b6;
+}
+
+.ladder-smart-match-suggestion-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 12px;
+  text-align: center;
+}
+
+.ladder-smart-match-suggestion-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.ladder-smart-match-suggestion-icon {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ladder-smart-match-suggestion-title {
+  color: #fff;
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.ladder-smart-match-suggestion-details {
+  color: #ccc;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.ladder-smart-match-confidence {
+  text-align: center;
+}
+
+.ladder-smart-match-confidence-badge {
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  display: inline-block;
+}
+
+.ladder-smart-match-suggestion-reason {
+  color: #e0e0e0;
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.ladder-smart-match-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ladder-smart-match-tag {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.ladder-smart-match-tag-primary {
+  background: rgba(91, 33, 182, 0.2);
+  color: #5b21b6;
+}
+
+/* Match type specific colors */
+.ladder-smart-match-tag-challenge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.ladder-smart-match-tag-smackdown {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.ladder-smart-match-tag-ladder-jump {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.ladder-smart-match-tag-smackback {
+  background: rgba(168, 85, 247, 0.2);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.ladder-smart-match-tag-hot-streak {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.ladder-smart-match-tag-rising-star {
+  background: rgba(236, 72, 153, 0.2);
+  color: #ec4899;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
+.ladder-smart-match-tag-success {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.ladder-smart-match-tag-warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
+  .ladder-smart-match-modal {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    margin: 0 auto !important;
+    min-width: 320px !important;
+    max-height: 70vh !important;
+    height: auto !important;
+  }
+  
+  /* Override DraggableModal styles for mobile */
+  .ladder-smart-match-modal.draggable-modal {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    min-width: 320px !important;
+    max-height: 70vh !important;
+    height: auto !important;
+  }
+  
+  /* Force mobile width for all screen sizes under 768px */
+  @media screen and (max-width: 768px) {
+    .ladder-smart-match-modal {
+      width: 95vw !important;
+      max-width: 95vw !important;
+      min-width: 320px !important;
+    }
+  }
+  
+  /* Fix modal positioning on mobile - override modal overlay */
+  @media (max-width: 768px) {
+    .ladder-smart-match-modal ~ * .modal-overlay,
+    .modal-overlay {
+      padding-top: 120px !important;
+      align-items: flex-start !important;
+    }
+  }
+  
+  .ladder-smart-match-header {
+    padding: 8px !important;
+    margin-bottom: 10px !important;
+  }
+  
+  .ladder-smart-match-title {
+    font-size: 1rem !important;
+    margin-bottom: 4px !important;
+  }
+  
+  .ladder-smart-match-subtitle {
+    font-size: 0.75rem !important;
+    line-height: 1.2 !important;
+  }
+  
   .ladder-smart-match-suggestion-header {
     flex-direction: column;
     gap: 12px;
+    justify-content: center;
+    align-items: center;
   }
   
   .ladder-smart-match-confidence {
-    text-align: left;
+    text-align: center;
   }
   
   .ladder-smart-match-suggestion-info {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
     gap: 4px;
   }
   
@@ -245,4 +523,128 @@
   .ladder-smart-match-tag {
     text-align: center;
   }
+  
+  /* Make suggestion cards more mobile-friendly */
+  .ladder-smart-match-suggestion {
+    padding: 8px !important;
+    margin-bottom: 6px !important;
+  }
+  
+  .ladder-smart-match-suggestion-title {
+    font-size: 0.85rem !important;
+    margin-bottom: 4px !important;
+  }
+  
+  .ladder-smart-match-suggestion-details {
+    font-size: 0.75rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  .ladder-smart-match-suggestion-button {
+    width: 100% !important;
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    margin-top: 6px !important;
+  }
+  
+  /* Empty state mobile adjustments */
+  .ladder-smart-match-empty {
+    padding: 15px 10px !important;
+  }
+  
+  .ladder-smart-match-empty-icon {
+    font-size: 2.5rem !important;
+    margin-bottom: 8px !important;
+  }
+  
+  .ladder-smart-match-empty-title {
+    font-size: 1rem !important;
+    margin-bottom: 4px !important;
+  }
+  
+  .ladder-smart-match-empty-message {
+    font-size: 0.75rem !important;
+    line-height: 1.3 !important;
+  }
+  
+  /* Content wrapper mobile adjustments */
+  .ladder-smart-match-content {
+    padding: 10px !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+  
+  /* Suggestions list mobile adjustments */
+  .ladder-smart-match-suggestions-list {
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+  
+  /* Suggestions title mobile adjustments */
+  .ladder-smart-match-suggestions-title {
+    font-size: 1rem !important;
+    margin-bottom: 12px !important;
+  }
+  
+  /* Suggestion cards mobile adjustments */
+  .ladder-smart-match-suggestion {
+    padding: 12px !important;
+    margin-bottom: 10px !important;
+  }
+  
+  .ladder-smart-match-suggestion-title {
+    font-size: 0.9rem !important;
+    margin-bottom: 6px !important;
+  }
+  
+  .ladder-smart-match-suggestion-details {
+    font-size: 0.8rem !important;
+    line-height: 1.3 !important;
+  }
+  
+  .ladder-smart-match-suggestion-reason {
+    font-size: 0.8rem !important;
+    line-height: 1.3 !important;
+    margin-bottom: 10px !important;
+  }
+  
+  .ladder-smart-match-suggestion-icon {
+    font-size: 18px !important;
+  }
+  
+  .ladder-smart-match-confidence-badge {
+    font-size: 0.7rem !important;
+    padding: 3px 6px !important;
+  }
+  
+  .ladder-smart-match-tag {
+    font-size: 0.7rem !important;
+    padding: 2px 4px !important;
+  }
+}
+
+/* Profile completion indicators */
+.ladder-smart-match-asterisk {
+  color: #f59e0b;
+  font-weight: bold;
+  margin-left: 4px;
+  font-size: 1.1em;
+}
+
+.ladder-smart-match-profile-warning {
+  color: #f59e0b;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.ladder-smart-match-legend {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.ladder-smart-match-legend-text {
+  color: #9ca3af;
+  font-size: 0.85rem;
+  margin: 0 0 12px 0;
+  font-style: italic;
 }

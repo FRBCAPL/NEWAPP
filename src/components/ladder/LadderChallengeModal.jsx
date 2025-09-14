@@ -188,35 +188,34 @@ ${defender.firstName}, you have 3 days to respond! ⏰`;
   }
 
   return (
-    <DraggableModal
-      open={true}
-      onClose={onClose}
-      title={`⚔️ ${challengeType.charAt(0).toUpperCase() + challengeType.slice(1)} Challenge`}
-      maxWidth="600px"
-    >
+      <DraggableModal
+        open={true}
+        onClose={onClose}
+        title={`⚔️ ${challengeType.charAt(0).toUpperCase() + challengeType.slice(1)} Challenge`}
+        maxWidth="600px"
+        className="ladder-challenge-modal"
+        borderColor="#5b21b6"
+        glowColor="#5b21b6"
+      >
       <div style={{ padding: '16px' }}>
         {/* Challenge Header */}
         <div style={{ 
           background: 'rgba(255, 68, 68, 0.1)', 
           border: '1px solid rgba(255, 68, 68, 0.3)', 
-          borderRadius: '8px', 
-          padding: '12px', 
-          marginBottom: '16px' 
+          borderRadius: '6px', 
+          padding: '8px', 
+          marginBottom: '12px' 
         }}>
-          <h3 style={{ color: '#ff4444', margin: '0 0 8px 0', textAlign: 'center', fontSize: '1.1rem' }}>
+          <h3 style={{ color: '#ff4444', margin: '0 0 6px 0', textAlign: 'center', fontSize: '1rem' }}>
             {challenger.firstName} {challenger.lastName} vs {defender.firstName} {defender.lastName}
           </h3>
-          <div style={{ display: 'flex', justifyContent: 'space-around', color: '#e0e0e0', fontSize: '0.9rem' }}>
-            <div>
-              <strong>Challenger:</strong><br />
-              Position {challenger.position}<br />
-              {challenger.ladderName}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#e0e0e0', fontSize: '0.8rem' }}>
+            <div style={{ textAlign: 'left' }}>
+              <strong>Challenger:</strong> Pos {challenger.position} • {challenger.ladderName}
             </div>
-            <div style={{ fontSize: '20px', color: '#ff4444' }}>⚔️</div>
-            <div>
-              <strong>Defender:</strong><br />
-              Position {defender.position}<br />
-              {defender.ladderName}
+            <div style={{ fontSize: '16px', color: '#ff4444', margin: '0 8px' }}>⚔️</div>
+            <div style={{ textAlign: 'right' }}>
+              <strong>Defender:</strong> Pos {defender.position} • {defender.ladderName}
             </div>
           </div>
         </div>
@@ -226,8 +225,8 @@ ${defender.firstName}, you have 3 days to respond! ⏰`;
           <div style={{ marginBottom: '16px' }}>
             <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1rem' }}>Match Details</h4>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-              <div>
+            <div className="form-row">
+              <div className="form-column">
                 <label style={{ color: '#e0e0e0', display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>
                   Entry Fee ($)
                 </label>
@@ -250,7 +249,7 @@ ${defender.firstName}, you have 3 days to respond! ⏰`;
                 />
               </div>
 
-              <div>
+              <div className="form-column">
                 <label style={{ color: '#e0e0e0', display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>
                   Race Length
                 </label>
@@ -276,8 +275,8 @@ ${defender.firstName}, you have 3 days to respond! ⏰`;
               </div>
             </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-              <div>
+            <div className="form-row">
+              <div className="form-column">
                 <label style={{ color: '#e0e0e0', display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>
                   Game Type
                 </label>
@@ -302,7 +301,7 @@ ${defender.firstName}, you have 3 days to respond! ⏰`;
                 </select>
               </div>
 
-              <div>
+              <div className="form-column">
                 <label style={{ color: '#e0e0e0', display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>
                   Table Size
                 </label>

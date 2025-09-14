@@ -18,56 +18,36 @@ const LadderTable = memo(({
       <div className={`ladder-table ${!isPublicView ? 'logged-in-view' : ''}`} style={{ position: 'relative' }}>
         <div className="table-header">
           <div className="header-cell">Rank</div>
-        <div className="header-cell">Player</div>
-        <div className="header-cell">Fargo</div>
-        {isPublicView && window.innerWidth <= 768 ? (
-          <div className="header-cell">W/L</div>
-        ) : (
-          <>
-            <div className="header-cell" style={window.innerWidth <= 768 ? { 
-              transform: 'translateX(18px)', 
-              marginLeft: '12px', 
-              paddingLeft: '12px',
-              position: 'relative',
-              textAlign: 'center'
-            } : {}}>W</div>
-            <div className="header-cell" style={window.innerWidth <= 768 ? { 
-              transform: 'translateX(18px)', 
-              marginLeft: '12px', 
-              paddingLeft: '12px',
-              position: 'relative',
-              textAlign: 'center'
-            } : {}}>L</div>
-          </>
-        )}
-        {isPublicView && window.innerWidth > 768 ? (
-          <div className="header-cell">Last Match</div>
-        ) : isPublicView && window.innerWidth <= 768 ? (
-           <div className="header-cell">Last Match</div>
-        ) : (
-          <div className="header-cell">Status</div>
-        )}
-          {!isPublicView && <div className="header-cell" style={{ whiteSpace: window.innerWidth <= 768 ? 'normal' : 'nowrap', wordBreak: 'keep-all', paddingLeft: window.innerWidth <= 768 ? '10px' : '140px' }}>Last Match</div>}
+          <div className="header-cell">Player</div>
+          {isPublicView ? (
+            window.innerWidth <= 768 ? (
+              <div className="header-cell">W/L</div>
+            ) : (
+              <>
+                <div className="header-cell">W</div>
+                <div className="header-cell">L</div>
+              </>
+            )
+          ) : (
+            window.innerWidth <= 768 ? (
+              <div className="header-cell">W/L</div>
+            ) : (
+              <>
+                <div className="header-cell">W</div>
+                <div className="header-cell">L</div>
+              </>
+            )
+          )}
+          {isPublicView && window.innerWidth > 768 ? (
+            <div className="header-cell">Last Match</div>
+          ) : isPublicView && window.innerWidth <= 768 ? (
+             <div className="header-cell">Last Match</div>
+          ) : (
+            <div className="header-cell">Status</div>
+          )}
+          {!isPublicView && <div className="header-cell last-match-header" style={{ whiteSpace: window.innerWidth <= 768 ? 'normal' : 'nowrap', wordBreak: 'keep-all', justifyContent: 'flex-start', textAlign: 'left', paddingLeft: '30px' }}>Last Match</div>}
         </div>
         
-        {/* Match Fee Information */}
-        {!isPublicView && (
-          <div className="match-fee-info-bar" style={{
-            background: 'rgba(16, 185, 129, 0.1)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            borderRadius: '6px',
-            padding: '8px 12px',
-            margin: '8px 0',
-            textAlign: 'center',
-            fontSize: '0.85rem',
-            color: '#e0e0e0'
-          }}>
-            <span style={{ color: '#10b981', fontWeight: 'bold' }}>💰 Match Fee Info:</span>
-            <span style={{ marginLeft: '8px' }}>
-              Winner reports match and pays <strong>$5 match fee</strong> (one fee per match, not per player)
-            </span>
-          </div>
-        )}
         
         {ladderData.map((player, index) => (
           <div key={player._id || index} className={`table-row ${player.lastMatch && player.lastMatch.opponent ? 'has-last-match' : ''}`}>
@@ -98,8 +78,15 @@ const LadderTable = memo(({
                     
                     return fullName;
                   } else {
-                    // Logged-in view: show full last name
-                    return firstName + ' ' + lastName;
+                    // Logged-in view: show full last name on PC, last initial on mobile
+                    if (window.innerWidth > 768) {
+                      // PC version: show full last name
+                      return firstName + ' ' + lastName;
+                    } else {
+                      // Mobile version: show last initial
+                      const lastNameInitial = lastName ? lastName.charAt(0) + '.' : '';
+                      return firstName + ' ' + lastNameInitial;
+                    }
                   }
                 })()}
                 {!isPublicView && !player.unifiedAccount?.hasUnifiedAccount && <span className="no-account">*</span>}
@@ -172,7 +159,7 @@ const LadderTable = memo(({
                       </button>
                     </>
                   ) : (
-                    <div style={{
+                    <div className="challenge-reason-text" style={{
                       fontSize: '0.6rem',
                       color: '#888',
                       fontStyle: 'italic',
@@ -184,37 +171,36 @@ const LadderTable = memo(({
                 </div>
               )}
             </div>
-            <div className="table-cell fargo" style={window.innerWidth <= 768 ? { 
-              transform: 'translateX(15px)', 
-              marginLeft: '10px', 
-              paddingLeft: '10px',
-              position: 'relative'
-            } : {}}>{player.fargoRate === 0 ? "No FargoRate" : player.fargoRate}</div>
-            {isPublicView && window.innerWidth <= 768 ? (
-              <div className="table-cell wins-losses-combined" style={{ 
-                transform: 'translateX(-5px)', 
-                marginLeft: '8px', 
-                paddingLeft: '8px',
-                position: 'relative',
-                textAlign: 'center'
-              }}>{player.wins || 0}/{player.losses || 0}</div>
+            {isPublicView ? (
+              window.innerWidth <= 768 ? (
+                <div className="table-cell wins-losses-combined" style={{ 
+                  transform: 'translateX(-5px)', 
+                  marginLeft: '8px', 
+                  paddingLeft: '8px',
+                  position: 'relative',
+                  textAlign: 'center'
+                }}>{player.wins || 0}/{player.losses || 0}</div>
+              ) : (
+                <>
+                  <div className="table-cell wins">{player.wins || 0}</div>
+                  <div className="table-cell losses">{player.losses || 0}</div>
+                </>
+              )
             ) : (
-              <>
-                <div className="table-cell wins" style={window.innerWidth <= 768 ? { 
-                  transform: 'translateX(12px)', 
+              window.innerWidth <= 768 ? (
+                <div className="table-cell wins-losses-combined" style={{ 
+                  transform: 'translateX(-5px)', 
                   marginLeft: '8px', 
                   paddingLeft: '8px',
                   position: 'relative',
                   textAlign: 'center'
-                } : {}}>{player.wins || 0}</div>
-                <div className="table-cell losses" style={window.innerWidth <= 768 ? { 
-                  transform: 'translateX(12px)', 
-                  marginLeft: '8px', 
-                  paddingLeft: '8px',
-                  position: 'relative',
-                  textAlign: 'center'
-                } : {}}>{player.losses || 0}</div>
-              </>
+                }}>{player.wins || 0}/{player.losses || 0}</div>
+              ) : (
+                <>
+                  <div className="table-cell wins">{player.wins || 0}</div>
+                  <div className="table-cell losses">{player.losses || 0}</div>
+                </>
+              )
             )}
             {isPublicView && window.innerWidth > 768 ? (
               <div className="table-cell last-match">
@@ -292,9 +278,19 @@ const LadderTable = memo(({
             {!isPublicView && (
               <div className="table-cell last-match">
                 {player.lastMatch ? (
-                  <div style={{ fontSize: '0.8rem', lineHeight: '1.2' }}>
+                  <div style={{ fontSize: '1.0rem', lineHeight: '1.2' }}>
                     <div style={{ fontWeight: 'bold', color: player.lastMatch.result === 'W' ? '#4CAF50' : '#f44336' }}>
-                      {player.lastMatch.result === 'W' ? 'W' : 'L'} vs {player.lastMatch.opponent}
+                      {player.lastMatch.result === 'W' ? 'W' : 'L'} vs {
+                        window.innerWidth <= 768 ? 
+                          (() => {
+                            const parts = player.lastMatch.opponent.split(' ');
+                            if (parts.length >= 2) {
+                              return parts[0] + ' ' + parts[1].charAt(0) + '.';
+                            }
+                            return player.lastMatch.opponent;
+                          })() :
+                          player.lastMatch.opponent
+                      }
                     </div>
                     <div style={{ color: '#666', fontSize: '0.7rem' }}>
                       {formatDateForMountainTime(player.lastMatch.date)}
@@ -306,7 +302,7 @@ const LadderTable = memo(({
                     )}
                   </div>
                 ) : (
-                  <span style={{ color: '#999', fontSize: '0.8rem' }}>No matches</span>
+                  <span style={{ color: '#999', fontSize: '1.0rem' }}>No matches</span>
                 )}
               </div>
             )}

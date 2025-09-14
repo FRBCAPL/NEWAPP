@@ -1012,11 +1012,19 @@ const LadderApp = ({
 
   // Memoize available defenders for Smart Match
   const availableDefenders = useMemo(() => {
-    return ladderData.filter(player => 
-      player.unifiedAccount?.hasUnifiedAccount && 
-      player.unifiedAccount?.email !== userLadderData?.email
-    );
-  }, [ladderData, userLadderData?.email]);
+    return ladderData.filter(player => {
+      // Include players with unified accounts (preferred)
+      const hasUnifiedAccount = player.unifiedAccount?.hasUnifiedAccount;
+      
+      // Also include players without unified accounts for Smart Match testing
+      // (they'll show with asterisks but can still be suggested)
+      const isNotCurrentUser = player.unifiedAccount?.email !== userLadderData?.email && 
+                              player.email !== userLadderData?.email &&
+                              player.firstName !== userLadderData?.firstName;
+      
+      return isNotCurrentUser; // Include all players except the current user
+    });
+  }, [ladderData, userLadderData?.email, userLadderData?.firstName]);
 
   const handleSmartMatch = useCallback(() => {
     console.log('🧠 Smart Match clicked');
@@ -1070,6 +1078,18 @@ const LadderApp = ({
         
         {/* Promotional Pricing Banner */}
         <PromotionalPricingBanner />
+        
+        {/* Match Fee Information - Separate container */}
+        {!isPublicView && (
+          <div className="match-fee-container">
+            <div className="match-fee-info-bar sticky-match-fee">
+              <span style={{ color: '#10b981', fontWeight: 'bold' }}>💰 Match Fee Info:</span>
+              <span style={{ marginLeft: '8px' }}>
+                Winner reports match and pays <strong>$5 match fee</strong> (one fee per match, not per player)
+              </span>
+            </div>
+          </div>
+        )}
         
         <LadderErrorBoundary>
           <LadderTable
@@ -1352,7 +1372,10 @@ const LadderApp = ({
                   {isPublicView ? (
                     <div className="header-cell">Last Match</div>
                   ) : (
-                    <div className="header-cell">Status</div>
+                    <>
+                      <div className="header-cell">Status</div>
+                      <div className="header-cell last-match-header" style={{backgroundColor: 'red', color: 'yellow', fontSize: '50px'}}>Last Match</div>
+                    </>
                   )}
                 </div>
                 
@@ -1392,12 +1415,33 @@ const LadderApp = ({
                         )}
                       </div>
                     ) : (
-                      <div className="table-cell status">
-                        {(() => {
-                          const playerStatus = getPlayerStatus(player);
-                          return <span className={playerStatus.className}>{playerStatus.text}</span>;
-                        })()}
-                      </div>
+                      <>
+                        <div className="table-cell status">
+                          {(() => {
+                            const playerStatus = getPlayerStatus(player);
+                            return <span className={playerStatus.className}>{playerStatus.text}</span>;
+                          })()}
+                        </div>
+                        <div className="table-cell last-match">
+                          {player.lastMatch ? (
+                            <div style={{ fontSize: '0.8rem', lineHeight: '1.2' }}>
+                              <div style={{ fontWeight: 'bold', color: player.lastMatch.result === 'W' ? '#4CAF50' : '#f44336' }}>
+                                {player.lastMatch.result === 'W' ? 'W' : 'L'} vs {player.lastMatch.opponent}
+                              </div>
+                              <div style={{ color: '#666', fontSize: '0.7rem' }}>
+                                {new Date(player.lastMatch.date).toLocaleDateString()}
+                              </div>
+                              {player.lastMatch.venue && (
+                                <div style={{ color: '#888', fontSize: '0.65rem' }}>
+                                  {player.lastMatch.venue}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span style={{ color: '#999', fontSize: '0.8rem' }}>No matches</span>
+                          )}
+                        </div>
+                      </>
                     )}
                   </div>
                 ))}
