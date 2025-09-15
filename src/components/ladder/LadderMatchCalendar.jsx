@@ -61,10 +61,18 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
 
   // Get matches for a specific date
   const getMatchesForDate = (date) => {
-    const dateStr = date.toISOString().split('T')[0];
+    // Use local date string to avoid timezone issues
+    const dateStr = date.getFullYear() + '-' + 
+                   String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(date.getDate()).padStart(2, '0');
+    
     const dayMatches = matches.filter(match => {
       const matchDate = new Date(match.scheduledDate || match.completedDate);
-      return matchDate.toISOString().split('T')[0] === dateStr;
+      // Use local date string for comparison to avoid timezone issues
+      const matchDateStr = matchDate.getFullYear() + '-' + 
+                          String(matchDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                          String(matchDate.getDate()).padStart(2, '0');
+      return matchDateStr === dateStr;
     });
     console.log('Matches for date:', dateStr, dayMatches);
     return dayMatches;

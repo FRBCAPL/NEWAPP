@@ -6,6 +6,7 @@ import { formatDateForMountainTime } from '../../utils/dateUtils';
 const UserStatusCard = memo(({ 
   userLadderData, 
   setShowUnifiedSignup, 
+  setShowProfileModal,
   isAdmin 
 }) => {
   const navigate = useNavigate();
@@ -70,7 +71,7 @@ const UserStatusCard = memo(({
             <div 
               className="status-item claim-notice"
               style={{ cursor: 'pointer' }}
-              onClick={() => setShowUnifiedSignup(true)}
+              onClick={() => setShowProfileModal(true)}
               onMouseOver={(e) => {
                 e.currentTarget.style.backgroundColor = 'rgba(33, 150, 243, 0.1)';
                 e.currentTarget.style.transform = 'translateY(-1px)';

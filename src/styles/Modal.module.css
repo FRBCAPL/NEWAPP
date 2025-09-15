@@ -270,9 +270,9 @@
 
 @media (max-width: 400px) {
   .modalOverlay, .modal-overlay {
-    align-items: stretch !important;
-    justify-content: stretch !important;
-    padding: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px !important;
   }
   .modalContent, .draggable-modal {
     width: 100vw !important;

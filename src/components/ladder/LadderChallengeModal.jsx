@@ -17,6 +17,7 @@ const LadderChallengeModal = ({
     gameType: '9-ball',
     tableSize: '9-foot',
     preferredDates: [],
+    preferredTimes: {}, // Object to store time for each date
     postContent: '',
     location: 'Legends Brews & Cues'
   });
@@ -54,20 +55,60 @@ const LadderChallengeModal = ({
 
   const handleDateAdd = () => {
     const newDate = document.getElementById('preferredDate').value;
+    const newTime = document.getElementById('preferredTime').value || '19:00'; // Default to 7:00 PM
     if (newDate) {
       setFormData(prev => ({
         ...prev,
-        preferredDates: [...prev.preferredDates, newDate]
+        preferredDates: [...prev.preferredDates, newDate],
+        preferredTimes: {
+          ...prev.preferredTimes,
+          [newDate]: newTime
+        }
       }));
       document.getElementById('preferredDate').value = '';
+      document.getElementById('preferredTime').value = '19:00';
     }
   };
 
   const handleDateRemove = (index) => {
+    const dateToRemove = formData.preferredDates[index];
+    setFormData(prev => {
+      const newPreferredTimes = { ...prev.preferredTimes };
+      delete newPreferredTimes[dateToRemove];
+      return {
+        ...prev,
+        preferredDates: prev.preferredDates.filter((_, i) => i !== index),
+        preferredTimes: newPreferredTimes
+      };
+    });
+  };
+
+  const handleTimeChange = (date, newTime) => {
     setFormData(prev => ({
       ...prev,
-      preferredDates: prev.preferredDates.filter((_, i) => i !== index)
+      preferredTimes: {
+        ...prev.preferredTimes,
+        [date]: newTime
+      }
     }));
+  };
+
+  // Get availability suggestions for a specific day
+  const getAvailabilitySuggestions = (date) => {
+    const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'lowercase' });
+    const challengerAvailability = challenger.availability?.[dayOfWeek] || [];
+    const defenderAvailability = defender.availability?.[dayOfWeek] || [];
+    
+    // Find overlapping time slots
+    const overlappingTimes = challengerAvailability.filter(time => 
+      defenderAvailability.includes(time)
+    );
+    
+    return {
+      challengerTimes: challengerAvailability,
+      defenderTimes: defenderAvailability,
+      overlappingTimes: overlappingTimes
+    };
   };
 
   const generatePostContent = () => {
@@ -79,6 +120,22 @@ const LadderChallengeModal = ({
 
     const description = challengeDescriptions[challengeType] || 'Challenge Match';
     
+    // Format dates and times
+    const dateTimeInfo = formData.preferredDates.map(date => {
+      const time = formData.preferredTimes[date] || '19:00';
+      const formattedDate = new Date(date).toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+      const formattedTime = new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      });
+      return `${formattedDate} at ${formattedTime}`;
+    }).join(', ');
+    
     return `🏆 ${description} 🏆
 
 ${challenger.firstName} ${challenger.lastName} (Position ${challenger.position}) is calling out ${defender.firstName} ${defender.lastName} (Position ${defender.position}) for a ${description.toLowerCase()}!
@@ -88,6 +145,7 @@ ${challenger.firstName} ${challenger.lastName} (Position ${challenger.position})
 🎱 Game: ${formData.gameType}
 🏓 Table: ${formData.tableSize}
 📍 Location: ${formData.location}
+⏰ Proposed Times: ${dateTimeInfo}
 
 ${formData.postContent ? `\n💬 Message: ${formData.postContent}` : ''}
 
@@ -109,6 +167,7 @@ ${defender.firstName}, you have 3 days to respond! ⏰`;
         gameType: formData.gameType,
         tableSize: formData.tableSize,
         preferredDates: formData.preferredDates,
+        preferredTimes: formData.preferredTimes,
         postContent: generatePostContent(),
         location: formData.location
       };
@@ -357,9 +416,9 @@ ${defender.firstName}, you have 3 days to respond! ⏰`;
             </div>
           </div>
 
-          {/* Preferred Dates */}
+          {/* Preferred Dates & Times */}
           <div style={{ marginBottom: '16px' }}>
-            <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1rem' }}>Preferred Dates</h4>
+            <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1rem' }}>Preferred Dates & Times</h4>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
               <input
                 type="date"
@@ -372,6 +431,20 @@ ${defender.firstName}, you have 3 days to respond! ⏰`;
                   background: '#333',
                   color: '#fff',
                   fontSize: '0.9rem'
+                }}
+              />
+              <input
+                type="time"
+                id="preferredTime"
+                defaultValue="19:00"
+                style={{
+                  padding: '8px',
+                  borderRadius: '4px',
+                  border: '1px solid #444',
+                  background: '#333',
+                  color: '#fff',
+                  fontSize: '0.9rem',
+                  width: '120px'
                 }}
               />
               <button
@@ -393,35 +466,79 @@ ${defender.firstName}, you have 3 days to respond! ⏰`;
             
                         {formData.preferredDates.length > 0 && (
               <div style={{ marginTop: '8px' }}>
-                <label style={{ color: '#e0e0e0', display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>
-                  Selected Dates:
+                <label style={{ color: '#e0e0e0', display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>
+                  Selected Dates & Times:
                 </label>
-                {formData.preferredDates.map((date, index) => (
-                  <div key={index} style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '4px 8px',
-                    background: 'rgba(255, 68, 68, 0.1)',
-                    borderRadius: '4px',
-                    marginBottom: '4px'
-                  }}>
-                    <span style={{ color: '#e0e0e0', fontSize: '0.9rem' }}>{new Date(date).toLocaleDateString()}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleDateRemove(index)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#ff4444',
-                        cursor: 'pointer',
-                        fontSize: '14px'
-                      }}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
+                {formData.preferredDates.map((date, index) => {
+                  const availabilitySuggestions = getAvailabilitySuggestions(date);
+                  const currentTime = formData.preferredTimes[date] || '19:00';
+                  
+                  return (
+                    <div key={index} style={{
+                      padding: '12px',
+                      background: 'rgba(255, 68, 68, 0.1)',
+                      borderRadius: '6px',
+                      marginBottom: '8px',
+                      border: '1px solid rgba(255, 68, 68, 0.3)'
+                    }}>
+                      {/* Date and Time Row */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span style={{ color: '#e0e0e0', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                            {new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                          </span>
+                          <input
+                            type="time"
+                            value={currentTime}
+                            onChange={(e) => handleTimeChange(date, e.target.value)}
+                            style={{
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              border: '1px solid #444',
+                              background: '#333',
+                              color: '#fff',
+                              fontSize: '0.85rem',
+                              width: '100px'
+                            }}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDateRemove(index)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#ff4444',
+                            cursor: 'pointer',
+                            fontSize: '16px',
+                            padding: '4px'
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                      
+                      {/* Availability Suggestions */}
+                      {availabilitySuggestions.overlappingTimes.length > 0 && (
+                        <div style={{ marginBottom: '6px' }}>
+                          <div style={{ color: '#4CAF50', fontSize: '0.8rem', marginBottom: '4px' }}>
+                            ✅ Both available at: {availabilitySuggestions.overlappingTimes.join(', ')}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Individual Availability Info */}
+                      <div style={{ display: 'flex', gap: '12px', fontSize: '0.75rem' }}>
+                        <div style={{ color: '#81C784' }}>
+                          You: {availabilitySuggestions.challengerTimes.length > 0 ? availabilitySuggestions.challengerTimes.join(', ') : 'No availability set'}
+                        </div>
+                        <div style={{ color: '#FFB74D' }}>
+                          {defender.firstName}: {availabilitySuggestions.defenderTimes.length > 0 ? availabilitySuggestions.defenderTimes.join(', ') : 'No availability set'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

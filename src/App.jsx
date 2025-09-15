@@ -545,6 +545,7 @@ function AppContent() {
                           isAdmin={isAdminState}
                           userType={userType}
                           onClaimLadderPosition={handleClaimLadderPosition}
+                          setShowProfileModal={setShowProfileModal}
                         />
                       </main>
                     </AppRouteWrapper>

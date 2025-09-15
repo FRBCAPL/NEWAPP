@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import DraggableModal from '../modal/DraggableModal';
 import LadderChallengeModal from './LadderChallengeModal';
+import { createSecureHeaders } from '../../utils/security.js';
+import { BACKEND_URL } from '../../config.js';
 import './LadderSmartMatchModal.css';
 
 const LadderSmartMatchModal = ({ 
@@ -8,7 +11,9 @@ const LadderSmartMatchModal = ({
   onClose, 
   challenger, 
   availableDefenders = [],
-  onChallengeComplete 
+  ladderData = [],
+  onChallengeComplete,
+  userPin 
 }) => {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -22,10 +27,23 @@ const LadderSmartMatchModal = ({
    const [aiSuggestions, setAiISuggestions] = useState([]);
    const [headToHeadRecord, setHeadToHeadRecord] = useState(null);
    const [loadingHeadToHead, setLoadingHeadToHead] = useState(false);
+   const [showMatchTypeModal, setShowMatchTypeModal] = useState(false);
+   const [selectedMatchType, setSelectedMatchType] = useState(null);
+   const [showMatchTypeSelection, setShowMatchTypeSelection] = useState(false);
 
   useEffect(() => {
+    console.log('🧠 Smart Match Modal useEffect triggered:', {
+      isOpen,
+      challenger: challenger ? 'Present' : 'Missing',
+      availableDefendersCount: availableDefenders.length,
+      availableDefenders: availableDefenders
+    });
+    
     if (isOpen && challenger && availableDefenders.length > 0) {
       generateSuggestions();
+    } else if (isOpen && challenger && availableDefenders.length === 0) {
+      console.warn('⚠️ Smart Match: No available defenders found!');
+      console.log('Available defenders array:', availableDefenders);
     }
   }, [isOpen, challenger, availableDefenders]);
 
@@ -246,33 +264,192 @@ const LadderSmartMatchModal = ({
    // Get head-to-head record between two players
    const getHeadToHeadRecord = async (challenger, defender) => {
      try {
-       // Make API call to get accurate head-to-head records from database
-       const challengerId = challenger._id || challenger.email;
-       const defenderId = defender._id || defender.email;
+       console.log('🔍 Fetching head-to-head record:', { challenger, defender });
        
-       const response = await fetch(`/api/matches/head-to-head/${challengerId}/${defenderId}`);
+       // Find the challenger's actual _id from the ladder data
+       let challengerId = challenger._id || challenger.id || challenger.playerId;
        
-       if (!response.ok) {
-         throw new Error(`HTTP error! status: ${response.status}`);
+       // If challengerId is not a valid MongoDB ObjectId (like 'ladder'), 
+       // find the challenger in the ladderData array
+       if (!challengerId || challengerId === 'ladder' || !challengerId.match(/^[0-9a-fA-F]{24}$/)) {
+         const challengerFromLadder = ladderData.find(player => 
+           player.firstName === challenger.firstName && 
+           player.lastName === challenger.lastName
+         );
+         if (challengerFromLadder) {
+           challengerId = challengerFromLadder._id;
+           console.log('🔍 Found challenger in ladder data:', challengerId);
+         }
        }
        
-       const data = await response.json();
+       const defenderId = defender._id || defender.id || defender.playerId;
        
-       // Convert API response to the format expected by the UI
-       return {
-         wins: data.record.player1Wins,
-         losses: data.record.player2Wins,
-         totalMatches: data.record.totalMatches,
-         lastMatch: data.lastMatch ? {
-           date: data.lastMatch.date,
-           winner: data.lastMatch.winner,
-           loser: data.lastMatch.loser,
-           score: data.lastMatch.score
-         } : null
+       console.log('🆔 Using IDs:', { challengerId, defenderId });
+       console.log('🔍 Challenger object keys:', Object.keys(challenger));
+       console.log('🔍 Defender object keys:', Object.keys(defender));
+       
+       // Check if we have the necessary IDs for API calls
+       if (!challengerId) {
+         console.log('❌ Missing challenger ID for head-to-head lookup');
+         return { wins: 0, losses: 0, totalMatches: 0, lastMatch: null };
+       }
+       
+       if (!defenderId) {
+         console.log('❌ Missing defender ID for head-to-head lookup');
+         return { wins: 0, losses: 0, totalMatches: 0, lastMatch: null };
+       }
+       
+       // Fetch matches for both players using IDs
+       const [challengerMatches, defenderMatches] = await Promise.all([
+         fetch(`${BACKEND_URL}/api/ladder/player/${encodeURIComponent(challengerId)}/matches`, {
+           headers: createSecureHeaders(userPin)
+         }).then(res => {
+           console.log('🔍 Challenger API response status:', res.status);
+           if (!res.ok) {
+             console.log('❌ Challenger API error:', res.status, res.statusText);
+             return [];
+           }
+           return res.json();
+         }),
+         fetch(`${BACKEND_URL}/api/ladder/player/${encodeURIComponent(defenderId)}/matches`, {
+           headers: createSecureHeaders(userPin)
+         }).then(res => {
+           console.log('🔍 Defender API response status:', res.status);
+           if (!res.ok) {
+             console.log('❌ Defender API error:', res.status, res.statusText);
+             return [];
+           }
+           return res.json();
+         })
+       ]);
+       
+       console.log('📊 Challenger matches:', challengerMatches.length);
+       console.log('📊 Defender matches:', defenderMatches.length);
+       
+       
+       // Find head-to-head matches (completed matches between these two players)
+       const headToHeadMatches = [];
+       
+       // Check challenger's matches for games against defender
+       challengerMatches.forEach(match => {
+         // Since the match data is flattened, if it has a result, it's completed
+         if (match.result) {
+           // Compare using opponent name since the match data is flattened
+           const isAgainstDefender = match.opponentName === `${defender.firstName} ${defender.lastName}`;
+           
+           console.log('🔍 Checking challenger match:', {
+             matchId: match._id,
+             opponentName: match.opponentName,
+             defenderName: `${defender.firstName} ${defender.lastName}`,
+             isAgainstDefender
+           });
+           
+           if (isAgainstDefender) {
+             headToHeadMatches.push(match);
+             console.log('✅ Found head-to-head match in challenger data');
+           }
+         }
+       });
+       
+       // Check defender's matches for games against challenger
+       defenderMatches.forEach(match => {
+         // Since the match data is flattened, if it has a result, it's completed
+         if (match.result) {
+           // Compare using opponent name since the match data is flattened
+           const isAgainstChallenger = match.opponentName === `${challenger.firstName} ${challenger.lastName}`;
+           
+           console.log('🔍 Checking defender match:', {
+             matchId: match._id,
+             opponentName: match.opponentName,
+             challengerName: `${challenger.firstName} ${challenger.lastName}`,
+             isAgainstChallenger
+           });
+           
+           if (isAgainstChallenger) {
+             // Avoid duplicates
+             if (!headToHeadMatches.find(h2h => h2h._id === match._id)) {
+               headToHeadMatches.push(match);
+               console.log('✅ Found head-to-head match in defender data');
+             }
+           }
+         }
+       });
+       
+       console.log('📈 Head-to-head matches found:', headToHeadMatches.length);
+       
+       if (headToHeadMatches.length === 0) {
+         return { wins: 0, losses: 0, totalMatches: 0, lastMatch: null };
+       }
+       
+       // Calculate wins and losses from challenger's perspective
+       let wins = 0;
+       let losses = 0;
+       let lastMatch = null;
+       
+       // Sort matches by date to get the most recent
+       headToHeadMatches.sort((a, b) => new Date(b.completedDate || b.scheduledDate) - new Date(a.completedDate || a.scheduledDate));
+       
+       headToHeadMatches.forEach(match => {
+         // Determine winner using the result field and playerRole
+         // If the challenger was the player in this match record, use their result
+         const isChallengerRecord = match.playerRole === 'challenger' || match.playerRole === 'defender';
+         
+         if (isChallengerRecord) {
+           if (match.result === 'W') {
+             wins++;
+           } else if (match.result === 'L') {
+             losses++;
+           }
+         }
+         
+         // Set the most recent match as lastMatch
+         if (!lastMatch) {
+           // Try to find a valid date from various possible fields
+           let matchDate = match.completedDate || match.scheduledDate || match.date || match.createdAt;
+           
+           // If we have a date, format it properly
+           if (matchDate) {
+             try {
+               const date = new Date(matchDate);
+               if (!isNaN(date.getTime())) {
+                 matchDate = date.toLocaleDateString();
+               } else {
+                 matchDate = 'Match completed';
+               }
+             } catch (e) {
+               matchDate = 'Match completed';
+             }
+           } else {
+             matchDate = 'Match completed';
+           }
+           
+           lastMatch = {
+             date: matchDate,
+             winner: match.result === 'W' ? 
+                    `${challenger.firstName} ${challenger.lastName}` : 
+                    match.opponentName,
+             loser: match.result === 'L' ? 
+                    `${challenger.firstName} ${challenger.lastName}` : 
+                    match.opponentName,
+             score: match.score || 'N/A'
+           };
+         }
+       });
+       
+       const record = {
+         wins,
+         losses,
+         totalMatches: wins + losses,
+         lastMatch
        };
+       
+       console.log('📈 Calculated head-to-head record:', record);
+       return record;
      } catch (error) {
-       console.error('Error getting head-to-head record:', error);
-       // Fallback to showing no previous matches
+       console.error('❌ Error getting head-to-head record:', error);
+       console.error('❌ Error details:', error.message);
+       
+       // Fallback to showing no previous matches when API fails
        return { wins: 0, losses: 0, totalMatches: 0, lastMatch: null };
      }
    };
@@ -314,6 +491,7 @@ const LadderSmartMatchModal = ({
 
   const generateSmartSuggestions = (challenger, defenders) => {
     const suggestions = [];
+    const opponentMap = new Map(); // Group suggestions by opponent
     
     // Debug logging (can be removed in production)
     // console.log('🧠 Smart Match Debug:', { challenger, defenders: defenders.length });
@@ -341,9 +519,9 @@ const LadderSmartMatchModal = ({
       const locationMatch = checkLocationMatch(challenger, defender);
       const scheduleConflicts = checkScheduleConflicts(challenger, defender);
       
-      // Calculate enhanced confidence with availability and location factors
+      // Calculate enhanced confidence prioritizing scheduling compatibility
       const baseConfidence = calculateConfidence(challenger, defender, 'challenge');
-      const enhancedConfidence = Math.min(1, baseConfidence * 0.4 + availabilityMatch.score * 0.3 + locationMatch.score * 0.2 + scheduleConflicts.score * 0.1);
+      const enhancedConfidence = Math.min(1, baseConfidence * 0.2 + availabilityMatch.score * 0.5 + locationMatch.score * 0.25 + scheduleConflicts.score * 0.05);
       
       // Create suggestion object for learned confidence calculation
       const suggestion = {
@@ -382,20 +560,28 @@ const LadderSmartMatchModal = ({
         reason += ` | ⚠️ ${scheduleConflicts.reason}`;
       }
 
-       suggestions.push({
-         defender,
-         type: 'challenge',
-         confidence: learnedConfidence,
-         reason,
-         priority: 1,
-         positionDiff,
-         availabilityScore: availabilityMatch.score,
-         locationScore: locationMatch.score,
-         scheduleScore: scheduleConflicts.score,
-         learnedBonus: learnedConfidence - enhancedConfidence,
-         availabilityDetails: availabilityMatch.details,
-         locationDetails: locationMatch.details
-       });
+      // Store in opponent map instead of directly pushing
+      const opponentKey = `${defender.firstName}-${defender.lastName}`;
+      if (!opponentMap.has(opponentKey)) {
+        opponentMap.set(opponentKey, {
+          defender,
+          matchTypes: [],
+          availabilityScore: availabilityMatch.score,
+          locationScore: locationMatch.score,
+          scheduleScore: scheduleConflicts.score,
+          availabilityDetails: availabilityMatch.details,
+          locationDetails: locationMatch.details
+        });
+      }
+      
+      opponentMap.get(opponentKey).matchTypes.push({
+        type: 'challenge',
+        confidence: learnedConfidence,
+        reason,
+        priority: 1,
+        positionDiff,
+        learnedBonus: learnedConfidence - enhancedConfidence
+      });
     });
 
     // Enhanced SmackDown suggestions (up to 5 spots below)
@@ -410,9 +596,9 @@ const LadderSmartMatchModal = ({
       const locationMatch = checkLocationMatch(challenger, defender);
       const scheduleConflicts = checkScheduleConflicts(challenger, defender);
       
-      // Calculate enhanced confidence with availability and location factors
+      // Calculate enhanced confidence prioritizing scheduling compatibility
       const baseConfidence = calculateConfidence(challenger, defender, 'smackdown');
-      const enhancedConfidence = Math.min(1, baseConfidence * 0.4 + availabilityMatch.score * 0.3 + locationMatch.score * 0.2 + scheduleConflicts.score * 0.1);
+      const enhancedConfidence = Math.min(1, baseConfidence * 0.2 + availabilityMatch.score * 0.5 + locationMatch.score * 0.25 + scheduleConflicts.score * 0.05);
       
       const positionDiff = defender.position - challenger.position;
       let reason = `SmackDown Match: ${defender.firstName} is ${positionDiff} spot${positionDiff > 1 ? 's' : ''} below you`;
@@ -437,19 +623,27 @@ const LadderSmartMatchModal = ({
         reason += ` | ⚠️ ${scheduleConflicts.reason}`;
       }
 
-       suggestions.push({
-         defender,
-         type: 'smackdown',
-         confidence: enhancedConfidence,
-         reason,
-         priority: 2,
-         positionDiff,
-         availabilityScore: availabilityMatch.score,
-         locationScore: locationMatch.score,
-         scheduleScore: scheduleConflicts.score,
-         availabilityDetails: availabilityMatch.details,
-         locationDetails: locationMatch.details
-       });
+      // Store in opponent map
+      const opponentKey = `${defender.firstName}-${defender.lastName}`;
+      if (!opponentMap.has(opponentKey)) {
+        opponentMap.set(opponentKey, {
+          defender,
+          matchTypes: [],
+          availabilityScore: availabilityMatch.score,
+          locationScore: locationMatch.score,
+          scheduleScore: scheduleConflicts.score,
+          availabilityDetails: availabilityMatch.details,
+          locationDetails: locationMatch.details
+        });
+      }
+      
+      opponentMap.get(opponentKey).matchTypes.push({
+        type: 'smackdown',
+        confidence: enhancedConfidence,
+        reason,
+        priority: 2,
+        positionDiff
+      });
     });
 
     // Enhanced Ladder Jump suggestions (if eligible)
@@ -472,26 +666,6 @@ const LadderSmartMatchModal = ({
       });
     }
 
-    // Add "Hot Streak" suggestions for active players
-    const activePlayers = sameLadderDefenders.filter(defender => 
-      defender.recentMatches && 
-      defender.recentMatches.length > 0 &&
-      new Date(defender.recentMatches[0].date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Active in last 7 days
-    );
-
-    activePlayers.forEach(defender => {
-      const confidence = calculateConfidence(challenger, defender, 'hot-streak');
-      const daysSinceLastMatch = Math.floor((new Date() - new Date(defender.recentMatches[0].date)) / (1000 * 60 * 60 * 24));
-      const reason = `Hot Streak: ${defender.firstName} played ${daysSinceLastMatch} day${daysSinceLastMatch !== 1 ? 's' : ''} ago - Strike while they're active!`;
-      
-      suggestions.push({
-        defender,
-        type: 'hot-streak',
-        confidence,
-        reason,
-        priority: 4
-      });
-    });
 
     // Add "Perfect Match" suggestions for players with high availability and location compatibility
     const perfectMatches = sameLadderDefenders.filter(defender => {
@@ -531,35 +705,39 @@ const LadderSmartMatchModal = ({
        });
     });
 
-    // Add "Rising Star" suggestions for players with good win rates
-    const risingStars = sameLadderDefenders.filter(defender => 
-      defender.wins && 
-      defender.totalMatches && 
-      (defender.wins / defender.totalMatches) >= 0.6 &&
-      defender.totalMatches >= 3
-    );
 
-    risingStars.forEach(defender => {
-      const confidence = calculateConfidence(challenger, defender, 'rising-star');
-      const winRate = Math.round((defender.wins / defender.totalMatches) * 100);
-      const reason = `Rising Star: ${defender.firstName} has a ${winRate}% win rate - Test your skills!`;
-      
-      suggestions.push({
-        defender,
-        type: 'rising-star',
-        confidence,
-        reason,
-        priority: 5
-      });
-    });
-
-    // Sort by priority and confidence
-    const finalSuggestions = suggestions
-      .sort((a, b) => {
+    // Convert opponent map to final suggestions array
+    const finalSuggestions = Array.from(opponentMap.values()).map(opponentData => {
+      // Sort match types by priority and confidence
+      const sortedMatchTypes = opponentData.matchTypes.sort((a, b) => {
         if (a.priority !== b.priority) return a.priority - b.priority;
         return b.confidence - a.confidence;
-      })
-      .slice(0, 10); // Top 10 suggestions
+      });
+      
+      // Get the best match type for display
+      const bestMatchType = sortedMatchTypes[0];
+      
+      return {
+        defender: opponentData.defender,
+        type: bestMatchType.type,
+        confidence: bestMatchType.confidence,
+        reason: bestMatchType.reason,
+        priority: bestMatchType.priority,
+        positionDiff: bestMatchType.positionDiff,
+        availabilityScore: opponentData.availabilityScore,
+        locationScore: opponentData.locationScore,
+        scheduleScore: opponentData.scheduleScore,
+        availabilityDetails: opponentData.availabilityDetails,
+        locationDetails: opponentData.locationDetails,
+        allMatchTypes: sortedMatchTypes, // Include all available match types
+        learnedBonus: bestMatchType.learnedBonus || 0
+      };
+    })
+    .sort((a, b) => {
+      if (a.priority !== b.priority) return a.priority - b.priority;
+      return b.confidence - a.confidence;
+    })
+    .slice(0, 10); // Top 10 suggestions
     
     console.log('Final suggestions:', finalSuggestions.length);
     console.log('Final suggestions:', finalSuggestions);
@@ -614,26 +792,7 @@ const LadderSmartMatchModal = ({
       }
     }
 
-    // Factor in challenge type (enhanced)
-    switch (type) {
-      case 'challenge':
-        confidence += 8; // Standard challenge
-        break;
-      case 'smackdown':
-        confidence += 12; // Defensive match
-        break;
-      case 'ladder-jump':
-        confidence += 15; // High reward
-        break;
-      case 'hot-streak':
-        confidence += 18; // Active player
-        break;
-      case 'rising-star':
-        confidence += 10; // Good opponent
-        break;
-      default:
-        confidence += 5;
-    }
+    // Remove match type bonuses - scheduling difficulty should be the same regardless of match type
 
     // Factor in ladder level
     if (challenger.ladderName === defender.ladderName) {
@@ -693,6 +852,22 @@ const LadderSmartMatchModal = ({
      }
    };
 
+  const handleMatchTypeClick = (matchType, e) => {
+    e.stopPropagation();
+    console.log('🎯 Match type clicked:', matchType);
+    console.log('🎯 Setting selectedMatchType to:', matchType);
+    console.log('🎯 Setting showMatchTypeModal to true');
+    setSelectedMatchType(matchType);
+    setShowMatchTypeModal(true);
+    console.log('🎯 Modal state should be updated now');
+  };
+
+  const handleChallengeClick = (suggestion) => {
+    setSelectedDefender(suggestion.defender);
+    setChallengeType(suggestion.type);
+    setShowChallengeModal(true);
+  };
+
   const handleChallengeFromDetails = (suggestion) => {
     setShowDetailsModal(false);
     setSelectedDefender(suggestion.defender);
@@ -712,10 +887,6 @@ const LadderSmartMatchModal = ({
       filteredSuggestions = suggestions.filter(s => s.type === 'challenge');
     } else if (query.includes('smackdown') || query.includes('below')) {
       filteredSuggestions = suggestions.filter(s => s.type === 'smackdown');
-    } else if (query.includes('rising star') || query.includes('star')) {
-      filteredSuggestions = suggestions.filter(s => s.type === 'rising-star');
-    } else if (query.includes('hot streak') || query.includes('active')) {
-      filteredSuggestions = suggestions.filter(s => s.type === 'hot-streak');
     } else if (query.includes('perfect match') || query.includes('perfect')) {
       filteredSuggestions = suggestions.filter(s => s.type === 'perfect-match');
     }
@@ -775,15 +946,17 @@ const LadderSmartMatchModal = ({
   };
 
   const getConfidenceColor = (confidence) => {
-    if (confidence >= 80) return '#10b981'; // Green for high confidence
-    if (confidence >= 60) return '#f59e0b'; // Amber for medium confidence
-    return '#6b7280'; // Gray for low confidence
+    if (confidence >= 80) return '#10b981'; // Green for "Very Likely"
+    if (confidence >= 60) return '#3b82f6'; // Blue for "Likely"
+    if (confidence >= 40) return '#f59e0b'; // Amber for "Maybe"
+    return '#6b7280'; // Gray for "Unlikely"
   };
 
   const getConfidenceText = (confidence) => {
-    if (confidence >= 80) return 'High';
-    if (confidence >= 60) return 'Medium';
-    return 'Low';
+    if (confidence >= 80) return 'Easy Smart Match';
+    if (confidence >= 60) return 'Possible Smart Match';
+    if (confidence >= 40) return 'Unlikely Smart Match';
+    return 'Very Unlikely Smart Match';
   };
 
   const getChallengeTypeIcon = (type) => {
@@ -792,8 +965,6 @@ const LadderSmartMatchModal = ({
       'smackdown': '💥',
       'ladder-jump': '🆙',
       'smackback': '🔄',
-      'hot-streak': '🔥',
-      'rising-star': '⭐'
     };
     return icons[type] || '⚔️';
   };
@@ -804,21 +975,90 @@ const LadderSmartMatchModal = ({
       'smackdown': '💥 SmackDown Match',
       'ladder-jump': '🆙 Ladder Jump',
       'smackback': '🔄 SmackBack Match',
-      'hot-streak': '🔥 Hot Streak',
-      'rising-star': '⭐ Rising Star'
     };
     return names[type] || type;
   };
 
+  // Function to check if a player has a hot streak (3+ consecutive wins)
+  const hasHotStreak = (player) => {
+    if (!player.recentMatches || player.recentMatches.length === 0) return false;
+    
+    let consecutiveWins = 0;
+    for (let i = 0; i < player.recentMatches.length; i++) {
+      if (player.recentMatches[i].result === 'win') {
+        consecutiveWins++;
+        if (consecutiveWins >= 3) return true;
+      } else {
+        break; // Streak broken
+      }
+    }
+    return false;
+  };
+
+  const getMatchTypeDescription = (type) => {
+    const descriptions = {
+      'challenge': {
+        title: 'Challenge Match',
+        description: 'A standard ladder challenge where you challenge a player above you on the ladder. Win to move up in position!',
+        rules: [
+          'Players can challenge opponents up to 4 spots above them',
+          'Challenger wins: Players switch positions',
+          'Defender wins: Ladder positions remain unchanged',
+          'Must be accepted when called out'
+        ]
+      },
+      'smackdown': {
+        title: 'SmackDown Match',
+        description: 'An intense match with special rules and higher stakes. The challenger pays full entry fee, defender pays 50%.',
+        rules: [
+          'Any player can call out a "SmackDown"',
+          'Player calls out an opponent no more than 5 spots below them',
+          'The Challenger pays the full entry fee; the Defender pays 50% of the entry fee',
+          'If Challenger Wins: Opponent moves THREE spots down, challenger moves TWO spots up (but not into first place)',
+          'If Challenger Loses: Players switch positions',
+          'First place must be earned via a Challenge Match or SmackBack match'
+        ]
+      },
+      'ladder-jump': {
+        title: 'Ladder Jump',
+        description: 'Challenge a player much higher on the ladder to jump multiple positions at once. High risk, high reward! (Currently not available in UI)',
+        rules: [
+          'Challenge players significantly above your current position',
+          'Win to jump multiple positions at once',
+          'Lose and you stay in your current position',
+          'Requires mutual agreement on the jump distance',
+          'Must be accepted when called out',
+          'Note: This feature is not yet available in the user interface'
+        ]
+      },
+      'smackback': {
+        title: 'SmackBack Match',
+        description: 'A special match where a SmackDown defender can challenge for 1st place in their next match.',
+        rules: [
+          'If the SmackDown defender wins, they can challenge for 1st place in their next match with a SmackBack',
+          'The Challenger pays the full entry fee; the Defender pays 50% of the entry fee',
+          'If Challenger Wins: Moves into 1st place, all other positions move down one spot',
+          'If Defender Wins: Ladder positions remain unchanged'
+        ]
+      },
+    };
+    return descriptions[type] || {
+      title: 'Unknown Match Type',
+      description: 'This match type is not recognized.',
+      rules: ['Contact an administrator for more information.']
+    };
+  };
+
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <>
       <DraggableModal
         open={true}
         onClose={handleClose}
         title={`🧠 Smart Match: ${challenger.firstName} ${challenger.lastName}`}
-        maxWidth="700px"
+        maxWidth="1200px"
+        maxHeight="80vh"
         className="ladder-smart-match-modal"
         borderColor="#5b21b6"
         glowColor="#5b21b6"
@@ -867,7 +1107,34 @@ const LadderSmartMatchModal = ({
             <div className="ladder-smart-match-empty">
               <div className="ladder-smart-match-empty-icon">🤔</div>
               <h3 className="ladder-smart-match-empty-title">No Suggestions Available</h3>
-              <p className="ladder-smart-match-empty-message">No suitable opponents found for smart match suggestions.</p>
+              <p className="ladder-smart-match-empty-message">
+                {availableDefenders.length === 0 ? (
+                  <>
+                    No opponents found on this ladder.<br/>
+                    <small style={{ color: '#9ca3af', fontSize: '0.9rem' }}>
+                      This could mean the ladder data hasn't loaded yet or there's a connection issue.
+                    </small>
+                  </>
+                ) : (
+                  'No suitable opponents found for smart match suggestions.'
+                )}
+              </p>
+              {availableDefenders.length === 0 && (
+                <button 
+                  onClick={() => window.location.reload()} 
+                  style={{
+                    marginTop: '10px',
+                    padding: '8px 16px',
+                    background: '#5b21b6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Refresh Page
+                </button>
+              )}
             </div>
           )}
 
@@ -887,22 +1154,22 @@ const LadderSmartMatchModal = ({
                   >
                     <div className="ladder-smart-match-suggestion-header">
                       <div className="ladder-smart-match-suggestion-info">
-                        <span className="ladder-smart-match-suggestion-icon">
-                          {getChallengeTypeIcon(suggestion.type)}
+                        <h4 className="ladder-smart-match-suggestion-title">
+                          {suggestion.defender.firstName} {suggestion.defender.lastName}
+                          {!suggestion.defender.unifiedAccount?.hasUnifiedAccount && (
+                            <span className="ladder-smart-match-asterisk" title="Incomplete profile - limited contact options">
+                              *
+                            </span>
+                          )}
+                          {hasHotStreak(suggestion.defender) && (
+                            <span className="ladder-smart-match-hot-streak-badge" title="Hot Streak: 3+ consecutive wins!">
+                              🔥
+                            </span>
+                          )}
+                        </h4>
+                        <span className="ladder-smart-match-suggestion-details">
+                          Position {suggestion.defender.position} • {suggestion.defender.ladderName}
                         </span>
-                        <div>
-                          <h4 className="ladder-smart-match-suggestion-title">
-                            {suggestion.defender.firstName} {suggestion.defender.lastName}
-                            {!suggestion.defender.unifiedAccount?.hasUnifiedAccount && (
-                              <span className="ladder-smart-match-asterisk" title="Incomplete profile - limited contact options">
-                                *
-                              </span>
-                            )}
-                          </h4>
-                          <p className="ladder-smart-match-suggestion-details">
-                            Position {suggestion.defender.position} • {suggestion.defender.ladderName}
-                          </p>
-                        </div>
                       </div>
                       
                       <div className="ladder-smart-match-confidence">
@@ -910,16 +1177,106 @@ const LadderSmartMatchModal = ({
                           className="ladder-smart-match-confidence-badge"
                           style={{ background: getConfidenceColor(suggestion.confidence) }}
                         >
-                          {getConfidenceText(suggestion.confidence)} ({suggestion.confidence}%)
+                          {getConfidenceText(suggestion.confidence)}
                         </div>
                       </div>
                     </div>
                     
+                    {/* Availability & Location Info */}
+                    <div style={{ 
+                      marginBottom: '12px', 
+                      padding: '8px 12px', 
+                      background: 'rgba(255, 255, 255, 0.05)', 
+                      borderRadius: '6px',
+                      border: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                      {/* Availability Info */}
+                      {suggestion.availabilityDetails && suggestion.availabilityDetails !== 'No overlapping free time found' && (
+                        <div style={{ marginBottom: '6px', textAlign: 'center' }}>
+                          <div style={{ 
+                            color: '#4CAF50', 
+                            fontSize: '0.75rem', 
+                            fontWeight: '600',
+                            marginBottom: '2px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
+                          }}>
+                            📅 <span>Overlapping Availability:</span>
+                          </div>
+                          <div style={{ 
+                            color: '#81C784', 
+                            fontSize: '0.7rem',
+                            lineHeight: '1.3',
+                            textAlign: 'center'
+                          }}>
+                            {suggestion.availabilityDetails}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Location Info */}
+                      {suggestion.locationDetails && suggestion.locationDetails !== 'No location data' && (
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ 
+                            color: '#FFB74D', 
+                            fontSize: '0.75rem', 
+                            fontWeight: '600',
+                            marginBottom: '2px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
+                          }}>
+                            📍 <span>Location Match:</span>
+                          </div>
+                          <div style={{ 
+                            color: '#FFCC80', 
+                            fontSize: '0.7rem',
+                            lineHeight: '1.3',
+                            textAlign: 'center'
+                          }}>
+                            {suggestion.locationDetails}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
                     <div className="ladder-smart-match-suggestion-footer">
                       <div className="ladder-smart-match-tags">
-                        <span className={`ladder-smart-match-tag ladder-smart-match-tag-${suggestion.type}`}>
-                          {getChallengeTypeName(suggestion.type)}
-                        </span>
+                        {/* Show all applicable match types */}
+                        {suggestion.allMatchTypes && suggestion.allMatchTypes.map((matchType, index) => (
+                        <button 
+                            key={index}
+                          className="ladder-smart-match-tag ladder-smart-match-tag-primary"
+                          title="Click to learn more about this match type"
+                            onClick={(e) => handleMatchTypeClick(matchType.type, e)}
+                          style={{ 
+                            cursor: 'pointer', 
+                            userSelect: 'none',
+                            border: 'none',
+                            background: 'transparent',
+                            color: 'white',
+                            padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontSize: '0.7rem',
+                            fontWeight: '600',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '0px',
+                              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                              textAlign: 'center',
+                              minHeight: 'auto',
+                              marginRight: '3px',
+                              marginBottom: '2px'
+                            }}
+                          >
+                            <div style={{ fontSize: '0.65rem' }}>Learn About</div>
+                            <div style={{ fontSize: '0.65rem' }}>{getChallengeTypeName(matchType.type)} {getChallengeTypeIcon(matchType.type)}</div>
+                        </button>
+                        ))}
                         
                         {suggestion.availabilityScore > 0.7 && (
                           <span className="ladder-smart-match-tag ladder-smart-match-tag-success">
@@ -934,13 +1291,45 @@ const LadderSmartMatchModal = ({
                         )}
                       </div>
                       
-                      <button
-                        className="ladder-smart-match-details-btn"
-                        onClick={(e) => handleViewDetails(suggestion, e)}
-                        title="View detailed match analysis"
-                      >
-                        View Details
-                      </button>
+                      <div className="ladder-smart-match-actions">
+                        {/* Single Schedule button that handles multiple match types */}
+                        {suggestion.allMatchTypes && suggestion.allMatchTypes.length > 1 ? (
+                          <button
+                            className="ladder-smart-match-action-btn ladder-smart-match-action-btn-primary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Open match type selection modal
+                              setSelectedSuggestion(suggestion);
+                              setShowMatchTypeSelection(true);
+                            }}
+                            style={{
+                              marginRight: '8px'
+                            }}
+                          >
+                            Schedule Match ({suggestion.allMatchTypes.length} options)
+                          </button>
+                        ) : (
+                        <button
+                          className="ladder-smart-match-action-btn ladder-smart-match-action-btn-primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleChallengeClick(suggestion);
+                          }}
+                            style={{
+                              marginRight: '8px'
+                          }}
+                        >
+                          Schedule {getChallengeTypeName(suggestion.type).replace('⚔️ ', '').replace('💥 ', '').replace('🆙 ', '').replace('🔄 ', '').replace('🔥 ', '').replace('⭐ ', '')}
+                        </button>
+                        )}
+                        
+                        <button
+                          className="ladder-smart-match-action-btn ladder-smart-match-action-btn-secondary"
+                          onClick={(e) => handleViewDetails(suggestion, e)}
+                        >
+                          📊 View Details
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1018,39 +1407,39 @@ const LadderSmartMatchModal = ({
            borderColor="#5b21b6"
            glowColor="#5b21b6"
          >
-           <div style={{ padding: '16px', maxHeight: '70vh', overflowY: 'auto' }}>
+           <div style={{ padding: '20px', maxHeight: '70vh', overflowY: 'auto' }}>
              {/* Player Info */}
              <div style={{ 
-               background: 'rgba(91, 33, 182, 0.1)', 
-               border: '1px solid rgba(91, 33, 182, 0.3)', 
-               borderRadius: '6px', 
-               padding: '12px', 
-               marginBottom: '16px' 
+               background: 'rgba(91, 33, 182, 0.15)', 
+               border: '1px solid rgba(91, 33, 182, 0.4)', 
+               borderRadius: '8px', 
+               padding: '16px', 
+               marginBottom: '20px' 
              }}>
-               <h3 style={{ color: '#ffffff', margin: '0 0 4px 0', fontSize: '1rem' }}>
+               <h3 style={{ color: '#ffffff', margin: '0 0 8px 0', fontSize: '1.2rem', fontWeight: 'bold' }}>
                  {getChallengeTypeIcon(selectedSuggestion.type)} {getChallengeTypeName(selectedSuggestion.type)}
                </h3>
-               <p style={{ color: '#e0e0e0', margin: '0', fontSize: '0.9rem' }}>
+               <p style={{ color: '#e0e0e0', margin: '0', fontSize: '1rem', fontWeight: '500' }}>
                  Position {selectedSuggestion.defender.position} • {selectedSuggestion.defender.ladderName}
                </p>
              </div>
 
              {/* Confidence Breakdown */}
-             <div style={{ marginBottom: '16px' }}>
-               <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '0.95rem' }}>Match Compatibility</h4>
-               <p style={{ color: '#9ca3af', fontSize: '0.8rem', marginBottom: '8px', fontStyle: 'italic' }}>
+             <div style={{ marginBottom: '24px' }}>
+               <h4 style={{ color: '#ffc107', marginBottom: '12px', fontSize: '1.1rem', fontWeight: 'bold' }}>Match Compatibility</h4>
+               <p style={{ color: '#d1d5db', fontSize: '0.95rem', marginBottom: '16px', fontStyle: 'italic' }}>
                  How easy this match will be to schedule and coordinate:
                </p>
                <div style={{ 
-                 background: 'rgba(0, 0, 0, 0.3)', 
-                 border: '1px solid #444', 
-                 borderRadius: '6px', 
-                 padding: '10px' 
+                 background: 'rgba(0, 0, 0, 0.4)', 
+                 border: '1px solid #555', 
+                 borderRadius: '8px', 
+                 padding: '16px' 
                }}>
-                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                   <div>
-                     <span style={{ color: '#e0e0e0', fontSize: '0.9rem' }}>Scheduling Ease:</span>
-                     <div style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '1px' }}>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'flex-start' }}>
+                   <div style={{ flex: 1 }}>
+                     <span style={{ color: '#ffffff', fontSize: '1rem', fontWeight: '600' }}>Scheduling Ease:</span>
+                     <div style={{ fontSize: '0.85rem', color: '#d1d5db', marginTop: '4px' }}>
                        {selectedSuggestion.confidence >= 80 ? '🟢 Very easy to coordinate' :
                         selectedSuggestion.confidence >= 60 ? '🟡 Some coordination needed' :
                         '🔵 Requires more planning'}
@@ -1059,18 +1448,21 @@ const LadderSmartMatchModal = ({
                    <span style={{ 
                      color: getConfidenceColor(selectedSuggestion.confidence),
                      fontWeight: 'bold',
-                     fontSize: '0.9rem'
+                     fontSize: '1rem',
+                     padding: '4px 8px',
+                     background: 'rgba(255, 255, 255, 0.1)',
+                     borderRadius: '4px'
                    }}>
-                     {selectedSuggestion.confidence}% ({getConfidenceText(selectedSuggestion.confidence)})
+                     {getConfidenceText(selectedSuggestion.confidence)}
                    </span>
                  </div>
                 
                  {selectedSuggestion.availabilityScore !== undefined && (
-                   <div style={{ marginBottom: '8px' }}>
-                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                       <div>
-                         <span style={{ color: '#e0e0e0', fontSize: '0.9rem' }}>📅 Availability Match:</span>
-                         <div style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '1px' }}>
+                   <div style={{ marginBottom: '16px', padding: '12px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'flex-start' }}>
+                       <div style={{ flex: 1 }}>
+                         <span style={{ color: '#ffffff', fontSize: '1rem', fontWeight: '600' }}>📅 Availability Match:</span>
+                         <div style={{ fontSize: '0.85rem', color: '#d1d5db', marginTop: '4px' }}>
                            {selectedSuggestion.availabilityScore === 0.5 ? '⚪ No availability data set' :
                             selectedSuggestion.availabilityScore > 0.7 ? '🟢 You have similar free times' :
                             selectedSuggestion.availabilityScore > 0.4 ? '🟡 Some matching availability' :
@@ -1080,121 +1472,141 @@ const LadderSmartMatchModal = ({
                        <span style={{ 
                          color: selectedSuggestion.availabilityScore === 0.5 ? '#9ca3af' :
                                 selectedSuggestion.availabilityScore > 0.7 ? '#10b981' : '#f59e0b', 
-                         fontSize: '0.9rem' 
+                         fontSize: '1rem',
+                         fontWeight: 'bold',
+                         padding: '4px 8px',
+                         background: 'rgba(255, 255, 255, 0.1)',
+                         borderRadius: '4px'
                        }}>
                          {Math.round(selectedSuggestion.availabilityScore * 100)}%
                        </span>
                      </div>
                      {selectedSuggestion.availabilityDetails && (
                        <div style={{ 
-                         fontSize: '0.75rem', 
-                         color: '#c4b5fd', 
-                         background: 'rgba(91, 33, 182, 0.1)', 
-                         border: '1px solid rgba(91, 33, 182, 0.2)', 
-                         borderRadius: '4px', 
-                         padding: '6px 8px',
-                         marginTop: '4px'
+                         fontSize: '0.85rem', 
+                         color: '#e0e0e0', 
+                         background: 'rgba(91, 33, 182, 0.15)', 
+                         border: '1px solid rgba(91, 33, 182, 0.3)', 
+                         borderRadius: '6px', 
+                         padding: '8px 12px',
+                         marginTop: '8px'
                        }}>
-                         <strong>Overlapping times:</strong> {selectedSuggestion.availabilityDetails}
+                         <strong style={{ color: '#ffffff' }}>Overlapping times:</strong> {selectedSuggestion.availabilityDetails}
                        </div>
                      )}
                    </div>
                  )}
                  
                  {selectedSuggestion.locationScore !== undefined && (
-                   <div style={{ marginBottom: '8px' }}>
-                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                       <div>
-                         <span style={{ color: '#e0e0e0', fontSize: '0.9rem' }}>📍 Location Match:</span>
-                         <div style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '1px' }}>
+                   <div style={{ marginBottom: '16px', padding: '12px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'flex-start' }}>
+                       <div style={{ flex: 1 }}>
+                         <span style={{ color: '#ffffff', fontSize: '1rem', fontWeight: '600' }}>📍 Location Match:</span>
+                         <div style={{ fontSize: '0.85rem', color: '#d1d5db', marginTop: '4px' }}>
                            {selectedSuggestion.locationScore > 0.7 ? '🟢 You prefer the same pool halls' :
                             selectedSuggestion.locationScore > 0.4 ? '🟡 Some overlapping preferred venues' :
                             '🔴 You prefer different pool halls'}
                          </div>
                        </div>
-                       <span style={{ color: selectedSuggestion.locationScore > 0.7 ? '#10b981' : '#f59e0b', fontSize: '0.9rem' }}>
+                       <span style={{ 
+                         color: selectedSuggestion.locationScore > 0.7 ? '#10b981' : '#f59e0b', 
+                         fontSize: '1rem',
+                         fontWeight: 'bold',
+                         padding: '4px 8px',
+                         background: 'rgba(255, 255, 255, 0.1)',
+                         borderRadius: '4px'
+                       }}>
                          {Math.round(selectedSuggestion.locationScore * 100)}%
                        </span>
                      </div>
                      {selectedSuggestion.locationDetails && (
                        <div style={{ 
-                         fontSize: '0.75rem', 
-                         color: '#60a5fa', 
-                         background: 'rgba(59, 130, 246, 0.1)', 
-                         border: '1px solid rgba(59, 130, 246, 0.2)', 
-                         borderRadius: '4px', 
-                         padding: '6px 8px',
-                         marginTop: '4px'
+                         fontSize: '0.85rem', 
+                         color: '#e0e0e0', 
+                         background: 'rgba(59, 130, 246, 0.15)', 
+                         border: '1px solid rgba(59, 130, 246, 0.3)', 
+                         borderRadius: '6px', 
+                         padding: '8px 12px',
+                         marginTop: '8px'
                        }}>
-                         <strong>Common venues:</strong> {selectedSuggestion.locationDetails}
+                         <strong style={{ color: '#ffffff' }}>Common venues:</strong> {selectedSuggestion.locationDetails}
                        </div>
                      )}
                    </div>
                  )}
                  
                  {selectedSuggestion.scheduleScore !== undefined && (
-                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                     <div>
-                       <span style={{ color: '#e0e0e0', fontSize: '0.9rem' }}>📅 Schedule Conflicts:</span>
-                       <div style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '1px' }}>
+                   <div style={{ padding: '12px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                       <div style={{ flex: 1 }}>
+                         <span style={{ color: '#ffffff', fontSize: '1rem', fontWeight: '600' }}>📅 Schedule Conflicts:</span>
+                         <div style={{ fontSize: '0.85rem', color: '#d1d5db', marginTop: '4px' }}>
                          {selectedSuggestion.scheduleScore > 0.7 ? '🟢 No upcoming matches - both players free' :
                           selectedSuggestion.scheduleScore > 0.4 ? '🟡 One player has upcoming matches' :
                           '🔴 Both players have upcoming matches'}
                        </div>
                      </div>
-                     <span style={{ color: selectedSuggestion.scheduleScore > 0.7 ? '#10b981' : '#f59e0b', fontSize: '0.9rem' }}>
+                       <span style={{ 
+                         color: selectedSuggestion.scheduleScore > 0.7 ? '#10b981' : '#f59e0b', 
+                         fontSize: '1rem',
+                         fontWeight: 'bold',
+                         padding: '4px 8px',
+                         background: 'rgba(255, 255, 255, 0.1)',
+                         borderRadius: '4px'
+                       }}>
                        {Math.round(selectedSuggestion.scheduleScore * 100)}%
                      </span>
+                     </div>
                    </div>
                  )}
               </div>
             </div>
 
              {/* Detailed Reasoning */}
-             <div style={{ marginBottom: '16px' }}>
-               <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '0.95rem' }}>Why This Match?</h4>
-               <p style={{ color: '#9ca3af', fontSize: '0.8rem', marginBottom: '8px', fontStyle: 'italic' }}>
+             <div style={{ marginBottom: '24px' }}>
+               <h4 style={{ color: '#ffc107', marginBottom: '12px', fontSize: '1.1rem', fontWeight: 'bold' }}>Why This Match?</h4>
+               <p style={{ color: '#d1d5db', fontSize: '0.95rem', marginBottom: '12px', fontStyle: 'italic' }}>
                  AI reasoning:
                </p>
-               <p style={{ 
+               <div style={{ 
                  color: '#e0e0e0', 
-                 lineHeight: '1.4',
-                 background: 'rgba(0, 0, 0, 0.3)', 
-                 border: '1px solid #444', 
-                 borderRadius: '6px', 
-                 padding: '10px',
-                 fontSize: '0.9rem'
+                 lineHeight: '1.5',
+                 background: 'rgba(0, 0, 0, 0.4)', 
+                 border: '1px solid #555', 
+                 borderRadius: '8px', 
+                 padding: '16px',
+                 fontSize: '1rem'
                }}>
                  {selectedSuggestion.reason}
-               </p>
+               </div>
              </div>
 
              {/* Head-to-Head Record */}
-             <div style={{ marginBottom: '16px' }}>
-               <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '0.95rem' }}>Your Record vs {selectedSuggestion.defender.firstName}</h4>
-               <p style={{ color: '#9ca3af', fontSize: '0.8rem', marginBottom: '8px', fontStyle: 'italic' }}>
+             <div style={{ marginBottom: '24px' }}>
+               <h4 style={{ color: '#ffc107', marginBottom: '12px', fontSize: '1.1rem', fontWeight: 'bold' }}>Your Record vs {selectedSuggestion.defender.firstName}</h4>
+               <p style={{ color: '#d1d5db', fontSize: '0.95rem', marginBottom: '12px', fontStyle: 'italic' }}>
                  Your history against this opponent:
                </p>
                <div style={{ 
-                 background: 'rgba(0, 0, 0, 0.3)', 
-                 border: '1px solid #444', 
-                 borderRadius: '6px', 
-                 padding: '10px' 
+                 background: 'rgba(0, 0, 0, 0.4)', 
+                 border: '1px solid #555', 
+                 borderRadius: '8px', 
+                 padding: '16px' 
                }}>
                  {loadingHeadToHead ? (
-                   <div style={{ textAlign: 'center', color: '#9ca3af', fontSize: '0.9rem' }}>
+                   <div style={{ textAlign: 'center', color: '#d1d5db', fontSize: '1rem' }}>
                      🔄 Loading head-to-head record...
                    </div>
                  ) : headToHeadRecord && headToHeadRecord.totalMatches === 0 ? (
-                   <div style={{ textAlign: 'center', color: '#9ca3af', fontSize: '0.9rem' }}>
+                   <div style={{ textAlign: 'center', color: '#d1d5db', fontSize: '1rem' }}>
                      🆕 No previous matches - This would be your first game!
                    </div>
                  ) : headToHeadRecord ? (
                    <>
-                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                       <div>
-                         <span style={{ color: '#e0e0e0', fontSize: '0.9rem' }}>Your Record:</span>
-                         <div style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '1px' }}>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'flex-start' }}>
+                       <div style={{ flex: 1 }}>
+                         <span style={{ color: '#ffffff', fontSize: '1rem', fontWeight: '600' }}>Your Record:</span>
+                         <div style={{ fontSize: '0.85rem', color: '#d1d5db', marginTop: '4px' }}>
                            {(() => {
                              const winRate = Math.round((headToHeadRecord.wins / headToHeadRecord.totalMatches) * 100);
                              return winRate >= 70 ? '🟢 You dominate this matchup' :
@@ -1208,16 +1620,19 @@ const LadderSmartMatchModal = ({
                            const winRate = Math.round((headToHeadRecord.wins / headToHeadRecord.totalMatches) * 100);
                            return winRate >= 50 ? '#10b981' : '#ef4444';
                          })(), 
-                         fontSize: '0.9rem',
-                         fontWeight: 'bold'
+                         fontSize: '1.2rem',
+                         fontWeight: 'bold',
+                         padding: '4px 8px',
+                         background: 'rgba(255, 255, 255, 0.1)',
+                         borderRadius: '4px'
                        }}>
                          {headToHeadRecord.wins}-{headToHeadRecord.losses}
                        </span>
                      </div>
-                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                       <div>
-                         <span style={{ color: '#e0e0e0', fontSize: '0.9rem' }}>Win Rate:</span>
-                         <div style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '1px' }}>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'flex-start' }}>
+                       <div style={{ flex: 1 }}>
+                         <span style={{ color: '#ffffff', fontSize: '1rem', fontWeight: '600' }}>Win Rate:</span>
+                         <div style={{ fontSize: '0.85rem', color: '#d1d5db', marginTop: '4px' }}>
                            {(() => {
                              const winRate = Math.round((headToHeadRecord.wins / headToHeadRecord.totalMatches) * 100);
                              return winRate >= 70 ? '🟢 Strong advantage' :
@@ -1231,28 +1646,39 @@ const LadderSmartMatchModal = ({
                            const winRate = Math.round((headToHeadRecord.wins / headToHeadRecord.totalMatches) * 100);
                            return winRate >= 50 ? '#10b981' : '#ef4444';
                          })(), 
-                         fontSize: '0.9rem'
+                         fontSize: '1rem',
+                         fontWeight: 'bold',
+                         padding: '4px 8px',
+                         background: 'rgba(255, 255, 255, 0.1)',
+                         borderRadius: '4px'
                        }}>
                          {Math.round((headToHeadRecord.wins / headToHeadRecord.totalMatches) * 100)}%
                        </span>
                      </div>
                      {headToHeadRecord.lastMatch && (
-                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                         <div>
-                           <span style={{ color: '#e0e0e0', fontSize: '0.9rem' }}>Last Match:</span>
-                           <div style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '1px' }}>
+                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                         <div style={{ flex: 1 }}>
+                           <span style={{ color: '#ffffff', fontSize: '1rem', fontWeight: '600' }}>Last Match:</span>
+                           <div style={{ fontSize: '0.85rem', color: '#d1d5db', marginTop: '4px' }}>
                              {headToHeadRecord.lastMatch.winner === challenger.email || headToHeadRecord.lastMatch.winner === challenger.firstName ? 
                                '🟢 You won' : '🔴 They won'}
                            </div>
                          </div>
-                         <span style={{ color: '#e0e0e0', fontSize: '0.9rem' }}>
+                         <span style={{ 
+                           color: '#e0e0e0', 
+                           fontSize: '1rem',
+                           fontWeight: '500',
+                           padding: '4px 8px',
+                           background: 'rgba(255, 255, 255, 0.1)',
+                           borderRadius: '4px'
+                         }}>
                            {new Date(headToHeadRecord.lastMatch.date).toLocaleDateString()}
                          </span>
                        </div>
                      )}
                    </>
                  ) : (
-                   <div style={{ textAlign: 'center', color: '#9ca3af', fontSize: '0.9rem' }}>
+                   <div style={{ textAlign: 'center', color: '#d1d5db', fontSize: '1rem' }}>
                      ❌ Error loading head-to-head record
                    </div>
                  )}
@@ -1410,7 +1836,6 @@ const LadderSmartMatchModal = ({
                 {[
                   "Find me a challenge match",
                   "Who's available tonight?",
-                  "Show me rising stars",
                   "Find someone 2 positions above me"
                 ].map((suggestion, index) => (
                   <button
@@ -1476,7 +1901,7 @@ const LadderSmartMatchModal = ({
                             className="ladder-smart-match-confidence-badge"
                             style={{ background: getConfidenceColor(suggestion.confidence) }}
                           >
-                            {getConfidenceText(suggestion.confidence)} ({suggestion.confidence}%)
+                            {getConfidenceText(suggestion.confidence)}
                           </div>
                         </div>
                       </div>
@@ -1563,6 +1988,43 @@ const LadderSmartMatchModal = ({
           100% { transform: rotate(360deg); }
         }
         
+        /* Fallback styles for GoDaddy hosting issues */
+        .ladder-smart-match-modal {
+          background: linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98)) !important;
+          border: 2px solid #5b21b6 !important;
+          border-radius: 12px !important;
+          color: #ffffff !important;
+        }
+        
+        .ladder-smart-match-content {
+          background: transparent !important;
+          color: #ffffff !important;
+        }
+        
+        .ladder-smart-match-header {
+          background: rgba(91, 33, 182, 0.1) !important;
+          border: 1px solid rgba(91, 33, 182, 0.3) !important;
+          border-radius: 6px !important;
+          padding: 6px !important;
+          margin-bottom: 8px !important;
+        }
+        
+        .ladder-smart-match-title {
+          color: #ffffff !important;
+          margin: 0 0 2px 0 !important;
+          text-align: center !important;
+          font-size: 1.1rem !important;
+          font-weight: bold !important;
+          text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+        }
+        
+        .ladder-smart-match-subtitle {
+          color: #e0e0e0 !important;
+          text-align: center !important;
+          margin: 0 !important;
+          font-size: 0.8rem !important;
+        }
+        
         /* Compact card layout */
         .ladder-smart-match-suggestion-footer {
           display: flex;
@@ -1609,8 +2071,231 @@ const LadderSmartMatchModal = ({
             text-align: center !important;
           }
         }
+        
+        .ladder-smart-match-hot-streak-badge {
+          display: inline-block;
+          margin-left: 6px;
+          font-size: 0.9rem;
+          animation: hotStreakPulse 2s infinite;
+          filter: drop-shadow(0 0 4px rgba(255, 69, 0, 0.6));
+        }
+        
+        @keyframes hotStreakPulse {
+          0%, 100% { 
+            transform: scale(1);
+            filter: drop-shadow(0 0 4px rgba(255, 69, 0, 0.6));
+          }
+          50% { 
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 8px rgba(255, 69, 0, 0.8));
+          }
+        }
       `}</style>
-    </>
+
+      {/* Match Type Explanation Modal - Rendered via Portal */}
+      {console.log('🎯 Modal render check - showMatchTypeModal:', showMatchTypeModal, 'selectedMatchType:', selectedMatchType)}
+      {showMatchTypeModal && selectedMatchType && createPortal(
+        <div 
+          className="modal-overlay" 
+          onClick={() => setShowMatchTypeModal(false)} 
+          style={{ 
+            zIndex: 100001, 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ 
+              position: 'relative', 
+              backgroundColor: '#1a1a1a', 
+              padding: '20px', 
+              borderRadius: '8px', 
+              maxWidth: '400px', 
+              width: '40%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              border: '2px solid #a855f7',
+              boxShadow: '0 10px 30px rgba(168, 85, 247, 0.3)'
+            }}
+          >
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ color: '#ffffff', margin: 0, fontSize: '1.5rem' }}>
+                {getChallengeTypeIcon(selectedMatchType)} {getMatchTypeDescription(selectedMatchType).title}
+              </h2>
+              <button 
+                className="modal-close-btn"
+                onClick={() => setShowMatchTypeModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <p style={{ color: '#e0e0e0', fontSize: '1rem', marginBottom: '16px', lineHeight: '1.5' }}>
+                {getMatchTypeDescription(selectedMatchType).description}
+              </p>
+              
+              <h4 style={{ color: '#a855f7', marginBottom: '12px', fontSize: '1.1rem' }}>Match Rules:</h4>
+              <ul style={{ color: '#ccc', paddingLeft: '20px', marginBottom: '20px' }}>
+                {getMatchTypeDescription(selectedMatchType).rules.map((rule, index) => (
+                  <li key={index} style={{ marginBottom: '8px', lineHeight: '1.4' }}>
+                    {rule}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div className="modal-footer" style={{ textAlign: 'center' }}>
+              <button 
+                className="btn btn-primary"
+                onClick={() => setShowMatchTypeModal(false)}
+                style={{
+                  background: 'linear-gradient(135deg, #a855f7, #7c3aed)',
+                  border: 'none',
+                  color: 'white',
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                Got it!
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Match Type Selection Modal */}
+      {showMatchTypeSelection && selectedSuggestion && createPortal(
+        <div 
+          className="modal-overlay" 
+          onClick={() => setShowMatchTypeSelection(false)} 
+          style={{ 
+            zIndex: 100001, 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ 
+              position: 'relative', 
+              backgroundColor: '#1a1a1a', 
+              padding: '20px', 
+              borderRadius: '8px', 
+              maxWidth: '400px', 
+              width: '40%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              border: '2px solid #a855f7',
+              boxShadow: '0 10px 30px rgba(168, 85, 247, 0.3)'
+            }}
+          >
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ color: '#ffffff', margin: 0, fontSize: '1.5rem' }}>
+                Choose Match Type
+              </h2>
+              <button 
+                className="modal-close-btn"
+                onClick={() => setShowMatchTypeSelection(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <p style={{ color: '#e0e0e0', fontSize: '1rem', marginBottom: '16px', lineHeight: '1.5' }}>
+                Select the type of match you want to schedule with {selectedSuggestion.defender.firstName}:
+              </p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {selectedSuggestion.allMatchTypes.map((matchType, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      const modifiedSuggestion = {
+                        ...selectedSuggestion,
+                        type: matchType.type,
+                        confidence: matchType.confidence
+                      };
+                      handleChallengeClick(modifiedSuggestion);
+                      setShowMatchTypeSelection(false);
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #a855f7, #7c3aed)',
+                      border: 'none',
+                      color: 'white',
+                      padding: '12px 16px',
+                      borderRadius: '6px',
+                      fontSize: '1rem',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      textAlign: 'left',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <span>{getChallengeTypeName(matchType.type)} {getChallengeTypeIcon(matchType.type)}</span>
+                    <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+                      {Math.round(matchType.confidence * 100)}% confidence
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>,
+    document.body
   );
 };
 

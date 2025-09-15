@@ -22,7 +22,7 @@
   
   .ladder-smart-match-title {
     font-size: 1.1rem !important;
-    margin-bottom: 2px !important;
+    margin-bottom: 1px !important;
   }
   
   .ladder-smart-match-subtitle {
@@ -98,25 +98,31 @@
 }
 
 .ladder-smart-match-suggestion:hover {
-  background: rgba(91, 33, 182, 0.1);
-  border-color: #5b21b6;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(107, 70, 193, 0.08));
+  border-color: var(--purple);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+  transform: translateY(-3px);
 }
 
 .ladder-smart-match-suggestion-header {
   display: flex;
   justify-content: center;
-  align-items: center;
-  margin-bottom: 8px;
-  gap: 12px;
-  text-align: center;
+  align-items: flex-start;
+  margin-bottom: 2px;
+  gap: 6px;
+  position: relative;
+  min-height: 50px;
 }
 
 .ladder-smart-match-suggestion-info {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 0px;
+  flex: 1;
   text-align: center;
+  height: 50px;
 }
 
 .ladder-smart-match-suggestion-icon {
@@ -128,19 +134,26 @@
 
 .ladder-smart-match-suggestion-name {
   color: #fff;
-  margin: 0 0 4px 0;
-  font-size: 1.1rem;
+  margin: 0;
+  font-size: 0.85rem;
   font-weight: bold;
+  display: inline;
+  margin-right: 8px;
 }
 
 .ladder-smart-match-suggestion-details {
   color: #ccc;
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  opacity: 0.8;
 }
 
 .ladder-smart-match-confidence {
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
 }
 
 .ladder-smart-match-confidence-badge {
@@ -165,22 +178,29 @@
 
 .ladder-smart-match-reason {
   color: #e0e0e0;
-  margin: 0 0 8px 0;
-  font-size: 0.9rem;
+  margin: 0 0 2px 0;
+  font-size: 0.75rem;
+  display: inline;
   line-height: 1.4;
 }
 
 .ladder-smart-match-tags {
   display: flex;
-  gap: 8px;
+  gap: 0px;
   flex-wrap: wrap;
 }
 
 .ladder-smart-match-tag {
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 0.8rem !important;
+  white-space: nowrap;
+  min-width: fit-content;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .ladder-smart-match-tag-challenge {
@@ -215,14 +235,16 @@
   border: 1px solid rgba(255, 193, 7, 0.3);
   border-radius: 4px;
   color: #ffc107;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
+  display: inline;
   line-height: 1.4;
 }
 
 .ladder-smart-match-actions {
   display: flex;
-  justify-content: center;
-  margin-top: 20px;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 0px;
 }
 
 .ladder-smart-match-close-btn {
@@ -253,10 +275,12 @@
 
 /* Suggestions container */
 .ladder-smart-match-suggestions-title {
-  color: #a855f7;
-  margin-bottom: 8px;
-  font-size: 1.1rem;
+  color: #10b981;
+  margin-top: 4px;
+  margin-bottom: 16px;
+  font-size: 1.7rem;
   font-weight: bold;
+  text-align: center;
 }
 
 .ladder-smart-match-suggestions-list {
@@ -264,43 +288,48 @@
   overflow-y: auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 8px;
+  gap: 0px;
 }
 
-/* Desktop: 2-column layout */
+/* Desktop: 3-column layout for narrower cards */
 @media (min-width: 769px) {
   .ladder-smart-match-suggestions-list {
-    grid-template-columns: 1fr 1fr;
-    max-height: 160px;
-    gap: 2px;
+    grid-template-columns: 1fr 1fr 1fr;
+    max-height: 200px;
+    gap: 8px;
   }
 }
 
 /* Individual suggestion card */
 .ladder-smart-match-suggestion {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid #444;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(107, 70, 193, 0.04));
+  border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 0;
+  padding: 4px 6px;
+  margin-bottom: 4px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  max-width: 280px;
 }
 
 /* Desktop: more compact cards */
 @media (min-width: 769px) {
   .ladder-smart-match-suggestion {
-    padding: 3px;
+    padding: 1px 3px;
   }
   
   .ladder-smart-match-suggestion-title {
-    font-size: 0.85rem !important;
-    margin-bottom: 2px !important;
+    font-size: 1.3rem !important;
+    margin-bottom: 1px !important;
   }
   
   .ladder-smart-match-suggestion-details {
     font-size: 0.75rem !important;
-    margin-bottom: 2px !important;
+    margin-bottom: 1px !important;
   }
   
   .ladder-smart-match-suggestion-reason {
@@ -310,34 +339,40 @@
   
   /* Reduce overall modal content padding */
   .ladder-smart-match-modal .modal-content {
-    padding: 4px !important;
+    padding: 0px !important;
   }
   
   .ladder-smart-match-content {
-    padding: 8px !important;
+    padding: 0px !important;
   }
 }
 
 .ladder-smart-match-suggestion:hover {
-  background: rgba(91, 33, 182, 0.1);
-  border-color: #5b21b6;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(107, 70, 193, 0.08));
+  border-color: var(--purple);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+  transform: translateY(-3px);
 }
 
 .ladder-smart-match-suggestion-header {
   display: flex;
   justify-content: center;
-  align-items: center;
-  margin-bottom: 8px;
-  gap: 12px;
-  text-align: center;
+  align-items: flex-start;
+  margin-bottom: 2px;
+  gap: 6px;
+  position: relative;
+  min-height: 50px;
 }
 
 .ladder-smart-match-suggestion-info {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 0px;
+  flex: 1;
   text-align: center;
+  height: 50px;
 }
 
 .ladder-smart-match-suggestion-icon {
@@ -348,54 +383,98 @@
 }
 
 .ladder-smart-match-suggestion-title {
-  color: #fff;
-  margin: 0 0 4px 0;
-  font-size: 1rem;
-  font-weight: bold;
+  color: #ef4444;
+  margin: 0 0 -5px 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .ladder-smart-match-suggestion-details {
   color: #ccc;
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  opacity: 0.8;
 }
 
 .ladder-smart-match-confidence {
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
 }
 
 .ladder-smart-match-confidence-badge {
   color: white;
   padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: bold;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
   display: inline-block;
+  min-width: 50px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.ladder-smart-match-suggestion-footer {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.ladder-smart-match-suggestion-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.ladder-smart-match-suggestion-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
 }
 
 .ladder-smart-match-suggestion-reason {
   color: #e0e0e0;
-  margin: 0 0 8px 0;
-  font-size: 0.9rem;
+  margin: 0 0 2px 0;
+  font-size: 0.75rem;
+  display: inline;
   line-height: 1.4;
 }
 
 .ladder-smart-match-tags {
   display: flex;
-  gap: 8px;
+  gap: 0px;
   flex-wrap: wrap;
 }
 
 .ladder-smart-match-tag {
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 0.8rem !important;
+  white-space: nowrap;
+  min-width: fit-content;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .ladder-smart-match-tag-primary {
-  background: rgba(91, 33, 182, 0.2);
-  color: #5b21b6;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(107, 70, 193, 0.1));
+  color: #a855f7;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  transition: all 0.2s ease;
+}
+
+.ladder-smart-match-tag-primary:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(107, 70, 193, 0.2));
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.2);
 }
 
 /* Match type specific colors */
@@ -474,23 +553,16 @@
     }
   }
   
-  /* Fix modal positioning on mobile - override modal overlay */
-  @media (max-width: 768px) {
-    .ladder-smart-match-modal ~ * .modal-overlay,
-    .modal-overlay {
-      padding-top: 120px !important;
-      align-items: flex-start !important;
-    }
-  }
+  /* Let DraggableModal handle positioning */
   
   .ladder-smart-match-header {
-    padding: 8px !important;
-    margin-bottom: 10px !important;
+    padding: 0px !important;
+    margin-bottom: 1px !important;
   }
   
   .ladder-smart-match-title {
     font-size: 1rem !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 1px !important;
   }
   
   .ladder-smart-match-subtitle {
@@ -513,7 +585,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 0px;
   }
   
   .ladder-smart-match-tags {
@@ -531,8 +603,8 @@
   }
   
   .ladder-smart-match-suggestion-title {
-    font-size: 0.85rem !important;
-    margin-bottom: 4px !important;
+    font-size: 1.9rem !important;
+    margin-bottom: 1px !important;
   }
   
   .ladder-smart-match-suggestion-details {
@@ -559,7 +631,7 @@
   
   .ladder-smart-match-empty-title {
     font-size: 1rem !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 1px !important;
   }
   
   .ladder-smart-match-empty-message {
@@ -647,4 +719,67 @@
   font-size: 0.85rem;
   margin: 0 0 12px 0;
   font-style: italic;
+}
+
+/* New styles for combined match types */
+.ladder-smart-match-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  align-items: stretch;
+}
+
+.ladder-smart-match-action-btn {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(107, 70, 193, 0.1));
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  color: #ffffff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ladder-smart-match-action-btn-primary {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(107, 70, 193, 0.2));
+  border-color: rgba(139, 92, 246, 0.6);
+  font-weight: 600;
+}
+
+.ladder-smart-match-action-btn-secondary {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(107, 70, 193, 0.08));
+  border-color: rgba(139, 92, 246, 0.3);
+  font-size: 0.7rem;
+  padding: 5px 8px;
+}
+
+.ladder-smart-match-action-btn:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(107, 70, 193, 0.25));
+  border-color: rgba(139, 92, 246, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+}
+
+.ladder-smart-match-secondary-actions {
+  display: flex;
+  gap: 0px;
+  flex-wrap: wrap;
+}
+
+.ladder-smart-match-tag-primary {
+  background: rgba(91, 33, 182, 0.3) !important;
+  border-color: rgba(91, 33, 182, 0.6) !important;
+  font-weight: 600;
+}
+
+.ladder-smart-match-tag-secondary {
+  background: rgba(91, 33, 182, 0.15) !important;
+  border-color: rgba(91, 33, 182, 0.3) !important;
+  opacity: 0.8;
 }

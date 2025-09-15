@@ -48,7 +48,8 @@ const LadderApp = ({
   isPublicView = false,
   onClaimLadderPosition,
   claimedPositions = new Set(),
-  isPositionClaimed = () => false
+  isPositionClaimed = () => false,
+  setShowProfileModal
 }) => {
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState(initialView);
@@ -65,6 +66,7 @@ const LadderApp = ({
   const [availableLocations, setAvailableLocations] = useState([]);
   const [showUnifiedSignup, setShowUnifiedSignup] = useState(false);
   const [showProfileCompletionPrompt, setShowProfileCompletionPrompt] = useState(false);
+  const [isProfileComplete, setIsProfileComplete] = useState(true);
   
   // Challenge system state
   const [showChallengeModal, setShowChallengeModal] = useState(false);
@@ -292,11 +294,16 @@ const LadderApp = ({
             const hasLocations = data.profile.locations && data.profile.locations.trim() !== '';
             const hasAvailability = data.profile.availability && Object.keys(data.profile.availability).length > 0;
             
-            // If any required profile fields are missing, show profile completion prompt
-            if (!hasPhone || !hasLocations || !hasAvailability) {
-              console.log('Profile incomplete, showing completion prompt');
-              setShowProfileCompletionPrompt(true);
-            }
+            // Set profile completion status
+            const profileComplete = hasPhone && hasLocations && hasAvailability;
+            setIsProfileComplete(profileComplete);
+            
+            console.log('Profile completion status:', {
+              hasPhone,
+              hasLocations, 
+              hasAvailability,
+              profileComplete
+            });
           }
         }
       } catch (error) {
@@ -1060,6 +1067,22 @@ const LadderApp = ({
     setShowChallengeConfirmModal(true);
   }, []);
 
+  // Function to check if a player has a hot streak (3+ consecutive wins)
+  const hasHotStreak = (player) => {
+    if (!player.recentMatches || player.recentMatches.length === 0) return false;
+    
+    let consecutiveWins = 0;
+    for (let i = 0; i < player.recentMatches.length; i++) {
+      if (player.recentMatches[i].result === 'win') {
+        consecutiveWins++;
+        if (consecutiveWins >= 3) return true;
+      } else {
+        break; // Streak broken
+      }
+    }
+    return false;
+  };
+
 
   const renderLadderView = () => {
     return (
@@ -1119,59 +1142,51 @@ const LadderApp = ({
     return (
       <div className="challenges-view">
         <div className="challenges-header-section">
-          <h2>My Challenges</h2>
+          <h2>⚔️ My Challenges</h2>
           <p>Manage your challenges and responses</p>
         </div>
         
         {/* Pending Challenges (Received) */}
         <div className="challenges-section">
-          <h3 style={{ color: '#ff4444', marginBottom: '16px' }}>
-            Pending Challenges ({pendingChallenges.length})
-          </h3>
+          <h3>📥 Pending Challenges ({pendingChallenges.length})</h3>
           
           {pendingChallenges.length === 0 ? (
-            <div style={{ 
-              background: 'rgba(0, 0, 0, 0.3)', 
-              borderRadius: '8px', 
-              padding: '20px', 
-              textAlign: 'center',
-              color: '#ccc'
-            }}>
-              No pending challenges to respond to.
+            <div className="no-challenges">
+              <div className="no-challenges-icon">📭</div>
+              <h4>No Pending Challenges</h4>
+              <p>You don't have any challenges waiting for your response.</p>
             </div>
           ) : (
             <div className="challenges-list">
               {pendingChallenges.map((challenge) => (
-                <div key={challenge._id} className="challenge-card">
+                <div key={challenge._id} className="challenge-card pending">
                   <div className="challenge-header">
-                    <h4>{challenge.challenger.firstName} {challenge.challenger.lastName} vs {challenge.defender.firstName} {challenge.defender.lastName}</h4>
+                    <h4>
+                      {challenge.challenger?.firstName} {challenge.challenger?.lastName} 
+                      <span className="vs-text"> vs </span>
+                      {challenge.defender?.firstName} {challenge.defender?.lastName}
+                    </h4>
                     <span className={`challenge-type challenge-${challenge.challengeType}`}>
-                      {challenge.challengeType.charAt(0).toUpperCase() + challenge.challengeType.slice(1)} Match
+                      {challenge.challengeType === 'challenge' ? '⚔️ Challenge' :
+                       challenge.challengeType === 'smackdown' ? '💥 SmackDown' :
+                       challenge.challengeType === 'ladder-jump' ? '🚀 Ladder Jump' : '🎯 Match'}
                     </span>
                   </div>
                   
                   <div className="challenge-details">
-                    <p><strong>Entry Fee:</strong> ${challenge.matchDetails.entryFee}</p>
-                    <p><strong>Race Length:</strong> {challenge.matchDetails.raceLength}</p>
-                    <p><strong>Game Type:</strong> {challenge.matchDetails.gameType}</p>
-                    <p><strong>Location:</strong> {challenge.matchDetails.location}</p>
-                    <p><strong>Expires:</strong> {new Date(challenge.deadline).toLocaleDateString()}</p>
+                    <p><strong>💰 Entry Fee:</strong> ${challenge.matchDetails?.entryFee || '0'}</p>
+                    <p><strong>🏁 Race Length:</strong> {challenge.matchDetails?.raceLength || '5'}</p>
+                    <p><strong>🎮 Game Type:</strong> {challenge.matchDetails?.gameType || '8-Ball'}</p>
+                    <p><strong>📍 Location:</strong> {challenge.matchDetails?.location || 'TBD'}</p>
+                    <p><strong>⏰ Expires:</strong> {challenge.deadline ? new Date(challenge.deadline).toLocaleDateString() : 'N/A'}</p>
                   </div>
                   
                   <div className="challenge-actions">
                     <button
                       onClick={() => handleViewChallenge(challenge)}
-                      style={{
-                        background: '#ff4444',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px 16px',
-                        cursor: 'pointer',
-                        fontSize: '0.9rem'
-                      }}
+                      className="action-btn respond-btn"
                     >
-                      Respond to Challenge
+                      📝 Respond to Challenge
                     </button>
                   </div>
                 </div>
@@ -1182,38 +1197,47 @@ const LadderApp = ({
         
         {/* Sent Challenges */}
         <div className="challenges-section">
-          <h3 style={{ color: '#ffc107', marginBottom: '16px' }}>
-            Sent Challenges ({sentChallenges.length})
-          </h3>
+          <h3>📤 Sent Challenges ({sentChallenges.length})</h3>
           
           {sentChallenges.length === 0 ? (
-            <div style={{ 
-              background: 'rgba(0, 0, 0, 0.3)', 
-              borderRadius: '8px', 
-              padding: '20px', 
-              textAlign: 'center',
-              color: '#ccc'
-            }}>
-              No sent challenges to display.
+            <div className="no-challenges">
+              <div className="no-challenges-icon">📤</div>
+              <h4>No Sent Challenges</h4>
+              <p>You haven't sent any challenges yet. Challenge another player to get started!</p>
             </div>
           ) : (
             <div className="challenges-list">
               {sentChallenges.map((challenge) => (
-                <div key={challenge._id} className="challenge-card">
+                <div key={challenge._id} className="challenge-card sent">
                   <div className="challenge-header">
-                    <h4>{challenge.challenger.firstName} {challenge.challenger.lastName} vs {challenge.defender.firstName} {challenge.defender.lastName}</h4>
+                    <h4>
+                      {challenge.challenger?.firstName} {challenge.challenger?.lastName} 
+                      <span className="vs-text"> vs </span>
+                      {challenge.defender?.firstName} {challenge.defender?.lastName}
+                    </h4>
                     <span className={`challenge-type challenge-${challenge.challengeType}`}>
-                      {challenge.challengeType.charAt(0).toUpperCase() + challenge.challengeType.slice(1)} Match
+                      {challenge.challengeType === 'challenge' ? '⚔️ Challenge' :
+                       challenge.challengeType === 'smackdown' ? '💥 SmackDown' :
+                       challenge.challengeType === 'ladder-jump' ? '🚀 Ladder Jump' : '🎯 Match'}
                     </span>
                   </div>
                   
                   <div className="challenge-details">
-                    <p><strong>Status:</strong> <span className={`status-${challenge.status}`}>{challenge.status}</span></p>
-                    <p><strong>Entry Fee:</strong> ${challenge.matchDetails.entryFee}</p>
-                    <p><strong>Race Length:</strong> {challenge.matchDetails.raceLength}</p>
-                    <p><strong>Game Type:</strong> {challenge.matchDetails.gameType}</p>
-                    <p><strong>Location:</strong> {challenge.matchDetails.location}</p>
-                    <p><strong>Expires:</strong> {new Date(challenge.deadline).toLocaleDateString()}</p>
+                    <p><strong>📊 Status:</strong> <span className={`status-${challenge.status}`}>{challenge.status}</span></p>
+                    <p><strong>💰 Entry Fee:</strong> ${challenge.matchDetails?.entryFee || '0'}</p>
+                    <p><strong>🏁 Race Length:</strong> {challenge.matchDetails?.raceLength || '5'}</p>
+                    <p><strong>🎮 Game Type:</strong> {challenge.matchDetails?.gameType || '8-Ball'}</p>
+                    <p><strong>📍 Location:</strong> {challenge.matchDetails?.location || 'TBD'}</p>
+                    <p><strong>⏰ Expires:</strong> {challenge.deadline ? new Date(challenge.deadline).toLocaleDateString() : 'N/A'}</p>
+                  </div>
+                  
+                  <div className="challenge-actions">
+                    <button
+                      className="action-btn view-btn"
+                      onClick={() => handleViewChallenge(challenge)}
+                    >
+                      👁️ View Details
+                    </button>
                   </div>
                 </div>
               ))}
@@ -1223,55 +1247,51 @@ const LadderApp = ({
         
         {/* Scheduled Matches */}
         <div className="challenges-section">
-          <h3 style={{ color: '#28a745', marginBottom: '16px' }}>
-            Scheduled Matches ({scheduledMatches.length})
-          </h3>
+          <h3>📅 Scheduled Matches ({scheduledMatches.length})</h3>
           
           {scheduledMatches.length === 0 ? (
-            <div style={{ 
-              background: 'rgba(0, 0, 0, 0.3)', 
-              borderRadius: '8px', 
-              padding: '20px', 
-              textAlign: 'center',
-              color: '#ccc'
-            }}>
-              No scheduled matches to display.
+            <div className="no-challenges">
+              <div className="no-challenges-icon">📅</div>
+              <h4>No Scheduled Matches</h4>
+              <p>You don't have any matches scheduled yet.</p>
             </div>
           ) : (
             <div className="challenges-list">
               {scheduledMatches.map((match) => (
-                <div key={match._id} className="challenge-card">
+                <div key={match._id} className="challenge-card scheduled">
                   <div className="challenge-header">
-                    <h4>{match.player1?.firstName} {match.player1?.lastName} vs {match.player2?.firstName} {match.player2?.lastName}</h4>
+                    <h4>
+                      {match.player1?.firstName} {match.player1?.lastName} 
+                      <span className="vs-text"> vs </span>
+                      {match.player2?.firstName} {match.player2?.lastName}
+                    </h4>
                     <span className={`challenge-type challenge-${match.matchType}`}>
-                      {match.matchType.charAt(0).toUpperCase() + match.matchType.slice(1)} Match
+                      {match.matchType === 'challenge' ? '⚔️ Challenge' :
+                       match.matchType === 'smackdown' ? '💥 SmackDown' :
+                       match.matchType === 'ladder-jump' ? '🚀 Ladder Jump' : '🎯 Match'}
                     </span>
                   </div>
                   
                   <div className="challenge-details">
-                    <p><strong>Status:</strong> <span className="status-scheduled">
+                    <p><strong>📊 Status:</strong> <span className="status-scheduled">
                       {match.challengeId ? 'Created by Admin' : 'Scheduled'}
                     </span></p>
-                    <p><strong>Race Length:</strong> {match.raceLength}</p>
-                    <p><strong>Game Type:</strong> {match.gameType}</p>
-                    <p><strong>Table Size:</strong> {match.tableSize}</p>
-                    <p><strong>Scheduled Date:</strong> {new Date(match.scheduledDate).toLocaleDateString()}</p>
-                    {match.venue && <p><strong>Location:</strong> {match.venue}</p>}
+                    <p><strong>🏁 Race Length:</strong> {match.raceLength || '5'}</p>
+                    <p><strong>🎮 Game Type:</strong> {match.gameType || '8-Ball'}</p>
+                    <p><strong>📏 Table Size:</strong> {match.tableSize || '9ft'}</p>
+                    <p><strong>📅 Scheduled Date:</strong> {match.scheduledDate ? new Date(match.scheduledDate).toLocaleDateString() : 'TBD'}</p>
+                    {match.venue && <p><strong>📍 Location:</strong> {match.venue}</p>}
                   </div>
                   
                   <div className="challenge-actions">
                     <button
-                      style={{
-                        background: '#28a745',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px 16px',
-                        cursor: 'pointer',
-                        fontSize: '0.9rem'
+                      className="action-btn view-btn"
+                      onClick={() => {
+                        // Handle view match details
+                        console.log('View match details:', match);
                       }}
                     >
-                      View Match Details
+                      👁️ View Match Details
                     </button>
                   </div>
                 </div>
@@ -1389,6 +1409,11 @@ const LadderApp = ({
                       >
                         {player.firstName} {player.lastName}
                         {!isPublicView && !player.unifiedAccount?.hasUnifiedAccount && <span className="no-account">*</span>}
+                        {hasHotStreak(player) && (
+                          <span className="ladder-hot-streak-badge" title="Hot Streak: 3+ consecutive wins!">
+                            🔥
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="table-cell fargo">{player.fargoRate === 0 ? "No FargoRate" : player.fargoRate}</div>
@@ -1471,6 +1496,24 @@ const LadderApp = ({
   };
 
   const renderMatchesView = () => {
+    // Sort matches by date (most recent first)
+    const sortedMatches = [...playerMatches].sort((a, b) => {
+      const dateA = new Date(a.scheduledDate || a.completedDate);
+      const dateB = new Date(b.scheduledDate || b.completedDate);
+      return dateB - dateA;
+    });
+
+    // Group matches by status
+    const upcomingMatches = sortedMatches.filter(match => 
+      match.status === 'scheduled' || match.status === 'pending'
+    );
+    const completedMatches = sortedMatches.filter(match => 
+      match.status === 'completed'
+    );
+    const cancelledMatches = sortedMatches.filter(match => 
+      match.status === 'cancelled'
+    );
+
     return (
       <div className="matches-view">
         <div className="view-header">
@@ -1497,70 +1540,217 @@ const LadderApp = ({
           </div>
         ) : (
           <div className="matches-list">
-            {playerMatches.map((match, index) => (
-              <div key={match._id || index} className="match-card">
-                <div className="match-header">
-                  <div className="match-type">
-                    {match.matchType === 'challenge' ? '⚔️ Challenge' : 
-                     match.matchType === 'ladder-jump' ? '🚀 Ladder Jump' :
-                     match.matchType === 'smackdown' ? '💥 SmackDown' : '🎯 Match'}
-                  </div>
-                  <div className="match-status">
-                    {match.status === 'scheduled' ? '📅 Scheduled' :
-                     match.status === 'completed' ? '✅ Completed' :
-                     match.status === 'cancelled' ? '❌ Cancelled' : '⏳ Pending'}
-                  </div>
+            {/* Upcoming Matches Section */}
+            {upcomingMatches.length > 0 && (
+              <>
+                <div className="matches-section-header">
+                  <h3>📅 Upcoming Matches ({upcomingMatches.length})</h3>
                 </div>
-                
-                <div className="match-players">
-                  <div className="player">
-                    <span className="player-name">
-                      {match.player1?.firstName} {match.player1?.lastName}
-                    </span>
-                    <span className="player-position">#{match.player1?.position}</span>
-                  </div>
-                  <div className="vs">VS</div>
-                  <div className="player">
-                    <span className="player-name">
-                      {match.player2?.firstName} {match.player2?.lastName}
-                    </span>
-                    <span className="player-position">#{match.player2?.position}</span>
-                  </div>
-                </div>
-
-                {match.status === 'completed' && (
-                  <div className="match-result">
-                    <div className="winner">
-                      🏆 Winner: {match.winner?.firstName} {match.winner?.lastName}
+                {upcomingMatches.map((match, index) => (
+                  <div key={match._id || index} className="match-card upcoming">
+                    <div className="match-header">
+                      <div className="match-type">
+                        {match.matchType === 'challenge' ? '⚔️ Challenge' : 
+                         match.matchType === 'ladder-jump' ? '🚀 Ladder Jump' :
+                         match.matchType === 'smackdown' ? '💥 SmackDown' : '🎯 Match'}
+                      </div>
+                      <div className={`match-status ${match.status}`}>
+                        {match.status === 'scheduled' ? '📅 Scheduled' :
+                         match.status === 'pending' ? '⏳ Pending' : '📋 Active'}
+                      </div>
                     </div>
-                    <div className="score">Score: {match.score}</div>
-                  </div>
-                )}
-
-                <div className="match-details">
-                  <div className="detail">
-                    <span className="label">Date:</span>
-                    <span className="value">
-                      {new Date(match.scheduledDate).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div className="detail">
-                    <span className="label">Game:</span>
-                    <span className="value">{match.gameType}</span>
-                  </div>
-                  <div className="detail">
-                    <span className="label">Race to:</span>
-                    <span className="value">{match.raceLength}</span>
-                  </div>
-                  {match.venue && (
-                    <div className="detail">
-                      <span className="label">Location:</span>
-                      <span className="value">{match.venue}</span>
+                    
+                    <div className="match-players">
+                      <div className="player">
+                        <span className="player-name">
+                          {match.player1?.firstName} {match.player1?.lastName}
+                        </span>
+                        <span className="player-position">#{match.player1?.position || 'N/A'}</span>
+                      </div>
+                      <div className="vs">VS</div>
+                      <div className="player">
+                        <span className="player-name">
+                          {match.player2?.firstName} {match.player2?.lastName}
+                        </span>
+                        <span className="player-position">#{match.player2?.position || 'N/A'}</span>
+                      </div>
                     </div>
-                  )}
+
+                    <div className="match-details">
+                      <div className="detail">
+                        <span className="label">📅 Date:</span>
+                        <span className="value">
+                          {match.scheduledDate ? new Date(match.scheduledDate).toLocaleDateString() : 'TBD'}
+                        </span>
+                      </div>
+                      {match.scheduledTime && (
+                        <div className="detail">
+                          <span className="label">🕐 Time:</span>
+                          <span className="value">{match.scheduledTime}</span>
+                        </div>
+                      )}
+                      <div className="detail">
+                        <span className="label">🎮 Game:</span>
+                        <span className="value">{match.gameType || '8-Ball'}</span>
+                      </div>
+                      <div className="detail">
+                        <span className="label">🏁 Race to:</span>
+                        <span className="value">{match.raceLength || '5'}</span>
+                      </div>
+                      {match.venue && (
+                        <div className="detail">
+                          <span className="label">📍 Location:</span>
+                          <span className="value">{match.venue}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action buttons for upcoming matches */}
+                    <div className="match-actions">
+                      <button 
+                        className="action-btn report-btn"
+                        onClick={() => {
+                          setSelectedMatch(match);
+                          setShowMatchReportingModal(true);
+                        }}
+                      >
+                        📝 Report Result
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* Completed Matches Section */}
+            {completedMatches.length > 0 && (
+              <>
+                <div className="matches-section-header">
+                  <h3>✅ Completed Matches ({completedMatches.length})</h3>
                 </div>
-              </div>
-            ))}
+                {completedMatches.map((match, index) => (
+                  <div key={match._id || index} className="match-card completed">
+                    <div className="match-header">
+                      <div className="match-type">
+                        {match.matchType === 'challenge' ? '⚔️ Challenge' : 
+                         match.matchType === 'ladder-jump' ? '🚀 Ladder Jump' :
+                         match.matchType === 'smackdown' ? '💥 SmackDown' : '🎯 Match'}
+                      </div>
+                      <div className="match-status completed">
+                        ✅ Completed
+                      </div>
+                    </div>
+                    
+                    <div className="match-players">
+                      <div className="player">
+                        <span className="player-name">
+                          {match.player1?.firstName} {match.player1?.lastName}
+                        </span>
+                        <span className="player-position">#{match.player1?.position || 'N/A'}</span>
+                      </div>
+                      <div className="vs">VS</div>
+                      <div className="player">
+                        <span className="player-name">
+                          {match.player2?.firstName} {match.player2?.lastName}
+                        </span>
+                        <span className="player-position">#{match.player2?.position || 'N/A'}</span>
+                      </div>
+                    </div>
+
+                    <div className="match-result">
+                      <div className="winner">
+                        🏆 Winner: {match.winner?.firstName} {match.winner?.lastName}
+                      </div>
+                      {match.score && (
+                        <div className="score">Score: {match.score}</div>
+                      )}
+                    </div>
+
+                    <div className="match-details">
+                      <div className="detail">
+                        <span className="label">📅 Date:</span>
+                        <span className="value">
+                          {match.completedDate ? new Date(match.completedDate).toLocaleDateString() : 
+                           match.scheduledDate ? new Date(match.scheduledDate).toLocaleDateString() : 'N/A'}
+                        </span>
+                      </div>
+                      <div className="detail">
+                        <span className="label">🎮 Game:</span>
+                        <span className="value">{match.gameType || '8-Ball'}</span>
+                      </div>
+                      <div className="detail">
+                        <span className="label">🏁 Race to:</span>
+                        <span className="value">{match.raceLength || '5'}</span>
+                      </div>
+                      {match.venue && (
+                        <div className="detail">
+                          <span className="label">📍 Location:</span>
+                          <span className="value">{match.venue}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* Cancelled Matches Section */}
+            {cancelledMatches.length > 0 && (
+              <>
+                <div className="matches-section-header">
+                  <h3>❌ Cancelled Matches ({cancelledMatches.length})</h3>
+                </div>
+                {cancelledMatches.map((match, index) => (
+                  <div key={match._id || index} className="match-card cancelled">
+                    <div className="match-header">
+                      <div className="match-type">
+                        {match.matchType === 'challenge' ? '⚔️ Challenge' : 
+                         match.matchType === 'ladder-jump' ? '🚀 Ladder Jump' :
+                         match.matchType === 'smackdown' ? '💥 SmackDown' : '🎯 Match'}
+                      </div>
+                      <div className="match-status cancelled">
+                        ❌ Cancelled
+                      </div>
+                    </div>
+                    
+                    <div className="match-players">
+                      <div className="player">
+                        <span className="player-name">
+                          {match.player1?.firstName} {match.player1?.lastName}
+                        </span>
+                        <span className="player-position">#{match.player1?.position || 'N/A'}</span>
+                      </div>
+                      <div className="vs">VS</div>
+                      <div className="player">
+                        <span className="player-name">
+                          {match.player2?.firstName} {match.player2?.lastName}
+                        </span>
+                        <span className="player-position">#{match.player2?.position || 'N/A'}</span>
+                      </div>
+                    </div>
+
+                    <div className="match-details">
+                      <div className="detail">
+                        <span className="label">📅 Date:</span>
+                        <span className="value">
+                          {match.scheduledDate ? new Date(match.scheduledDate).toLocaleDateString() : 'N/A'}
+                        </span>
+                      </div>
+                      <div className="detail">
+                        <span className="label">🎮 Game:</span>
+                        <span className="value">{match.gameType || '8-Ball'}</span>
+                      </div>
+                      {match.cancellation?.reason && (
+                        <div className="detail">
+                          <span className="label">📝 Reason:</span>
+                          <span className="value">{match.cancellation.reason}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         )}
       </div>
@@ -1574,9 +1764,66 @@ const LadderApp = ({
           <UserStatusCard 
             userLadderData={userLadderData}
             setShowUnifiedSignup={setShowUnifiedSignup}
+            setShowProfileModal={setShowProfileModal}
             isAdmin={isAdmin}
           />
         </LadderErrorBoundary>
+
+        {/* Profile Completion Timeline - Show for users who need to complete profile */}
+        {((userLadderData?.needsClaim || userLadderData?.playerId === 'unknown') || 
+          (userLadderData?.playerId === 'ladder' && !isProfileComplete)) && !isAdmin && (
+          <LadderErrorBoundary>
+            <div className="profile-completion-timeline">
+              <div className="timeline-header">
+                <h3>🎯 Complete Your Profile To Participate in the Ladder!</h3>
+                <p>Follow these steps to start challenging other players:</p>
+              </div>
+              
+              <div className="timeline-steps">
+                <div className="timeline-step">
+                  <div className="step-circle">
+                    <span className="step-number">1</span>
+                  </div>
+                  <div className="step-content">
+                    <h4>Add Profile Info</h4>
+                    <p>Availability & locations</p>
+                  </div>
+                  <div className="step-connector"></div>
+                </div>
+                
+                <div className="timeline-step">
+                  <div className="step-circle">
+                    <span className="step-number">2</span>
+                  </div>
+                  <div className="step-content">
+                    <h4>Get Approved</h4>
+                    <p>Admin review</p>
+                  </div>
+                  <div className="step-connector"></div>
+                </div>
+                
+                <div className="timeline-step">
+                  <div className="step-circle">
+                    <span className="step-number">3</span>
+                  </div>
+                  <div className="step-content">
+                    <h4>Start Playing</h4>
+                    <p>Challenge others!</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="timeline-action">
+                <button 
+                  className="complete-profile-btn"
+                  onClick={() => setShowProfileModal(true)}
+                >
+                  🚀 Complete My Profile
+                </button>
+              </div>
+            </div>
+          </LadderErrorBoundary>
+        )}
 
         <LadderErrorBoundary>
           <NavigationMenu
@@ -1851,7 +2098,9 @@ const LadderApp = ({
            onClose={() => setShowSmartMatchModal(false)}
            challenger={userLadderData}
            availableDefenders={availableDefenders}
+           ladderData={ladderData}
            onChallengeComplete={handleChallengeComplete}
+           userPin={userPin}
          />
        )}
        

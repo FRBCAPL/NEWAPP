@@ -21,6 +21,7 @@ export default function DraggableModal({
   // Reset position when modal opens
   useEffect(() => {
     if (open) {
+      console.log('🎯 Modal opening - resetting drag position to center');
       setDrag({ x: 0, y: 0 });
     }
   }, [open]);
@@ -79,16 +80,15 @@ export default function DraggableModal({
       onClick={onClose}
       style={{
         position: "fixed",
-        top: 0,
+        top: isMobile ? "120px" : "0",
         left: 0,
         right: 0,
         bottom: 0,
         background: "rgba(0,0,0,0.7)",
         display: "flex",
-        alignItems: isMobile ? "flex-start" : "center",
+        alignItems: "center",
         justifyContent: "center",
         paddingTop: isMobile ? "0" : "40px",
-        top: isMobile ? "120px" : "0",
         zIndex: 100000,
         backdropFilter: "blur(3px)",
         WebkitBackdropFilter: "blur(3px)"
@@ -231,8 +231,8 @@ export default function DraggableModal({
         
         @media (max-width: 768px) {
           .modal-overlay {
-            padding-top: 120px !important;
-            align-items: flex-start !important;
+            padding-top: 40px !important;
+            align-items: center !important;
           }
           .draggable-modal {
             max-width: 95vw !important;
@@ -254,8 +254,8 @@ export default function DraggableModal({
         
         @media (max-width: 480px) {
           .modal-overlay {
-            padding-top: 60px !important;
-            align-items: flex-start !important;
+            padding-top: 20px !important;
+            align-items: center !important;
           }
           .draggable-modal {
             max-width: 98vw !important;
