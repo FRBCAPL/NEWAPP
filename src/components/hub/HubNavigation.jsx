@@ -29,6 +29,10 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
     navigate('/platform-admin');
   };
 
+  const handleDuesTrackerClick = () => {
+    navigate('/dues-tracker');
+  };
+
   const handleLogout = () => {
     if (onLogout) {
       onLogout();
@@ -136,6 +140,9 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
               <>
                 <button onClick={handlePlayerManagementClick} className="admin-btn">
                   👥 Players
+                </button>
+                <button onClick={handleDuesTrackerClick} className="admin-btn">
+                  💰 Dues
                 </button>
                 <button onClick={handleAdminClick} className="admin-btn">
                   ⚙️ Admin

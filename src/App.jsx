@@ -24,6 +24,7 @@ import EmbedApp from './EmbedApp';
 import SimpleLadderEmbed from './components/ladder/SimpleLadderEmbed';
 import PlayerManagement from './components/admin/PlayerManagement';
 import UserProfileModal from './components/modal/UserProfileModal';
+import DuesTracker from './components/dues/DuesTracker';
 import adminAuthService from './services/adminAuthService.js';
 
 // Guest App Components
@@ -631,6 +632,22 @@ function AppContent() {
                      <div className="admin-app-content">
                        <AdminDashboard />
                      </div>
+                   </AppRouteWrapper>
+                 ) : (
+                   <Navigate to="/" />
+                 )
+               }
+             />
+
+             {/* Dues Tracker Route - Admin Only */}
+             <Route
+               path="/dues-tracker"
+               element={
+                 isAuthenticated && isAdmin() ? (
+                   <AppRouteWrapper appName="USA Pool League Dues Tracker">
+                     <main className="main-app-content">
+                       <DuesTracker />
+                     </main>
                    </AppRouteWrapper>
                  ) : (
                    <Navigate to="/" />
