@@ -405,7 +405,7 @@ const LadderSmartMatchModal = ({
          // Set the most recent match as lastMatch
          if (!lastMatch) {
            // Try to find a valid date from various possible fields
-           let matchDate = match.completedDate || match.scheduledDate || match.date || match.createdAt;
+           let matchDate = match.matchDate || match.completedDate || match.scheduledDate || match.date || match.createdAt;
            
            // If we have a date, format it properly
            if (matchDate) {
@@ -428,9 +428,9 @@ const LadderSmartMatchModal = ({
              winner: match.result === 'W' ? 
                     `${challenger.firstName} ${challenger.lastName}` : 
                     match.opponentName,
-             loser: match.result === 'L' ? 
-                    `${challenger.firstName} ${challenger.lastName}` : 
-                    match.opponentName,
+             loser: match.result === 'W' ? 
+                    match.opponentName :
+                    `${challenger.firstName} ${challenger.lastName}`,
              score: match.score || 'N/A'
            };
          }
@@ -1660,7 +1660,7 @@ const LadderSmartMatchModal = ({
                          <div style={{ flex: 1 }}>
                            <span style={{ color: '#ffffff', fontSize: '1rem', fontWeight: '600' }}>Last Match:</span>
                            <div style={{ fontSize: '0.85rem', color: '#d1d5db', marginTop: '4px' }}>
-                             {headToHeadRecord.lastMatch.winner === challenger.email || headToHeadRecord.lastMatch.winner === challenger.firstName ? 
+                             {headToHeadRecord.lastMatch.winner === `${challenger.firstName} ${challenger.lastName}` ? 
                                '🟢 You won' : '🔴 They won'}
                            </div>
                          </div>
@@ -1672,7 +1672,16 @@ const LadderSmartMatchModal = ({
                            background: 'rgba(255, 255, 255, 0.1)',
                            borderRadius: '4px'
                          }}>
-                           {new Date(headToHeadRecord.lastMatch.date).toLocaleDateString()}
+                           {headToHeadRecord.lastMatch.date === 'Match completed' ? 
+                             'Match completed' : 
+                             (() => {
+                               try {
+                                 const date = new Date(headToHeadRecord.lastMatch.date);
+                                 return isNaN(date.getTime()) ? 'Match completed' : date.toLocaleDateString();
+                               } catch (e) {
+                                 return 'Match completed';
+                               }
+                             })()}
                          </span>
                        </div>
                      )}

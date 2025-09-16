@@ -84,8 +84,8 @@
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
-  min-height: 30px;
-  max-height: 50px;
+  min-height: 45px;
+  max-height: 55px;
   padding: 2px;
 }
 
@@ -168,35 +168,43 @@
 .match-players {
   position: absolute;
   bottom: 20px;
-  left: 2px;
-  right: 2px;
+  left: 1px;
+  right: 1px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  width: calc(100% - 2px);
 }
 
 .player-names {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 0.78rem;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 3px;
   color: #e0e0e0;
-  line-height: 1.2;
+  line-height: 1;
+  flex-wrap: nowrap;
 }
 
-.player-name {
+.calendar-day .player-name {
   font-weight: 500;
-  max-width: 25px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: none !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  white-space: nowrap !important;
+  font-size: 0.75rem !important;
+  width: auto !important;
 }
 
-.vs {
-  font-size: 0.6rem;
-  color: #ef4444;
-  font-weight: bold;
+.calendar-day .vs {
+  font-size: 0.7rem !important;
+  color: #ef4444 !important;
+  font-weight: normal !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+  display: inline-block !important;
+  vertical-align: baseline !important;
 }
 
 /* Top 5 Match Styling */
@@ -211,6 +219,17 @@
   font-size: 0.5rem;
   margin-right: 2px;
   filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.8));
+}
+
+/* Glossy Calendar Modal Positioning */
+.glossy-calendar-modal {
+  position: fixed !important;
+  top: 60vh !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  max-height: 70vh !important;
+  max-width: 90vw !important;
+  margin: 0 !important;
 }
 
 /* Glossy Calendar Modal Title Area Styling */

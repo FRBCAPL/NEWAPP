@@ -194,12 +194,119 @@ const LadderApp = ({
     };
   }, [selectedLadder, loadData]);
 
+  const loadPlayerMatches = useCallback(async () => {
+    console.log('🔍 loadPlayerMatches called for:', userLadderData?.email);
+    if (!userLadderData?.email) {
+      console.log('🔍 No email, skipping loadPlayerMatches');
+      setMatchesLoading(false);
+      return;
+    }
+
+    try {
+      setMatchesLoading(true);
+      console.log('🔍 Calling matches API...');
+      // Use the working ladder matches endpoint
+      const response = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/499-under/matches`, {
+        headers: createSecureHeaders(userPin)
+      });
+      
+      console.log('🔍 API response status:', response.status);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('🔍 API response data:', data);
+        const allMatches = data.matches || [];
+        console.log('🔍 All matches count:', allMatches.length);
+        
+        // Filter matches for the current player
+        const playerEmail = userLadderData.email.toLowerCase();
+        console.log('🔍 Looking for player email:', playerEmail);
+        
+        const playerMatches = allMatches.filter(match => {
+          // Check if the match has player1 and player2 with email fields
+          if (match.player1?.email && match.player2?.email) {
+            const player1Email = match.player1.email.toLowerCase();
+            const player2Email = match.player2.email.toLowerCase();
+            
+            console.log('🔍 Checking match with player1/player2 emails:', {
+              player1Email,
+              player2Email,
+              playerEmail,
+              match: match
+            });
+            
+            return player1Email === playerEmail || player2Email === playerEmail;
+          }
+          
+          // Check if the match has player1 and player2 with name fields (current structure)
+          if (match.player1?.firstName && match.player2?.firstName) {
+            const player1Name = `${match.player1.firstName} ${match.player1.lastName}`.toLowerCase();
+            const player2Name = `${match.player2.firstName} ${match.player2.lastName}`.toLowerCase();
+            const targetPlayerName = `${userLadderData.firstName} ${userLadderData.lastName}`.toLowerCase();
+            
+            console.log('🔍 Checking match with player1/player2 names:', {
+              player1Name,
+              player2Name,
+              targetPlayerName,
+              match: match
+            });
+            
+            return player1Name === targetPlayerName || player2Name === targetPlayerName;
+          }
+          
+          // Check if the match has a direct playerEmail field (flattened data)
+          if (match.playerEmail) {
+            const matchPlayerEmail = match.playerEmail.toLowerCase();
+            
+            console.log('🔍 Checking match with playerEmail field:', {
+              matchPlayerEmail,
+              playerEmail,
+              match: match
+            });
+            
+            return matchPlayerEmail === playerEmail;
+          }
+          
+          // Check if the match has challenger/defender with email fields
+          if (match.challenger?.email && match.defender?.email) {
+            const challengerEmail = match.challenger.email.toLowerCase();
+            const defenderEmail = match.defender.email.toLowerCase();
+            
+            console.log('🔍 Checking match with challenger/defender emails:', {
+              challengerEmail,
+              defenderEmail,
+              playerEmail,
+              match: match
+            });
+            
+            return challengerEmail === playerEmail || defenderEmail === playerEmail;
+          }
+          
+          console.log('🔍 Match structure not recognized:', match);
+          console.log('🔍 player1 structure:', match.player1);
+          console.log('🔍 player2 structure:', match.player2);
+          return false;
+        });
+        
+        console.log('🔍 Filtered player matches:', playerMatches);
+        setPlayerMatches(playerMatches);
+      } else {
+        console.error('Failed to load player matches:', response.status);
+        setPlayerMatches([]);
+      }
+    } catch (error) {
+      console.error('Error loading player matches:', error);
+      setPlayerMatches([]);
+    } finally {
+      setMatchesLoading(false);
+    }
+  }, [userLadderData?.email, userPin]);
+
   // Load matches when matches view is accessed
   useEffect(() => {
     if (currentView === 'matches') {
       loadPlayerMatches();
     }
-  }, [currentView, userLadderData?.email]);
+  }, [currentView, userLadderData?.email, loadPlayerMatches]);
 
   // Load challenges when challenges view is accessed
   useEffect(() => {
@@ -990,33 +1097,6 @@ const LadderApp = ({
     }
   };
 
-  const loadPlayerMatches = async () => {
-    if (!userLadderData?.email) {
-      setMatchesLoading(false);
-      return;
-    }
-
-    try {
-      setMatchesLoading(true);
-      const sanitizedEmail = sanitizeEmail(userLadderData.email);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/player/${encodeURIComponent(sanitizedEmail)}/matches`, {
-        headers: createSecureHeaders(userPin)
-      });
-      if (response.ok) {
-        const matches = await response.json();
-        setPlayerMatches(matches);
-      } else {
-        console.error('Failed to load player matches');
-        setPlayerMatches([]);
-      }
-    } catch (error) {
-      console.error('Error loading player matches:', error);
-      setPlayerMatches([]);
-    } finally {
-      setMatchesLoading(false);
-    }
-  };
-
   // Memoize available defenders for Smart Match
   const availableDefenders = useMemo(() => {
     return ladderData.filter(player => {
@@ -1496,6 +1576,9 @@ const LadderApp = ({
   };
 
   const renderMatchesView = () => {
+    console.log('🔍 renderMatchesView - playerMatches:', playerMatches);
+    console.log('🔍 renderMatchesView - playerMatches length:', playerMatches.length);
+    
     // Sort matches by date (most recent first)
     const sortedMatches = [...playerMatches].sort((a, b) => {
       const dateA = new Date(a.scheduledDate || a.completedDate);
@@ -1503,7 +1586,12 @@ const LadderApp = ({
       return dateB - dateA;
     });
 
-    // Group matches by status
+    console.log('🔍 sortedMatches:', sortedMatches);
+
+    // Group matches by status - check what status values we actually have
+    const statusValues = [...new Set(sortedMatches.map(match => match.status))];
+    console.log('🔍 Available status values:', statusValues);
+    
     const upcomingMatches = sortedMatches.filter(match => 
       match.status === 'scheduled' || match.status === 'pending'
     );
@@ -1513,6 +1601,9 @@ const LadderApp = ({
     const cancelledMatches = sortedMatches.filter(match => 
       match.status === 'cancelled'
     );
+    
+    console.log('🔍 completedMatches count:', completedMatches.length);
+    console.log('🔍 completedMatches:', completedMatches);
 
     return (
       <div className="matches-view">
@@ -1628,69 +1719,126 @@ const LadderApp = ({
                 <div className="matches-section-header">
                   <h3>✅ Completed Matches ({completedMatches.length})</h3>
                 </div>
-                {completedMatches.map((match, index) => (
-                  <div key={match._id || index} className="match-card completed">
-                    <div className="match-header">
-                      <div className="match-type">
-                        {match.matchType === 'challenge' ? '⚔️ Challenge' : 
-                         match.matchType === 'ladder-jump' ? '🚀 Ladder Jump' :
-                         match.matchType === 'smackdown' ? '💥 SmackDown' : '🎯 Match'}
-                      </div>
-                      <div className="match-status completed">
-                        ✅ Completed
-                      </div>
-                    </div>
-                    
-                    <div className="match-players">
-                      <div className="player">
-                        <span className="player-name">
-                          {match.player1?.firstName} {match.player1?.lastName}
-                        </span>
-                        <span className="player-position">#{match.player1?.position || 'N/A'}</span>
-                      </div>
-                      <div className="vs">VS</div>
-                      <div className="player">
-                        <span className="player-name">
-                          {match.player2?.firstName} {match.player2?.lastName}
-                        </span>
-                        <span className="player-position">#{match.player2?.position || 'N/A'}</span>
-                      </div>
-                    </div>
-
-                    <div className="match-result">
-                      <div className="winner">
-                        🏆 Winner: {match.winner?.firstName} {match.winner?.lastName}
-                      </div>
-                      {match.score && (
-                        <div className="score">Score: {match.score}</div>
-                      )}
-                    </div>
-
-                    <div className="match-details">
-                      <div className="detail">
-                        <span className="label">📅 Date:</span>
-                        <span className="value">
-                          {match.completedDate ? new Date(match.completedDate).toLocaleDateString() : 
-                           match.scheduledDate ? new Date(match.scheduledDate).toLocaleDateString() : 'N/A'}
-                        </span>
-                      </div>
-                      <div className="detail">
-                        <span className="label">🎮 Game:</span>
-                        <span className="value">{match.gameType || '8-Ball'}</span>
-                      </div>
-                      <div className="detail">
-                        <span className="label">🏁 Race to:</span>
-                        <span className="value">{match.raceLength || '5'}</span>
-                      </div>
-                      {match.venue && (
-                        <div className="detail">
-                          <span className="label">📍 Location:</span>
-                          <span className="value">{match.venue}</span>
+                {completedMatches.map((match, index) => {
+                  // Determine if the current user won or lost
+                  const currentUserEmail = userLadderData?.email?.toLowerCase();
+                  const currentUserName = `${userLadderData?.firstName} ${userLadderData?.lastName}`.toLowerCase();
+                  
+                  console.log('🔍 Match winner check:', {
+                    matchId: match._id,
+                    winner: match.winner,
+                    currentUserEmail,
+                    currentUserName,
+                    player1: match.player1,
+                    player2: match.player2
+                  });
+                  
+                  // Check winner by email first, then by name
+                  let isCurrentUserWinner = false;
+                  if (match.winner?.email) {
+                    isCurrentUserWinner = match.winner.email.toLowerCase() === currentUserEmail;
+                  } else if (match.winner?.firstName && match.winner?.lastName) {
+                    const winnerName = `${match.winner.firstName} ${match.winner.lastName}`.toLowerCase();
+                    isCurrentUserWinner = winnerName === currentUserName;
+                  }
+                  
+                  const isCurrentUserPlayer1 = match.player1?.email?.toLowerCase() === currentUserEmail || 
+                    `${match.player1?.firstName} ${match.player1?.lastName}`.toLowerCase() === currentUserName;
+                  const isCurrentUserPlayer2 = match.player2?.email?.toLowerCase() === currentUserEmail || 
+                    `${match.player2?.firstName} ${match.player2?.lastName}`.toLowerCase() === currentUserName;
+                  
+                  console.log('🔍 Winner determination:', {
+                    isCurrentUserWinner,
+                    isCurrentUserPlayer1,
+                    isCurrentUserPlayer2
+                  });
+                  
+                  // Get opponent info
+                  const opponent = isCurrentUserPlayer1 ? match.player2 : match.player1;
+                  
+                  return (
+                    <div key={match._id || index} className={`match-card completed ${isCurrentUserWinner ? 'win' : 'loss'}`}>
+                      {/* Match Header */}
+                      <div className="match-header">
+                        <div className="match-type">
+                          {match.matchType === 'challenge' ? '⚔️ Challenge' : 
+                           match.matchType === 'ladder-jump' ? '🚀 Ladder Jump' :
+                           match.matchType === 'smackdown' ? '💥 SmackDown' : '🎯 Match'}
                         </div>
-                      )}
+                        <div className="match-status completed">
+                          ✅ Completed
+                        </div>
+                        <div className="match-date">
+                          📅 {match.completedDate ? new Date(match.completedDate).toLocaleDateString() : 
+                               match.scheduledDate ? new Date(match.scheduledDate).toLocaleDateString() : 'N/A'}
+                        </div>
+                      </div>
+                      
+                      {/* Opponent Info */}
+                      <div className="opponent-info">
+                        <div className="opponent-name">
+                          <span className="vs">vs</span> {opponent?.firstName} {opponent?.lastName} <span className="rank">#{opponent?.position || 'N/A'}</span>
+                        </div>
+                      </div>
+
+                      {/* Match Result */}
+                      <div className="match-result">
+                        <div className="result-icon">
+                          {isCurrentUserWinner ? '🏆' : '💔'}
+                        </div>
+                        <div className="result-text">
+                          {isCurrentUserWinner ? 'Winner: Brett Gonzalez' : `Winner: ${match.winner?.firstName} ${match.winner?.lastName}`}
+                        </div>
+                        {match.score && (
+                          <div className="score-display">
+                            Score: {match.score}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Match Details Grid */}
+                      <div className="match-details-grid">
+                        <div className="detail-item">
+                          <div className="detail-icon">📅</div>
+                          <div className="detail-content">
+                            <div className="detail-label">Date</div>
+                            <div className="detail-value">
+                              {match.completedDate ? new Date(match.completedDate).toLocaleDateString() : 
+                               match.scheduledDate ? new Date(match.scheduledDate).toLocaleDateString() : 'N/A'}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="detail-item">
+                          <div className="detail-icon">🎮</div>
+                          <div className="detail-content">
+                            <div className="detail-label">Game</div>
+                            <div className="detail-value">{match.gameType || '8-Ball'}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="detail-item">
+                          <div className="detail-icon">🏁</div>
+                          <div className="detail-content">
+                            <div className="detail-label">Race to</div>
+                            <div className="detail-value">{match.raceLength || '5'}</div>
+                          </div>
+                        </div>
+                        
+                        {match.venue && (
+                          <div className="detail-item">
+                            <div className="detail-icon">📍</div>
+                            <div className="detail-content">
+                              <div className="detail-label">Location</div>
+                              <div className="detail-value">{match.venue}</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </>
             )}
 
@@ -1775,7 +1923,7 @@ const LadderApp = ({
           <LadderErrorBoundary>
             <div className="profile-completion-timeline">
               <div className="timeline-header">
-                <h3>🎯 Complete Your Profile To Participate in the Ladder!</h3>
+                <h3>⚔️ Complete Your Profile To Participate in the Ladder!</h3>
                 <p>Follow these steps to start challenging other players:</p>
               </div>
               

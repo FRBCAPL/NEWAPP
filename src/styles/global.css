@@ -483,7 +483,7 @@ body .main-app-content > * {
   max-width: 100% !important;
   width: 100% !important;
   box-sizing: border-box !important;
-  overflow-x: auto !important;
+  overflow-x: hidden !important;
 }
 
 /* Custom vertical scrollbar for the window (body/html) */
