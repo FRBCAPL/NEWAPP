@@ -18,52 +18,61 @@ const NavigationMenu = memo(({
   setShowMatchCalendar
 }) => {
   const navigate = useNavigate();
+  
+  // Debug logging
+  console.log('🔍 NavigationMenu - isPublicView:', isPublicView);
   return (
     <div className="ladder-navigation">
       <div className="nav-grid">
+        {/* Row 1: View Ladders, Match Calendar, Smart Match */}
         {!isPublicView && (
-          <>
-            <div className="nav-card" onClick={() => navigateToView('ladders')}>
-              <div className="nav-icon">📊</div>
-              <h3>View Ladders</h3>
-              <p>See all ladder positions and rankings</p>
-            </div>
-            
-            {userLadderData?.canChallenge && (
-              <>
-                <div className="nav-card" onClick={handleSmartMatch}>
-                  <div className="nav-icon">🧠</div>
-                  <h3>Smart Match</h3>
-                  <p>AI-powered challenge suggestions</p>
-                </div>
-                
-                <div className="nav-card" onClick={() => setCurrentView('challenges')}>
-                  <div className="nav-icon">⚔️</div>
-                  <h3>My Challenges</h3>
-                  <p>Manage your challenges and responses</p>
-                  {pendingChallenges.length > 0 && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '-8px',
-                      right: '-8px',
-                      background: '#ff4444',
-                      color: 'white',
-                      borderRadius: '50%',
-                      width: '24px',
-                      height: '24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.8rem',
-                      fontWeight: 'bold'
-                    }}>
-                      {pendingChallenges.length}
-                    </div>
-                  )}
-                </div>
-              </>
+          <div className="nav-card" onClick={() => navigateToView('ladders')}>
+            <div className="nav-icon">📊</div>
+            <h3>View Ladders</h3>
+            <p>See all ladder positions and rankings</p>
+          </div>
+        )}
+        
+        <div className="nav-card" onClick={() => setShowMatchCalendar(true)}>
+          <div className="nav-icon">📅</div>
+          <h3>Match Calendar</h3>
+          <p>View confirmed matches and schedule</p>
+        </div>
+        
+        {!isPublicView && userLadderData?.canChallenge && (
+          <div className="nav-card" onClick={handleSmartMatch}>
+            <div className="nav-icon">🧠</div>
+            <h3>Smart Match</h3>
+            <p>AI-powered challenge suggestions</p>
+          </div>
+        )}
+        
+        {/* Row 2: My Challenges, Report Match, My Completed Matches */}
+        {!isPublicView && userLadderData?.canChallenge && (
+          <div className="nav-card" onClick={() => setCurrentView('challenges')}>
+            <div className="nav-icon">⚔️</div>
+            <h3>My Challenges</h3>
+            <p>Manage your challenges and responses</p>
+            {pendingChallenges.length > 0 && (
+              <div style={{
+                position: 'absolute',
+                top: '-8px',
+                right: '-8px',
+                background: '#ff4444',
+                color: 'white',
+                borderRadius: '50%',
+                width: '24px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.8rem',
+                fontWeight: 'bold'
+              }}>
+                {pendingChallenges.length}
+              </div>
             )}
-          </>
+          </div>
         )}
         
         {!isPublicView && (
@@ -74,12 +83,6 @@ const NavigationMenu = memo(({
           </div>
         )}
         
-        <div className="nav-card" onClick={() => setShowMatchCalendar(true)}>
-          <div className="nav-icon">📅</div>
-          <h3>Match Calendar</h3>
-          <p>View confirmed matches and schedule</p>
-        </div>
-        
         {!isPublicView && userLadderData?.playerId === 'ladder' && (
           <div className="nav-card" onClick={() => navigateToView('matches')}>
             <div className="nav-icon">🎯</div>
@@ -88,16 +91,17 @@ const NavigationMenu = memo(({
           </div>
         )}
         
-        <div className="nav-card" onClick={() => setShowPaymentDashboard(true)}>
-          <div className="nav-icon">💳</div>
-          <h3>Payment Dashboard</h3>
-          <p>Manage credits, membership, and payments</p>
-        </div>
-        
+        {/* Row 3: Prize Pools, Payment Dashboard, Ladder Rules */}
         <div className="nav-card" onClick={() => setShowPrizePoolModal(true)}>
           <div className="nav-icon">💰</div>
           <h3>Prize Pools</h3>
           <p>View current prize pools and winners</p>
+        </div>
+        
+        <div className="nav-card" onClick={() => setShowPaymentDashboard(true)}>
+          <div className="nav-icon">💳</div>
+          <h3>Payment Dashboard</h3>
+          <p>Manage credits, membership, and payments</p>
         </div>
         
         {!userLadderData?.canChallenge && userLadderData?.playerId !== 'guest' && (

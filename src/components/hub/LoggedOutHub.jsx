@@ -339,32 +339,32 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     >
                       👀 View Ladder
                     </button>
-                    <button
-                      className="calendar-btn"
-                      onClick={() => setShowCalendar(true)}
-                      style={{
-                        background: 'transparent',
-                        color: '#6b46c1',
-                        border: '2px solid #6b46c1',
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.8rem',
-                        fontWeight: 'bold',
-                        transition: 'all 0.3s ease',
-                        whiteSpace: 'nowrap'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = '#6b46c1';
-                        e.target.style.color = 'white';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = 'transparent';
-                        e.target.style.color = '#6b46c1';
-                      }}
-                    >
-                      📅 Calendar
-                    </button>
+    <button
+      className="calendar-btn"
+      onClick={() => setShowCalendar(true)}
+      style={{
+        background: 'rgba(139, 92, 246, 0.1)',
+        color: '#8B5CF6',
+        border: '2px solid #8B5CF6',
+        padding: window.innerWidth <= 768 ? '8px 16px' : '10px 20px',
+        borderRadius: '8px',
+        cursor: 'pointer',
+        fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem',
+        fontWeight: '600',
+        transition: 'all 0.2s ease',
+        whiteSpace: 'nowrap'
+      }}
+      onMouseEnter={(e) => {
+        e.target.style.background = 'rgba(139, 92, 246, 0.2)';
+        e.target.style.transform = 'translateY(-1px)';
+      }}
+      onMouseLeave={(e) => {
+        e.target.style.background = 'rgba(139, 92, 246, 0.1)';
+        e.target.style.transform = 'translateY(0)';
+      }}
+    >
+      📅 Calendar
+    </button>
                   </div>
                 )}
                 <div className="app-icon" style={{
