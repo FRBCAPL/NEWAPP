@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import LocationSelectionModal from './LocationSelectionModal.jsx';
 import notificationService from '../../services/notificationService.js';
 
@@ -509,7 +510,7 @@ const UserProfileModal = ({
   console.log('⏰ Current availability:', localUser.availability);
   console.log('📞 Current phone:', localUser.phone);
 
-  return (
+  return createPortal(
     <div
       style={{
         position: "fixed",
@@ -1444,7 +1445,8 @@ const UserProfileModal = ({
         availableLocations={availableLocations}
         onSave={handleLocationsModalSave}
       />
-    </div>
+    </div>,
+    document.body
   );
 };
 

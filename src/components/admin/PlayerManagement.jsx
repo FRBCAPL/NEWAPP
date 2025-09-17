@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '../../config.js';
 import styles from './PlayerManagement.module.css';
 
@@ -269,7 +270,7 @@ export default function PlayerManagement() {
       )}
 
       {/* Edit Player Form */}
-      {editingPlayer && (
+      {editingPlayer && createPortal(
         <div className={styles.formOverlay}>
           <div className={styles.form}>
             <h3>Edit Unified Player: {editingPlayer.firstName} {editingPlayer.lastName}</h3>
@@ -358,7 +359,8 @@ export default function PlayerManagement() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Players List */}

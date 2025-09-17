@@ -32,6 +32,13 @@ const LadderManagement = ({ userEmail, userPin }) => {
   });
   const [matchHistory, setMatchHistory] = useState([]);
   const [showMatchHistory, setShowMatchHistory] = useState(false);
+  
+  // Match editing states
+  const [editingMatch, setEditingMatch] = useState(null);
+  const [showEditMatchForm, setShowEditMatchForm] = useState(false);
+  const [editMatchFormData, setEditMatchFormData] = useState({});
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [matchToDelete, setMatchToDelete] = useState(null);
 
   const ladders = [
     { name: '499-under', displayName: '499 & Under' },
@@ -304,6 +311,119 @@ const LadderManagement = ({ userEmail, userPin }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle editing a match
+  const handleEditMatch = async (match) => {
+    try {
+      // Fetch full match details
+      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches/${match.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setEditingMatch(data.match);
+        setEditMatchFormData({
+          winner: data.match.winner?.id || '',
+          score: data.match.score || '',
+          notes: data.match.notes || '',
+          adminNotes: data.match.adminNotes || '',
+          completedDate: data.match.completedDate ? new Date(data.match.completedDate).toISOString().split('T')[0] : '',
+          scheduledDate: data.match.scheduledDate ? new Date(data.match.scheduledDate).toISOString().split('T')[0] : '',
+          venue: data.match.venue || '',
+          entryFee: data.match.entryFee || 0,
+          raceLength: data.match.raceLength || 5,
+          gameType: data.match.gameType || '8-ball',
+          tableSize: data.match.tableSize || '7-foot',
+          status: data.match.status || 'scheduled'
+        });
+        setShowEditMatchForm(true);
+      } else {
+        setMessage('Failed to load match details');
+      }
+    } catch (error) {
+      console.error('Error loading match details:', error);
+      setMessage('Error loading match details');
+    }
+  };
+
+  // Handle deleting a match
+  const handleDeleteMatch = (match) => {
+    setMatchToDelete(match);
+    setShowDeleteConfirm(true);
+  };
+
+  // Confirm delete match
+  const confirmDeleteMatch = async () => {
+    if (!matchToDelete) return;
+    
+    try {
+      setLoading(true);
+      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches/${matchToDelete.id}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        setMessage('Match deleted successfully');
+        // Reload match history
+        await loadMatchHistory();
+        // Reload ladder data to update positions
+        await loadLadderData();
+      } else {
+        const errorData = await response.json();
+        setMessage(`Failed to delete match: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting match:', error);
+      setMessage('Error deleting match');
+    } finally {
+      setLoading(false);
+      setShowDeleteConfirm(false);
+      setMatchToDelete(null);
+    }
+  };
+
+  // Handle edit match form submission
+  const handleEditMatchSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!editingMatch) return;
+    
+    try {
+      setLoading(true);
+      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches/${editingMatch.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(editMatchFormData)
+      });
+      
+      if (response.ok) {
+        setMessage('Match updated successfully');
+        setShowEditMatchForm(false);
+        setEditingMatch(null);
+        // Reload match history
+        await loadMatchHistory();
+        // Reload ladder data to update positions if winner was changed
+        await loadLadderData();
+      } else {
+        const errorData = await response.json();
+        setMessage(`Failed to update match: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error updating match:', error);
+      setMessage('Error updating match');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle edit form input changes
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditMatchFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   return (
@@ -649,6 +769,235 @@ const LadderManagement = ({ userEmail, userPin }) => {
           </div>
         )}
 
+        {/* Edit Match Form */}
+        {showEditMatchForm && editingMatch && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3>Edit Match</h3>
+              <form onSubmit={handleEditMatchSubmit}>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Player 1:</label>
+                    <input
+                      type="text"
+                      value={editingMatch.player1?.name || ''}
+                      disabled
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Player 2:</label>
+                    <input
+                      type="text"
+                      value={editingMatch.player2?.name || ''}
+                      disabled
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Winner:</label>
+                    <select
+                      name="winner"
+                      value={editMatchFormData.winner}
+                      onChange={handleEditFormChange}
+                    >
+                      <option value="">Select Winner</option>
+                      <option value={editingMatch.player1?.id}>{editingMatch.player1?.name}</option>
+                      <option value={editingMatch.player2?.id}>{editingMatch.player2?.name}</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Score:</label>
+                    <input
+                      type="text"
+                      name="score"
+                      value={editMatchFormData.score}
+                      onChange={handleEditFormChange}
+                      placeholder="e.g., 3-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Status:</label>
+                    <select
+                      name="status"
+                      value={editMatchFormData.status}
+                      onChange={handleEditFormChange}
+                    >
+                      <option value="scheduled">Scheduled</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                      <option value="forfeited">Forfeited</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Completed Date:</label>
+                    <input
+                      type="date"
+                      name="completedDate"
+                      value={editMatchFormData.completedDate}
+                      onChange={handleEditFormChange}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Venue:</label>
+                    <input
+                      type="text"
+                      name="venue"
+                      value={editMatchFormData.venue}
+                      onChange={handleEditFormChange}
+                      placeholder="Pool hall or venue"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Entry Fee:</label>
+                    <input
+                      type="number"
+                      name="entryFee"
+                      value={editMatchFormData.entryFee}
+                      onChange={handleEditFormChange}
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Race Length:</label>
+                    <input
+                      type="number"
+                      name="raceLength"
+                      value={editMatchFormData.raceLength}
+                      onChange={handleEditFormChange}
+                      min="1"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Game Type:</label>
+                    <select
+                      name="gameType"
+                      value={editMatchFormData.gameType}
+                      onChange={handleEditFormChange}
+                    >
+                      <option value="8-ball">8-ball</option>
+                      <option value="9-ball">9-ball</option>
+                      <option value="10-ball">10-ball</option>
+                      <option value="mixed">Mixed</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Table Size:</label>
+                    <select
+                      name="tableSize"
+                      value={editMatchFormData.tableSize}
+                      onChange={handleEditFormChange}
+                    >
+                      <option value="7-foot">7-foot</option>
+                      <option value="9-foot">9-foot</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Scheduled Date:</label>
+                    <input
+                      type="date"
+                      name="scheduledDate"
+                      value={editMatchFormData.scheduledDate}
+                      onChange={handleEditFormChange}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Notes:</label>
+                    <textarea
+                      name="notes"
+                      value={editMatchFormData.notes}
+                      onChange={handleEditFormChange}
+                      placeholder="Match notes"
+                      rows="3"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Admin Notes:</label>
+                    <textarea
+                      name="adminNotes"
+                      value={editMatchFormData.adminNotes}
+                      onChange={handleEditFormChange}
+                      placeholder="Admin-only notes"
+                      rows="3"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-buttons">
+                  <button 
+                    type="submit" 
+                    disabled={loading}
+                    className="submit-btn"
+                  >
+                    {loading ? 'Updating...' : 'Update Match'}
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setShowEditMatchForm(false);
+                      setEditingMatch(null);
+                    }}
+                    className="cancel-btn"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        {showDeleteConfirm && matchToDelete && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3>Confirm Delete Match</h3>
+              <p>Are you sure you want to delete this match?</p>
+              <div className="match-details">
+                <p><strong>Players:</strong> {matchToDelete.winner?.name} vs {matchToDelete.loser?.name}</p>
+                <p><strong>Score:</strong> {matchToDelete.score}</p>
+                <p><strong>Date:</strong> {formatDateForMountainTime(matchToDelete.matchDate)}</p>
+              </div>
+              <p className="warning-text">⚠️ This action cannot be undone and will reverse any position changes.</p>
+              <div className="form-buttons">
+                <button 
+                  onClick={confirmDeleteMatch}
+                  disabled={loading}
+                  className="delete-btn"
+                >
+                  {loading ? 'Deleting...' : 'Delete Match'}
+                </button>
+                <button 
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setMatchToDelete(null);
+                  }}
+                  className="cancel-btn"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Match History */}
         {showMatchHistory && (
           <div className="match-history-section">
@@ -667,6 +1016,7 @@ const LadderManagement = ({ userEmail, userPin }) => {
                       <th>Format</th>
                       <th>Location</th>
                       <th>Status</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -686,6 +1036,24 @@ const LadderManagement = ({ userEmail, userPin }) => {
                           <span className={`status ${match.verificationStatus}`}>
                             {match.verificationStatus}
                           </span>
+                        </td>
+                        <td>
+                          <div className="match-actions">
+                            <button 
+                              className="edit-btn"
+                              onClick={() => handleEditMatch(match)}
+                              title="Edit Match"
+                            >
+                              ✏️
+                            </button>
+                            <button 
+                              className="delete-btn"
+                              onClick={() => handleDeleteMatch(match)}
+                              title="Delete Match"
+                            >
+                              🗑️
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

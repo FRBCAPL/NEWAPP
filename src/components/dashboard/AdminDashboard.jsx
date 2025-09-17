@@ -11,6 +11,7 @@ import PaymentConfiguration from "./PaymentConfiguration.jsx";
 import PaymentTracker from "./PaymentTracker.jsx";
 import LeagueManagement from "./LeagueManagement.jsx";
 import LadderApplicationsManager from "../admin/LadderApplicationsManager.jsx";
+import SimplifiedAdminDashboard from "../admin/SimplifiedAdminDashboard.jsx";
 import unifiedAdminService from '../../services/unifiedAdminService.js';
 import { 
   FaSyncAlt, 
@@ -1914,6 +1915,14 @@ export default function AdminDashboard() {
         >
           🏆 Pending Applications
         </button>
+        
+        <button 
+          className={styles.quickActionButton}
+          onClick={() => setActiveSection('simplified-admin')}
+          style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}
+        >
+          🎯 Simplified Admin Dashboard
+        </button>
             </div>
           </div>
         );
@@ -1950,6 +1959,9 @@ export default function AdminDashboard() {
       
       case 'ladder-applications':
         return <LadderApplicationsManager onClose={() => setActiveSection('overview')} />;
+      
+      case 'simplified-admin':
+        return <SimplifiedAdminDashboard />;
       
       default:
         return null;

@@ -71,6 +71,28 @@ export default function LadderPlayerManagement() {
   
   // Applications manager state
   const [showApplicationsManager, setShowApplicationsManager] = useState(false);
+  
+  // Pending match editing states
+  const [editingPendingMatch, setEditingPendingMatch] = useState(null);
+  const [showEditPendingMatchForm, setShowEditPendingMatchForm] = useState(false);
+  const [editPendingMatchFormData, setEditPendingMatchFormData] = useState({});
+  const [showDeletePendingConfirm, setShowDeletePendingConfirm] = useState(false);
+  const [pendingMatchToDelete, setPendingMatchToDelete] = useState(null);
+  
+  // Message state for notifications
+  const [message, setMessage] = useState('');
+  
+  // LMS tracking states
+  const [showLmsTracking, setShowLmsTracking] = useState(false);
+  const [lmsMatches, setLmsMatches] = useState([]);
+  const [lmsRefreshKey, setLmsRefreshKey] = useState(0);
+  
+  // Function to clear message after delay
+  const clearMessage = () => {
+    setTimeout(() => {
+      setMessage('');
+    }, 5000); // Clear after 5 seconds
+  };
 
   // Helper function to render modals using portals
   const renderModal = (modalContent) => {
@@ -176,14 +198,18 @@ export default function LadderPlayerManagement() {
   const handleUpdatePlayer = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/player/${editingPlayer.email}`, {
+      // Use the correct endpoint for updating ladder players
+      const response = await fetch(`${BACKEND_URL}/api/ladder/player/${editingPlayer._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...formData,
-          ladderName: 'General'
+          email: formData.email,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          isActive: formData.isActive,
+          fargoRate: formData.fargoRate
         })
       });
 
@@ -436,6 +462,7 @@ export default function LadderPlayerManagement() {
       const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches?status=scheduled`);
       if (response.ok) {
         const data = await response.json();
+        console.log('Loaded pending matches:', data.matches);
         setPendingMatches(data.matches || []);
       } else {
         alert('Failed to load pending matches');
@@ -626,6 +653,214 @@ export default function LadderPlayerManagement() {
     window.open(promotionUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
   };
 
+  // Handle editing a pending match
+  const handleEditPendingMatch = (match) => {
+    setEditingPendingMatch(match);
+    setEditPendingMatchFormData({
+      matchType: match.matchType || 'challenge',
+      matchFormat: match.matchFormat || 'race-to-5',
+      scheduledDate: match.scheduledDate ? 
+        new Date(match.scheduledDate).toISOString().split('T')[0] : 
+        match.proposedDate ? 
+          new Date(match.proposedDate).toISOString().split('T')[0] : '',
+      location: match.location || match.venue || '',
+      notes: match.notes || '',
+      entryFee: match.entryFee || 0,
+      gameType: match.gameType || '8-ball',
+      tableSize: match.tableSize || '7-foot'
+    });
+    setShowEditPendingMatchForm(true);
+  };
+
+  // Handle deleting a pending match
+  const handleDeletePendingMatch = (match) => {
+    setPendingMatchToDelete(match);
+    setShowDeletePendingConfirm(true);
+  };
+
+  // Confirm delete pending match
+  const confirmDeletePendingMatch = async () => {
+    if (!pendingMatchToDelete) return;
+    
+    try {
+      setLoading(true);
+      const matchId = pendingMatchToDelete._id || pendingMatchToDelete.id;
+      console.log('Deleting match ID:', matchId);
+      
+      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches/${matchId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        // Reload pending matches
+        await loadPendingMatches();
+        setMessage('Pending match deleted successfully');
+      } else {
+        const errorData = await response.json();
+        setMessage(`Failed to delete pending match: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting pending match:', error);
+      setMessage('Error deleting pending match');
+    } finally {
+      setLoading(false);
+      setShowDeletePendingConfirm(false);
+      setPendingMatchToDelete(null);
+    }
+  };
+
+  // Handle edit pending match form submission
+  const handleEditPendingMatchSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!editingPendingMatch) return;
+    
+    try {
+      setLoading(true);
+      
+      // Prepare the data for the backend, ensuring proper date formatting
+      const updateData = {
+        // Only send fields that the backend expects for pending match updates
+        scheduledDate: editPendingMatchFormData.scheduledDate ? 
+          new Date(editPendingMatchFormData.scheduledDate + 'T12:00:00').toISOString() : 
+          null,
+        venue: editPendingMatchFormData.location || null,
+        notes: editPendingMatchFormData.notes || null,
+        entryFee: editPendingMatchFormData.entryFee || 0,
+        gameType: editPendingMatchFormData.gameType || '8-ball',
+        tableSize: editPendingMatchFormData.tableSize || '7-foot'
+      };
+      
+      console.log('Sending update data:', JSON.stringify(updateData, null, 2));
+      console.log('Original form data:', JSON.stringify(editPendingMatchFormData, null, 2));
+      
+      const matchId = editingPendingMatch._id || editingPendingMatch.id;
+      console.log('Editing match ID:', matchId);
+      
+      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches/${matchId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Match update successful:', result);
+        setMessage('✅ Pending match updated successfully');
+        clearMessage();
+        setShowEditPendingMatchForm(false);
+        setEditingPendingMatch(null);
+        // Reload pending matches to show updated data
+        await loadPendingMatches();
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to update pending match:', JSON.stringify(errorData, null, 2));
+        console.error('Response status:', response.status);
+        console.error('Response statusText:', response.statusText);
+        setMessage(`❌ Failed to update pending match: ${errorData.message || 'Unknown error'}`);
+        clearMessage();
+      }
+    } catch (error) {
+      console.error('Error updating pending match:', error);
+      setMessage('❌ Error updating pending match');
+      clearMessage();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle edit form input changes
+  const handleEditPendingFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditPendingMatchFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+
+  // LMS tracking functions
+  const loadLmsMatches = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches`);
+      if (response.ok) {
+        const data = await response.json();
+        // Filter for completed matches that need LMS entry or are in progress
+        const completedMatches = data.matches.filter(match => 
+          match.status === 'completed' && 
+          (!match.lmsStatus || match.lmsStatus === 'not_entered' || match.lmsStatus === 'scheduled')
+        );
+        console.log('LMS Matches data:', completedMatches);
+        // Debug the first match to see date structure
+        if (completedMatches.length > 0) {
+          console.log('First match date data:', {
+            completedDate: completedMatches[0].completedDate,
+            scheduledDate: completedMatches[0].scheduledDate,
+            completedDateType: typeof completedMatches[0].completedDate,
+            scheduledDateType: typeof completedMatches[0].scheduledDate,
+            fullMatch: completedMatches[0]
+          });
+        }
+        setLmsMatches(completedMatches);
+        setLmsRefreshKey(Date.now());
+      }
+    } catch (error) {
+      console.error('Error loading LMS matches:', error);
+    }
+  };
+
+  const markMatchAsLmsScheduled = async (matchId) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches/${matchId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          lmsStatus: 'scheduled',
+          lmsScheduledAt: new Date().toISOString()
+        })
+      });
+      
+      if (response.ok) {
+        setMessage('✅ Match marked as scheduled in LMS');
+        clearMessage();
+        await loadLmsMatches();
+      }
+    } catch (error) {
+      console.error('Error updating LMS status:', error);
+      setMessage('❌ Error updating LMS status');
+      clearMessage();
+    }
+  };
+
+  const markMatchAsLmsCompleted = async (matchId) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches/${matchId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          lmsStatus: 'completed',
+          lmsCompletedAt: new Date().toISOString()
+        })
+      });
+      
+      if (response.ok) {
+        setMessage('✅ Match marked as scored in LMS');
+        clearMessage();
+        await loadLmsMatches();
+      }
+    } catch (error) {
+      console.error('Error updating LMS status:', error);
+      setMessage('❌ Error updating LMS status');
+      clearMessage();
+    }
+  };
+
   if (loading) {
     return <div className={styles.container}>Loading ladder players...</div>;
   }
@@ -750,9 +985,40 @@ export default function LadderPlayerManagement() {
               >
                 ⬆️ Promote Players
         </button>
+              <button 
+                onClick={() => {
+                  setShowLmsTracking(true);
+                  // Force refresh by clearing cache and reloading
+                  setLmsMatches([]);
+                  setTimeout(() => {
+                    loadLmsMatches();
+                  }, 100);
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #6c5ce7, #a29bfe)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 20px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease',
+                  margin: '5px'
+                }}
+              >
+                📊 LMS Tracking
+        </button>
             </div>
          </div>
       </div>
+
+      {/* Message Display */}
+      {message && (
+        <div className={styles.messageDisplay}>
+          {message}
+        </div>
+      )}
 
       {/* Add Player Form */}
       {showAddForm && renderModal(
@@ -1072,7 +1338,6 @@ export default function LadderPlayerManagement() {
                 name="location"
                 value={formData.location}
                 onChange={handleInputChange}
-                 required
                >
                  <option value="">Select Preferred Location</option>
                  {availableLocations.length > 0 ? (
@@ -1317,9 +1582,11 @@ export default function LadderPlayerManagement() {
                   </thead>
                   <tbody>
                     {pendingMatches.map((match, index) => (
-                      <tr key={match.id || index}>
-                        <td>{match.scheduledDate ? new Date(match.scheduledDate).toLocaleDateString() : 
-                             match.proposedDate ? new Date(match.proposedDate).toLocaleDateString() : 
+                      <tr key={match._id || match.id || index}>
+                        <td>{match.scheduledDate ? 
+                             new Date(match.scheduledDate).toLocaleDateString() : 
+                             match.proposedDate ? 
+                             new Date(match.proposedDate).toLocaleDateString() : 
                              'TBD'}</td>
                         <td>
                           <span className={`${styles.matchType} ${styles[match.matchType || 'challenge']}`}>
@@ -1349,15 +1616,32 @@ export default function LadderPlayerManagement() {
                           </span>
                         </td>
                         <td>
-                          <button 
-                            className={styles.reportResultButton}
-                            onClick={() => {
-                              selectPendingMatch(match);
-                              setShowPendingMatches(false); // Close the pending matches modal
-                            }}
-                          >
-                            Report Result
-                          </button>
+                          <div className={styles.matchActions}>
+                            <button 
+                              className={styles.reportResultButton}
+                              onClick={() => {
+                                selectPendingMatch(match);
+                                setShowPendingMatches(false); // Close the pending matches modal
+                              }}
+                              title="Report Result"
+                            >
+                              📊
+                            </button>
+                            <button 
+                              className={styles.editButton}
+                              onClick={() => handleEditPendingMatch(match)}
+                              title="Edit Match"
+                            >
+                              ✏️
+                            </button>
+                            <button 
+                              className={styles.deleteButton}
+                              onClick={() => handleDeletePendingMatch(match)}
+                              title="Delete Match"
+                            >
+                              🗑️
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1365,6 +1649,200 @@ export default function LadderPlayerManagement() {
                 </table>
               </div>
             )}
+          </div>
+        </DraggableModal>
+      )}
+
+      {/* Edit Pending Match Form */}
+      {showEditPendingMatchForm && editingPendingMatch && renderModal(
+        <DraggableModal
+          open={showEditPendingMatchForm}
+          onClose={() => {
+            setShowEditPendingMatchForm(false);
+            setEditingPendingMatch(null);
+          }}
+          title="Edit Pending Match"
+          maxWidth="60vw"
+        >
+          <div className={styles.editPendingMatchForm}>
+            <form onSubmit={handleEditPendingMatchSubmit}>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Match Type:</label>
+                  <select
+                    name="matchType"
+                    value={editPendingMatchFormData.matchType}
+                    onChange={handleEditPendingFormChange}
+                  >
+                    <option value="challenge">Challenge</option>
+                    <option value="smackdown">SmackDown</option>
+                    <option value="smackback">SmackBack</option>
+                    <option value="defense">Defense</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Match Format:</label>
+                  <select
+                    name="matchFormat"
+                    value={editPendingMatchFormData.matchFormat}
+                    onChange={handleEditPendingFormChange}
+                  >
+                    <option value="race-to-3">Race to 3</option>
+                    <option value="race-to-5">Race to 5</option>
+                    <option value="race-to-7">Race to 7</option>
+                    <option value="race-to-9">Race to 9</option>
+                    <option value="best-of-3">Best of 3</option>
+                    <option value="best-of-5">Best of 5</option>
+                    <option value="best-of-7">Best of 7</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Scheduled Date:</label>
+                  <input
+                    type="date"
+                    name="scheduledDate"
+                    value={editPendingMatchFormData.scheduledDate}
+                    onChange={handleEditPendingFormChange}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Location:</label>
+                  <select
+                    name="location"
+                    value={editPendingMatchFormData.location}
+                    onChange={handleEditPendingFormChange}
+                  >
+                    <option value="">Select Location</option>
+                    {availableLocations.map((location, index) => (
+                      <option key={index} value={location.name}>
+                        {location.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Entry Fee:</label>
+                  <input
+                    type="number"
+                    name="entryFee"
+                    value={editPendingMatchFormData.entryFee}
+                    onChange={handleEditPendingFormChange}
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Table Size:</label>
+                  <select
+                    name="tableSize"
+                    value={editPendingMatchFormData.tableSize}
+                    onChange={handleEditPendingFormChange}
+                  >
+                    <option value="7-foot">7-foot</option>
+                    <option value="9-foot">9-foot</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Game Type:</label>
+                  <select
+                    name="gameType"
+                    value={editPendingMatchFormData.gameType}
+                    onChange={handleEditPendingFormChange}
+                  >
+                    <option value="8-ball">8-ball</option>
+                    <option value="9-ball">9-ball</option>
+                    <option value="10-ball">10-ball</option>
+                    <option value="mixed">Mixed</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Notes:</label>
+                  <textarea
+                    name="notes"
+                    value={editPendingMatchFormData.notes}
+                    onChange={handleEditPendingFormChange}
+                    placeholder="Match notes"
+                    rows="3"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formButtons}>
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className={styles.submitButton}
+                >
+                  {loading ? 'Updating...' : 'Update Match'}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setShowEditPendingMatchForm(false);
+                    setEditingPendingMatch(null);
+                  }}
+                  className={styles.cancelButton}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </DraggableModal>
+      )}
+
+      {/* Delete Pending Match Confirmation */}
+      {showDeletePendingConfirm && pendingMatchToDelete && renderModal(
+        <DraggableModal
+          open={showDeletePendingConfirm}
+          onClose={() => {
+            setShowDeletePendingConfirm(false);
+            setPendingMatchToDelete(null);
+          }}
+          title="Confirm Delete Pending Match"
+          maxWidth="40vw"
+        >
+          <div className={styles.deleteConfirmModal}>
+            <p>Are you sure you want to delete this pending match?</p>
+            <div className={styles.matchDetails}>
+              <p><strong>Players:</strong> {pendingMatchToDelete.challenger?.firstName || pendingMatchToDelete.player1?.firstName} {pendingMatchToDelete.challenger?.lastName || pendingMatchToDelete.player1?.lastName} vs {pendingMatchToDelete.defender?.firstName || pendingMatchToDelete.player2?.firstName} {pendingMatchToDelete.defender?.lastName || pendingMatchToDelete.player2?.lastName}</p>
+              <p><strong>Type:</strong> {pendingMatchToDelete.matchType || 'Challenge'}</p>
+              <p><strong>Date:</strong> {pendingMatchToDelete.scheduledDate ? 
+                  new Date(pendingMatchToDelete.scheduledDate).toLocaleDateString() : 
+                  pendingMatchToDelete.proposedDate ? 
+                  new Date(pendingMatchToDelete.proposedDate).toLocaleDateString() : 'TBD'}</p>
+            </div>
+            <p className={styles.warningText}>⚠️ This action cannot be undone.</p>
+            <div className={styles.formButtons}>
+              <button 
+                onClick={confirmDeletePendingMatch}
+                disabled={loading}
+                className={styles.deleteButton}
+              >
+                {loading ? 'Deleting...' : 'Delete Match'}
+              </button>
+              <button 
+                onClick={() => {
+                  setShowDeletePendingConfirm(false);
+                  setPendingMatchToDelete(null);
+                }}
+                className={styles.cancelButton}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </DraggableModal>
       )}
@@ -1591,6 +2069,203 @@ export default function LadderPlayerManagement() {
           maxHeight="90vh"
         >
           <LadderApplicationsManager onClose={() => setShowApplicationsManager(false)} />
+        </DraggableModal>
+      )}
+
+      {/* LMS Tracking Modal */}
+      {showLmsTracking && renderModal(
+        <DraggableModal
+          open={showLmsTracking}
+          onClose={() => setShowLmsTracking(false)}
+          title="LMS Tracking - Matches Status"
+          maxWidth="90vw"
+          maxHeight="90vh"
+        >
+          <div style={{ padding: '20px' }}>
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ color: '#6c5ce7', marginBottom: '10px' }}>
+                📊 LMS Match Status Tracking
+              </h3>
+              <p style={{ color: '#666', fontSize: '14px' }}>
+                Track which completed matches need to be entered into LMS for FargoRate reporting.
+              </p>
+            </div>
+
+            {lmsMatches.length === 0 ? (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '40px', 
+                color: '#22c55e',
+                fontSize: '16px'
+              }}>
+                ✅ All matches are up to date with LMS!
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ 
+                  width: '100%', 
+                  borderCollapse: 'collapse',
+                  backgroundColor: 'white',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#6c5ce7', color: 'white' }}>
+                      <th style={{ padding: '12px', textAlign: 'left' }}>Date</th>
+                      <th style={{ padding: '12px', textAlign: 'left' }}>Winner</th>
+                      <th style={{ padding: '12px', textAlign: 'left' }}>Loser</th>
+                      <th style={{ padding: '12px', textAlign: 'left' }}>Score</th>
+                      <th style={{ padding: '12px', textAlign: 'left' }}>Location</th>
+                      <th style={{ padding: '12px', textAlign: 'left' }}>LMS Status</th>
+                      <th style={{ padding: '12px', textAlign: 'left' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lmsMatches.map((match, index) => (
+                      <tr key={`${match._id || match.id}-${lmsRefreshKey}`} style={{ 
+                        borderBottom: '1px solid #e5e7eb',
+                        backgroundColor: index % 2 === 0 ? '#f9fafb' : 'white'
+                      }}>
+                        <td style={{ padding: '12px' }}>
+                          <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'blue' }}>
+                            {match.completedDate ? 
+                              new Date(match.completedDate).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              }) : 
+                              new Date(match.scheduledDate).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })
+                            }
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#666' }}>
+                            {match.completedDate ? 'Played' : 'Scheduled'}
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          <strong style={{ color: '#22c55e' }}>
+                            {match.winner ? 
+                              (typeof match.winner === 'object' ? 
+                                `${match.winner.firstName} ${match.winner.lastName}` : 
+                                match.winner) : 
+                              'N/A'}
+                          </strong>
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          <span style={{ color: '#ef4444' }}>
+                            {match.loser ? 
+                              (typeof match.loser === 'object' ? 
+                                `${match.loser.firstName} ${match.loser.lastName}` : 
+                                match.loser) : 
+                              'N/A'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          <span style={{ 
+                            fontSize: '14px', 
+                            fontWeight: 'bold',
+                            color: match.score ? '#1f2937' : '#9ca3af'
+                          }}>
+                            {match.score || 'No Score'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          <span style={{ 
+                            fontSize: '13px',
+                            color: match.venue ? '#1f2937' : '#9ca3af'
+                          }}>
+                            {match.venue || 'No Location'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          <span style={{
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            backgroundColor: match.lmsStatus === 'scheduled' ? '#dbeafe' : 
+                                           match.lmsStatus === 'completed' ? '#dcfce7' : '#fef3c7',
+                            color: match.lmsStatus === 'scheduled' ? '#1d4ed8' : 
+                                   match.lmsStatus === 'completed' ? '#16a34a' : '#d97706'
+                          }}>
+                            {match.lmsStatus === 'scheduled' ? '📅 Scheduled in LMS' : 
+                             match.lmsStatus === 'completed' ? '✅ Scored in LMS' : '⚠️ Not Entered'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            {(!match.lmsStatus || match.lmsStatus === 'not_entered') && (
+                              <button
+                                onClick={() => markMatchAsLmsScheduled(match._id || match.id)}
+                                style={{
+                                  background: '#3b82f6',
+                                  color: 'white',
+                                  border: 'none',
+                                  padding: '6px 12px',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px'
+                                }}
+                              >
+                                📅 Mark as Scheduled
+                              </button>
+                            )}
+                            {match.lmsStatus === 'scheduled' && (
+                              <button
+                                onClick={() => markMatchAsLmsCompleted(match._id || match.id)}
+                                style={{
+                                  background: '#22c55e',
+                                  color: 'white',
+                                  border: 'none',
+                                  padding: '6px 12px',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px'
+                                }}
+                              >
+                                📊 Scored in LMS
+                              </button>
+                            )}
+                            {match.lmsStatus === 'completed' && (
+                              <span style={{ 
+                                color: '#16a34a', 
+                                fontSize: '12px', 
+                                fontWeight: 'bold' 
+                              }}>
+                                ✅ Done
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div style={{ 
+              marginTop: '20px', 
+              padding: '15px', 
+              backgroundColor: '#f0f9ff',
+              borderRadius: '8px',
+              border: '1px solid #0ea5e9'
+            }}>
+              <h4 style={{ color: '#0ea5e9', marginBottom: '10px' }}>📋 LMS Entry Instructions:</h4>
+              <ol style={{ color: '#374151', fontSize: '14px', lineHeight: '1.6' }}>
+                <li>Log into your LMS account</li>
+                <li>Go to your division/league</li>
+                <li>Add each match to the schedule</li>
+                <li>After the match is played, enter the winner and score</li>
+                <li>Click "Scheduled" when you've added it to LMS</li>
+                <li>Click "Completed" when you've entered the result</li>
+              </ol>
+            </div>
+          </div>
         </DraggableModal>
       )}
 
