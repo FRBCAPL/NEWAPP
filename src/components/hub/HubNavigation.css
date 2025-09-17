@@ -290,6 +290,51 @@
 }
 
 /* Responsive Design */
+
+/* Large screens but constrained width (like iframe) */
+@media (max-width: 1200px) and (min-width: 769px) {
+  .nav-center .app-title {
+    font-size: 1.4rem !important;
+    line-height: 1.1 !important;
+  }
+  
+  .nav-center div {
+    font-size: 1.2rem !important;
+    line-height: 1.1 !important;
+  }
+  
+  .admin-dropdown-btn,
+  .profile-btn,
+  .switch-app-btn,
+  .logout-btn {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Medium screens and iframe constraints */
+@media (max-width: 1000px) {
+  .nav-center .app-title {
+    font-size: 1.2rem !important;
+    line-height: 1.0 !important;
+  }
+  
+  .nav-center div {
+    font-size: 1.0rem !important;
+    line-height: 1.0 !important;
+  }
+  
+  .admin-dropdown-btn,
+  .profile-btn,
+  .switch-app-btn,
+  .logout-btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    min-height: 36px;
+  }
+}
+
+/* Tablet and smaller iframe */
 @media (max-width: 768px) {
   .hub-navigation {
     padding: 0.3rem 0;
@@ -364,7 +409,7 @@
   }
   
   .nav-center .app-title {
-    font-size: 0.3rem !important;
+    font-size: 1.0rem !important;
     line-height: 1.0 !important;
     white-space: nowrap !important;
   }
@@ -384,6 +429,80 @@
     font-size: 0.9rem !important;
     white-space: nowrap !important;
     line-height: 1.2 !important;
+  }
+
+/* Responsive greeting text */
+.greeting-text {
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 1000px) {
+  .greeting-text {
+    font-size: 1.0rem !important;
+    line-height: 1.0 !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .greeting-text {
+    font-size: 0.9rem !important;
+    line-height: 1.0 !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .greeting-text {
+    font-size: 0.8rem !important;
+    line-height: 1.0 !important;
+    margin-top: 0.1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .greeting-text {
+    font-size: 0.7rem !important;
+    line-height: 1.0 !important;
+    margin-top: 0.05rem !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .greeting-text {
+    font-size: 0.6rem !important;
+    line-height: 1.0 !important;
+    margin-top: 0.02rem !important;
+  }
+}
+
+/* Very narrow iframe constraints */
+@media (max-width: 600px) {
+  .nav-center .app-title {
+    font-size: 0.9rem !important;
+    line-height: 1.0 !important;
+  }
+  
+  .nav-center div {
+    font-size: 0.8rem !important;
+    line-height: 1.0 !important;
+    margin-top: 0.1rem !important;
+  }
+  
+  .admin-dropdown-btn,
+  .profile-btn,
+  .switch-app-btn,
+  .logout-btn {
+    padding: 0.3rem 0.4rem;
+    font-size: 0.7rem;
+    min-height: 28px;
+  }
+  
+  .admin-dropdown-menu {
+    min-width: 120px;
+  }
+  
+  .dropdown-item {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.7rem;
   }
 }
 
@@ -449,5 +568,49 @@
   .nav-ball {
     width: 15px;
     height: 15px;
+  }
+}
+
+/* Extremely narrow iframe (like embedded scenarios) */
+@media (max-width: 400px) {
+  .nav-center .app-title {
+    font-size: 0.8rem !important;
+    line-height: 1.0 !important;
+  }
+  
+  .nav-center div {
+    font-size: 0.7rem !important;
+    line-height: 1.0 !important;
+    margin-top: 0.05rem !important;
+  }
+  
+  .admin-dropdown-btn,
+  .profile-btn,
+  .switch-app-btn,
+  .logout-btn {
+    padding: 0.25rem 0.3rem;
+    font-size: 0.6rem;
+    min-height: 24px;
+    min-width: 24px;
+  }
+  
+  .hub-brand {
+    padding: 0.15rem 0.3rem;
+    font-size: 0.6rem;
+  }
+  
+  .nav-ball {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .admin-dropdown-menu {
+    min-width: 100px;
+    font-size: 0.6rem;
+  }
+  
+  .dropdown-item {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.6rem;
   }
 }
