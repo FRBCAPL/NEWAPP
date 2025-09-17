@@ -2021,34 +2021,6 @@ const LadderApp = ({
         </p>
       </div>
 
-      {/* TEMP: Test Match Reporting Modal Button */}
-      <div style={{ textAlign: 'center', margin: '20px 0' }}>
-        <button
-          onClick={() => setShowMatchReportingModal(true)}
-          style={{
-            background: 'linear-gradient(135deg, #ff4444, #cc0000)',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            fontSize: '1rem',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: '0 4px 15px rgba(255, 68, 68, 0.3)',
-            transition: 'all 0.3s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.transform = 'translateY(-2px)';
-            e.target.style.boxShadow = '0 6px 20px rgba(255, 68, 68, 0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = 'translateY(0)';
-            e.target.style.boxShadow = '0 4px 15px rgba(255, 68, 68, 0.3)';
-          }}
-        >
-          🏓 Test Match Reporting Modal
-        </button>
-      </div>
 
       {/* Header */}
 
