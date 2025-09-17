@@ -2007,6 +2007,7 @@ const LadderApp = ({
   }
 
   return (
+    <>
     <div className="ladder-app-container">
       {/* Ladder-specific floating logos - only Legends logo and pool balls */}
       <LadderFloatingLogos />
@@ -2018,6 +2019,35 @@ const LadderApp = ({
           This ladder system is <strong>NOT</strong> affiliated with, endorsed by, or sanctioned by the Front Range Pool League, CueSports International, BCA Pool League, or USA Pool League.<br/>
           It is an independent tournament series operated by <strong>Legends Brews and Cues</strong>.
         </p>
+      </div>
+
+      {/* TEMP: Test Match Reporting Modal Button */}
+      <div style={{ textAlign: 'center', margin: '20px 0' }}>
+        <button
+          onClick={() => setShowMatchReportingModal(true)}
+          style={{
+            background: 'linear-gradient(135deg, #ff4444, #cc0000)',
+            color: 'white',
+            border: 'none',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            fontSize: '1rem',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            boxShadow: '0 4px 15px rgba(255, 68, 68, 0.3)',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'translateY(-2px)';
+            e.target.style.boxShadow = '0 6px 20px rgba(255, 68, 68, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = '0 4px 15px rgba(255, 68, 68, 0.3)';
+          }}
+        >
+          🏓 Test Match Reporting Modal
+        </button>
       </div>
 
       {/* Header */}
@@ -2260,19 +2290,6 @@ const LadderApp = ({
          />
        )}
        
-               {showMatchReportingModal && (
-          <LadderMatchReportingModal
-            isOpen={showMatchReportingModal}
-            onClose={() => setShowMatchReportingModal(false)}
-            playerName={userLadderData?.email || `${playerName} ${playerLastName}`}
-            selectedLadder={selectedLadder}
-            onMatchReported={(matchData) => {
-              // Refresh ladder data after match is reported
-              loadData();
-              loadChallenges();
-            }}
-          />
-        )}
         
         {showPaymentDashboard && (
           <PaymentDashboard
@@ -2330,6 +2347,22 @@ const LadderApp = ({
         )}
         
      </div>
+     
+     {/* Match Reporting Modal - Outside main container for proper screen centering */}
+     {showMatchReportingModal && (
+       <LadderMatchReportingModal
+         isOpen={showMatchReportingModal}
+         onClose={() => setShowMatchReportingModal(false)}
+         playerName={userLadderData?.email || `${playerName} ${playerLastName}`}
+         selectedLadder={selectedLadder}
+         onMatchReported={(matchData) => {
+           // Refresh ladder data after match is reported
+           loadData();
+           loadChallenges();
+         }}
+       />
+     )}
+    </>
    );
  };
 

@@ -9,7 +9,14 @@ const LadderMatchReportingModal = ({
   onMatchReported 
 }) => {
   const [pendingMatches, setPendingMatches] = useState([]);
-  const [selectedMatch, setSelectedMatch] = useState(null);
+  const [selectedMatch, setSelectedMatch] = useState({
+    _id: 'test-match',
+    senderName: 'John Doe',
+    receiverName: 'Jane Smith',
+    date: '2024-01-15',
+    time: '7:00 PM',
+    location: 'Legends Brews & Cues'
+  }); // TEMP: Show form directly for testing
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -18,10 +25,16 @@ const LadderMatchReportingModal = ({
   // Match reporting form state
   const [winner, setWinner] = useState('');
   const [score, setScore] = useState('');
+  const [scoreFormat, setScoreFormat] = useState('race-to-5'); // Standard format
+  const [customRaceTo, setCustomRaceTo] = useState(''); // For "Other" option
+  const [winnerGames, setWinnerGames] = useState('');
+  const [loserGames, setLoserGames] = useState('');
   const [notes, setNotes] = useState('');
+  const [scoreError, setScoreError] = useState('');
   
   // Payment state
   const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [showPaymentInfo, setShowPaymentInfo] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [membership, setMembership] = useState(null);
@@ -133,10 +146,102 @@ const LadderMatchReportingModal = ({
     setSelectedMatch(match);
     setWinner('');
     setScore('');
+    setScoreFormat('race-to-5');
+    setCustomRaceTo('');
+    setWinnerGames('');
+    setLoserGames('');
     setNotes('');
+    setScoreError('');
     setShowPaymentForm(false);
     setError('');
     setMessage('');
+  };
+
+  // Score validation and formatting functions
+  const validateScore = (winnerGames, loserGames, format) => {
+    const winnerNum = parseInt(winnerGames);
+    const loserNum = parseInt(loserGames);
+    
+    if (!winnerGames || !loserGames || isNaN(winnerNum) || isNaN(loserNum)) {
+      return { valid: false, error: 'Please enter valid numbers for both scores' };
+    }
+    
+    if (winnerNum <= 0 || loserNum <= 0) {
+      return { valid: false, error: 'Scores must be greater than 0' };
+    }
+    
+    if (winnerNum === loserNum) {
+      return { valid: false, error: 'Winner and loser cannot have the same score' };
+    }
+    
+    // Validate based on format
+    let maxGames;
+    if (format === 'other') {
+      maxGames = parseInt(customRaceTo) || 5;
+    } else {
+      maxGames = parseInt(format.split('-')[2]) || 5;
+    }
+    
+    if (winnerNum > maxGames || loserNum > maxGames) {
+      return { valid: false, error: `Scores cannot exceed ${maxGames} games for ${format.replace('-', ' ')}` };
+    }
+    
+    // Winner must have more games
+    if (winnerNum < loserNum) {
+      return { valid: false, error: 'Winner must have more games than loser' };
+    }
+    
+    return { valid: true, error: '' };
+  };
+
+  const formatScore = (winnerGames, loserGames) => {
+    return `${winnerGames}-${loserGames}`;
+  };
+
+  const handleScoreChange = (field, value) => {
+    if (field === 'winner') {
+      setWinnerGames(value);
+    } else {
+      setLoserGames(value);
+    }
+    
+    // Clear previous errors
+    setScoreError('');
+    
+    // Auto-format the score display
+    if (value && (field === 'winner' ? loserGames : winnerGames)) {
+      const validation = validateScore(
+        field === 'winner' ? value : winnerGames,
+        field === 'winner' ? loserGames : value,
+        scoreFormat
+      );
+      
+      if (validation.valid) {
+        setScore(formatScore(
+          field === 'winner' ? value : winnerGames,
+          field === 'winner' ? loserGames : value
+        ));
+      } else {
+        setScoreError(validation.error);
+        setScore('');
+      }
+    }
+  };
+
+  // Generate options for score dropdowns based on race format
+  const generateScoreOptions = () => {
+    let maxGames;
+    if (scoreFormat === 'other') {
+      maxGames = parseInt(customRaceTo) || 5;
+    } else {
+      maxGames = parseInt(scoreFormat.split('-')[2]) || 5;
+    }
+    
+    const options = [];
+    for (let i = 0; i <= maxGames; i++) {
+      options.push(i);
+    }
+    return options;
   };
 
   // Determine user trust level and payment method
@@ -160,10 +265,27 @@ const LadderMatchReportingModal = ({
   const handleSubmitResult = async (e) => {
     e.preventDefault();
     
-    if (!winner || !score) {
-      setError('Please select a winner and enter the score');
+    if (!winner) {
+      setError('Please select a winner');
       return;
     }
+    
+    // Validate custom race input if "Other" is selected
+    if (scoreFormat === 'other' && (!customRaceTo || parseInt(customRaceTo) < 1)) {
+      setError('Please enter a valid custom race number (1 or higher)');
+      return;
+    }
+    
+    // Validate score
+    const validation = validateScore(winnerGames, loserGames, scoreFormat);
+    if (!validation.valid) {
+      setScoreError(validation.error);
+      setError('Please fix the score before submitting');
+      return;
+    }
+    
+    // Set the formatted score
+    setScore(formatScore(winnerGames, loserGames));
 
     // Check if membership is active
     if (!membership || !membership.isActive) {
@@ -360,57 +482,65 @@ const LadderMatchReportingModal = ({
     <div className="prize-pool-modal">
       <div className="prize-pool-modal-content">
         {/* Header */}
-        <div className="modal-header">
-          <h2 style={{
-            color: '#ff4444',
-            margin: '0',
-            fontSize: '1.8rem',
-            textAlign: 'center'
-          }}>
-            🏓 Report Match Result
-          </h2>
-          
+        <div className="modal-header" style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '0.5rem'
+        }}>
+          {/* Left side - Ladder name */}
           <div style={{
-            marginTop: '0.5rem',
-            textAlign: 'center',
             color: '#ff4444',
             fontSize: '1.2rem',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            flex: '1'
           }}>
             {getLadderDisplayName(selectedLadder)} Ladder
           </div>
           
-          <button
-            onClick={onClose}
-            style={{
-              position: 'absolute',
-              top: '15px',
-              left: '20px',
-              background: 'none',
-              border: 'none',
-              color: '#ccc',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              padding: '5px',
-              borderRadius: '50%',
-              width: '40px',
-              height: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = 'rgba(255, 255, 255, 0.1)';
-              e.target.style.color = '#fff';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = 'none';
-              e.target.style.color = '#ccc';
-            }}
-          >
-            ×
-          </button>
+          {/* Center - Title */}
+          <h2 style={{
+            color: '#ff4444',
+            margin: '0',
+            fontSize: '1.8rem',
+            textAlign: 'center',
+            flex: '2'
+          }}>
+            ⚔️ Report Match Result
+          </h2>
+          
+          {/* Right side - Close button */}
+          <div style={{ flex: '1', display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#ccc',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                padding: '5px',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.target.style.color = '#fff';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'none';
+                e.target.style.color = '#ccc';
+              }}
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -525,16 +655,53 @@ const LadderMatchReportingModal = ({
               {/* Match Reporting Form */}
               {selectedMatch && !showPaymentForm && (
                 <div style={{ marginBottom: '2rem' }}>
-                  <h3 style={{ color: '#ff4444', marginBottom: '1rem', fontSize: '1.3rem' }}>
-                    🏆 Report Match Result
-                  </h3>
                   
+                  {/* Match Fee Information */}
+                  <div style={{
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: '8px',
+                    padding: '0.5rem',
+                    marginBottom: '1.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ color: '#10b981', fontWeight: 'bold', marginBottom: '4px' }}>
+                      💰 Match Fee Information
+                    </div>
+                    <div style={{ color: '#e0e0e0', fontSize: '0.9rem', marginBottom: '8px' }}>
+                      The <strong>winner</strong> reports the match and pays the <strong>$5 match fee</strong>.
+                      <br />
+                      <em>Only one $5 fee per match - not per player!</em>
+                    </div>
+                    <button
+                      onClick={() => setShowPaymentInfo(true)}
+                      style={{
+                        background: 'rgba(16, 185, 129, 0.2)',
+                        border: '1px solid rgba(16, 185, 129, 0.4)',
+                        color: '#10b981',
+                        padding: '6px 12px',
+                        borderRadius: '4px',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = 'rgba(16, 185, 129, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'rgba(16, 185, 129, 0.2)';
+                      }}
+                    >
+                      📋 View Payment Details
+                    </button>
+                  </div>
+
                   {/* Match Details */}
                   <div style={{
                     background: 'rgba(255, 255, 255, 0.05)',
                     borderRadius: '8px',
-                    padding: '1rem',
-                    marginBottom: '1.5rem'
+                    padding: '0.5rem',
+                    marginBottom: '0.75rem'
                   }}>
                     <h4 style={{ color: '#fff', margin: '0 0 0.75rem 0' }}>Match Details</h4>
                     <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
@@ -544,27 +711,86 @@ const LadderMatchReportingModal = ({
                     </div>
                   </div>
 
-                  {/* Match Fee Information */}
-                  <div style={{
-                    background: 'rgba(16, 185, 129, 0.1)',
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    marginBottom: '1.5rem',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ color: '#10b981', fontWeight: 'bold', marginBottom: '4px' }}>
-                      💰 Match Fee Information
-                    </div>
-                    <div style={{ color: '#e0e0e0', fontSize: '0.9rem' }}>
-                      The <strong>winner</strong> reports the match and pays the <strong>$5 match fee</strong>.
-                      <br />
-                      <em>Only one $5 fee per match - not per player!</em>
-                    </div>
-                  </div>
-
                   {/* Reporting Form */}
                   <form onSubmit={handleSubmitResult}>
+                    {/* Match Format Selection */}
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                        Match Format *
+                      </label>
+                      <select
+                        value={scoreFormat}
+                        onChange={(e) => {
+                          setScoreFormat(e.target.value);
+                          setScoreError('');
+                          setScore('');
+                          setCustomRaceTo('');
+                          setWinnerGames('');
+                          setLoserGames('');
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          background: 'rgba(0, 0, 0, 0.8)',
+                          color: '#fff',
+                          fontSize: '1rem'
+                        }}
+                      >
+                        <option value="race-to-5" style={{ background: '#000', color: '#fff' }}>Race to 5</option>
+                        <option value="race-to-7" style={{ background: '#000', color: '#fff' }}>Race to 7</option>
+                        <option value="race-to-9" style={{ background: '#000', color: '#fff' }}>Race to 9</option>
+                        <option value="race-to-11" style={{ background: '#000', color: '#fff' }}>Race to 11</option>
+                        <option value="race-to-13" style={{ background: '#000', color: '#fff' }}>Race to 13</option>
+                        <option value="race-to-15" style={{ background: '#000', color: '#fff' }}>Race to 15</option>
+                        <option value="race-to-17" style={{ background: '#000', color: '#fff' }}>Race to 17</option>
+                        <option value="race-to-19" style={{ background: '#000', color: '#fff' }}>Race to 19</option>
+                        <option value="race-to-21" style={{ background: '#000', color: '#fff' }}>Race to 21</option>
+                        <option value="other" style={{ background: '#000', color: '#fff' }}>Other (Custom)</option>
+                      </select>
+                    </div>
+
+                    {/* Custom Race Input - Only show when "Other" is selected */}
+                    {scoreFormat === 'other' && (
+                      <div style={{ marginBottom: '1rem' }}>
+                        <label style={{ display: 'block', color: '#ccc', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                          Custom Race to *
+                      </label>
+                      <input
+                          type="number"
+                          value={customRaceTo}
+                          onChange={(e) => {
+                            setCustomRaceTo(e.target.value);
+                            setScoreError('');
+                            setScore('');
+                            setWinnerGames('');
+                            setLoserGames('');
+                          }}
+                          placeholder="Enter number (e.g., 25, 50, 100)"
+                          min="1"
+                          max="999"
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                            background: 'rgba(0, 0, 0, 0.8)',
+                          color: '#fff',
+                          fontSize: '1rem'
+                        }}
+                        />
+                        <div style={{ 
+                          color: '#999', 
+                          fontSize: '0.8rem', 
+                          marginTop: '0.25rem' 
+                        }}>
+                          Enter the number of games needed to win (1-999)
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Winner Selection */}
                     <div style={{ marginBottom: '1rem' }}>
                       <label style={{ display: 'block', color: '#ccc', marginBottom: '0.5rem', fontWeight: 'bold' }}>
                         Winner *
@@ -574,44 +800,150 @@ const LadderMatchReportingModal = ({
                         onChange={(e) => setWinner(e.target.value)}
                         style={{
                           width: '100%',
-                          padding: '0.75rem',
+                          padding: '0.5rem',
                           borderRadius: '6px',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
-                          background: 'rgba(0, 0, 0, 0.3)',
+                          background: 'rgba(0, 0, 0, 0.8)',
                           color: '#fff',
                           fontSize: '1rem'
                         }}
                         required
                       >
-                        <option value="">Select winner</option>
-                        <option value={selectedMatch.senderName}>{selectedMatch.senderName}</option>
-                        <option value={selectedMatch.receiverName}>{selectedMatch.receiverName}</option>
+                        <option value="" style={{ background: '#000', color: '#fff' }}>Select winner</option>
+                        <option value={selectedMatch.senderName} style={{ background: '#000', color: '#fff' }}>{selectedMatch.senderName}</option>
+                        <option value={selectedMatch.receiverName} style={{ background: '#000', color: '#fff' }}>{selectedMatch.receiverName}</option>
                       </select>
                     </div>
 
+                    {/* Standardized Score Input */}
                     <div style={{ marginBottom: '1rem' }}>
                       <label style={{ display: 'block', color: '#ccc', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                        Score *
+                        Final Score *
                       </label>
-                      <input
-                        type="text"
-                        value={score}
-                        onChange={(e) => setScore(e.target.value)}
-                        placeholder="e.g., 7-5, 9-3, etc."
-                        style={{
-                          width: '100%',
-                          padding: '0.75rem',
+                      
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: '1fr auto 1fr', 
+                        gap: '0.75rem', 
+                        alignItems: 'center',
+                        marginBottom: '0.5rem'
+                      }} className="score-input-grid">
+                        {/* Winner Score */}
+                        <div>
+                          <label style={{ 
+                            display: 'block', 
+                            color: '#4caf50', 
+                            fontSize: '0.9rem', 
+                            marginBottom: '0.25rem',
+                            fontWeight: 'bold'
+                          }}>
+                            Winner Games
+                          </label>
+                          <select
+                            value={winnerGames}
+                            onChange={(e) => handleScoreChange('winner', e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '0.5rem',
+                              borderRadius: '6px',
+                              border: scoreError ? '2px solid #f44336' : '1px solid rgba(76, 175, 80, 0.3)',
+                              background: 'rgba(0, 0, 0, 0.8)',
+                              color: '#4caf50',
+                              fontSize: '1.2rem',
+                              fontWeight: 'bold',
+                              textAlign: 'center'
+                            }}
+                          >
+                            <option value="" style={{ background: '#000', color: '#fff' }}>Select</option>
+                            {generateScoreOptions().map(num => (
+                              <option key={num} value={num} style={{ background: '#000', color: '#fff' }}>
+                                {num}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        
+                        {/* VS Separator */}
+                        <div style={{ 
+                          color: '#ccc', 
+                          fontSize: '1.5rem', 
+                          fontWeight: 'bold',
+                          textAlign: 'center',
+                          marginTop: '1.5rem'
+                        }}>
+                          -
+                        </div>
+                        
+                        {/* Loser Score */}
+                        <div>
+                          <label style={{ 
+                            display: 'block', 
+                            color: '#f44336', 
+                            fontSize: '0.9rem', 
+                            marginBottom: '0.25rem',
+                            fontWeight: 'bold'
+                          }}>
+                            Loser Games
+                          </label>
+                          <select
+                            value={loserGames}
+                            onChange={(e) => handleScoreChange('loser', e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '0.5rem',
+                              borderRadius: '6px',
+                              border: scoreError ? '2px solid #f44336' : '1px solid rgba(244, 67, 54, 0.3)',
+                              background: 'rgba(0, 0, 0, 0.8)',
+                              color: '#f44336',
+                              fontSize: '1.2rem',
+                              fontWeight: 'bold',
+                              textAlign: 'center'
+                            }}
+                          >
+                            <option value="" style={{ background: '#000', color: '#fff' }}>Select</option>
+                            {generateScoreOptions().map(num => (
+                              <option key={num} value={num} style={{ background: '#000', color: '#fff' }}>
+                                {num}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      
+                      {/* Score Display */}
+                      {score && winner && (
+                        <div style={{
+                          background: 'rgba(76, 175, 80, 0.1)',
+                          border: '1px solid rgba(76, 175, 80, 0.3)',
                           borderRadius: '6px',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          background: 'rgba(0, 0, 0, 0.3)',
-                          color: '#fff',
-                          fontSize: '1rem'
-                        }}
-                        required
-                      />
+                          padding: '0.5rem',
+                          textAlign: 'center',
+                          marginBottom: '0.5rem'
+                        }}>
+                          <div style={{ color: '#4caf50', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                            🏆 {winner} wins: {score}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Score Error */}
+                      {scoreError && (
+                        <div style={{
+                          background: 'rgba(244, 67, 54, 0.1)',
+                          border: '1px solid rgba(244, 67, 54, 0.3)',
+                          borderRadius: '6px',
+                          padding: '0.5rem',
+                          color: '#f44336',
+                          fontSize: '0.9rem',
+                          textAlign: 'center'
+                        }}>
+                          ⚠️ {scoreError}
+                        </div>
+                      )}
+                      
                     </div>
 
-                    <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ marginBottom: '1rem' }}>
                       <label style={{ display: 'block', color: '#ccc', marginBottom: '0.5rem', fontWeight: 'bold' }}>
                         Notes (optional)
                       </label>
@@ -622,7 +954,7 @@ const LadderMatchReportingModal = ({
                         rows="3"
                         style={{
                           width: '100%',
-                          padding: '0.75rem',
+                          padding: '0.5rem',
                           borderRadius: '6px',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
                           background: 'rgba(0, 0, 0, 0.3)',
@@ -637,21 +969,21 @@ const LadderMatchReportingModal = ({
                     <div style={{ display: 'grid', gap: '0.75rem' }}>
                       <button
                         type="submit"
-                        disabled={submitting || !winner || !score}
+                        disabled={submitting || !winner || !winnerGames || !loserGames || scoreError || (scoreFormat === 'other' && !customRaceTo)}
                         style={{
                           background: 'rgba(255, 68, 68, 0.8)',
                           border: 'none',
                           color: '#fff',
                           padding: '12px 16px',
                           borderRadius: '8px',
-                          cursor: submitting || !winner || !score ? 'not-allowed' : 'pointer',
+                          cursor: submitting || !winner || !winnerGames || !loserGames || scoreError || (scoreFormat === 'other' && !customRaceTo) ? 'not-allowed' : 'pointer',
                           fontSize: '1rem',
                           fontWeight: 'bold',
-                          opacity: submitting || !winner || !score ? 0.6 : 1,
+                          opacity: submitting || !winner || !winnerGames || !loserGames || scoreError || (scoreFormat === 'other' && !customRaceTo) ? 0.6 : 1,
                           transition: 'all 0.2s ease'
                         }}
                         onMouseEnter={(e) => {
-                          if (!submitting && winner && score) {
+                          if (!submitting && winner && winnerGames && loserGames && !scoreError && !(scoreFormat === 'other' && !customRaceTo)) {
                             e.target.style.background = 'rgba(255, 68, 68, 1)';
                           }
                         }}
@@ -659,7 +991,7 @@ const LadderMatchReportingModal = ({
                           e.target.style.background = 'rgba(255, 68, 68, 0.8)';
                         }}
                       >
-                        {submitting ? 'Submitting...' : '🏆 Report Match Result'}
+                        {submitting ? 'Submitting...' : '🏆 Report Match & Pay $5 Fee'}
                       </button>
                       
                       <button
@@ -668,7 +1000,12 @@ const LadderMatchReportingModal = ({
                           setSelectedMatch(null);
                           setWinner('');
                           setScore('');
+                          setScoreFormat('race-to-5');
+                          setCustomRaceTo('');
+                          setWinnerGames('');
+                          setLoserGames('');
                           setNotes('');
+                          setScoreError('');
                         }}
                         style={{
                           background: 'rgba(255, 255, 255, 0.1)',
@@ -696,191 +1033,74 @@ const LadderMatchReportingModal = ({
                 </div>
               )}
 
-              {/* Streamlined Payment Form */}
+              {/* Simplified Payment Form */}
               {showPaymentForm && (
                 <div style={{ marginBottom: '2rem' }}>
-                  <h3 style={{ color: '#ff4444', marginBottom: '1rem', fontSize: '1.3rem' }}>
-                    💳 Payment Required - Membership & Match Fee
+                  <h3 style={{ color: '#ff4444', marginBottom: '1rem', fontSize: '1.3rem', textAlign: 'center' }}>
+                    💳 Pay Match Fee
                   </h3>
                   
+                  {/* Simple Payment Summary */}
                   <div style={{
-                    background: 'rgba(255, 193, 7, 0.1)',
-                    border: '1px solid rgba(255, 193, 7, 0.3)',
+                    background: 'rgba(255, 255, 255, 0.05)',
                     borderRadius: '8px',
-                    padding: '1rem',
-                    marginBottom: '1.5rem'
+                    padding: '1.5rem',
+                    marginBottom: '1.5rem',
+                    textAlign: 'center'
                   }}>
-                    <div style={{ color: '#ffc107', fontSize: '1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                      ⚠️ Active Membership Required
+                    <div style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                      Total Amount Due
+                    </div>
+                    <div style={{ color: '#4caf50', fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                      ${(!membership || !membership.isActive) ? '10.00' : '5.00'}
                     </div>
                     <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
-                      {!membership || !membership.isActive ? 
-                        'Your membership has expired. You need to renew your membership ($5/month) AND pay the match fee ($5) to report match results.' :
-                        'Pay the $5 match fee to report your match result. Choose your preferred payment method below.'
+                      {(!membership || !membership.isActive) ? 
+                        'Match Fee ($5) + Membership Renewal ($5)' : 
+                        'Match Fee ($5)'
                       }
                     </div>
                   </div>
 
-                  {/* User Status & Credits */}
-                  <div style={{ 
-                    background: 'rgba(255, 255, 255, 0.05)', 
-                    border: '1px solid rgba(255, 255, 255, 0.1)', 
-                    borderRadius: '8px', 
-                    padding: '1rem', 
-                    marginBottom: '1rem' 
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <span style={{ color: '#fff', fontWeight: 'bold' }}>Account Status:</span>
-                      <span style={{ 
-                        color: getUserTrustLevel() === 'trusted' ? '#4caf50' : getUserTrustLevel() === 'verified' ? '#ff9800' : '#f44336',
-                        fontWeight: 'bold',
-                        textTransform: 'uppercase',
-                        fontSize: '0.9rem'
-                      }}>
-                        {getUserTrustLevel() === 'trusted' ? '🟢 Instant Process' : getUserTrustLevel() === 'verified' ? '🟡 Auto Process' : '🔴 Needs Admin Approval'}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#ccc' }}>Available Credits:</span>
-                      <span style={{ color: '#4caf50', fontWeight: 'bold' }}>${userCredits.toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  {/* Payment Options */}
+                  {/* Quick Credit Option */}
                   {canUseCredits() && (
-                    <div style={{ 
-                      background: 'rgba(76, 175, 80, 0.1)', 
-                      border: '1px solid rgba(76, 175, 80, 0.3)', 
-                      borderRadius: '8px', 
-                      padding: '1rem', 
-                      marginBottom: '1.5rem' 
-                    }}>
-                      <h3 style={{ color: '#4caf50', margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>💳 Use Credits</h3>
-                      <p style={{ color: '#ccc', margin: '0 0 1rem 0', fontSize: '0.9rem' }}>
-                        You have enough credits to pay for this match instantly!
-                      </p>
+                    <div style={{ marginBottom: '1rem' }}>
                       <button
                         onClick={submitMatchResultWithCredits}
                         style={{
-                          background: 'rgba(76, 175, 80, 0.8)',
+                          background: 'linear-gradient(135deg, #4caf50, #45a049)',
                           color: '#fff',
                           border: 'none',
-                          padding: '0.75rem 1.5rem',
-                          borderRadius: '6px',
-                          fontSize: '1rem',
+                          padding: '1rem 2rem',
+                          borderRadius: '8px',
+                          fontSize: '1.1rem',
                           fontWeight: 'bold',
                           cursor: 'pointer',
                           width: '100%',
-                          transition: 'all 0.2s ease'
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
                         }}
                         onMouseEnter={(e) => {
-                          e.target.style.background = 'rgba(76, 175, 80, 1)';
+                          e.target.style.transform = 'translateY(-2px)';
+                          e.target.style.boxShadow = '0 6px 16px rgba(76, 175, 80, 0.4)';
                         }}
                         onMouseLeave={(e) => {
-                          e.target.style.background = 'rgba(76, 175, 80, 0.8)';
+                          e.target.style.transform = 'translateY(0)';
+                          e.target.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.3)';
                         }}
                       >
-                        💳 Pay with Credits ($5.00)
+                        💳 Pay with Credits (${userCredits.toFixed(2)} available)
                       </button>
                     </div>
                   )}
 
-                  {/* Buy Credits Option */}
-                  {!canUseCredits() && (
-                    <div style={{ 
-                      background: 'rgba(33, 150, 243, 0.1)', 
-                      border: '1px solid rgba(33, 150, 243, 0.3)', 
-                      borderRadius: '8px', 
-                      padding: '1rem', 
-                      marginBottom: '1.5rem' 
-                    }}>
-                      <h3 style={{ color: '#2196f3', margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>💳 Buy Credits for Instant Payment</h3>
-                      <p style={{ color: '#ccc', margin: '0 0 1rem 0', fontSize: '0.9rem' }}>
-                        Purchase credits to pay for matches instantly without verification!
-                      </p>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button
-                          onClick={() => {
-                            // This would open the payment dashboard
-                            window.open('/ladder', '_blank');
-                          }}
-                          style={{
-                            background: 'rgba(33, 150, 243, 0.8)',
-                            color: '#fff',
-                            border: 'none',
-                            padding: '0.75rem 1rem',
-                            borderRadius: '6px',
-                            fontSize: '0.9rem',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            flex: 1,
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.background = 'rgba(33, 150, 243, 1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.background = 'rgba(33, 150, 243, 0.8)';
-                          }}
-                        >
-                          💳 Buy Credits
-                        </button>
-                        <div style={{ 
-                          color: '#2196f3', 
-                          fontSize: '0.9rem', 
-                          display: 'flex', 
-                          alignItems: 'center',
-                          padding: '0.75rem 0'
-                        }}>
-                          Current: ${userCredits.toFixed(2)}
+                  {/* Payment Methods - Simplified */}
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ color: '#ccc', fontSize: '1rem', marginBottom: '1rem', textAlign: 'center' }}>
+                      Or pay with one of these methods:
                         </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Payment Summary */}
-                  <div style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '8px',
-                    padding: '1rem',
-                    marginBottom: '1.5rem'
-                  }}>
-                    <div style={{ color: '#fff', fontWeight: 'bold', marginBottom: '0.75rem', fontSize: '1.1rem' }}>
-                      💰 Payment Summary
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                      <span style={{ color: '#ccc' }}>Match Fee:</span>
-                      <span style={{ color: '#fff', fontWeight: 'bold' }}>$5.00</span>
-                    </div>
-                    {(!membership || !membership.isActive) && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                        <span style={{ color: '#ccc' }}>Membership Renewal:</span>
-                        <span style={{ color: '#fff', fontWeight: 'bold' }}>$5.00</span>
-                      </div>
-                    )}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '0.5rem' }}>
-                      <span style={{ color: '#ccc', fontWeight: 'bold' }}>Total:</span>
-                      <span style={{ color: '#4caf50', fontWeight: 'bold', fontSize: '1.1rem' }}>
-                        ${(!membership || !membership.isActive) ? '10.00' : '5.00'}
-                      </span>
-                    </div>
-                    {getUserTrustLevel() === 'new' && (
-                      <div style={{ 
-                        background: 'rgba(255, 152, 0, 0.1)', 
-                        border: '1px solid rgba(255, 152, 0, 0.3)', 
-                        borderRadius: '6px', 
-                        padding: '0.75rem', 
-                        marginTop: '1rem' 
-                      }}>
-                        <p style={{ color: '#ff9800', margin: '0', fontSize: '0.9rem', fontWeight: 'bold' }}>
-                          ⚠️ New users require admin verification for payments
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Payment Methods Grid */}
-                  <div style={{ display: 'grid', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                    
+                    <div style={{ display: 'grid', gap: '0.75rem' }}>
                     {availablePaymentMethods.map((method) => (
                       <div key={method.id} style={{
                         background: 'rgba(255, 255, 255, 0.05)',
@@ -889,36 +1109,18 @@ const LadderMatchReportingModal = ({
                         padding: '1rem',
                         transition: 'all 0.2s ease'
                       }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
-                            <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                              <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '1rem' }}>
                               {method.name}
                             </div>
-                            <div style={{ color: '#ccc', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-                              {method.instructions}
-                            </div>
                             {method.username && (
-                              <div style={{ color: '#4caf50', fontSize: '0.9rem', fontWeight: 'bold', marginTop: '0.25rem' }}>
-                                Username: {method.username}
+                                <div style={{ color: '#4caf50', fontSize: '0.9rem', marginTop: '0.25rem' }}>
+                                  {method.username}
                               </div>
                             )}
-                          </div>
-                          <div style={{
-                            background: 'rgba(76, 175, 80, 0.8)',
-                            color: '#fff',
-                            padding: '0.5rem 1rem',
-                            borderRadius: '6px',
-                            fontSize: '0.9rem',
-                            fontWeight: 'bold',
-                            minWidth: '80px',
-                            textAlign: 'center'
-                          }}>
-                            ${(!membership || !membership.isActive) ? '10' : '5'}
-                          </div>
                         </div>
                         
-                        {/* Action Buttons */}
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
                           {method.paymentLink ? (
                             <a 
                               href={method.paymentLink} 
@@ -927,13 +1129,11 @@ const LadderMatchReportingModal = ({
                               style={{ 
                                 background: 'rgba(76, 175, 80, 0.8)',
                                 color: '#fff',
-                                padding: '0.75rem 1rem',
+                                  padding: '0.75rem 1.5rem',
                                 borderRadius: '6px',
                                 fontSize: '0.9rem',
                                 fontWeight: 'bold',
                                 textDecoration: 'none',
-                                textAlign: 'center',
-                                flex: 1,
                                 transition: 'all 0.2s ease'
                               }}
                               onMouseEnter={(e) => {
@@ -943,7 +1143,7 @@ const LadderMatchReportingModal = ({
                                 e.target.style.background = 'rgba(76, 175, 80, 0.8)';
                               }}
                             >
-                              🔗 Pay Online
+                                Pay ${(!membership || !membership.isActive) ? '10' : '5'}
                             </a>
                           ) : (
                             <button
@@ -953,12 +1153,11 @@ const LadderMatchReportingModal = ({
                                 background: paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(76, 175, 80, 0.8)',
                                 color: '#fff',
                                 border: 'none',
-                                padding: '0.75rem 1rem',
+                                  padding: '0.75rem 1.5rem',
                                 borderRadius: '6px',
                                 fontSize: '0.9rem',
                                 fontWeight: 'bold',
                                 cursor: paymentProcessing ? 'not-allowed' : 'pointer',
-                                flex: 1,
                                 transition: 'all 0.2s ease',
                                 opacity: paymentProcessing ? 0.6 : 1
                               }}
@@ -971,12 +1170,13 @@ const LadderMatchReportingModal = ({
                                 e.target.style.background = paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(76, 175, 80, 0.8)';
                               }}
                             >
-                              {paymentProcessing ? 'Processing...' : '✅ Mark as Paid'}
+                                {paymentProcessing ? 'Processing...' : `Mark Paid $${(!membership || !membership.isActive) ? '10' : '5'}`}
                             </button>
                           )}
                         </div>
                       </div>
                     ))}
+                    </div>
                   </div>
 
                   {/* Back Button */}
@@ -1011,6 +1211,215 @@ const LadderMatchReportingModal = ({
           )}
         </div>
       </div>
+
+      {/* Payment Information Modal */}
+      {showPaymentInfo && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000
+        }}>
+          <div style={{
+            background: 'rgba(20, 20, 20, 0.95)',
+            border: '2px solid rgba(255, 68, 68, 0.3)',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            maxWidth: '95vw',
+            width: '95vw',
+            maxHeight: '95vh',
+            overflowY: 'auto',
+            position: 'relative'
+          }}>
+            {/* Close Button */}
+            <button
+              onClick={() => setShowPaymentInfo(false)}
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '20px',
+                background: 'none',
+                border: 'none',
+                color: '#ccc',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                padding: '5px',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.target.style.color = '#fff';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'none';
+                e.target.style.color = '#ccc';
+              }}
+            >
+              ×
+            </button>
+
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ color: '#ff4444', margin: '0 0 0.5rem 0', fontSize: '1.8rem' }}>
+                💳 Payment Information
+              </h2>
+              <p style={{ color: '#ccc', margin: 0, fontSize: '1rem' }}>
+                Understanding subscription and match reporting fees
+              </p>
+            </div>
+
+            {/* Content */}
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '1.5rem'
+            }}>
+              {/* Membership Subscription */}
+              <div style={{
+                background: 'rgba(33, 150, 243, 0.1)',
+                border: '1px solid rgba(33, 150, 243, 0.3)',
+                borderRadius: '8px',
+                padding: '1.5rem'
+              }}>
+                <h3 style={{ color: '#2196f3', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
+                  📅 Monthly Membership - $5/month
+                </h3>
+                <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                  <p style={{ margin: '0 0 0.75rem 0' }}>
+                    <strong>What it includes:</strong>
+                  </p>
+                  <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
+                    <li>Access to all ladder divisions</li>
+                    <li>Challenge other players</li>
+                    <li>View ladder standings and statistics</li>
+                    <li>Participate in tournaments and events</li>
+                    <li>Receive notifications and updates</li>
+                  </ul>
+                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
+                    <strong>Note:</strong> Membership is required to report match results. If your membership expires, you'll need to renew it ($5) plus pay the match fee ($5) = $10 total.
+                  </p>
+                </div>
+              </div>
+
+              {/* Match Reporting Fee */}
+              <div style={{
+                background: 'rgba(76, 175, 80, 0.1)',
+                border: '1px solid rgba(76, 175, 80, 0.3)',
+                borderRadius: '8px',
+                padding: '1.5rem'
+              }}>
+                <h3 style={{ color: '#4caf50', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
+                  🏆 Match Reporting Fee - $5 per match
+                </h3>
+                <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                  <p style={{ margin: '0 0 0.75rem 0' }}>
+                    <strong>How it works:</strong>
+                  </p>
+                  <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
+                    <li>Only the <strong>winner</strong> pays the $5 fee</li>
+                    <li>One fee per match (not per player)</li>
+                    <li>Fee is paid when reporting the match result</li>
+                    <li>Supports the ladder system and prize pools</li>
+                  </ul>
+                  <p style={{ margin: 0, fontStyle: 'italic', color: '#ff9800' }}>
+                    <strong>Example:</strong> If you win a match, you pay $5 to report the result. The loser pays nothing.
+                  </p>
+                </div>
+              </div>
+
+              {/* Payment Methods */}
+              <div style={{
+                background: 'rgba(255, 193, 7, 0.1)',
+                border: '1px solid rgba(255, 193, 7, 0.3)',
+                borderRadius: '8px',
+                padding: '1.5rem'
+              }}>
+                <h3 style={{ color: '#ffc107', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
+                  💳 Payment Methods
+                </h3>
+                <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                  <p style={{ margin: '0 0 0.75rem 0' }}>
+                    <strong>We accept:</strong>
+                  </p>
+                  <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
+                    <li>CashApp</li>
+                    <li>Venmo</li>
+                    <li>PayPal</li>
+                    <li>Credit/Debit Cards (via Square)</li>
+                    <li>Credits (pre-purchased balance)</li>
+                  </ul>
+                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
+                    <strong>Tip:</strong> Buy credits in advance for instant match reporting without verification delays!
+                  </p>
+                </div>
+              </div>
+
+              {/* Trust System */}
+              <div style={{
+                background: 'rgba(156, 39, 176, 0.1)',
+                border: '1px solid rgba(156, 39, 176, 0.3)',
+                borderRadius: '8px',
+                padding: '1.5rem'
+              }}>
+                <h3 style={{ color: '#9c27b0', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
+                  🛡️ Trust & Verification System
+                </h3>
+                <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                  <p style={{ margin: '0 0 0.75rem 0' }}>
+                    <strong>How verification works:</strong>
+                  </p>
+                  <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
+                    <li><strong>New users:</strong> Payments require admin verification (24-48 hours)</li>
+                    <li><strong>Verified users:</strong> 3+ successful payments = auto-approval</li>
+                    <li><strong>Trusted users:</strong> 10+ successful payments = instant processing</li>
+                  </ul>
+                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
+                    <strong>Build trust:</strong> Make successful payments to earn faster processing!
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Close Button */}
+            <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+              <button
+                onClick={() => setShowPaymentInfo(false)}
+                style={{
+                  background: 'rgba(255, 68, 68, 0.8)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(255, 68, 68, 1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'rgba(255, 68, 68, 0.8)';
+                }}
+              >
+                Got it! Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
