@@ -140,6 +140,50 @@
         .container-fluid {
             max-width: 1400px;
         }
+        
+        /* Make Division column narrower */
+        .table th:nth-child(2), .table td:nth-child(2) { 
+            width: 15%; /* Reduced from default */
+            max-width: 15%;
+        }
+        
+        /* Division color buttons */
+        .division-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        
+        /* Division color schemes */
+        .division-nay-nay { background: #e91e63; color: white; }
+        .division-3310 { background: #2196f3; color: white; }
+        .division-tuesday { background: #4caf50; color: white; }
+        .division-wednesday { background: #ff9800; color: white; }
+        .division-thursday { background: #9c27b0; color: white; }
+        .division-friday { background: #f44336; color: white; }
+        .division-saturday { background: #00bcd4; color: white; }
+        .division-sunday { background: #795548; color: white; }
+        .division-default { background: #607d8b; color: white; }
+        
+        /* Make players modal wider */
+        #playersModal .modal-dialog {
+            max-width: 95vw;
+            width: 95vw;
+        }
+        
+        @media (min-width: 1200px) {
+            #playersModal .modal-dialog {
+                max-width: 90vw;
+                width: 90vw;
+            }
+        }
         .card-header {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-bottom: 2px solid #dee2e6;
