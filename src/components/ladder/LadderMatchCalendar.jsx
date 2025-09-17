@@ -166,23 +166,24 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
               const isTodayDate = isToday(day);
               const dayMatches = getMatchesForDate(day);
               const isSelected = false; // No longer using selected state in calendar
+              const hasMatches = dayMatches.length > 0;
 
               return (
                 <div
-                  key={index}
-                  className={`calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${isTodayDate ? 'today' : ''} ${isSelected ? 'selected' : ''} ${dayMatches.length > 0 ? 'has-matches' : ''}`}
+                  key={`${day.getTime()}-${matches.length}`}
+                  className={`calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${isTodayDate ? 'today' : ''} ${isSelected ? 'selected' : ''} ${hasMatches ? 'has-matches' : ''}`}
                   onClick={() => {
                     setSelectedDate(day);
                     setShowMatchesModal(true);
                   }}
                 >
                   <div className="day-number">{day.getDate()}</div>
-                  {dayMatches.length > 0 && (
+                  {hasMatches && (
                     <div className="match-indicator">
                       <span className="match-count">{dayMatches.length}</span>
                     </div>
                   )}
-                  {dayMatches.length > 0 && (
+                  {hasMatches && (
                     <div className="match-players">
                       {dayMatches.slice(0, 4).map((match, matchIndex) => {
                         // Check if either player is ranked in the top 5 of the ladder

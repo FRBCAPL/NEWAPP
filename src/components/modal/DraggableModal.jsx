@@ -88,7 +88,7 @@ export default function DraggableModal({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: isMobile ? "20px" : "40px",
+        padding: isMobile ? "0" : "40px",
         zIndex: 100000,
         backdropFilter: "blur(3px)",
         WebkitBackdropFilter: "blur(3px)"
@@ -97,7 +97,7 @@ export default function DraggableModal({
       <div
         className={`draggable-modal ${className}`}
         style={{
-          transform: `translate(${drag.x}px, ${drag.y}px)`,
+          transform: window.innerWidth <= 768 ? "translate(-50%, -50%)" : `translate(${drag.x}px, ${drag.y}px)`,
           cursor: dragging ? "grabbing" : "default",
           background: "linear-gradient(120deg, #232323 80%, #2a0909 100%)",
           color: "#fff",
@@ -107,10 +107,12 @@ export default function DraggableModal({
           width: window.innerWidth <= 768 ? "95vw" : maxWidth,
           maxWidth: window.innerWidth <= 768 ? "95vw" : maxWidth,
           minWidth: window.innerWidth <= 768 ? "320px" : "400px",
-          margin: "0 auto",
+          margin: window.innerWidth <= 768 ? "0" : "0 auto",
+          left: window.innerWidth <= 768 ? "50%" : "auto",
+          top: window.innerWidth <= 768 ? "50%" : "auto",
+          position: window.innerWidth <= 768 ? "fixed" : "relative",
           animation: "modalBounceIn 0.5s cubic-bezier(.21,1.02,.73,1.01)",
           padding: 0,
-          position: "relative",
           fontFamily: "inherit",
           boxSizing: "border-box",
           height: maxHeight || (window.innerWidth <= 768 ? "auto" : "auto"),
@@ -240,6 +242,11 @@ export default function DraggableModal({
             border-radius: 0.5rem !important;
             height: auto !important;
             max-height: 90vh !important;
+            margin: 0 !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            position: fixed !important;
           }
           .modal-header {
             padding: 0.5rem 0.5rem 0.3rem 0.5rem !important;
@@ -264,6 +271,11 @@ export default function DraggableModal({
             border-radius: 0.3rem !important;
             height: auto !important;
             max-height: 95vh !important;
+            margin: 0 !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            position: fixed !important;
           }
           .modal-content {
             max-height: calc(95vh - 50px) !important;
