@@ -131,7 +131,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 marginTop: '0.3rem',
                 opacity: 0.9,
                 lineHeight: '1.1'
-              }} className="greeting-text">
+              }}>
                 Welcome to the Hub, {userFirstName} {userLastName}
               </div>
             )}
