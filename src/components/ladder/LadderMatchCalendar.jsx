@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import DraggableModal from '../modal/DraggableModal';
 import { BACKEND_URL } from '../../config.js';
+import { isToday, formatDateForDisplay } from '../../utils/dateUtils';
 import './LadderMatchCalendar.css';
 
 const LadderMatchCalendar = ({ isOpen, onClose }) => {
@@ -98,7 +100,7 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
   const calendarDays = generateCalendarDays();
   const monthName = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-  return (
+  return createPortal(
     <DraggableModal
       open={isOpen}
       onClose={onClose}
@@ -161,14 +163,14 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
           <div className="calendar-days">
             {calendarDays.map((day, index) => {
               const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
-              const isToday = day.toDateString() === new Date().toDateString();
+              const isTodayDate = isToday(day);
               const dayMatches = getMatchesForDate(day);
               const isSelected = false; // No longer using selected state in calendar
 
               return (
                 <div
                   key={index}
-                  className={`calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${dayMatches.length > 0 ? 'has-matches' : ''}`}
+                  className={`calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${isTodayDate ? 'today' : ''} ${isSelected ? 'selected' : ''} ${dayMatches.length > 0 ? 'has-matches' : ''}`}
                   onClick={() => {
                     setSelectedDate(day);
                     setShowMatchesModal(true);
@@ -251,7 +253,12 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
                 verticalAlign: 'middle'
               }} 
             />
-            <span>Matches for {selectedDate ? formatDate(selectedDate) : ''}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span>Matches for {selectedDate ? selectedDate.toLocaleDateString('en-US', { weekday: 'long' }) : ''}</span>
+              <span style={{ fontSize: '0.9em', opacity: 0.9 }}>
+                {selectedDate ? selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}
+              </span>
+            </div>
             <span style={{ fontSize: '24px' }}>⚔️</span>
           </div>
         }
@@ -301,7 +308,8 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
           )}
         </div>
       </DraggableModal>
-    </DraggableModal>
+    </DraggableModal>,
+    document.body
   );
 };
 

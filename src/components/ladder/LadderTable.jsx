@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { formatDateForMountainTime } from '../../utils/dateUtils';
+import { formatDateForDisplay } from '../../utils/dateUtils';
 
 const LadderTable = memo(({
   ladderData,
@@ -293,7 +293,7 @@ const LadderTable = memo(({
                       }
                     </div>
                     <div style={{ color: '#666', fontSize: '0.7rem' }}>
-                      {formatDateForMountainTime(player.lastMatch.date)}
+                      {formatDateForDisplay(player.lastMatch.date)}
                     </div>
                     {player.lastMatch.venue && (
                       <div style={{ color: '#888', fontSize: '0.65rem' }}>

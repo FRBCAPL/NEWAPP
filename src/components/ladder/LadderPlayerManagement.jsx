@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '../../config.js';
 import DraggableModal from '../modal/DraggableModal';
 import LadderApplicationsManager from '../admin/LadderApplicationsManager';
+import { getCurrentDateString, dateStringToDate, dateToDateString } from '../../utils/dateUtils';
 import styles from './LadderPlayerManagement.module.css';
 
 export default function LadderPlayerManagement() {
@@ -39,7 +40,7 @@ export default function LadderPlayerManagement() {
     defenderPosition: '',
     winnerId: '',
     score: '',
-    matchDate: new Date().toISOString().split('T')[0],
+    matchDate: getCurrentDateString(),
     matchFormat: 'race-to-5',
     location: '',
     notes: ''
@@ -54,7 +55,7 @@ export default function LadderPlayerManagement() {
     challengerId: '',
     defenderId: '',
     matchFormat: 'race-to-5',
-    proposedDate: new Date().toISOString().split('T')[0],
+    proposedDate: getCurrentDateString(),
     location: '',
     notes: ''
   });
@@ -337,7 +338,7 @@ export default function LadderPlayerManagement() {
       defenderPosition: match.defender?.position || match.player2?.position,
       winnerId: '',
       score: '',
-      matchDate: match.scheduledDate ? new Date(match.scheduledDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      matchDate: match.scheduledDate ? dateToDateString(new Date(match.scheduledDate)) : getCurrentDateString(),
       matchFormat: match.matchFormat || match.raceLength || 'best-of-5',
       location: match.location || match.venue || '',
       notes: match.notes || ''
@@ -585,7 +586,7 @@ export default function LadderPlayerManagement() {
         body: JSON.stringify({
           ...createMatchFormData,
           status: 'scheduled',
-          proposedDate: new Date(createMatchFormData.proposedDate).toISOString()
+          proposedDate: dateStringToDate(createMatchFormData.proposedDate)
         })
       });
 
@@ -599,7 +600,7 @@ export default function LadderPlayerManagement() {
            challengerId: '',
            defenderId: '',
            matchFormat: 'race-to-5',
-           proposedDate: new Date().toISOString().split('T')[0],
+           proposedDate: getCurrentDateString(),
            location: '',
            notes: ''
          });
@@ -660,9 +661,9 @@ export default function LadderPlayerManagement() {
       matchType: match.matchType || 'challenge',
       matchFormat: match.matchFormat || 'race-to-5',
       scheduledDate: match.scheduledDate ? 
-        new Date(match.scheduledDate).toISOString().split('T')[0] : 
+        dateToDateString(new Date(match.scheduledDate)) : 
         match.proposedDate ? 
-          new Date(match.proposedDate).toISOString().split('T')[0] : '',
+          dateToDateString(new Date(match.proposedDate)) : '',
       location: match.location || match.venue || '',
       notes: match.notes || '',
       entryFee: match.entryFee || 0,

@@ -80,7 +80,7 @@ export default function DraggableModal({
       onClick={onClose}
       style={{
         position: "fixed",
-        top: isMobile ? "120px" : "0",
+        top: 0,
         left: 0,
         right: 0,
         bottom: 0,
@@ -88,7 +88,7 @@ export default function DraggableModal({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        paddingTop: isMobile ? "0" : "40px",
+        padding: isMobile ? "20px" : "40px",
         zIndex: 100000,
         backdropFilter: "blur(3px)",
         WebkitBackdropFilter: "blur(3px)"
@@ -231,8 +231,9 @@ export default function DraggableModal({
         
         @media (max-width: 768px) {
           .modal-overlay {
-            padding-top: 40px !important;
+            padding: 20px !important;
             align-items: center !important;
+            justify-content: center !important;
           }
           .draggable-modal {
             max-width: 95vw !important;
@@ -254,8 +255,9 @@ export default function DraggableModal({
         
         @media (max-width: 480px) {
           .modal-overlay {
-            padding-top: 20px !important;
+            padding: 15px !important;
             align-items: center !important;
+            justify-content: center !important;
           }
           .draggable-modal {
             max-width: 98vw !important;

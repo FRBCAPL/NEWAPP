@@ -1,6 +1,6 @@
 import React, { memo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { formatDateForMountainTime, formatTimeForMountainTime } from '../../utils/dateUtils';
+import { formatDateForDisplay, formatDateTimeForDisplay } from '../../utils/dateUtils';
 
 const PlayerStatsModal = memo(({
   showMobilePlayerStats,
@@ -204,7 +204,7 @@ const PlayerStatsModal = memo(({
                   <div className="stat-item">
                     <div className="stat-label">Immunity Until</div>
                     <div className="stat-value">
-                      {formatDateForMountainTime(selectedPlayerForStats.immunityUntil)}
+                      {formatDateForDisplay(selectedPlayerForStats.immunityUntil)}
                     </div>
                   </div>
                 )}
@@ -246,7 +246,7 @@ const PlayerStatsModal = memo(({
                          'Player'}
                       </div>
                       <div className="match-date">
-                        {formatDateForMountainTime(transformedLastMatch.matchDate)}
+                        {formatDateForDisplay(transformedLastMatch.matchDate)}
                       </div>
                     </div>
                   ) : (
@@ -287,11 +287,11 @@ const PlayerStatsModal = memo(({
                               }
                             </span>
                             <span style={{ color: '#888', fontSize: '10px' }}>
-                              {formatDateForMountainTime(match.matchDate)}
+                              {formatDateForDisplay(match.matchDate)}
                             </span>
                           </div>
                           <div style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>
-                            {match.score} • {match.matchType} • {formatTimeForMountainTime(match.matchDate)}
+                            {match.score} • {match.matchType} • {formatDateTimeForDisplay(match.matchDate)}
                           </div>
                         </div>
                       ))}

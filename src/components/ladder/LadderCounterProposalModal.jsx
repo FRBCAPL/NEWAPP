@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import DraggableModal from '../modal/DraggableModal';
 import { BACKEND_URL } from '../../config.js';
+import { getMinDateForInput } from '../../utils/dateUtils';
 import './LadderCounterProposalModal.css';
 
 const LadderCounterProposalModal = ({ 
@@ -297,7 +298,7 @@ const LadderCounterProposalModal = ({
                 type="date"
                 value={newDate}
                 onChange={(e) => setNewDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
+                min={getMinDateForInput()}
                 style={{
                   flex: 1,
                   padding: '8px',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { formatDateForMountainTime } from '../../utils/dateUtils';
+import { formatDateForDisplay } from '../../utils/dateUtils';
 import { csvToJson, getSampleCSV, validatePlayerData } from '../../utils/csvToJson';
 import { BACKEND_URL } from '../../config.js';
 import './LadderManagement.css';
@@ -571,7 +571,7 @@ const LadderManagement = ({ userEmail, userPin }) => {
                     </td>
                     <td>
                       {player.immunityUntil ? 
-                        formatDateForMountainTime(player.immunityUntil) : 
+                        formatDateForDisplay(player.immunityUntil) : 
                         'None'
                       }
                     </td>
@@ -973,7 +973,7 @@ const LadderManagement = ({ userEmail, userPin }) => {
               <div className="match-details">
                 <p><strong>Players:</strong> {matchToDelete.winner?.name} vs {matchToDelete.loser?.name}</p>
                 <p><strong>Score:</strong> {matchToDelete.score}</p>
-                <p><strong>Date:</strong> {formatDateForMountainTime(matchToDelete.matchDate)}</p>
+                <p><strong>Date:</strong> {formatDateForDisplay(matchToDelete.matchDate)}</p>
               </div>
               <p className="warning-text">⚠️ This action cannot be undone and will reverse any position changes.</p>
               <div className="form-buttons">
@@ -1022,7 +1022,7 @@ const LadderManagement = ({ userEmail, userPin }) => {
                   <tbody>
                     {matchHistory.map((match, index) => (
                       <tr key={match.id || index}>
-                        <td>{formatDateForMountainTime(match.matchDate)}</td>
+                        <td>{formatDateForDisplay(match.matchDate)}</td>
                         <td>
                           <strong>{match.winner.name}</strong> (#{match.winner.position})
                         </td>
