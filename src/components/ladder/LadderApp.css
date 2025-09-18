@@ -3377,7 +3377,6 @@ div.match-fee-info-bar,
       padding-right: 0 !important;
       text-align: left !important;
     }
-  }
   
   .ladder-table.logged-in-view .table-header {
     grid-template-columns: 25px 1fr 50px 60px;
@@ -3390,6 +3389,7 @@ div.match-fee-info-bar,
     gap: 6px;
     padding: 6px 8px;
   }
+}
 
 /* Override global mobile font-size for ladder table */
 @media (max-width: 768px) {
