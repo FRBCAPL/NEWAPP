@@ -773,9 +773,9 @@
   
   /* Force player names to show fully - very specific selector */
   .ladder-table.logged-in-view .table-row .table-cell.name {
-    padding-left: 8px !important;
-    justify-content: flex-start !important;
-    text-align: left !important;
+    padding: 8px !important;
+    justify-content: center !important;
+    text-align: center !important;
     font-size: 0.7rem !important;
     overflow: visible !important;
     white-space: nowrap !important;
@@ -909,9 +909,9 @@
 }
 
 .ladder-table.logged-in-view .table-cell.name {
-  justify-content: flex-start;
-  text-align: left;
-  transform: translateX(20px);
+  justify-content: center;
+  text-align: center;
+  transform: translateX(0px);
 }
 
 /* Ensure Fargo, W/L, and Status headers are centered to match their data */
@@ -1805,9 +1805,9 @@ div.match-fee-info-bar,
   /* Player column content positioning */
   .ladder-table.logged-in-view .table-cell.name {
     transform: none !important;
-    margin-left: 0 !important;
-    padding-left: 8px !important;
-    text-align: left !important;
+    margin: 0 !important;
+    padding: 8px !important;
+    text-align: center !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
   }
@@ -1879,10 +1879,10 @@ div.match-fee-info-bar,
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
-    justify-content: flex-start !important;
-    text-align: left !important;
-    padding-left: 0 !important;
-    margin-left: 0 !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   
   .ladder-table.logged-in-view .table-cell.name .player-name-clickable {
@@ -2779,7 +2779,7 @@ div.match-fee-info-bar,
   border-radius: 18px;
   max-width: 400px;
   width: 50%;
-  height: 80vh;
+  height: 80npmvh;
   overflow-y: auto;
   backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);

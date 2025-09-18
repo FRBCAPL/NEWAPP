@@ -13,6 +13,20 @@ let currentDivisionId = null;
 let currentWeek = 1;
 let currentWeeklyPaymentTeamId = null;
 
+// Function to get division color class
+function getDivisionClass(divisionName) {
+    const name = divisionName.toLowerCase();
+    if (name.includes('nay nay')) return 'division-nay-nay';
+    if (name.includes('3310')) return 'division-3310';
+    if (name.includes('tuesday')) return 'division-tuesday';
+    if (name.includes('wednesday')) return 'division-wednesday';
+    if (name.includes('thursday')) return 'division-thursday';
+    if (name.includes('friday')) return 'division-friday';
+    if (name.includes('saturday')) return 'division-saturday';
+    if (name.includes('sunday')) return 'division-sunday';
+    return 'division-default';
+}
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
     // Skip login for now - go directly to main app
@@ -243,7 +257,7 @@ function displayTeams(teams) {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><strong>${team.teamName}</strong></td>
-            <td><span class="badge bg-primary">${team.division}</span></td>
+            <td><span class="division-badge ${getDivisionClass(team.division)}">${team.division}</span></td>
             <td>${team.captainName}</td>
             <td>
                 <span class="badge bg-info">${playerCount} players</span>
@@ -255,9 +269,9 @@ function displayTeams(teams) {
                     ${isCurrent ? 'Current' : `Owes $${amountOwed}`}
                 </span>
             </td>
-            <td>${team.paymentDate ? new Date(team.paymentDate).toLocaleDateString() : '-'}</td>
+            <td>${weeklyPaid && weeklyPaymentDate ? new Date(weeklyPaymentDate).toLocaleDateString() : '-'}</td>
             <td>
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex flex-column align-items-center gap-1">
                     <span class="badge bg-${weeklyPaid ? 'success' : weeklyBye ? 'info' : 'danger'}">
                         <i class="fas fa-${weeklyPaid ? 'check' : weeklyBye ? 'pause' : 'times'} me-1"></i>
                         ${weeklyPaid ? 'Paid' : weeklyBye ? 'Bye Week' : 'Unpaid'}
