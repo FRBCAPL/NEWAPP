@@ -97,11 +97,13 @@
 }
 
 .nav-center div {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-  text-align: center;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  text-align: center !important;
+  line-height: 1.2 !important;
+  display: inline-block !important;
 }
 
 .nav-center .app-title,

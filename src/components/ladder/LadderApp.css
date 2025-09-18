@@ -24,6 +24,8 @@
   color: var(--white);
   position: relative;
   backdrop-filter: blur(10px);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Custom purple border for ladder modals only */

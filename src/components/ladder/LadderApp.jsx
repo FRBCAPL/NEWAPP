@@ -18,7 +18,6 @@ import LadderHeader from './LadderHeader';
 import LadderMatchCalendar from './LadderMatchCalendar';
 import LadderTable from './LadderTable';
 import NavigationMenu from './NavigationMenu';
-import DiagnosticInfo from '../DiagnosticInfo';
 import PlayerStatsModal from './PlayerStatsModal';
 import FullMatchHistoryModal from './FullMatchHistoryModal';
 import UserStatusCard from './UserStatusCard';
@@ -2009,7 +2008,6 @@ const LadderApp = ({
 
   return (
     <>
-    <DiagnosticInfo />
     <div className="ladder-app-container">
       {/* Ladder-specific floating logos - only Legends logo and pool balls */}
       <LadderFloatingLogos />
