@@ -49,7 +49,6 @@ html, body, #root {
   box-sizing: border-box;
   background: #000 !important;
   color: var(--chat-yellow);
-  overflow: hidden;
 }
 
 /* Ensure no white borders or frames */
@@ -85,11 +84,7 @@ body {
   background: #000 !important;
 }
 
-/* Remove all max-width/max-height constraints except for specific components */
-* {
-  max-width: unset !important;
-  max-height: unset !important;
-}
+/* Removed aggressive max-width/max-height constraints that were causing layout issues */
 
 /* Restore nav-grid max-width for proper layout */
 .nav-grid {
@@ -510,8 +505,6 @@ button:focus-visible {
 /* Prevent horizontal scrolling on all devices */
 html, body {
   overflow-x: hidden;
-  max-width: 100vw;
-  position: relative;
 }
 
 /* Better mobile font rendering */
