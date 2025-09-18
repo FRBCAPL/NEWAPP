@@ -3392,6 +3392,7 @@ div.match-fee-info-bar,
     gap: 6px;
     padding: 6px 8px;
   }
+}
 
 /* Override global mobile font-size for ladder table */
 @media (max-width: 768px) {
