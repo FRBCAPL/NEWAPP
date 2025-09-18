@@ -3330,8 +3330,7 @@ div.match-fee-info-bar,
   }
   
   /* All header positioning rules inside media query for 5-column layout */
-  @media (max-width: 768px) {
-    /* Position Rank header over the data */
+  /* Position Rank header over the data */
     .ladder-table:not(.logged-in-view) .table-header .header-cell:first-child {
       transform: translateX(-10px) !important;
       margin-left: 0 !important;
@@ -3393,7 +3392,6 @@ div.match-fee-info-bar,
     gap: 6px;
     padding: 6px 8px;
   }
-}
 
 /* Override global mobile font-size for ladder table */
 @media (max-width: 768px) {
