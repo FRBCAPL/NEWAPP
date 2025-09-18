@@ -21,9 +21,12 @@ try {
 }
 
 // Detect if we're running in an iframe and add data attribute
+// TEMPORARILY DISABLED - Render deployment issue
 if (typeof window !== 'undefined') {
   const isInIframe = window.self !== window.top;
-  if (isInIframe) {
+  console.log('Iframe detection:', isInIframe, 'window.self:', window.self, 'window.top:', window.top);
+  // DISABLED FOR TESTING: if (isInIframe) {
+  if (false) { // Force disable iframe detection
     document.documentElement.setAttribute('data-iframe', 'true');
     document.body.setAttribute('data-iframe', 'true');
     const rootElement = document.getElementById('root');
