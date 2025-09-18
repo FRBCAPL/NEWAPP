@@ -270,9 +270,11 @@
 }
 
 .nav-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  gap: 20px !important;
+  max-width: none !important;
+  width: 100% !important;
 }
 
 .nav-card {
@@ -1546,8 +1548,10 @@ div.match-fee-info-bar,
   
   /* Navigation Grid - Enhanced Mobile */
   .nav-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+    gap: 20px !important;
+    max-width: none !important;
+    width: 100% !important;
   }
   
   .nav-card {
