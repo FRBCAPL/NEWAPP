@@ -1907,10 +1907,8 @@ div.match-fee-info-bar,
     display: block;
   }
   
-  @media (max-width: 768px) {
-    .challenge-reason-text {
-      display: none !important;
-    }
+  .challenge-reason-text {
+    display: none !important;
   }
   
   .ladder-table.logged-in-view .table-cell.wins,
@@ -3379,7 +3377,6 @@ div.match-fee-info-bar,
       padding-right: 0 !important;
       text-align: left !important;
     }
-  }
   
   .ladder-table.logged-in-view .table-header {
     grid-template-columns: 25px 1fr 50px 60px;
