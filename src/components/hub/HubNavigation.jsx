@@ -164,7 +164,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
             {(isAdmin || isSuperAdmin) && (
               <div className="admin-dropdown-container" ref={dropdownRef}>
                 <button onClick={toggleDropdown} className="admin-dropdown-btn">
-                  ⚙️ Admin Menu
+                  ⚙️ Admin
                 </button>
                 {isDropdownOpen && (
                   <div className="admin-dropdown-menu">
