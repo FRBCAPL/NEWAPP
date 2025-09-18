@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './HubNavigation.css';
 import ball8 from '../../assets/ball8.svg';
@@ -8,8 +8,6 @@ import ball10 from '../../assets/tenball.svg';
 const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFirstName, userLastName, onProfileClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
 
   const handleReturnToHub = () => {
     navigate('/hub');
@@ -41,29 +39,6 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
     }
     navigate('/');
   };
-
-  // Dropdown functionality
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
-  };
-
-  const closeDropdown = () => {
-    setIsDropdownOpen(false);
-  };
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        closeDropdown();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   const isLadderApp = location.pathname === '/guest/ladder' || location.pathname === '/ladder' || currentAppName === 'Ladder of Legends';
   
@@ -160,59 +135,26 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
             gap: '0.5rem',
             order: 3
           }}>
-            {/* Admin Dropdown Menu */}
-            {(isAdmin || isSuperAdmin) && (
-              <div className="admin-dropdown-container" ref={dropdownRef}>
-                <button onClick={toggleDropdown} className="admin-dropdown-btn">
+            {/* Admin buttons */}
+            {isAdmin && (
+              <>
+                <button onClick={handlePlayerManagementClick} className="admin-btn">
+                  👥 Players
+                </button>
+                <button onClick={handleDuesTrackerClick} className="admin-btn">
+                  💰 Dues
+                </button>
+                <button onClick={handleAdminClick} className="admin-btn">
                   ⚙️ Admin
                 </button>
-                {isDropdownOpen && (
-                  <div className="admin-dropdown-menu">
-                    {isAdmin && (
-                      <>
-                        <button 
-                          onClick={() => {
-                            handlePlayerManagementClick();
-                            closeDropdown();
-                          }} 
-                          className="dropdown-item"
-                        >
-                          👥 Players
-                        </button>
-                        <button 
-                          onClick={() => {
-                            handleDuesTrackerClick();
-                            closeDropdown();
-                          }} 
-                          className="dropdown-item"
-                        >
-                          💰 Dues
-                        </button>
-                        <button 
-                          onClick={() => {
-                            handleAdminClick();
-                            closeDropdown();
-                          }} 
-                          className="dropdown-item"
-                        >
-                          ⚙️ Admin
-                        </button>
-                      </>
-                    )}
-                    {isSuperAdmin && (
-                      <button 
-                        onClick={() => {
-                          handlePlatformAdminClick();
-                          closeDropdown();
-                        }} 
-                        className="dropdown-item super-admin-item"
-                      >
-                        🔧 Platform Admin
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
+              </>
+            )}
+            
+            {/* Super Admin button */}
+            {isSuperAdmin && (
+              <button onClick={handlePlatformAdminClick} className="super-admin-btn">
+                🔧 Platform Admin
+              </button>
             )}
             
             <button onClick={onProfileClick} className="profile-btn">
